@@ -36,8 +36,8 @@ Decimal phases appear between their surrounding integers in numeric order.
   7. Auth flows have unit/integration tests covering login, 2FA rejection, session persistence, and logout
 **Plans**: 4 plans (revised after cross-AI review Round 2)
 Plans:
-- [ ] 01-01-PLAN.md -- Project infrastructure (dependencies, Vite config, shadcn/ui, Vitest, clean-checkout safe build)
-- [ ] 01-02-PLAN.md -- Database schema (7 tables, RLS, server-side RPC for mfa_verified, COALESCE discord_id extraction, upsert triggers)
+- [x] 01-01-PLAN.md -- Project infrastructure (dependencies, Vite config, shadcn/ui, Vitest, clean-checkout safe build)
+- [x] 01-02-PLAN.md -- Database schema (7 tables, RLS, server-side RPC for mfa_verified, COALESCE discord_id extraction, upsert triggers)
 - [ ] 01-03-PLAN.md -- Provider token spike + auth infrastructure + app shell (RPC-based callback, AuthProvider, ThemeProvider, Navbar, pages)
 - [ ] 01-04-PLAN.md -- Behavioral tests with real handleAuthCallback + human verification (RPC verification, fail-closed tests, UI tests)
 **UI hint**: yes
