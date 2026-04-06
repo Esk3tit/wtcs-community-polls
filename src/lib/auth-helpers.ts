@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { supabase, typedRpc } from '@/lib/supabase'
 
 export type AuthCallbackResult =
   | { success: true }
@@ -84,11 +84,11 @@ export async function handleAuthCallback(): Promise<AuthCallbackResult> {
       ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
       : null
 
-    const { error: rpcError } = await supabase.rpc('update_profile_after_auth' as never, {
+    const { error: rpcError } = await typedRpc('update_profile_after_auth', {
       p_mfa_verified: true,
       p_discord_username: discordUser.global_name || discordUser.username || 'Unknown',
       p_avatar_url: avatarUrl,
-    } as never)
+    })
 
     // R2 FIX: Check RPC result. If it fails, log but still allow login.
     // Rationale: The 2FA check succeeded (mfa_enabled=true from Discord).

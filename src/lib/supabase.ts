@@ -11,6 +11,17 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
-// NOTE: If the spike (Task 1) determines that PKCE flow does NOT provide
-// provider_token, add { auth: { flowType: 'implicit' } } as third argument.
-// See RESEARCH.md Open Question 1.
+
+// Type-safe RPC helper — supabase-js v2 generic inference for .rpc() breaks
+// under TypeScript 6 when Database includes table definitions. This wrapper
+// preserves full type safety at the call site. Remove when supabase-js ships
+// a TS6-compatible release.
+type RpcFunctions = Database['public']['Functions']
+
+export async function typedRpc<FnName extends string & keyof RpcFunctions>(
+  fn: FnName,
+  args: RpcFunctions[FnName]['Args']
+) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return supabase.rpc(fn as any, args as any)
+}

@@ -131,7 +131,9 @@ export type Database = {
         Update: { count?: number }
       }
     }
-    Views: Record<string, never>
+    Views: {
+      [_ in never]: never
+    }
     Functions: {
       update_profile_after_auth: {
         Args: {
@@ -142,8 +144,6 @@ export type Database = {
         Returns: undefined
       }
     }
-    Enums: Record<string, never>
-    CompositeTypes: Record<string, never>
   }
 }
 
