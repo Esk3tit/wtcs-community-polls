@@ -34,7 +34,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   5. App is mobile-first: layouts, touch targets, and interactions are designed for phone screens first, with light/dark mode supporting system preference
   6. Testing infrastructure (Vitest + React Testing Library) is configured with CI-ready scripts
   7. Auth flows have unit/integration tests covering login, 2FA rejection, session persistence, and logout
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [ ] 01-01-PLAN.md -- Project infrastructure setup (dependencies, Vite config, shadcn/ui, Vitest, Netlify)
+- [ ] 01-02-PLAN.md -- Database schema and migrations (tables, RLS, triggers, seed)
+- [ ] 01-03-PLAN.md -- Auth infrastructure and app shell (Supabase client, useAuth, OAuth callback, Navbar, pages)
+- [ ] 01-04-PLAN.md -- Testing and human verification (auth tests, UI tests, visual sign-off)
 **UI hint**: yes
 
 ### Phase 2: Browsing & Responding
@@ -85,7 +90,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. Supabase database receives a keepalive ping every 3-4 days via automated cron, preventing free-tier pausing
   2. App is accessible at polls.wtcsmapvote.com with correct SPA routing (deep links and refresh work)
   3. End-to-end flow works in production: login, browse suggestions, respond, see results, admin creates suggestion
-  4. E2E smoke tests cover the critical path (login → browse → respond → see results)
+  4. E2E smoke tests cover the critical path (login -> browse -> respond -> see results)
 **Plans**: TBD
 
 ## Progress
@@ -95,7 +100,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Authentication | 0/? | Not started | - |
+| 1. Foundation & Authentication | 0/4 | Planned | - |
 | 2. Browsing & Responding | 0/? | Not started | - |
 | 3. Response Integrity | 0/? | Not started | - |
 | 4. Admin Panel & Suggestion Management | 0/? | Not started | - |
