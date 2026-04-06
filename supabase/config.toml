@@ -1,0 +1,22 @@
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+
+[db]
+port = 54322
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173/auth/callback"]
+
+[auth.external.discord]
+enabled = true
+client_id = "env(SUPABASE_AUTH_DISCORD_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_DISCORD_SECRET)"
