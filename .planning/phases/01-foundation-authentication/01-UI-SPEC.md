@@ -50,11 +50,12 @@ Exceptions: Touch targets minimum 44px height (per WCAG 2.5.8) for "Login with D
 | Role | Size | Weight | Line Height | Usage |
 |------|------|--------|-------------|-------|
 | Body | 16px | 400 (regular) | 1.5 (24px) | Paragraphs, descriptions, explanatory text |
-| Label | 14px | 500 (medium) | 1.4 (20px) | Nav links, meta text, badge text, small UI labels |
+| Label | 14px | 400 (regular) | 1.4 (20px) | Nav links, meta text, badge text, small UI labels |
 | Heading | 20px | 600 (semibold) | 1.3 (26px) | Section titles, card headings, page subtitles |
-| Display | 32px | 700 (bold) | 1.2 (38px) | Landing page hero title, page-level headings |
+| Display | 32px | 600 (semibold) | 1.2 (38px) | Landing page hero title, page-level headings |
 
 **Notes:**
+- Only 2 font weights are used across the entire project: 400 (regular) and 600 (semibold). Visual hierarchy comes from size contrast, not weight proliferation.
 - Mobile body stays at 16px (no reduction below 16px to prevent iOS zoom on input focus).
 - Display size reduces to 28px on viewports below 640px.
 - Heading size stays 20px across all breakpoints.
@@ -126,11 +127,11 @@ Sticky top bar with logo, navigation links, and user controls.
 | Padding horizontal | 24px (desktop), 16px (mobile) |
 | Layout | Flexbox: logo left, nav center, user controls right |
 
-**Logo area:** Text logo "WTCS Polls" in Display weight (700) at 18px, color `--text-primary`. No image logo in Phase 1.
+**Logo area:** Text logo "WTCS Polls" in Display weight (600) at 18px, color `--text-primary`. No image logo in Phase 1.
 
-**Nav links (desktop):** Horizontal list: "Polls", "Archive", "Admin" (admin-only, hidden for non-admins). Label typography (14px, 500). Color `--text-secondary` default, `--text-primary` on hover, `--accent` when active. Active indicator: 2px bottom border in `--accent`.
+**Nav links (desktop):** Horizontal list: "Polls", "Archive", "Admin" (admin-only, hidden for non-admins). Label typography (14px, 400). Color `--text-secondary` default, `--text-primary` on hover, `--accent` when active. Active indicator: 2px bottom border in `--accent`.
 
-**Mobile navigation:** Hamburger menu icon (lucide `Menu`, 24px) top-right replacing nav links. Tapping opens a slide-down panel below the nav bar, full-width, with nav links stacked vertically. Each link: 48px row height, 16px left padding, `--text-secondary` default, `--bg-secondary` background on active. Panel background: `--bg-surface`. Close on link tap or tap outside.
+**Mobile navigation:** Hamburger menu button (lucide `Menu`, 24px, `aria-label="Open navigation menu"`) top-right replacing nav links. Tapping opens a slide-down panel below the nav bar, full-width, with nav links stacked vertically. Each link: 48px row height, 16px left padding, `--text-secondary` default, `--bg-secondary` background on active. Panel background: `--bg-surface`. Close on link tap or tap outside.
 
 **User controls (logged in):** Discord avatar (32px circle, `border-radius: 50%`) with username next to it (Label typography, `--text-secondary`). On mobile: avatar only (no username text), 32px. Clicking avatar opens a dropdown menu.
 
@@ -153,7 +154,7 @@ Splash page shown to unauthenticated visitors. Builds trust and explains the pla
 | Section | Specification |
 |---------|---------------|
 | Top spacing | 3xl (64px) from nav bar |
-| Logo/brand mark | Text: "WTCS Community Polls" in Display (32px, 700), color `--text-primary` |
+| Logo/brand mark | Text: "WTCS Community Polls" in Display (32px, 600), color `--text-primary` |
 | Tagline | "Vote on proposals that shape competitive War Thunder" in Heading (20px, 600), color `--text-secondary`, 8px below brand |
 | Description | Body text (16px, 400) color `--text-secondary`, 24px below tagline. Copy: "The official platform for the War Thunder Competitive Scene community to vote on lineup changes, rule proposals, and tournament formats. Your Discord identity ensures every vote counts -- one account, one vote." |
 | CTA button | "Login with Discord" -- see Button spec below. 32px below description. |
@@ -188,7 +189,7 @@ Two variants needed in Phase 1.
 |----------|-------|
 | Background | transparent |
 | Text color | `--text-secondary` (or `--destructive` for sign out) |
-| Font | 14px, weight 500 |
+| Font | 14px, weight 400 |
 | Padding | 8px 16px |
 | Border radius | 6px |
 | Hover | Background `--bg-secondary` |
@@ -230,7 +231,7 @@ Placeholder for Phase 2 poll listing. Shows empty state.
 
 | Element | Specification |
 |---------|---------------|
-| Page heading | "Active Polls" in Display (32px, 700), color `--text-primary` |
+| Page heading | "Active Polls" in Display (32px, 600), color `--text-primary` |
 | Empty state icon | lucide `Inbox`, 48px, color `--text-muted` |
 | Empty state heading | "No polls yet" in Heading (20px, 600), color `--text-primary` |
 | Empty state body | "Polls will appear here once an admin creates them. Check back soon." in Body (16px, 400), color `--text-secondary` |
@@ -240,7 +241,7 @@ Placeholder for Phase 2 poll listing. Shows empty state.
 
 | Element | Specification |
 |---------|---------------|
-| Page heading | "Poll Archive" in Display (32px, 700), color `--text-primary` |
+| Page heading | "Poll Archive" in Display (32px, 600), color `--text-primary` |
 | Empty state icon | lucide `Archive`, 48px, color `--text-muted` |
 | Empty state heading | "No archived polls" in Heading (20px, 600), color `--text-primary` |
 | Empty state body | "Closed polls will appear here with their final results." in Body (16px, 400), color `--text-secondary` |
@@ -251,7 +252,7 @@ Guarded by admin role check. Non-admins do not see this route in navigation.
 
 | Element | Specification |
 |---------|---------------|
-| Page heading | "Admin Panel" in Display (32px, 700), color `--text-primary` |
+| Page heading | "Admin Panel" in Display (32px, 600), color `--text-primary` |
 | Empty state icon | lucide `Settings`, 48px, color `--text-muted` |
 | Empty state heading | "Admin tools coming soon" in Heading (20px, 600), color `--text-primary` |
 | Empty state body | "Poll creation and management tools will be available in a future update." in Body (16px, 400), color `--text-secondary` |
@@ -364,7 +365,7 @@ Shown briefly during OAuth redirect processing.
 | Focus indicators | All interactive elements: 2px solid `--accent` outline, 2px offset on `:focus-visible` |
 | Touch targets | Minimum 44px height on all tappable elements (buttons, nav links, dropdown items) |
 | Keyboard navigation | Tab order follows visual flow. Dropdown menu traps focus while open, Escape closes. |
-| Screen reader | Nav uses `<nav>` landmark. Main content uses `<main>`. Buttons have descriptive labels. Avatar dropdown uses `aria-expanded` and `aria-haspopup="menu"`. |
+| Screen reader | Nav uses `<nav>` landmark. Main content uses `<main>`. Buttons have descriptive labels. Avatar dropdown uses `aria-expanded` and `aria-haspopup="menu"`. Hamburger button uses `aria-label="Open navigation menu"`. |
 | Reduced motion | `@media (prefers-reduced-motion: reduce)` disables spinner rotation animation and button hover transforms |
 
 ---
