@@ -36,7 +36,7 @@ Community members can vote on competitive scene proposals with confidence that r
 - [ ] Vote writes through Supabase Edge Functions (server-side validation, rate limiting, abuse checks)
 - [ ] Direct reads from browser via Supabase JS client + RLS
 - [ ] Vote counts aggregated via Postgres trigger into vote_counts table
-- [ ] Mobile-friendly responsive design
+- [ ] Mobile-first responsive design — phone screens are the primary experience (casual users tapping links from Discord)
 - [ ] Supabase free tier keepalive via cron ping every 3-4 days
 
 ### Out of Scope

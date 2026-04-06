@@ -61,8 +61,17 @@
 ### UI & Design
 
 - [ ] **UIDN-01**: App supports dark mode via CSS custom properties (default to dark, matching Discord)
-- [ ] **UIDN-02**: Layout is responsive and mobile-friendly (usable on phone screens)
+- [ ] **UIDN-02**: Mobile-first responsive design — layouts, touch targets, and interactions designed for phone screens first, scaled up for desktop
 - [ ] **UIDN-03**: Modern, polished visual design appropriate for an esports community
+
+### Testing
+
+- [ ] **TEST-01**: Testing infrastructure set up (Vitest + React Testing Library) with CI-ready scripts
+- [ ] **TEST-02**: Auth flows have unit/integration tests (login, 2FA rejection, session persistence, logout)
+- [ ] **TEST-03**: Vote casting and result visibility have unit/integration tests (one-vote enforcement, vote-then-reveal, voters-only results)
+- [ ] **TEST-04**: Vote integrity checks have tests (server membership rejection, rate limiting)
+- [ ] **TEST-05**: Admin actions have tests (poll CRUD, admin promotion/demotion, server-side auth checks)
+- [ ] **TEST-06**: E2E smoke tests cover the critical path (login → browse → vote → see results)
 
 ### Infrastructure
 
@@ -112,51 +121,57 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | — | Pending |
-| AUTH-02 | — | Pending |
-| AUTH-03 | — | Pending |
-| AUTH-04 | — | Pending |
-| AUTH-05 | — | Pending |
-| ADMN-01 | — | Pending |
-| ADMN-02 | — | Pending |
-| ADMN-03 | — | Pending |
-| ADMN-04 | — | Pending |
-| POLL-01 | — | Pending |
-| POLL-02 | — | Pending |
-| POLL-03 | — | Pending |
-| POLL-04 | — | Pending |
-| POLL-05 | — | Pending |
-| POLL-06 | — | Pending |
-| POLL-07 | — | Pending |
-| LIFE-01 | — | Pending |
-| LIFE-02 | — | Pending |
-| LIFE-03 | — | Pending |
-| VOTE-01 | — | Pending |
-| VOTE-02 | — | Pending |
-| VOTE-03 | — | Pending |
-| VOTE-04 | — | Pending |
-| RSLT-01 | — | Pending |
-| RSLT-02 | — | Pending |
-| RSLT-03 | — | Pending |
-| RSLT-04 | — | Pending |
-| RSLT-05 | — | Pending |
-| CATG-01 | — | Pending |
-| CATG-02 | — | Pending |
-| CATG-03 | — | Pending |
-| CATG-04 | — | Pending |
-| UIDN-01 | — | Pending |
-| UIDN-02 | — | Pending |
-| UIDN-03 | — | Pending |
-| INFR-01 | — | Pending |
-| INFR-02 | — | Pending |
-| INFR-03 | — | Pending |
-| INFR-04 | — | Pending |
+| AUTH-01 | Phase 1 | Pending |
+| AUTH-02 | Phase 1 | Pending |
+| AUTH-03 | Phase 3 | Pending |
+| AUTH-04 | Phase 1 | Pending |
+| AUTH-05 | Phase 1 | Pending |
+| ADMN-01 | Phase 1 | Pending |
+| ADMN-02 | Phase 4 | Pending |
+| ADMN-03 | Phase 4 | Pending |
+| ADMN-04 | Phase 4 | Pending |
+| POLL-01 | Phase 4 | Pending |
+| POLL-02 | Phase 4 | Pending |
+| POLL-03 | Phase 4 | Pending |
+| POLL-04 | Phase 4 | Pending |
+| POLL-05 | Phase 4 | Pending |
+| POLL-06 | Phase 4 | Pending |
+| POLL-07 | Phase 4 | Pending |
+| LIFE-01 | Phase 4 | Pending |
+| LIFE-02 | Phase 4 | Pending |
+| LIFE-03 | Phase 4 | Pending |
+| VOTE-01 | Phase 2 | Pending |
+| VOTE-02 | Phase 2 | Pending |
+| VOTE-03 | Phase 2 | Pending |
+| VOTE-04 | Phase 3 | Pending |
+| RSLT-01 | Phase 2 | Pending |
+| RSLT-02 | Phase 2 | Pending |
+| RSLT-03 | Phase 2 | Pending |
+| RSLT-04 | Phase 2 | Pending |
+| RSLT-05 | Phase 2 | Pending |
+| CATG-01 | Phase 4 | Pending |
+| CATG-02 | Phase 2 | Pending |
+| CATG-03 | Phase 2 | Pending |
+| CATG-04 | Phase 2 | Pending |
+| UIDN-01 | Phase 1 | Pending |
+| UIDN-02 | Phase 1 | Pending |
+| UIDN-03 | Phase 1 | Pending |
+| INFR-01 | Phase 1 | Pending |
+| INFR-02 | Phase 5 | Pending |
+| INFR-03 | Phase 1 | Pending |
+| INFR-04 | Phase 2 | Pending |
+| TEST-01 | Phase 1 | Pending |
+| TEST-02 | Phase 1 | Pending |
+| TEST-03 | Phase 2 | Pending |
+| TEST-04 | Phase 3 | Pending |
+| TEST-05 | Phase 4 | Pending |
+| TEST-06 | Phase 5 | Pending |
 
 **Coverage:**
-- v1 requirements: 39 total
-- Mapped to phases: 0
-- Unmapped: 39
+- v1 requirements: 45 total
+- Mapped to phases: 45
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-06*
-*Last updated: 2026-04-06 after initial definition*
+*Last updated: 2026-04-06 after testing requirements added*
