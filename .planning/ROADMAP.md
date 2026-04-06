@@ -34,12 +34,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   5. App is mobile-first: layouts, touch targets, and interactions are designed for phone screens first, with light/dark mode supporting system preference
   6. Testing infrastructure (Vitest + React Testing Library) is configured with CI-ready scripts
   7. Auth flows have unit/integration tests covering login, 2FA rejection, session persistence, and logout
-**Plans**: 4 plans
+**Plans**: 4 plans (revised after cross-AI review)
 Plans:
-- [ ] 01-01-PLAN.md -- Project infrastructure setup (dependencies, Vite config, shadcn/ui, Vitest, Netlify)
-- [ ] 01-02-PLAN.md -- Database schema and migrations (tables, RLS, triggers, seed)
-- [ ] 01-03-PLAN.md -- Auth infrastructure and app shell (Supabase client, useAuth, OAuth callback, Navbar, pages)
-- [ ] 01-04-PLAN.md -- Testing and human verification (auth tests, UI tests, visual sign-off)
+- [ ] 01-01-PLAN.md -- Project infrastructure (dependencies, Vite config, shadcn/ui, Vitest, clean-checkout safe build)
+- [ ] 01-02-PLAN.md -- Database schema (7 tables with admin_discord_ids, RLS with narrow self-update, upsert triggers, choice-poll validation)
+- [ ] 01-03-PLAN.md -- Auth infrastructure and app shell (AuthProvider context, fail-closed 2FA callback, ThemeProvider with system listener, Navbar, pages)
+- [ ] 01-04-PLAN.md -- Behavioral tests and human verification (component-rendered auth tests, fail-closed callback tests, UI tests, visual sign-off)
 **UI hint**: yes
 
 ### Phase 2: Browsing & Responding
