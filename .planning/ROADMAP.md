@@ -39,7 +39,7 @@ Plans:
 - [x] 01-01-PLAN.md -- Project infrastructure (dependencies, Vite config, shadcn/ui, Vitest, clean-checkout safe build)
 - [x] 01-02-PLAN.md -- Database schema (7 tables, RLS, server-side RPC for mfa_verified, COALESCE discord_id extraction, upsert triggers)
 - [x] 01-03-PLAN.md -- Provider token spike + auth infrastructure + app shell (RPC-based callback, AuthProvider, ThemeProvider, Navbar, pages)
-- [ ] 01-04-PLAN.md -- Behavioral tests with real handleAuthCallback + human verification (RPC verification, fail-closed tests, UI tests)
+- [x] 01-04-PLAN.md -- Behavioral tests with real handleAuthCallback + human verification (RPC verification, fail-closed tests, UI tests)
 **UI hint**: yes
 
 ### Phase 2: Browsing & Responding
