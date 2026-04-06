@@ -37,9 +37,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Guard against stale fetches: only set if user ID still matches
+      const profileData = data as Profile | null
       setProfile((prev) => {
-        if (data && data.id !== userId) return prev
-        return data
+        if (profileData && profileData.id !== userId) return prev
+        return profileData
       })
     } catch (err) {
       console.error('Profile fetch error:', err)

@@ -131,6 +131,17 @@ export type Database = {
         Update: { count?: number }
       }
     }
+    Views: Record<string, never>
+    Functions: {
+      update_profile_after_auth: {
+        Args: {
+          p_mfa_verified: boolean
+          p_discord_username: string
+          p_avatar_url: string | null
+        }
+        Returns: void
+      }
+    }
   }
 }
 
