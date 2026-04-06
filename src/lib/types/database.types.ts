@@ -139,9 +139,11 @@ export type Database = {
           p_discord_username: string
           p_avatar_url: string | null
         }
-        Returns: void
+        Returns: undefined
       }
     }
+    Enums: Record<string, never>
+    CompositeTypes: Record<string, never>
   }
 }
 
