@@ -3,18 +3,22 @@
 
 **WTCS Community Polls**
 
-A community suggestion and voting platform for the War Thunder Competitive Scene (WTCS). Admins create polls (e.g. "Remove MiG-29 12-3 from this lineup"), community members vote on them via Discord OAuth. Hosted at polls.wtcsmapvote.com as a sibling to the main WTCS Map Vote/Ban app — fully independent, sharing only admin accounts conceptually.
+A community suggestion and opinion-gathering platform for the War Thunder Competitive Scene (WTCS). Admins create suggestions/topics (e.g. "Remove MiG-29 12-3 from this lineup"), community members share their opinions via Discord OAuth. Hosted at polls.wtcsmapvote.com as a sibling to the main WTCS Map Vote/Ban app — fully independent, sharing only admin accounts conceptually.
 
-**Core Value:** Community members can vote on competitive scene proposals with confidence that results are legitimate — one verified Discord account, one vote, no manipulation.
+**User-facing name:** WTCS Community Suggestions
+**Internal/admin name:** WTCS Community Polls (used in code, DB, admin UI)
+
+**Core Value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic — one verified Discord account, one response, no manipulation.
 
 ### Constraints
 
 - **Budget**: $0/month — Supabase free tier, Netlify legacy free tier, Upstash Redis free tier
-- **Tech stack**: Vite + React + TypeScript + TanStack Router (frontend), Supabase (backend), Netlify (hosting) — all locked decisions
+- **Tech stack**: Vite + React + TypeScript + TanStack Router + shadcn/ui + Tailwind CSS v4 (frontend), Supabase (backend), Netlify (hosting) — all locked decisions
 - **Auth**: Discord OAuth only, enforced via Supabase native Discord provider
 - **Scale**: Must work within Supabase free tier limits (500MB DB, 1GB storage, 2M Edge Function invocations/month)
 - **Hosting**: Netlify legacy free tier — separate site from main WTCS app
 - **Rate limiting**: Upstash Redis free tier (if needed for abuse prevention)
+- **Design system**: shadcn/ui Maia style, Neutral preset (bbVJxbc), Inter font
 <!-- GSD:project-end -->
 
 <!-- GSD:stack-start source:codebase/STACK.md -->
