@@ -54,7 +54,11 @@ Plans:
   5. A user who has not responded to a closed suggestion cannot see its results; only respondents can view results even after the suggestion closes
   6. Suggestion browsing, responding, and results are fully usable on phone screens (tap-friendly choices, readable results, no horizontal scroll)
   7. Response submission and result visibility have unit/integration tests (one-response enforcement, respond-then-reveal, respondents-only results)
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 02-01-PLAN.md -- Types, hooks, UI components for suggestion browsing (cards, filtering, search, expand/collapse)
+- [ ] 02-02-PLAN.md -- Edge Function for vote submission, voting hooks, choice buttons, result bars, polling, archive page
+- [ ] 02-03-PLAN.md -- Seed data with WTCS sample content, unit/integration tests for voting, results, and browsing
 **UI hint**: yes
 
 ### Phase 3: Response Integrity
@@ -100,8 +104,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Authentication | 0/4 | Planned | - |
-| 2. Browsing & Responding | 0/? | Not started | - |
+| 1. Foundation & Authentication | 4/4 | Complete | - |
+| 2. Browsing & Responding | 0/3 | Planned | - |
 | 3. Response Integrity | 0/? | Not started | - |
 | 4. Admin Panel & Suggestion Management | 0/? | Not started | - |
 | 5. Launch Hardening | 0/? | Not started | - |
