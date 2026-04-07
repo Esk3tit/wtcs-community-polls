@@ -41,8 +41,8 @@ export function SuggestionCard({
     ? Array.from(voteCounts.values()).reduce((sum, c) => sum + c, 0)
     : undefined
 
-  const cardContent = (
-    <div className="p-5">
+  const headerContent = (
+    <div>
       {isPinned && <PinnedBanner closesAt={suggestion.closes_at} />}
 
       {/* Row 1: Category badge + status/time meta */}
@@ -73,74 +73,6 @@ export function SuggestionCard({
       <h3 className="mt-2 text-lg font-medium text-foreground">
         {suggestion.title}
       </h3>
-
-      {/* Collapsible content */}
-      <CollapsibleContent>
-        {suggestion.description && (
-          <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-            {suggestion.description}
-          </p>
-        )}
-
-        {suggestion.image_url && (
-          <div className="mt-3 rounded-md overflow-hidden bg-muted aspect-video">
-            <img
-              src={suggestion.image_url}
-              alt=""
-              className="max-h-64 object-cover w-full"
-            />
-          </div>
-        )}
-
-        {/* Choices / Results area */}
-        <div className="mt-4">
-          {userChoiceId ? (
-            <ResultBars
-              choices={suggestion.choices}
-              voteCounts={voteCounts ?? new Map()}
-              userChoiceId={userChoiceId}
-              totalResponses={totalResponses ?? 0}
-            />
-          ) : (
-            <ChoiceButtons
-              choices={suggestion.choices}
-              pollId={suggestion.id}
-              pollStatus={suggestion.status}
-              hasVoted={false}
-              onVote={onVote}
-              submittingPollId={submittingPollId}
-              submittingChoiceId={submittingChoiceId}
-              totalResponses={totalResponses ?? 0}
-            />
-          )}
-        </div>
-      </CollapsibleContent>
-
-      {/* Row 3: Footer (always visible) */}
-      <div className="mt-3 flex items-center justify-between">
-        <div className="flex items-center">
-          {/* Creator avatar placeholder -- profile data not in query yet */}
-          <div className="w-6 h-6 rounded-full bg-muted" />
-          <span className="text-xs text-muted-foreground ml-2">
-            Community
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          {totalResponses !== undefined && (
-            <span className="text-xs text-muted-foreground">
-              {totalResponses} response{totalResponses !== 1 ? 's' : ''}
-            </span>
-          )}
-          {!isPinned && (
-            <ChevronDown
-              className={cn(
-                'size-4 text-muted-foreground transition-transform',
-                isOpen && 'rotate-180'
-              )}
-            />
-          )}
-        </div>
-      </div>
     </div>
   )
 
@@ -153,17 +85,86 @@ export function SuggestionCard({
             'cursor-pointer hover:border-foreground/20'
         )}
       >
-        {isPinned ? (
-          <>
-            {cardContent}
-          </>
-        ) : (
-          <CollapsibleTrigger asChild>
-            <div role="button" tabIndex={0}>
-              {cardContent}
+        <div className="p-5">
+          {/* Header: only this area is the collapsible trigger (avoids nested interactive elements) */}
+          {isPinned ? (
+            headerContent
+          ) : (
+            <CollapsibleTrigger asChild>
+              <div role="button" tabIndex={0}>
+                {headerContent}
+              </div>
+            </CollapsibleTrigger>
+          )}
+
+          {/* Collapsible content: description, image, choices/results */}
+          <CollapsibleContent>
+            {suggestion.description && (
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                {suggestion.description}
+              </p>
+            )}
+
+            {suggestion.image_url && (
+              <div className="mt-3 rounded-md overflow-hidden bg-muted aspect-video">
+                <img
+                  src={suggestion.image_url}
+                  alt={suggestion.title}
+                  className="max-h-64 object-cover w-full"
+                />
+              </div>
+            )}
+
+            {/* Choices / Results area */}
+            <div className="mt-4">
+              {userChoiceId ? (
+                <ResultBars
+                  choices={suggestion.choices}
+                  voteCounts={voteCounts ?? new Map()}
+                  userChoiceId={userChoiceId}
+                  totalResponses={totalResponses ?? 0}
+                />
+              ) : (
+                <ChoiceButtons
+                  choices={suggestion.choices}
+                  pollId={suggestion.id}
+                  pollStatus={suggestion.status}
+                  hasVoted={false}
+                  onVote={onVote}
+                  submittingPollId={submittingPollId}
+                  submittingChoiceId={submittingChoiceId}
+                  totalResponses={totalResponses ?? 0}
+                />
+              )}
             </div>
-          </CollapsibleTrigger>
-        )}
+          </CollapsibleContent>
+
+          {/* Row 3: Footer (always visible) */}
+          <div className="mt-3 flex items-center justify-between">
+            <div className="flex items-center">
+              {/* Creator avatar placeholder -- profile data not in query yet */}
+              <div className="w-6 h-6 rounded-full bg-muted" />
+              <span className="text-xs text-muted-foreground ml-2">
+                Community
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              {totalResponses !== undefined && (
+                <span className="text-xs text-muted-foreground">
+                  {totalResponses} response{totalResponses !== 1 ? 's' : ''}
+                </span>
+              )}
+              {!isPinned && (
+                <ChevronDown
+                  className={cn(
+                    'size-4 text-muted-foreground transition-transform',
+                    isOpen && 'rotate-180'
+                  )}
+                />
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </Collapsible>
   )
