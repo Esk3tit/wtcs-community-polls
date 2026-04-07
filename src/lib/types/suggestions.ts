@@ -8,6 +8,7 @@ export type Category = Tables<'categories'>
 export type Choice = Tables<'choices'>
 export type Vote = Tables<'votes'>
 export type VoteCount = Tables<'vote_counts'>
+export type Profile = Tables<'profiles'>
 
 // Query builder for suggestion with joined relations — single source of truth
 const suggestionsQuery = supabase

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { handleAuthCallback } from '@/lib/auth-helpers'
-import type { Profile } from '@/lib/types/database.types'
+import type { Profile } from '@/lib/types/suggestions'
 
 interface AuthState {
   session: Session | null
@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Guard against stale fetches: only set if user ID still matches
       const profileData = data as Profile | null
-      setProfile((prev) => {
+      setProfile((prev: Profile | null) => {
         if (profileData && profileData.id !== userId) return prev
         return profileData
       })
