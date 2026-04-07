@@ -148,9 +148,9 @@ export function SuggestionCard({
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <div
         className={cn(
-          'bg-card rounded-xl border',
+          'bg-card rounded-xl border shadow-sm hover:shadow-md transition-shadow dark:shadow-none',
           !isPinned &&
-            'cursor-pointer hover:border-foreground/20 transition-colors'
+            'cursor-pointer hover:border-foreground/20'
         )}
       >
         {isPinned ? (
