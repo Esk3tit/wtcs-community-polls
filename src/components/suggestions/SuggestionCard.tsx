@@ -131,12 +131,14 @@ export function SuggestionCard({
               {totalResponses} response{totalResponses !== 1 ? 's' : ''}
             </span>
           )}
-          <ChevronDown
-            className={cn(
-              'size-4 text-muted-foreground transition-transform',
-              isOpen && 'rotate-180'
-            )}
-          />
+          {!isPinned && (
+            <ChevronDown
+              className={cn(
+                'size-4 text-muted-foreground transition-transform',
+                isOpen && 'rotate-180'
+              )}
+            />
+          )}
         </div>
       </div>
     </div>
