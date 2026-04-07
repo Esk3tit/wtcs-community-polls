@@ -13,7 +13,10 @@ export function useCategories() {
         .select('*')
         .order('sort_order', { ascending: true })
 
-      if (!error && data) {
+      if (error) {
+        console.error('Failed to fetch categories:', error)
+      }
+      if (data) {
         setCategories(data)
       }
       setLoading(false)
