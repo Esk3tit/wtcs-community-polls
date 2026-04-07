@@ -116,7 +116,7 @@ BEGIN
     _discord_id,
     COALESCE(
       NEW.raw_user_meta_data->>'full_name',
-      NEW.raw_user_meta_data->>'custom_claims'::jsonb->>'global_name',
+      NEW.raw_user_meta_data->'custom_claims'->>'global_name',
       NEW.raw_user_meta_data->>'name',
       NEW.raw_user_meta_data->>'user_name',
       'Unknown'

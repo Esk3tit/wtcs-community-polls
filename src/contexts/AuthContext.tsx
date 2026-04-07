@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
 import type { ReactNode } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+import { handleAuthCallback } from '@/lib/auth-helpers'
 import type { Profile } from '@/lib/types/database.types'
 
 interface AuthState {
@@ -62,7 +63,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Single auth subscription for the entire app
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, newSession) => {
+      async (event, newSession) => {
+        // On initial sign-in, verify Discord 2FA before allowing access
+        if (event === 'SIGNED_IN' && newSession?.provider_token) {
+          const result = await handleAuthCallback()
+          if (!result.success) {
+            // 2FA check failed — user is already signed out by handleAuthCallback
+            setSession(null)
+            setUser(null)
+            setProfile(null)
+            setLoading(false)
+            return
+          }
+        }
+
         setSession(newSession)
         setUser(newSession?.user ?? null)
         if (newSession?.user) {
@@ -88,8 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signInWithOAuth({
       provider: 'discord',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-        scopes: 'identify email',
+        redirectTo: window.location.origin,
       },
     })
   }, [])
