@@ -1,6 +1,4 @@
 import type { Tables } from '@/lib/types/database.types'
-import type { QueryData } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase'
 
 // Base row types from database
 export type Poll = Tables<'polls'>
@@ -10,17 +8,25 @@ export type Vote = Tables<'votes'>
 export type VoteCount = Tables<'vote_counts'>
 export type Profile = Tables<'profiles'>
 
-// Query builder for suggestion with joined relations — single source of truth
-const suggestionsQuery = supabase
-  .from('polls')
-  .select(`
-    *,
-    categories!polls_category_id_fkey(id, name, slug, sort_order),
-    choices(id, label, sort_order)
-  `)
+// Shared select clause — single source of truth for suggestion queries
+export const SUGGESTIONS_SELECT = `
+  *,
+  categories!polls_category_id_fkey(id, name, slug, sort_order),
+  choices(id, label, sort_order)
+` as const
 
-// Derived from the actual Supabase query — no manual interface, no type assertions
-export type SuggestionWithChoices = QueryData<typeof suggestionsQuery>[number]
+// Matches the shape returned by SUGGESTIONS_SELECT query
+export type SuggestionWithChoices = Poll & {
+  categories: Pick<Category, 'id' | 'name' | 'slug' | 'sort_order'> | null
+  choices: ChoiceSummary[]
+}
+
+// Narrowed choice type for components that only need display fields
+export interface ChoiceSummary {
+  id: string
+  label: string
+  sort_order: number
+}
 
 export interface ChoiceWithCount {
   id: string

@@ -1,6 +1,6 @@
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-interface ChoiceSummary { id: string; label: string; sort_order: number }
+import type { ChoiceSummary } from '@/lib/types/suggestions'
 
 export function ChoiceButtons({
   choices,
@@ -14,7 +14,7 @@ export function ChoiceButtons({
 }: {
   choices: ChoiceSummary[]
   pollId: string
-  pollStatus: string
+  pollStatus: 'active' | 'closed'
   hasVoted: boolean
   onVote: (pollId: string, choiceId: string) => void
   submittingPollId: string | null

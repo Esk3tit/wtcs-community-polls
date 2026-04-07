@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
+import { SUGGESTIONS_SELECT } from '@/lib/types/suggestions'
 import type { SuggestionWithChoices } from '@/lib/types/suggestions'
 
 export function useSuggestions(status: 'active' | 'closed') {
@@ -14,11 +15,7 @@ export function useSuggestions(status: 'active' | 'closed') {
     // SERVER-SIDE filter: .eq('status', status) ensures only matching polls are returned
     const { data: polls, error } = await supabase
       .from('polls')
-      .select(`
-        *,
-        categories!polls_category_id_fkey(id, name, slug, sort_order),
-        choices(id, label, sort_order)
-      `)
+      .select(SUGGESTIONS_SELECT)
       .eq('status', status)
       .order('is_pinned', { ascending: false })
       .order('created_at', { ascending: false })
@@ -59,6 +56,8 @@ export function useSuggestions(status: 'active' | 'closed') {
   }, [status, user])
 
   useEffect(() => {
+    // Async data fetching on mount/dependency change — setState is in the async callback, not synchronous
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchSuggestions()
   }, [fetchSuggestions])
 

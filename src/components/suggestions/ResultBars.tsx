@@ -1,8 +1,6 @@
 import { Check } from 'lucide-react'
 import { calcPercentage } from '@/lib/format'
-import type { ChoiceWithCount } from '@/lib/types/suggestions'
-
-interface ChoiceSummary { id: string; label: string; sort_order: number }
+import type { ChoiceSummary, ChoiceWithCount } from '@/lib/types/suggestions'
 
 export function ResultBars({
   choices,

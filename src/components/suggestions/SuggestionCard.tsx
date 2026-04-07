@@ -128,7 +128,7 @@ export function SuggestionCard({
                 <ChoiceButtons
                   choices={suggestion.choices}
                   pollId={suggestion.id}
-                  pollStatus={suggestion.status}
+                  pollStatus={suggestion.status as 'active' | 'closed'}
                   hasVoted={false}
                   onVote={onVote}
                   submittingPollId={submittingPollId}

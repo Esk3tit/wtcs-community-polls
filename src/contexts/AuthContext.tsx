@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Guard against stale fetches: only set if user ID still matches
       const profileData = data as Profile | null
-      setProfile((prev: Profile | null) => {
+      setProfile((prev) => {
         if (profileData && profileData.id !== userId) return prev
         return profileData
       })
@@ -124,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth(): AuthState {
   const context = useContext(AuthContext)
   if (context === undefined) {
