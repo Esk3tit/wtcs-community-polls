@@ -59,7 +59,7 @@ Plans:
 - [x] 02-01-PLAN.md -- Types, hooks, UI components for suggestion browsing (cards, filtering, search, expand/collapse)
 - [x] 02-02-PLAN.md -- Edge Function for vote submission, voting hooks, choice buttons, result bars, polling, archive page
 - [x] 02-03-PLAN.md -- Seed data with WTCS sample content, unit/integration tests for voting, results, and browsing
-- [ ] 02-04-PLAN.md -- Gap closure: restore topics.tsx and archive.tsx route wiring (regression from Plan 03)
+- [x] 02-04-PLAN.md -- Gap closure: restore topics.tsx and archive.tsx route wiring (regression from Plan 03)
 **UI hint**: yes
 
 ### Phase 3: Response Integrity
