@@ -16,7 +16,7 @@ export function SearchBar({
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search topics..."
         aria-label="Search topics"
-        className="h-10 pl-9 pr-9"
+        className="h-10 pl-9 pr-9 bg-card shadow-sm dark:shadow-none"
       />
       {value && (
         <button

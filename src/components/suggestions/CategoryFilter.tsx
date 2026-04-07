@@ -16,7 +16,7 @@ export function CategoryFilter({
         role="tab"
         aria-selected={activeId === null}
         variant={activeId === null ? 'default' : 'outline'}
-        className="h-8 px-3 rounded-full text-xs font-medium uppercase tracking-wide"
+        className={`h-8 px-3 rounded-full text-xs font-medium uppercase tracking-wide ${activeId !== null ? 'bg-card shadow-sm dark:shadow-none' : ''}`}
         onClick={() => onSelect(null)}
       >
         All
@@ -28,7 +28,7 @@ export function CategoryFilter({
           aria-selected={activeId === category.id}
           variant={activeId === category.id ? 'default' : 'outline'}
           className={`h-8 px-3 rounded-full text-xs font-medium uppercase tracking-wide ${
-            activeId !== category.id ? 'text-muted-foreground' : ''
+            activeId !== category.id ? 'text-muted-foreground bg-card shadow-sm dark:shadow-none' : ''
           }`}
           onClick={() => onSelect(category.id)}
         >
