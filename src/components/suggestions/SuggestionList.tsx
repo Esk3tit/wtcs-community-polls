@@ -2,6 +2,8 @@ import { useState, useMemo } from 'react'
 import { useSuggestions } from '@/hooks/useSuggestions'
 import { useCategories } from '@/hooks/useCategories'
 import { useDebounce } from '@/hooks/useDebounce'
+import { useVoteCounts } from '@/hooks/useVoteCounts'
+import { useVoteSubmit } from '@/hooks/useVoteSubmit'
 import { SearchBar } from '@/components/suggestions/SearchBar'
 import { CategoryFilter } from '@/components/suggestions/CategoryFilter'
 import { EmptyState } from '@/components/suggestions/EmptyState'
@@ -9,11 +11,17 @@ import { SuggestionSkeleton } from '@/components/suggestions/SuggestionSkeleton'
 import { SuggestionCard } from '@/components/suggestions/SuggestionCard'
 
 export function SuggestionList({ status }: { status: 'active' | 'closed' }) {
-  const { suggestions, userVotes, loading } = useSuggestions(status)
+  const { suggestions, userVotes, loading, addOptimisticVote } = useSuggestions(status)
   const { categories } = useCategories()
   const [searchText, setSearchText] = useState('')
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null)
   const debouncedSearch = useDebounce(searchText, 300)
+
+  const votedPollIds = useMemo(() => Array.from(userVotes.keys()), [userVotes])
+  // Polling enabled only for active suggestions. Closed suggestions fetch once on mount.
+  const enablePolling = status === 'active'
+  const { voteCounts, refetchVoteCounts } = useVoteCounts(votedPollIds, enablePolling)
+  const { submitVote, submittingPollId, submittingChoiceId } = useVoteSubmit(addOptimisticVote, refetchVoteCounts)
 
   const hasActiveFilters = activeCategoryId !== null || debouncedSearch.length > 0
 
@@ -35,11 +43,6 @@ export function SuggestionList({ status }: { status: 'active' | 'closed' }) {
   const clearFilters = () => {
     setSearchText('')
     setActiveCategoryId(null)
-  }
-
-  // Placeholder vote handler -- Plan 02 wires real voting
-  const handleVote = (_pollId: string, _choiceId: string) => {
-    // Will be implemented in Plan 02
   }
 
   if (loading) {
@@ -92,10 +95,10 @@ export function SuggestionList({ status }: { status: 'active' | 'closed' }) {
                   suggestion={suggestion}
                   categoryIndex={categoryIndex >= 0 ? categoryIndex : 0}
                   userChoiceId={userVotes.get(suggestion.id)}
-                  onVote={handleVote}
-                  voteCounts={undefined}
-                  submittingPollId={null}
-                  submittingChoiceId={null}
+                  onVote={submitVote}
+                  voteCounts={voteCounts.get(suggestion.id)}
+                  submittingPollId={submittingPollId}
+                  submittingChoiceId={submittingChoiceId}
                 />
               )
             })}

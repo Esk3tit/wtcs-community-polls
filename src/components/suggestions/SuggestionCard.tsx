@@ -7,6 +7,8 @@ import {
 } from '@/components/ui/collapsible'
 import { CategoryBadge, ResolutionBadge } from '@/components/suggestions/StatusBadge'
 import { PinnedBanner } from '@/components/suggestions/PinnedBanner'
+import { ChoiceButtons } from '@/components/suggestions/ChoiceButtons'
+import { ResultBars } from '@/components/suggestions/ResultBars'
 import { formatTimeRemaining } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { SuggestionWithChoices, ResolutionStatus } from '@/lib/types/suggestions'
@@ -15,10 +17,10 @@ export function SuggestionCard({
   suggestion,
   categoryIndex,
   userChoiceId,
-  onVote: _onVote,
+  onVote,
   voteCounts,
-  submittingPollId: _submittingPollId,
-  submittingChoiceId: _submittingChoiceId,
+  submittingPollId,
+  submittingChoiceId,
 }: {
   suggestion: SuggestionWithChoices
   categoryIndex: number
@@ -90,24 +92,26 @@ export function SuggestionCard({
           </div>
         )}
 
-        {/* Choices area placeholder -- Plan 02 replaces with ChoiceButtons/ResultBars */}
-        <div data-slot="choices" data-poll-id={suggestion.id} className="mt-4">
-          {isClosed && !userChoiceId && (
-            <p className="text-sm text-muted-foreground italic">
-              This topic is closed. Only respondents can view results.
-            </p>
-          )}
-          {!isClosed && !userChoiceId && (
-            <p className="text-xs text-muted-foreground">
-              {totalResponses !== undefined && totalResponses > 0
-                ? `${totalResponses} response${totalResponses !== 1 ? 's' : ''} -- respond to see results`
-                : 'Be the first to respond'}
-            </p>
-          )}
-          {userChoiceId && totalResponses !== undefined && (
-            <p className="text-xs text-muted-foreground">
-              {totalResponses} total response{totalResponses !== 1 ? 's' : ''}
-            </p>
+        {/* Choices / Results area */}
+        <div className="mt-4">
+          {userChoiceId ? (
+            <ResultBars
+              choices={suggestion.choices}
+              voteCounts={voteCounts ?? new Map()}
+              userChoiceId={userChoiceId}
+              totalResponses={totalResponses ?? 0}
+            />
+          ) : (
+            <ChoiceButtons
+              choices={suggestion.choices}
+              pollId={suggestion.id}
+              pollStatus={suggestion.status}
+              hasVoted={false}
+              onVote={onVote}
+              submittingPollId={submittingPollId}
+              submittingChoiceId={submittingChoiceId}
+              totalResponses={totalResponses ?? 0}
+            />
           )}
         </div>
       </CollapsibleContent>
