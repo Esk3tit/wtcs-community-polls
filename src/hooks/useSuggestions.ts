@@ -29,11 +29,8 @@ export function useSuggestions(status: 'active' | 'closed') {
       setLoading(false)
       return
     }
-    if (polls) {
-      setSuggestions(polls)
-    }
-
-    // Fetch user's votes (RLS ensures only own votes visible)
+    // Fetch user's votes before committing suggestions to state (keeps both in sync)
+    let votesMap = new Map<string, string>()
     if (user) {
       const { data: votes, error: votesError } = await supabase
         .from('votes')
@@ -48,10 +45,15 @@ export function useSuggestions(status: 'active' | 'closed') {
       }
 
       if (votes) {
-        setUserVotes(new Map(votes.map(v => [v.poll_id, v.choice_id])))
+        votesMap = new Map(votes.map(v => [v.poll_id, v.choice_id]))
       }
     }
 
+    // Commit both atomically — no inconsistent state
+    if (polls) {
+      setSuggestions(polls)
+    }
+    setUserVotes(votesMap)
     setError(null)
     setLoading(false)
   }, [status, user])

@@ -17,14 +17,22 @@ export function useVoteSubmit(
     setSubmittingChoiceId(choiceId)
 
     try {
-      const { data, error } = await supabase.functions.invoke('submit-vote', {
+      const { error } = await supabase.functions.invoke('submit-vote', {
         body: { poll_id: pollId, choice_id: choiceId },
       })
 
       if (error) {
-        // Check if body contains specific error
-        const body = data as { error?: string } | null
-        const message = body?.error ?? 'Could not submit response. Try again.'
+        // On non-2xx, supabase-js v2 sets data to null and puts the response in error.context
+        let message = 'Could not submit response. Try again.'
+        try {
+          const context = (error as { context?: { json?: () => Promise<{ error?: string }> } }).context
+          if (context?.json) {
+            const body = await context.json()
+            if (body?.error) message = body.error
+          }
+        } catch {
+          // Fall through to default message
+        }
 
         if (message.includes('already responded')) {
           toast.error('You have already responded to this topic.')

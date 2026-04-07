@@ -15,9 +15,13 @@ export function usePolling(callback: () => void, delay: number | null) {
     let cancelled = false
 
     async function tick() {
-      // Only fire when tab is visible -- prevents background tab queries
-      if (document.visibilityState === 'visible') {
-        await savedCallback.current()
+      try {
+        // Only fire when tab is visible -- prevents background tab queries
+        if (document.visibilityState === 'visible') {
+          await savedCallback.current()
+        }
+      } catch {
+        // Swallow callback errors to keep polling alive
       }
       // Schedule next poll only after current one completes (prevents overlap)
       if (!cancelled) {
