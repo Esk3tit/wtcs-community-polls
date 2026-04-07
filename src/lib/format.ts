@@ -1,6 +1,8 @@
-export function formatTimeRemaining(closesAt: string): string {
+export function formatTimeRemaining(closesAt: string | null | undefined): string {
+  if (!closesAt) return 'No deadline'
   const now = new Date()
   const closes = new Date(closesAt)
+  if (isNaN(closes.getTime())) return 'No deadline'
   const diffMs = closes.getTime() - now.getTime()
 
   if (diffMs <= 0) return 'Closed'
