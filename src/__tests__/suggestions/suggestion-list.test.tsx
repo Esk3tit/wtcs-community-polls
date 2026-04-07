@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, act } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { render, screen, fireEvent } from '@testing-library/react'
 
 // Mock hooks
 const mockUseSuggestions = vi.fn()
@@ -64,13 +63,11 @@ vi.mock('@/components/ui/button', () => ({
     onClick,
     role,
     'aria-selected': ariaSelected,
-    ...props
   }: {
     children: React.ReactNode
     onClick?: (e: React.MouseEvent) => void
     role?: string
     'aria-selected'?: boolean
-    [key: string]: unknown
   }) => (
     <button onClick={onClick} role={role} aria-selected={ariaSelected}>
       {children}
