@@ -9,6 +9,14 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  // Only accept POST requests
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }),
+      { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+
   try {
     // Verify user auth via their JWT
     const authHeader = req.headers.get('Authorization')
@@ -32,7 +40,17 @@ Deno.serve(async (req) => {
     }
 
     // Parse and validate request body
-    const { poll_id, choice_id } = await req.json()
+    let poll_id: string, choice_id: string
+    try {
+      const body = await req.json()
+      poll_id = body.poll_id
+      choice_id = body.choice_id
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
     if (!poll_id || !choice_id) {
       return new Response(
         JSON.stringify({ error: 'Missing poll_id or choice_id' }),
