@@ -11,15 +11,25 @@ export function usePolling(callback: () => void, delay: number | null) {
   useEffect(() => {
     if (delay === null) return // Polling disabled (e.g., closed suggestions)
 
-    function tick() {
+    let timeoutId: ReturnType<typeof setTimeout>
+    let cancelled = false
+
+    async function tick() {
       // Only fire when tab is visible -- prevents background tab queries
       if (document.visibilityState === 'visible') {
-        savedCallback.current()
+        await savedCallback.current()
+      }
+      // Schedule next poll only after current one completes (prevents overlap)
+      if (!cancelled) {
+        timeoutId = setTimeout(tick, delay!)
       }
     }
 
-    const id = setInterval(tick, delay)
-    // Cleanup: clear interval on unmount or when delay changes
-    return () => clearInterval(id)
+    timeoutId = setTimeout(tick, delay)
+    // Cleanup: cancel pending timeout on unmount or when delay changes
+    return () => {
+      cancelled = true
+      clearTimeout(timeoutId)
+    }
   }, [delay])
 }
