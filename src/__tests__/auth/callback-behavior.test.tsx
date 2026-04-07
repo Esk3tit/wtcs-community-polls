@@ -27,7 +27,6 @@ vi.mock('@/lib/supabase', () => ({
     }),
     rpc: (...args: unknown[]) => mockRpc(...args),
   },
-  typedRpc: (...args: unknown[]) => mockRpc(...args),
 }))
 
 // R2 FIX: Import the REAL handleAuthCallback function.
