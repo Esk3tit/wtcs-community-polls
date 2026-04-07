@@ -63,7 +63,7 @@ export function ChoiceButtons({
       </div>
       <p className="text-xs text-muted-foreground mt-3">
         {totalResponses === 0
-          ? 'Be the first to respond'
+          ? 'Respond to see results'
           : `${totalResponses} response${totalResponses !== 1 ? 's' : ''} -- respond to see results`}
       </p>
     </div>
