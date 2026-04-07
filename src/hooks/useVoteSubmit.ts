@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 
@@ -8,10 +8,12 @@ export function useVoteSubmit(
 ) {
   const [submittingPollId, setSubmittingPollId] = useState<string | null>(null)
   const [submittingChoiceId, setSubmittingChoiceId] = useState<string | null>(null)
+  const submittingRef = useRef(false)
 
   const submitVote = useCallback(async (pollId: string, choiceId: string) => {
-    if (submittingPollId) return // Prevent double-submit
+    if (submittingRef.current) return // Prevent double-submit (ref-based, race-safe)
 
+    submittingRef.current = true
     setSubmittingPollId(pollId)
     setSubmittingChoiceId(choiceId)
 
@@ -42,10 +44,11 @@ export function useVoteSubmit(
     } catch {
       toast.error('Could not submit response. Try again.')
     } finally {
+      submittingRef.current = false
       setSubmittingPollId(null)
       setSubmittingChoiceId(null)
     }
-  }, [submittingPollId, addOptimisticVote, refetchVoteCounts])
+  }, [addOptimisticVote, refetchVoteCounts])
 
   return { submitVote, submittingPollId, submittingChoiceId }
 }
