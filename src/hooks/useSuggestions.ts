@@ -8,6 +8,7 @@ export function useSuggestions(status: 'active' | 'closed') {
   const [suggestions, setSuggestions] = useState<SuggestionWithChoices[]>([])
   const [userVotes, setUserVotes] = useState<Map<string, string>>(new Map())
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchSuggestions = useCallback(async () => {
     // SERVER-SIDE filter: .eq('status', status) ensures only matching polls are returned
@@ -24,6 +25,9 @@ export function useSuggestions(status: 'active' | 'closed') {
 
     if (error) {
       console.error('Failed to fetch suggestions:', error)
+      setError('Failed to load topics. Try refreshing the page.')
+      setLoading(false)
+      return
     }
     if (polls) {
       setSuggestions(polls)
@@ -31,16 +35,24 @@ export function useSuggestions(status: 'active' | 'closed') {
 
     // Fetch user's votes (RLS ensures only own votes visible)
     if (user) {
-      const { data: votes } = await supabase
+      const { data: votes, error: votesError } = await supabase
         .from('votes')
         .select('poll_id, choice_id')
         .eq('user_id', user.id)
+
+      if (votesError) {
+        console.error('Failed to fetch votes:', votesError)
+        setError('Failed to load your responses. Try refreshing the page.')
+        setLoading(false)
+        return
+      }
 
       if (votes) {
         setUserVotes(new Map(votes.map(v => [v.poll_id, v.choice_id])))
       }
     }
 
+    setError(null)
     setLoading(false)
   }, [status, user])
 
@@ -52,5 +64,5 @@ export function useSuggestions(status: 'active' | 'closed') {
     setUserVotes(prev => new Map(prev).set(pollId, choiceId))
   }, [])
 
-  return { suggestions, userVotes, loading, refetch: fetchSuggestions, addOptimisticVote }
+  return { suggestions, userVotes, loading, error, refetch: fetchSuggestions, addOptimisticVote }
 }
