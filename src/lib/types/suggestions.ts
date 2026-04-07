@@ -41,6 +41,6 @@ export const CATEGORY_COLORS = [
 ] as const
 
 export function getCategoryColor(index: number) {
-  const slot = CATEGORY_COLORS[index % CATEGORY_COLORS.length]
+  const slot = CATEGORY_COLORS[Math.abs(index) % CATEGORY_COLORS.length]
   return `${slot.light} ${slot.dark}`
 }
