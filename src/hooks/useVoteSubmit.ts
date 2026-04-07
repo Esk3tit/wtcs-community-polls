@@ -4,7 +4,6 @@ import { toast } from 'sonner'
 
 export function useVoteSubmit(
   addOptimisticVote: (pollId: string, choiceId: string) => void,
-  refetchVoteCounts: () => void,
 ) {
   const [submittingPollId, setSubmittingPollId] = useState<string | null>(null)
   const [submittingChoiceId, setSubmittingChoiceId] = useState<string | null>(null)
@@ -35,12 +34,10 @@ export function useVoteSubmit(
         return
       }
 
-      // Success: optimistic update + refetch counts
+      // Success: optimistic update triggers re-render, which causes
+      // useVoteCounts to refetch with the updated pollIds automatically
       addOptimisticVote(pollId, choiceId)
       toast.success('Response recorded')
-
-      // Refetch vote counts so results appear immediately
-      refetchVoteCounts()
     } catch {
       toast.error('Could not submit response. Try again.')
     } finally {
@@ -48,7 +45,7 @@ export function useVoteSubmit(
       setSubmittingPollId(null)
       setSubmittingChoiceId(null)
     }
-  }, [addOptimisticVote, refetchVoteCounts])
+  }, [addOptimisticVote])
 
   return { submitVote, submittingPollId, submittingChoiceId }
 }

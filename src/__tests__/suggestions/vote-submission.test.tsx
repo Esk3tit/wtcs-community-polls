@@ -58,9 +58,7 @@ describe('Vote submission', () => {
   it('invokes edge function with poll_id and choice_id', async () => {
     mockInvoke.mockResolvedValue({ data: { success: true }, error: null })
     const addOptimistic = vi.fn()
-    const refetch = vi.fn()
-
-    const { result } = renderHook(() => useVoteSubmit(addOptimistic, refetch))
+    const { result } = renderHook(() => useVoteSubmit(addOptimistic))
 
     await act(async () => {
       await result.current.submitVote('poll-abc', 'choice-xyz')
@@ -75,9 +73,7 @@ describe('Vote submission', () => {
   it('shows success toast on successful submission', async () => {
     mockInvoke.mockResolvedValue({ data: { success: true }, error: null })
     const addOptimistic = vi.fn()
-    const refetch = vi.fn()
-
-    const { result } = renderHook(() => useVoteSubmit(addOptimistic, refetch))
+    const { result } = renderHook(() => useVoteSubmit(addOptimistic))
 
     await act(async () => {
       await result.current.submitVote('poll-abc', 'choice-xyz')
@@ -85,7 +81,6 @@ describe('Vote submission', () => {
 
     expect(mockToastSuccess).toHaveBeenCalledWith('Response recorded')
     expect(addOptimistic).toHaveBeenCalledWith('poll-abc', 'choice-xyz')
-    expect(refetch).toHaveBeenCalled()
   })
 
   // Test 3: VOTE-02 -- shows error toast on duplicate vote (409 UNIQUE violation)
@@ -95,9 +90,7 @@ describe('Vote submission', () => {
       error: { message: 'Edge Function returned error' },
     })
     const addOptimistic = vi.fn()
-    const refetch = vi.fn()
-
-    const { result } = renderHook(() => useVoteSubmit(addOptimistic, refetch))
+    const { result } = renderHook(() => useVoteSubmit(addOptimistic))
 
     await act(async () => {
       await result.current.submitVote('poll-abc', 'choice-xyz')
@@ -193,9 +186,7 @@ describe('Vote submission', () => {
       error: { message: 'Edge Function returned error' },
     })
     const addOptimistic = vi.fn()
-    const refetch = vi.fn()
-
-    const { result } = renderHook(() => useVoteSubmit(addOptimistic, refetch))
+    const { result } = renderHook(() => useVoteSubmit(addOptimistic))
 
     await act(async () => {
       await result.current.submitVote('poll-abc', '')

@@ -24,8 +24,8 @@ export function SuggestionList({ status }: { status: 'active' | 'closed' }) {
   )
   // Polling enabled only for active suggestions. Closed suggestions fetch once on mount.
   const enablePolling = status === 'active'
-  const { voteCounts, refetchVoteCounts } = useVoteCounts(votedPollIds, enablePolling)
-  const { submitVote, submittingPollId, submittingChoiceId } = useVoteSubmit(addOptimisticVote, refetchVoteCounts)
+  const { voteCounts } = useVoteCounts(votedPollIds, enablePolling)
+  const { submitVote, submittingPollId, submittingChoiceId } = useVoteSubmit(addOptimisticVote)
 
   const hasActiveFilters = activeCategoryId !== null || debouncedSearch.length > 0
 
