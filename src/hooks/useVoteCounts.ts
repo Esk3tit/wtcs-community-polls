@@ -20,10 +20,15 @@ export function useVoteCounts(
     // RLS enforces respondent-only visibility: this query only returns
     // vote_counts rows for polls where the current user has a vote record.
     // Non-voters get zero rows -- they cannot see any aggregate data.
-    const { data: counts } = await supabase
+    const { data: counts, error } = await supabase
       .from('vote_counts')
       .select('poll_id, choice_id, count')
       .in('poll_id', votedPollIds)
+
+    if (error) {
+      console.error('Failed to fetch vote counts:', error)
+      return // Keep previous counts rather than resetting to empty
+    }
 
     if (counts) {
       const map = new Map<string, Map<string, number>>()
