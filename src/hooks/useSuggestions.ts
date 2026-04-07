@@ -22,7 +22,10 @@ export function useSuggestions(status: 'active' | 'closed') {
       .order('is_pinned', { ascending: false })
       .order('created_at', { ascending: false })
 
-    if (!error && polls) {
+    if (error) {
+      console.error('Failed to fetch suggestions:', error)
+    }
+    if (polls) {
       setSuggestions(polls as unknown as SuggestionWithChoices[])
     }
 
