@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { usePolling } from '@/hooks/usePolling'
 
@@ -11,8 +11,15 @@ export function useVoteCounts(
   // Map<pollId, Map<choiceId, count>>
   const [voteCounts, setVoteCounts] = useState<Map<string, Map<string, number>>>(new Map())
 
+  // Stabilize dependency: use serialized string key instead of array reference
+  // to prevent unnecessary refetches when the array has the same content but a new reference
+  const pollIdsKey = votedPollIds.join(',')
+  const pollIdsRef = useRef(votedPollIds)
+  pollIdsRef.current = votedPollIds
+
   const fetchCounts = useCallback(async () => {
-    if (votedPollIds.length === 0) {
+    const ids = pollIdsRef.current
+    if (ids.length === 0) {
       setVoteCounts(new Map())
       return
     }
@@ -23,7 +30,7 @@ export function useVoteCounts(
     const { data: counts, error } = await supabase
       .from('vote_counts')
       .select('poll_id, choice_id, count')
-      .in('poll_id', votedPollIds)
+      .in('poll_id', ids)
 
     if (error) {
       console.error('Failed to fetch vote counts:', error)
@@ -40,7 +47,8 @@ export function useVoteCounts(
       }
       setVoteCounts(map)
     }
-  }, [votedPollIds])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pollIdsKey])
 
   // Initial fetch
   useEffect(() => {
