@@ -11,13 +11,17 @@ import { SuggestionSkeleton } from '@/components/suggestions/SuggestionSkeleton'
 import { SuggestionCard } from '@/components/suggestions/SuggestionCard'
 
 export function SuggestionList({ status }: { status: 'active' | 'closed' }) {
-  const { suggestions, userVotes, loading, addOptimisticVote } = useSuggestions(status)
+  const { suggestions, userVotes, loading, error, addOptimisticVote } = useSuggestions(status)
   const { categories } = useCategories()
   const [searchText, setSearchText] = useState('')
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null)
   const debouncedSearch = useDebounce(searchText, 300)
 
-  const votedPollIds = useMemo(() => Array.from(userVotes.keys()), [userVotes])
+  const suggestionIds = useMemo(() => new Set(suggestions.map(s => s.id)), [suggestions])
+  const votedPollIds = useMemo(
+    () => Array.from(userVotes.keys()).filter(id => suggestionIds.has(id)),
+    [userVotes, suggestionIds]
+  )
   // Polling enabled only for active suggestions. Closed suggestions fetch once on mount.
   const enablePolling = status === 'active'
   const { voteCounts, refetchVoteCounts } = useVoteCounts(votedPollIds, enablePolling)
@@ -53,6 +57,19 @@ export function SuggestionList({ status }: { status: 'active' | 'closed' }) {
         </h1>
         <div className="mt-6">
           <SuggestionSkeleton />
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div>
+        <h1 className="text-2xl font-semibold">
+          {status === 'active' ? 'Active Topics' : 'Archive'}
+        </h1>
+        <div className="mt-6 text-center py-8">
+          <p className="text-sm text-destructive">{error}</p>
         </div>
       </div>
     )
