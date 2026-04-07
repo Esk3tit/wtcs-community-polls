@@ -26,7 +26,7 @@ export function useSuggestions(status: 'active' | 'closed') {
       console.error('Failed to fetch suggestions:', error)
     }
     if (polls) {
-      setSuggestions(polls as unknown as SuggestionWithChoices[])
+      setSuggestions(polls)
     }
 
     // Fetch user's votes (RLS ensures only own votes visible)
