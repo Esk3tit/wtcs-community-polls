@@ -66,15 +66,17 @@ Extends Phase 1 typography. New roles for Phase 2:
 | Suggestion title | `text-lg font-medium` | Card title text (D-23) |
 | Body/description | `text-sm text-muted-foreground` | Suggestion description, search placeholder |
 | Label/meta | `text-xs text-muted-foreground` | Timestamps, response counts, creator name, time remaining |
-| Result percentage | `text-xl font-medium` | Large percentage number on result bars |
+| Result percentage | `text-lg font-semibold` | Large percentage number on result bars (differentiated from card title via weight) |
 | Result count | `text-xs text-muted-foreground` | Raw count next to percentage (e.g., "42 responses") |
 | Badge text | `text-xs font-medium` | Category pills, status badges |
 | Choice button text | `text-sm font-medium` | Pre-vote choice button labels |
 | Pinned banner text | `text-xs font-medium` | "Pinned" label and time remaining text |
 
-**5 sizes total:** `text-xs` (12px), `text-sm` (14px), `text-lg` (18px), `text-xl` (20px), `text-2xl` (24px).
+**4 sizes total:** `text-xs` (12px), `text-sm` (14px), `text-lg` (18px), `text-2xl` (24px).
 
 **2 explicit font weights:** `font-medium` (500) and `font-semibold` (600). Regular weight (400) is the implicit default on `text-sm`/`text-xs` without a weight class.
+
+**Differentiation note:** Result percentage and suggestion title both use `text-lg` (18px) but are distinguished by weight: titles use `font-medium` (500), percentages use `font-semibold` (600). They never appear in the same visual row, as percentages only display in the expanded result area below the title.
 
 **Constraints (carried from Phase 1):**
 - No `text-xs` below 12px. Body stays `text-sm` (14px) minimum.
@@ -240,7 +242,7 @@ Displayed after user has responded. Shows percentages and counts.
 |----------|-------|
 | Layout | `flex flex-col gap-3` |
 | Per choice | Stacked: label row + progress bar |
-| Label row | `flex items-center justify-between` -- Choice text (`text-sm font-medium`) left, percentage (`text-xl font-medium`) right |
+| Label row | `flex items-center justify-between` -- Choice text (`text-sm font-medium`) left, percentage (`text-lg font-semibold`) right |
 | Count | `text-xs text-muted-foreground` below percentage -- "({N})" |
 | Bar track | `h-2 rounded-full bg-muted w-full` |
 | Bar fill (user's choice) | `h-2 rounded-full bg-primary transition-all duration-300` width set to percentage |
