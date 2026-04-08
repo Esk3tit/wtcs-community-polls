@@ -86,8 +86,13 @@ describe('Vote submission', () => {
   // Test 3: VOTE-02 -- shows error toast on duplicate vote (409 UNIQUE violation)
   it('shows error toast on duplicate vote (409 UNIQUE violation)', async () => {
     mockInvoke.mockResolvedValue({
-      data: { error: 'You have already responded to this topic' },
-      error: { message: 'Edge Function returned error' },
+      data: null,
+      error: {
+        message: 'Edge Function returned a non-2xx status code',
+        context: {
+          json: () => Promise.resolve({ error: 'You have already responded to this topic' }),
+        },
+      },
     })
     const addOptimistic = vi.fn()
     const { result } = renderHook(() => useVoteSubmit(addOptimistic))
@@ -182,8 +187,13 @@ describe('Vote submission', () => {
   // Test 7: VOTE-02 -- rejects vote with missing choice_id
   it('rejects vote with missing choice_id (400 error)', async () => {
     mockInvoke.mockResolvedValue({
-      data: { error: 'Missing poll_id or choice_id' },
-      error: { message: 'Edge Function returned error' },
+      data: null,
+      error: {
+        message: 'Edge Function returned a non-2xx status code',
+        context: {
+          json: () => Promise.resolve({ error: 'Missing poll_id or choice_id' }),
+        },
+      },
     })
     const addOptimistic = vi.fn()
     const { result } = renderHook(() => useVoteSubmit(addOptimistic))
