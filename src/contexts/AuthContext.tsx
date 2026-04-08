@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Block all state updates while auth verification is in progress.
     // Prevents intermediate events (INITIAL_SESSION, TOKEN_REFRESHED) from
     // setting session state and flashing the dashboard before error redirect.
-    const verifyingRef = { current: false }
+    const verifyingRef = { current: isOAuthRedirect }
 
     // Single auth subscription for the entire app
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
