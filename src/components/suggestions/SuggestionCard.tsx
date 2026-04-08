@@ -3,7 +3,6 @@ import { ChevronDown } from 'lucide-react'
 import {
   Collapsible,
   CollapsibleContent,
-  CollapsibleTrigger,
 } from '@/components/ui/collapsible'
 import { CategoryBadge, ResolutionBadge } from '@/components/suggestions/StatusBadge'
 import { PinnedBanner } from '@/components/suggestions/PinnedBanner'
@@ -84,21 +83,26 @@ export function SuggestionCard({
           !isPinned &&
             'cursor-pointer hover:border-foreground/20'
         )}
+        {...(!isPinned ? {
+          role: 'button',
+          tabIndex: 0,
+          'aria-expanded': isOpen,
+          'aria-label': `${suggestion.title} — click to ${isOpen ? 'collapse' : 'expand'}`,
+          onClick: () => setIsOpen(!isOpen),
+          onKeyDown: (e: React.KeyboardEvent) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setIsOpen(!isOpen)
+            }
+          },
+        } : {})}
       >
         <div className="p-5">
-          {/* Header: only this area is the collapsible trigger (avoids nested interactive elements) */}
-          {isPinned ? (
-            headerContent
-          ) : (
-            <CollapsibleTrigger asChild>
-              <div role="button" tabIndex={0}>
-                {headerContent}
-              </div>
-            </CollapsibleTrigger>
-          )}
+          {/* Header */}
+          {headerContent}
 
           {/* Collapsible content: description, image, choices/results */}
-          <CollapsibleContent>
+          <CollapsibleContent onClick={(e: React.MouseEvent) => e.stopPropagation()}>
             {suggestion.description && (
               <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
                 {suggestion.description}
@@ -143,7 +147,7 @@ export function SuggestionCard({
           <div className="mt-3 flex items-center justify-between">
             <div className="flex items-center">
               {/* Creator avatar placeholder -- profile data not in query yet */}
-              <div className="w-6 h-6 rounded-full bg-muted" />
+              <div className="w-6 h-6 rounded-full bg-muted" aria-hidden="true" />
               <span className="text-xs text-muted-foreground ml-2">
                 Community
               </span>

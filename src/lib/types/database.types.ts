@@ -154,6 +154,7 @@ export type Database = {
           created_at: string
           discord_id: string
           discord_username: string
+          guild_member: boolean
           id: string
           is_admin: boolean
           mfa_verified: boolean
@@ -164,6 +165,7 @@ export type Database = {
           created_at?: string
           discord_id: string
           discord_username: string
+          guild_member?: boolean
           id: string
           is_admin?: boolean
           mfa_verified?: boolean
@@ -174,6 +176,7 @@ export type Database = {
           created_at?: string
           discord_id?: string
           discord_username?: string
+          guild_member?: boolean
           id?: string
           is_admin?: boolean
           mfa_verified?: boolean
@@ -272,6 +275,7 @@ export type Database = {
         Args: {
           p_avatar_url: string
           p_discord_username: string
+          p_guild_member?: boolean
           p_mfa_verified: boolean
         }
         Returns: undefined

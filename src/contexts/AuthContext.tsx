@@ -11,7 +11,7 @@ interface AuthState {
   profile: Profile | null
   loading: boolean
   isAdmin: boolean
-  signOut: () => Promise<void>
+  signOut: () => void
   signInWithDiscord: () => Promise<void>
 }
 
@@ -50,32 +50,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
-      setSession(initialSession)
-      setUser(initialSession?.user ?? null)
-      if (initialSession?.user) {
-        fetchProfile(initialSession.user.id).then(() => setLoading(false))
-      } else {
-        setLoading(false)
-      }
-    })
+    // Detect fresh OAuth redirect — tokens in URL hash mean verification is pending.
+    // Skip getSession() shortcut so loading stays true until onAuthStateChange
+    // completes the 2FA/guild verification. Prevents dashboard flash before error redirect.
+    const hashParams = new URLSearchParams(window.location.hash.substring(1))
+    const isOAuthRedirect = hashParams.has('access_token') ||
+      new URLSearchParams(window.location.search).has('code')
+
+    if (!isOAuthRedirect) {
+      // Normal page load — use cached session
+      supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+        setSession(initialSession)
+        setUser(initialSession?.user ?? null)
+        if (initialSession?.user) {
+          fetchProfile(initialSession.user.id).then(() => setLoading(false))
+        } else {
+          setLoading(false)
+        }
+      })
+    }
+    // OAuth redirect: loading stays true, onAuthStateChange handles everything below
+
+    // Block all state updates while auth verification is in progress.
+    // Prevents intermediate events (INITIAL_SESSION, TOKEN_REFRESHED) from
+    // setting session state and flashing the dashboard before error redirect.
+    const verifyingRef = { current: isOAuthRedirect }
 
     // Single auth subscription for the entire app
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         // On initial sign-in, verify Discord 2FA before allowing access
         if (event === 'SIGNED_IN' && newSession?.provider_token) {
-          const result = await handleAuthCallback()
-          if (!result.success) {
-            // 2FA check failed — user is already signed out by handleAuthCallback
-            setSession(null)
-            setUser(null)
-            setProfile(null)
-            setLoading(false)
+          verifyingRef.current = true
+          try {
+            const result = await handleAuthCallback()
+            if (!result.success) {
+              // Redirect immediately — don't update React state, page is navigating away.
+              // Changing state would cause a re-render that briefly flashes the login screen.
+              window.location.href = `/auth/error?reason=${result.reason}`
+              return
+            }
+          } catch {
+            window.location.href = '/auth/error?reason=auth-failed'
             return
+          } finally {
+            verifyingRef.current = false
           }
+        } else if (verifyingRef.current && event === 'SIGNED_IN') {
+          // SIGNED_IN fired without provider_token during OAuth redirect — release the gate
+          verifyingRef.current = false
         }
+
+        // Don't update state while verification is in progress
+        if (verifyingRef.current) return
 
         setSession(newSession)
         setUser(newSession?.user ?? null)
@@ -91,11 +118,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe()
   }, [fetchProfile])
 
-  const signOut = useCallback(async () => {
-    await supabase.auth.signOut()
+  const signOut = useCallback(() => {
+    // Clear state synchronously first so UI responds immediately,
+    // then make the API call. Avoids stale async handler issues
+    // where the await never completes after idle/re-renders.
     setSession(null)
     setUser(null)
     setProfile(null)
+    supabase.auth.signOut().catch(() => {
+      // Session already cleared from state — worst case the server
+      // session expires naturally
+    })
   }, [])
 
   const signInWithDiscord = useCallback(async () => {
@@ -103,6 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       provider: 'discord',
       options: {
         redirectTo: window.location.origin,
+        scopes: 'identify email guilds',
       },
     })
   }, [])

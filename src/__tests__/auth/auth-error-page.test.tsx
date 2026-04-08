@@ -47,4 +47,20 @@ describe('AuthErrorPage', () => {
     expect(screen.getByText(/Could not complete your login/)).toBeInTheDocument()
     expect(screen.getByText('Try Signing In Again')).toBeInTheDocument()
   })
+
+  it('renders not-in-server messaging with invite link', () => {
+    render(<AuthErrorPage reason="not-in-server" />)
+
+    expect(screen.getByText('WTCS Server Membership Required')).toBeInTheDocument()
+    expect(screen.getByText(/member of the official WTCS Discord server/)).toBeInTheDocument()
+    expect(screen.getByText('Join the WTCS Discord Server')).toBeInTheDocument()
+    expect(screen.getByText('Try Signing In Again')).toBeInTheDocument()
+  })
+
+  it('not-in-server invite links to WTCS Discord', () => {
+    render(<AuthErrorPage reason="not-in-server" />)
+
+    const link = screen.getByText('Join the WTCS Discord Server').closest('a')
+    expect(link).toHaveAttribute('href', 'https://discord.gg/aUe8NGP3U2')
+  })
 })

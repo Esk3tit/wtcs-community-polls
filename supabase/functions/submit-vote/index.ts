@@ -1,5 +1,15 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { Ratelimit } from 'https://esm.sh/@upstash/ratelimit@2'
+import { Redis } from 'https://esm.sh/@upstash/redis@1'
 import { getCorsHeaders } from '../_shared/cors.ts'
+
+// Rate limiter: 5 requests per 60-second sliding window, per user
+// Instantiated at module level so it's reused across invocations
+const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(5, '60 s'),
+  prefix: 'wtcs:vote',
+})
 
 Deno.serve(async (req) => {
   const corsHeaders = getCorsHeaders(req)
@@ -39,6 +49,38 @@ Deno.serve(async (req) => {
       )
     }
 
+    // Rate limit check -- per user ID, counts ALL attempts regardless of validation outcome (D-07, D-08)
+    // Positioned before guild_member check and body parsing so even invalid requests consume quota
+    // If Redis is unavailable, ratelimit.limit() throws and the outer catch returns 500 (fail-closed)
+    const { success: rateLimitOk } = await ratelimit.limit(user.id)
+    if (!rateLimitOk) {
+      return new Response(
+        JSON.stringify({ error: 'Too many responses too quickly. Please wait a moment and try again.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '60' } }
+      )
+    }
+
+    // Use service_role client for writes (bypasses RLS)
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    )
+
+    // Enforce guild membership and MFA at submission time (not just login)
+    // Defense-in-depth: prevents stale sessions or bypasses
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('guild_member, mfa_verified')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile?.guild_member || !profile?.mfa_verified) {
+      return new Response(
+        JSON.stringify({ error: 'Your account does not meet the requirements to respond' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // Parse and validate request body
     let poll_id: string, choice_id: string
     try {
@@ -57,12 +99,6 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
-
-    // Use service_role client for writes (bypasses RLS)
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    )
 
     // Validate poll exists and is active (reject votes on closed suggestions)
     const { data: poll } = await supabaseAdmin

@@ -211,7 +211,7 @@ describe('AuthProvider', () => {
       expect.objectContaining({
         provider: 'discord',
         options: expect.objectContaining({
-          scopes: 'identify email',
+          scopes: 'identify email guilds',
         }),
       })
     )
