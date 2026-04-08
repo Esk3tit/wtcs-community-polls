@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Foundation & Authentication** - Supabase schema with RLS, Discord OAuth, routing scaffold, light/dark responsive shell (shadcn/ui + Tailwind), deployment pipeline, testing infrastructure setup with auth tests
 - [ ] **Phase 2: Browsing & Responding** - Suggestion listing with category filtering, response submission via Edge Function, respond-then-reveal results with live HTTP polling, response/results tests
-- [ ] **Phase 3: Response Integrity** - Discord server membership verification via Bot API, Upstash Redis rate limiting on response submissions, integrity tests
+- [ ] **Phase 3: Response Integrity** - Discord server membership verification via OAuth guilds scope, Upstash Redis rate limiting on response submissions, integrity tests
 - [ ] **Phase 4: Admin Panel & Suggestion Management** - Admin suggestion creation with dynamic choices, category management, suggestion lifecycle (timers, close, archive with resolution status), admin promotion/demotion, admin action tests
 - [ ] **Phase 5: Launch Hardening** - Supabase keepalive cron, production deployment at polls.wtcsmapvote.com, E2E smoke tests, end-to-end verification
 
@@ -70,7 +70,10 @@ Plans:
   1. User who is not a member of the official War Thunder esports Discord server is rejected with a clear error message when attempting to respond
   2. A user submitting responses in rapid succession is rate-limited and receives an error after exceeding the threshold
   3. Response integrity checks have tests (server membership rejection, rate limiting behavior)
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 03-01-PLAN.md -- Guild membership verification (migration, auth callback guilds check, AuthErrorPage not-in-server variant, auth tests)
+- [ ] 03-02-PLAN.md -- Upstash Redis rate limiting on submit-vote Edge Function, rate limit toast tests, external service setup checkpoint
 
 ### Phase 4: Admin Panel & Suggestion Management
 **Goal**: Admins can create, configure, and manage suggestions end-to-end through the app -- from creation with dynamic choices and images, through lifecycle management, to archival with resolution status
@@ -106,7 +109,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Authentication | 4/4 | Complete | - |
-| 2. Browsing & Responding | 3/4 | Executing (gap closure) | - |
-| 3. Response Integrity | 0/? | Not started | - |
+| 2. Browsing & Responding | 4/4 | Complete | - |
+| 3. Response Integrity | 0/2 | Planned | - |
 | 4. Admin Panel & Suggestion Management | 0/? | Not started | - |
 | 5. Launch Hardening | 0/? | Not started | - |
