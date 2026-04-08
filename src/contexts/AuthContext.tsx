@@ -71,12 +71,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     // OAuth redirect: loading stays true, onAuthStateChange handles everything below
 
+    // Block all state updates while auth verification is in progress.
+    // Prevents intermediate events (INITIAL_SESSION, TOKEN_REFRESHED) from
+    // setting session state and flashing the dashboard before error redirect.
+    const verifyingRef = { current: false }
+
     // Single auth subscription for the entire app
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         // On initial sign-in, verify Discord 2FA before allowing access
         if (event === 'SIGNED_IN' && newSession?.provider_token) {
+          verifyingRef.current = true
           const result = await handleAuthCallback()
+          verifyingRef.current = false
           if (!result.success) {
             // Verification failed — user is already signed out by handleAuthCallback
             setSession(null)
@@ -87,6 +94,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return
           }
         }
+
+        // Don't update state while verification is in progress
+        if (verifyingRef.current) return
 
         setSession(newSession)
         setUser(newSession?.user ?? null)
