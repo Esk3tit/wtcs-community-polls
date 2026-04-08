@@ -12,8 +12,8 @@ export type AuthCallbackResult =
  * mfa_enabled is false/missing, the user is signed out immediately.
  */
 // Deduplication guard: shared-promise pattern ensures concurrent callers
-// (AuthContext onAuthStateChange + callback route) get the same real result
-// without double-executing verification (WR-02 fix)
+// (AuthContext onAuthStateChange + callback route) get the same result
+// without double-executing verification
 let callbackPromise: Promise<AuthCallbackResult> | null = null
 
 export async function handleAuthCallback(): Promise<AuthCallbackResult> {
@@ -77,9 +77,8 @@ async function executeAuthCallback(): Promise<AuthCallbackResult> {
       return { success: false, reason: '2fa-required' }
     }
 
-    // Check Discord server membership via guilds endpoint (D-01, D-03)
-    // Addresses review concern: OAuth callback error handling -- explicit handling for
-    // API error, network error, malformed response, and empty guild list
+    // Check Discord server membership via guilds endpoint
+    // Handles API error, network error, malformed response, and empty guild list
     let guilds: Array<{ id: string }>
     try {
       const guildsResponse = await fetch('https://discord.com/api/users/@me/guilds', {
@@ -136,7 +135,8 @@ async function executeAuthCallback(): Promise<AuthCallbackResult> {
 
     if (rpcError) {
       console.error('Profile update RPC failed:', rpcError.message)
-      // Non-fatal: 2FA was verified, profile data may be stale
+      await supabase.auth.signOut()
+      return { success: false, reason: 'auth-failed' }
     }
 
     return { success: true }

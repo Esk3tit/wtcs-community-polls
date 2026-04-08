@@ -74,6 +74,10 @@ describe('submit-vote rate limiting behavior (source analysis)', () => {
       )
     })
 
+    it('rate limited response includes Retry-After header', () => {
+      expect(submitVoteSource).toContain("'Retry-After': '60'")
+    })
+
     it('rate limited response includes CORS headers', () => {
       // Find the 429 block and verify corsHeaders is present nearby
       const status429Index = submitVoteSource.indexOf('status: 429')

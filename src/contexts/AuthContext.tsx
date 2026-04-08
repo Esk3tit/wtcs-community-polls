@@ -82,14 +82,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // On initial sign-in, verify Discord 2FA before allowing access
         if (event === 'SIGNED_IN' && newSession?.provider_token) {
           verifyingRef.current = true
-          const result = await handleAuthCallback()
-          verifyingRef.current = false
-          if (!result.success) {
-            // Redirect immediately — don't update React state, page is navigating away.
-            // Changing state would cause a re-render that briefly flashes the login screen.
-            window.location.href = `/auth/error?reason=${result.reason}`
+          try {
+            const result = await handleAuthCallback()
+            if (!result.success) {
+              // Redirect immediately — don't update React state, page is navigating away.
+              // Changing state would cause a re-render that briefly flashes the login screen.
+              window.location.href = `/auth/error?reason=${result.reason}`
+              return
+            }
+          } catch {
+            window.location.href = '/auth/error?reason=auth-failed'
             return
+          } finally {
+            verifyingRef.current = false
           }
+        } else if (verifyingRef.current && event === 'SIGNED_IN') {
+          // SIGNED_IN fired without provider_token during OAuth redirect — release the gate
+          verifyingRef.current = false
         }
 
         // Don't update state while verification is in progress

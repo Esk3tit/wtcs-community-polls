@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     if (!rateLimitOk) {
       return new Response(
         JSON.stringify({ error: 'Too many responses too quickly. Please wait a moment and try again.' }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '60' } }
       )
     }
 

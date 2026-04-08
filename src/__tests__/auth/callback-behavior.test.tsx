@@ -29,9 +29,7 @@ vi.mock('@/lib/supabase', () => ({
   },
 }))
 
-// R2 FIX: Import the REAL handleAuthCallback function.
-// This is the actual production code from auth-helpers.ts, not a reimplementation.
-// The mocked supabase module above controls its dependencies.
+// Import the real handleAuthCallback — mocked supabase module above controls its dependencies.
 import { handleAuthCallback } from '@/lib/auth-helpers'
 
 const WTCS_GUILD_ID = '123456789'
@@ -208,7 +206,7 @@ describe('Auth Callback: Fail-Closed Behavior (REAL handleAuthCallback)', () => 
     vi.unstubAllGlobals()
   })
 
-  it('R2: calls update_profile_after_auth RPC (not direct profile update)', async () => {
+  it('calls update_profile_after_auth RPC (not direct profile update)', async () => {
     mockGetSession.mockResolvedValue({
       data: { session: { access_token: 'jwt', user: { id: 'u1' }, provider_token: 'discord-token' } },
     })
@@ -231,7 +229,7 @@ describe('Auth Callback: Fail-Closed Behavior (REAL handleAuthCallback)', () => 
     vi.unstubAllGlobals()
   })
 
-  it('R2: still succeeds when RPC returns error (profile sync is non-fatal)', async () => {
+  it('FAIL-CLOSED: rejects when RPC returns error (profile sync failure blocks login)', async () => {
     mockGetSession.mockResolvedValue({
       data: { session: { access_token: 'jwt', user: { id: 'u1' }, provider_token: 'discord-token' } },
     })
@@ -245,9 +243,10 @@ describe('Auth Callback: Fail-Closed Behavior (REAL handleAuthCallback)', () => 
 
     const result = await handleAuthCallback()
 
-    // Login should still succeed -- 2FA was verified, profile sync is non-fatal
-    expect(result.success).toBe(true)
-    expect(mockSignOut).not.toHaveBeenCalled()
+    // RPC failure must fail closed — user is signed out
+    expect(result.success).toBe(false)
+    if (!result.success) expect(result.reason).toBe('auth-failed')
+    expect(mockSignOut).toHaveBeenCalled()
 
     vi.unstubAllGlobals()
   })
