@@ -68,11 +68,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (event === 'SIGNED_IN' && newSession?.provider_token) {
           const result = await handleAuthCallback()
           if (!result.success) {
-            // 2FA check failed — user is already signed out by handleAuthCallback
+            // Verification failed — user is already signed out by handleAuthCallback
             setSession(null)
             setUser(null)
             setProfile(null)
             setLoading(false)
+            window.location.href = `/auth/error?reason=${result.reason}`
             return
           }
         }
