@@ -1,9 +1,9 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useEffect, useState, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { handleAuthCallback } from '@/lib/auth-helpers'
-import type { Profile } from '@/lib/types/database.types'
+import type { Profile } from '@/lib/types/suggestions'
 
 interface AuthState {
   session: Session | null
@@ -124,10 +124,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 }
 
-export function useAuth(): AuthState {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
-}
+// useAuth hook lives in src/hooks/useAuth.ts to satisfy react-refresh/only-export-components
+export { AuthContext }
+export type { AuthState }

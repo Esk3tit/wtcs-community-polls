@@ -408,6 +408,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-
-// Convenience type aliases
-export type Profile = Database['public']['Tables']['profiles']['Row']
