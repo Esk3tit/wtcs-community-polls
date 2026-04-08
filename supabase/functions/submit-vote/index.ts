@@ -66,17 +66,17 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    // Enforce guild membership at submission time (not just login)
-    // Addresses review: downstream enforcement -- prevents stale sessions or bypasses
+    // Enforce guild membership and MFA at submission time (not just login)
+    // Defense-in-depth: prevents stale sessions or bypasses
     const { data: profile } = await supabaseAdmin
       .from('profiles')
-      .select('guild_member')
+      .select('guild_member, mfa_verified')
       .eq('id', user.id)
       .single()
 
-    if (!profile?.guild_member) {
+    if (!profile?.guild_member || !profile?.mfa_verified) {
       return new Response(
-        JSON.stringify({ error: 'You must be a member of the WTCS Discord server to respond' }),
+        JSON.stringify({ error: 'Your account does not meet the requirements to respond' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
