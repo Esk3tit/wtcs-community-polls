@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 3 context gathered
-last_updated: "2026-04-08T01:14:09.202Z"
-last_activity: 2026-04-07
+stopped_at: Phase 3 complete — ready for Phase 4
+last_updated: "2026-04-08T16:30:00.000Z"
+last_activity: 2026-04-08
 progress:
   total_phases: 5
-  completed_phases: 2
-  total_plans: 8
-  completed_plans: 8
-  percent: 100
+  completed_phases: 3
+  total_plans: 10
+  completed_plans: 10
+  percent: 60
 ---
 
 # Project State
@@ -21,22 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** Community members can vote on competitive scene proposals with confidence that results are legitimate
-**Current focus:** Phase 02 — browsing-responding
+**Current focus:** Phase 03 complete — ready for Phase 04 (admin)
 
 ## Current Position
 
-Phase: 3
+Phase: 4
 Plan: Not started
-Status: Executing Phase 02
-Last activity: 2026-04-07
+Status: Phase 3 shipped and merged. Ready for Phase 4.
+Last activity: 2026-04-08
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██████░░░░] 60%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 8
+- Total plans completed: 10
 - Average duration: -
 - Total execution time: 0 hours
 
@@ -44,7 +44,9 @@ Progress: [░░░░░░░░░░] 0%
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
+| 01 | 2 | - | - |
 | 02 | 4 | - | - |
+| 03 | 2 | - | - |
 
 **Recent Trend:**
 
@@ -62,20 +64,20 @@ Recent decisions affecting current work:
 
 - [Roadmap]: 5-phase structure following Schema/Auth -> Reads/Voting -> Integrity -> Admin -> Launch
 - [Roadmap]: Phase 2 will use seed data for polls (admin creation comes in Phase 4)
-- [Roadmap]: Discord server membership check separated into Phase 3 (requires Bot setup + external coordination)
+- [Phase 3]: Guild membership uses OAuth guilds scope (not Bot API) via provider_token
+- [Phase 3]: Edge Function deployed with --no-verify-jwt (ES256 gateway compatibility)
+- [Phase 3]: RPC error handling is fail-closed (sign out on profile update failure)
 
 ### Pending Todos
 
-None yet.
+- Phase 5: Add loading skeletons and/or prefetch-on-hover for navigation (see .planning/notes/)
 
 ### Blockers/Concerns
 
-- Phase 3 requires a Discord Bot to be created and added to the WTCS esports server (external coordination needed before Phase 3 execution)
-- MFA field path in Supabase Discord metadata needs verification during Phase 1 planning (custom_claims.mfa_enabled vs raw_user_meta_data)
 - pg_cron availability on Supabase free tier should be verified during Phase 4 planning
 
 ## Session Continuity
 
-Last session: 2026-04-08T01:14:09.198Z
-Stopped at: Phase 3 context gathered
-Resume file: .planning/phases/03-response-integrity/03-CONTEXT.md
+Last session: 2026-04-08T16:30:00.000Z
+Stopped at: Phase 3 complete — ready for Phase 4
+Resume file: N/A — clean start for Phase 4
