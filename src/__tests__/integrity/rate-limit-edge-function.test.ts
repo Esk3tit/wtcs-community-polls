@@ -36,7 +36,8 @@ describe('submit-vote rate limiting behavior (source analysis)', () => {
 
     it('rate limit check occurs before guild_member check', () => {
       const rateLimitLine = submitVoteSource.indexOf('ratelimit.limit(user.id)')
-      const guildCheckLine = submitVoteSource.indexOf('guild_member')
+      // Search for the actual guild_member DB query, not comments mentioning it
+      const guildCheckLine = submitVoteSource.indexOf(".select('guild_member')")
       expect(rateLimitLine).toBeGreaterThan(-1)
       expect(guildCheckLine).toBeGreaterThan(-1)
       expect(rateLimitLine).toBeLessThan(guildCheckLine)

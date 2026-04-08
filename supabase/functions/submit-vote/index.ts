@@ -1,5 +1,15 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { Ratelimit } from 'https://esm.sh/@upstash/ratelimit@2'
+import { Redis } from 'https://esm.sh/@upstash/redis@1'
 import { getCorsHeaders } from '../_shared/cors.ts'
+
+// Rate limiter: 5 requests per 60-second sliding window, per user
+// Instantiated at module level so it's reused across invocations
+const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(5, '60 s'),
+  prefix: 'wtcs:vote',
+})
 
 Deno.serve(async (req) => {
   const corsHeaders = getCorsHeaders(req)
@@ -36,6 +46,17 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Rate limit check -- per user ID, counts ALL attempts regardless of validation outcome (D-07, D-08)
+    // Positioned before guild_member check and body parsing so even invalid requests consume quota
+    // If Redis is unavailable, ratelimit.limit() throws and the outer catch returns 500 (fail-closed)
+    const { success: rateLimitOk } = await ratelimit.limit(user.id)
+    if (!rateLimitOk) {
+      return new Response(
+        JSON.stringify({ error: 'Too many responses too quickly. Please wait a moment and try again.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
