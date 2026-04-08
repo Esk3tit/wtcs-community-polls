@@ -2,6 +2,7 @@
 phase: 3
 reviewers: [codex]
 reviewed_at: 2026-04-07
+rounds: 2
 plans_reviewed: [03-01-PLAN.md, 03-02-PLAN.md]
 ---
 
@@ -88,3 +89,27 @@ This plan is appropriately scoped and fits the chosen architecture well: enforce
 
 ### Divergent Views
 None — single reviewer (Codex). Concerns are internally consistent.
+
+---
+
+## Round 2: Codex Review (GPT-5.4) — Post-Revision
+
+### Round 1 Concern Resolution
+
+| Concern | Severity | Status |
+|---------|----------|--------|
+| TEST-04 coverage gap | HIGH | **Partially addressed** — server-side tests added but are static source-analysis, not runtime behavior tests. Acceptable trade-off since Deno Edge Functions cannot run in Vitest. |
+| Checkpoint boundary blur | MEDIUM | **Addressed** — Plan 01 owns schema push/guild ID; Plan 02 checkpoint is Upstash-only. |
+| Downstream enforcement ambiguity | MEDIUM | **Addressed** — Submission-time `guild_member` enforcement is now explicit in Plan 01. |
+| OAuth callback error handling | MEDIUM | **Addressed** — Malformed JSON (non-array) and empty guild list are now covered in tests. |
+| Rate limit scope clarity | MEDIUM | **Addressed** — Plan 02 explicitly states per-attempt, positioned before guild check and body parsing. |
+
+### New Issues Found
+
+1. **`.env.example` missing from files_modified (LOW):** Plan 01 Task 1 action step 6 creates `.env.example` with `VITE_WTCS_GUILD_ID=` and acceptance criteria checks for it, but `.env.example` is not listed in `files_modified` or Task 1 `<files>`. Easy for executor to miss.
+
+### Summary
+The revision is materially better and fixes four of five original concerns cleanly. The only substantive carryover is that Plan 02's server-side tests are source-code inspection rather than runtime behavior tests — an inherent limitation of testing Deno Edge Functions in Vitest, not a plan design flaw. The `.env.example` omission from `files_modified` is minor.
+
+### Risk Assessment
+**MEDIUM** (down from MEDIUM — same rating but with narrower remaining gaps). Design and task boundaries are now solid. The remaining test gap is an acceptable trade-off given the Deno/Vitest boundary constraint.
