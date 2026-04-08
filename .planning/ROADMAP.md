@@ -70,10 +70,10 @@ Plans:
   1. User who is not a member of the official War Thunder esports Discord server is rejected with a clear error message when attempting to respond
   2. A user submitting responses in rapid succession is rate-limited and receives an error after exceeding the threshold
   3. Response integrity checks have tests (server membership rejection, rate limiting behavior)
-**Plans**: 2 plans
+**Plans**: 2 plans (revised after cross-AI review)
 Plans:
-- [ ] 03-01-PLAN.md -- Guild membership verification (migration, auth callback guilds check, AuthErrorPage not-in-server variant, auth tests)
-- [ ] 03-02-PLAN.md -- Upstash Redis rate limiting on submit-vote Edge Function, rate limit toast tests, external service setup checkpoint
+- [ ] 03-01-PLAN.md -- Guild membership verification (migration, auth callback guilds check, downstream enforcement in submit-vote, AuthErrorPage not-in-server variant, comprehensive failure-mode auth tests, schema push checkpoint)
+- [ ] 03-02-PLAN.md -- Upstash Redis rate limiting on submit-vote Edge Function, client-side toast tests, server-side Edge Function behavior tests, Upstash setup checkpoint
 
 ### Phase 4: Admin Panel & Suggestion Management
 **Goal**: Admins can create, configure, and manage suggestions end-to-end through the app -- from creation with dynamic choices and images, through lifecycle management, to archival with resolution status
