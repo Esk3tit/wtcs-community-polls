@@ -11,7 +11,7 @@ interface AuthState {
   profile: Profile | null
   loading: boolean
   isAdmin: boolean
-  signOut: () => Promise<void>
+  signOut: () => void
   signInWithDiscord: () => Promise<void>
 }
 
@@ -109,11 +109,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe()
   }, [fetchProfile])
 
-  const signOut = useCallback(async () => {
-    await supabase.auth.signOut()
+  const signOut = useCallback(() => {
+    // Clear state synchronously first so UI responds immediately,
+    // then make the API call. Avoids stale async handler issues
+    // where the await never completes after idle/re-renders.
     setSession(null)
     setUser(null)
     setProfile(null)
+    supabase.auth.signOut().catch(() => {
+      // Session already cleared from state — worst case the server
+      // session expires naturally
+    })
   }, [])
 
   const signInWithDiscord = useCallback(async () => {
