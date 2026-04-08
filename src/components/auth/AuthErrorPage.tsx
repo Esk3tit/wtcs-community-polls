@@ -51,7 +51,7 @@ export function AuthErrorPage({ reason }: AuthErrorPageProps) {
     <div className="max-w-md mx-auto py-16 md:py-24">
       <Card className="bg-card rounded-xl border p-8">
         <div className="text-center">
-          <Icon className="mx-auto h-10 w-10 text-destructive" />
+          <Icon className="mx-auto h-10 w-10 text-destructive" aria-hidden="true" />
           <h1 className="text-2xl font-semibold text-center mt-4">{config.heading}</h1>
           <p className="text-sm text-muted-foreground text-center mt-2">{config.body}</p>
 

@@ -86,6 +86,8 @@ export function SuggestionCard({
         {...(!isPinned ? {
           role: 'button',
           tabIndex: 0,
+          'aria-expanded': isOpen,
+          'aria-label': `${suggestion.title} — click to ${isOpen ? 'collapse' : 'expand'}`,
           onClick: () => setIsOpen(!isOpen),
           onKeyDown: (e: React.KeyboardEvent) => {
             if (e.key === 'Enter' || e.key === ' ') {
@@ -145,7 +147,7 @@ export function SuggestionCard({
           <div className="mt-3 flex items-center justify-between">
             <div className="flex items-center">
               {/* Creator avatar placeholder -- profile data not in query yet */}
-              <div className="w-6 h-6 rounded-full bg-muted" />
+              <div className="w-6 h-6 rounded-full bg-muted" aria-hidden="true" />
               <span className="text-xs text-muted-foreground ml-2">
                 Community
               </span>
