@@ -61,6 +61,6 @@ describe('AuthErrorPage', () => {
     render(<AuthErrorPage reason="not-in-server" />)
 
     const link = screen.getByText('Join the WTCS Discord Server').closest('a')
-    expect(link).toHaveAttribute('href', 'https://discord.gg/wtcs')
+    expect(link).toHaveAttribute('href', 'https://discord.gg/aUe8NGP3U2')
   })
 })

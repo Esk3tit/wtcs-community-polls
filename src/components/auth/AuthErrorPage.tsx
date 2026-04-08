@@ -21,7 +21,7 @@ const errorConfig = {
     heading: 'WTCS Server Membership Required',
     body: 'You need to be a member of the official WTCS Discord server to participate in community suggestions.',
     primaryLabel: 'Join the WTCS Discord Server',
-    primaryHref: 'https://discord.gg/wtcs',
+    primaryHref: 'https://discord.gg/aUe8NGP3U2',
     secondaryLabel: 'Try Signing In Again',
   },
   'session-expired': {

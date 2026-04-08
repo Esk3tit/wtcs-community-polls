@@ -1,6 +1,11 @@
+/// <reference types="node" />
 import { describe, it, expect } from 'vitest'
-import { readFileSync } from 'fs'
-import { resolve } from 'path'
+import { readFileSync } from 'node:fs'
+import { resolve, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 const submitVoteSource = readFileSync(
   resolve(__dirname, '../../../supabase/functions/submit-vote/index.ts'),
