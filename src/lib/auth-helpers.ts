@@ -11,7 +11,13 @@ export type AuthCallbackResult =
  * FAIL-CLOSED: If provider_token is missing, Discord API fails, or
  * mfa_enabled is false/missing, the user is signed out immediately.
  */
+// Deduplication guard: prevents concurrent calls from multiple call sites
+// (AuthContext onAuthStateChange + callback route) from racing
+let callbackInProgress = false
+
 export async function handleAuthCallback(): Promise<AuthCallbackResult> {
+  if (callbackInProgress) return { success: true } // Already running from another call site
+  callbackInProgress = true
   try {
     const { data: { session } } = await supabase.auth.getSession()
 
@@ -127,5 +133,7 @@ export async function handleAuthCallback(): Promise<AuthCallbackResult> {
       // Sign out itself failed
     }
     return { success: false, reason: 'auth-failed' }
+  } finally {
+    callbackInProgress = false
   }
 }
