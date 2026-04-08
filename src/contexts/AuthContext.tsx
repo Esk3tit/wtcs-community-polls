@@ -50,16 +50,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
-      setSession(initialSession)
-      setUser(initialSession?.user ?? null)
-      if (initialSession?.user) {
-        fetchProfile(initialSession.user.id).then(() => setLoading(false))
-      } else {
-        setLoading(false)
-      }
-    })
+    // Detect fresh OAuth redirect — tokens in URL hash mean verification is pending.
+    // Skip getSession() shortcut so loading stays true until onAuthStateChange
+    // completes the 2FA/guild verification. Prevents dashboard flash before error redirect.
+    const hashParams = new URLSearchParams(window.location.hash.substring(1))
+    const isOAuthRedirect = hashParams.has('access_token') ||
+      new URLSearchParams(window.location.search).has('code')
+
+    if (!isOAuthRedirect) {
+      // Normal page load — use cached session
+      supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+        setSession(initialSession)
+        setUser(initialSession?.user ?? null)
+        if (initialSession?.user) {
+          fetchProfile(initialSession.user.id).then(() => setLoading(false))
+        } else {
+          setLoading(false)
+        }
+      })
+    }
+    // OAuth redirect: loading stays true, onAuthStateChange handles everything below
 
     // Single auth subscription for the entire app
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
