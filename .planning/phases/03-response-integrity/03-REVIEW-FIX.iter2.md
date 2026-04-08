@@ -1,8 +1,8 @@
 ---
 phase: 03-response-integrity
 fixed_at: 2026-04-07T12:30:00Z
-review_path: .planning/phases/03-response-integrity/03-REVIEW.md
-iteration: 1
+review_path: .planning/phases/03-response-integrity/03-REVIEW.iter2.md
+iteration: 2
 findings_in_scope: 5
 fixed: 5
 skipped: 0

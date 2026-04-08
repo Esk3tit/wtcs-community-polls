@@ -49,8 +49,9 @@ created: 2026-04-07
 
 ## Wave 0 Requirements
 
-- [ ] `src/__tests__/guild-check.test.ts` — stubs for AUTH-03 guild membership verification
-- [ ] `src/__tests__/rate-limit.test.ts` — stubs for VOTE-04 rate limiting behavior
+- [x] `src/__tests__/auth/callback-behavior.test.tsx` — AUTH-03 guild membership verification (8 tests)
+- [x] `src/__tests__/integrity/rate-limit-edge-function.test.ts` — VOTE-04 rate limiting behavior (10 tests)
+- [x] `src/__tests__/integrity/rate-limit-toast.test.tsx` — VOTE-04 client-side toast display (2 tests)
 
 *Existing vitest infrastructure covers framework needs.*
 

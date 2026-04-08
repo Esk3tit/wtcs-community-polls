@@ -26,29 +26,7 @@ describe('Rate limit toast display (VOTE-04)', () => {
     vi.clearAllMocks()
   })
 
-  it('shows rate limit toast when Edge Function returns 429 error', async () => {
-    mockInvoke.mockResolvedValue({
-      data: null,
-      error: {
-        message: 'Edge Function returned a non-2xx status code',
-        context: {
-          json: () => Promise.resolve({ error: 'Too many responses too quickly. Please wait a moment and try again.' }),
-        },
-      },
-    })
-    const addOptimistic = vi.fn()
-    const { result } = renderHook(() => useVoteSubmit(addOptimistic))
-
-    await act(async () => {
-      await result.current.submitVote('poll-abc', 'choice-xyz')
-    })
-
-    expect(mockToastError).toHaveBeenCalledWith(
-      'Too many responses too quickly. Please wait a moment and try again.'
-    )
-  })
-
-  it('rate limit error message matches D-09 exact text', async () => {
+  it('shows exact D-09 rate limit toast once when Edge Function returns 429 error', async () => {
     const d09Message = 'Too many responses too quickly. Please wait a moment and try again.'
     mockInvoke.mockResolvedValue({
       data: null,
@@ -66,7 +44,6 @@ describe('Rate limit toast display (VOTE-04)', () => {
       await result.current.submitVote('poll-abc', 'choice-xyz')
     })
 
-    // Verify exact D-09 message text is displayed
     expect(mockToastError).toHaveBeenCalledTimes(1)
     expect(mockToastError).toHaveBeenCalledWith(d09Message)
   })
