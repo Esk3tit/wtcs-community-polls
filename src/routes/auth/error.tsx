@@ -10,5 +10,5 @@ export const Route = createFileRoute('/auth/error')({
 
 function AuthErrorRoute() {
   const { reason } = Route.useSearch()
-  return <AuthErrorPage reason={reason as '2fa-required' | 'session-expired' | 'auth-failed'} />
+  return <AuthErrorPage reason={reason as '2fa-required' | 'session-expired' | 'auth-failed' | 'not-in-server'} />
 }

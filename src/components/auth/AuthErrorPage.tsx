@@ -1,10 +1,10 @@
-import { ShieldAlert, Clock, AlertCircle } from 'lucide-react'
+import { ShieldAlert, Clock, AlertCircle, Users } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/useAuth'
 
 interface AuthErrorPageProps {
-  reason: '2fa-required' | 'session-expired' | 'auth-failed'
+  reason: '2fa-required' | 'session-expired' | 'auth-failed' | 'not-in-server'
 }
 
 const errorConfig = {
@@ -14,6 +14,14 @@ const errorConfig = {
     body: 'To keep responses authentic, we require 2FA on your Discord account. It takes about a minute to set up.',
     primaryLabel: 'Set Up 2FA on Discord',
     primaryHref: 'https://support.discord.com/hc/en-us/articles/219576828',
+    secondaryLabel: 'Try Signing In Again',
+  },
+  'not-in-server': {
+    icon: Users,
+    heading: 'WTCS Server Membership Required',
+    body: 'You need to be a member of the official WTCS Discord server to participate in community suggestions.',
+    primaryLabel: 'Join the WTCS Discord Server',
+    primaryHref: 'https://discord.gg/wtcs',
     secondaryLabel: 'Try Signing In Again',
   },
   'session-expired': {
