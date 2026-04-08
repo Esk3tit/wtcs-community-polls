@@ -1,8 +1,9 @@
 ---
 phase: 03-response-integrity
-reviewed: 2026-04-07T12:00:00Z
+reviewed: 2026-04-07T14:30:00Z
 depth: deep
-files_reviewed: 13
+iteration: 2
+files_reviewed: 14
 files_reviewed_list:
   - .env.example
   - .husky/pre-commit
@@ -14,155 +15,92 @@ files_reviewed_list:
   - src/components/auth/AuthErrorPage.tsx
   - src/contexts/AuthContext.tsx
   - src/lib/auth-helpers.ts
+  - src/lib/types/database.types.ts
   - src/routes/auth/error.tsx
   - supabase/functions/submit-vote/index.ts
   - supabase/migrations/00000000000003_guild_membership.sql
 findings:
-  critical: 1
-  warning: 4
-  info: 2
-  total: 7
+  critical: 0
+  warning: 2
+  info: 1
+  total: 3
 status: issues_found
 ---
 
-# Phase 03: Code Review Report
+# Phase 03: Code Review Report (Iteration 2)
 
-**Reviewed:** 2026-04-07T12:00:00Z
+**Reviewed:** 2026-04-07T14:30:00Z
 **Depth:** deep
-**Files Reviewed:** 13
+**Files Reviewed:** 14
 **Status:** issues_found
 
 ## Summary
 
-Phase 03 adds Discord guild membership verification at login time and per-user rate limiting via Upstash Redis in the submit-vote Edge Function. The security architecture is well-designed: fail-closed behavior is consistent throughout auth-helpers.ts, the submit-vote function enforces guild membership at submission time (not just login), rate limiting is positioned before body parsing, and the migration correctly blocks client-side writes to `guild_member` via the trigger guard. Test coverage for fail-closed behavior is thorough.
+This is the second review iteration following fixes for CR-01, WR-01, WR-02, WR-03, and WR-04 from iteration 1. All five prior issues are confirmed resolved:
 
-One critical issue was found: the TypeScript `database.types.ts` has not been regenerated after the migration that adds the `guild_member` column, creating a type-safety gap across the codebase. Four warnings cover a race between dual `handleAuthCallback` call sites, an unsafe type assertion on the error route, a silent failure mode when the guild ID env var is missing, and a missing `mfa_verified` check in the Edge Function's submission-time enforcement.
+- **CR-01 FIXED:** `database.types.ts` now includes `guild_member` in profiles Row, Insert, and Update types, plus `p_guild_member` in the RPC function args.
+- **WR-01 FIXED:** `callbackInProgress` deduplication guard added to `auth-helpers.ts` with `finally` cleanup.
+- **WR-02 FIXED:** `VALID_REASONS` array with `includes()` check in `src/routes/auth/error.tsx` validates the `reason` search param at runtime, defaulting to `'auth-failed'`.
+- **WR-03 FIXED:** Explicit `console.error` and fail-closed return when `VITE_WTCS_GUILD_ID` is missing in `auth-helpers.ts:102-107`.
+- **WR-04 FIXED:** `submit-vote/index.ts:73` now selects `'guild_member, mfa_verified'` and checks both at line 77.
 
-## Critical Issues
+However, the WR-04 fix introduced a regression in an existing source-analysis test, and the WR-01 deduplication guard has a semantic issue where concurrent callers receive a false `success: true`.
 
-### CR-01: `database.types.ts` missing `guild_member` column -- type-safety gap
-
-**File:** `src/lib/types/database.types.ts:151-183`
-**Issue:** The migration `00000000000003_guild_membership.sql` adds `guild_member BOOLEAN NOT NULL DEFAULT FALSE` to the `profiles` table, but `database.types.ts` has not been regenerated. The `Profile` type (re-exported via `src/lib/types/suggestions.ts` and used in `AuthContext.tsx`) does not include `guild_member`. This means:
-- TypeScript will not catch any misspelling of `guild_member` in client code
-- The `profile` object in `AuthContext` will have the field at runtime (from Supabase `select('*')`) but TypeScript won't know about it
-- Any future code trying to read `profile.guild_member` will get a compile error despite working at runtime
-
-**Fix:** Regenerate types after applying the migration:
-```bash
-npx supabase gen types typescript --local > src/lib/types/database.types.ts
-```
-
-The `Row` type for `profiles` should then include:
-```typescript
-guild_member: boolean
-```
+Cross-file analysis was performed tracing `handleAuthCallback` call chains (AuthContext -> auth-helpers, callback route -> auth-helpers), `useVoteSubmit` -> submit-vote Edge Function, and the Profile type flow (database.types.ts -> suggestions.ts -> AuthContext.tsx).
 
 ## Warnings
 
-### WR-01: Dual `handleAuthCallback` call sites risk double execution
+### WR-01: Test regression from WR-04 fix -- select string mismatch breaks source-analysis test
 
-**File:** `src/contexts/AuthContext.tsx:68-69` and `src/routes/auth/callback.tsx:18`
-**Issue:** `handleAuthCallback()` is called from two independent locations:
-1. `AuthContext.tsx` line 69: inside `onAuthStateChange` when `event === 'SIGNED_IN' && newSession?.provider_token`
-2. `callback.tsx` line 18: on mount of the `/auth/callback` route
-
-Currently `signInWithDiscord` uses `redirectTo: window.location.origin` (root), so the normal flow triggers path 1 only. However, Supabase config (`supabase/config.toml` line 17) lists `http://localhost:5173/auth/callback` as an additional redirect URL. If anyone changes `redirectTo` to include `/auth/callback`, or if Supabase falls back to the site URL during the OAuth flow, both paths fire: the callback route calls `handleAuthCallback()` AND `onAuthStateChange` fires `SIGNED_IN` with `provider_token`, causing two Discord API calls, two RPC calls, and a race condition on sign-out.
-
-**Fix:** Add a guard in `callback.tsx` to skip its own `handleAuthCallback` call since `AuthContext` already handles it, or add a module-level deduplication flag:
+**File:** `src/__tests__/integrity/rate-limit-edge-function.test.ts:45`
+**Issue:** The test at line 45 uses `submitVoteSource.indexOf(".select('guild_member')")` to locate the guild membership check in the Edge Function source. The WR-04 fix changed `submit-vote/index.ts:73` from `.select('guild_member')` to `.select('guild_member, mfa_verified')`. The `indexOf` call now returns `-1`, causing `expect(guildCheckLine).toBeGreaterThan(-1)` to fail. This test is broken by the iteration-1 fix.
+**Fix:**
 ```typescript
-// In auth-helpers.ts -- add deduplication
-let callbackInProgress = false
+// Line 45: Update the search string to match the new select query
+const guildCheckLine = submitVoteSource.indexOf(".select('guild_member, mfa_verified')")
+```
+
+### WR-02: Deduplication guard returns success: true without verification
+
+**File:** `src/lib/auth-helpers.ts:19`
+**Issue:** When `callbackInProgress` is `true` (a concurrent call is already executing), the function returns `{ success: true }` immediately without performing any 2FA or guild membership verification. The second caller (e.g., the callback route component at `src/routes/auth/callback.tsx:18`) receives a "success" result and navigates to `/`. If the first call ultimately fails and signs the user out, the second caller has already acted on a false positive. In practice, the `onAuthStateChange` result in `AuthContext` controls actual auth state, so the user gets signed out shortly after -- but there is a brief window where the callback route navigates to `/` before the sign-out takes effect.
+**Fix:** Use a shared promise so both callers receive the real result:
+```typescript
+let callbackPromise: Promise<AuthCallbackResult> | null = null
+
 export async function handleAuthCallback(): Promise<AuthCallbackResult> {
-  if (callbackInProgress) return { success: true } // Already running
-  callbackInProgress = true
+  if (callbackPromise) return callbackPromise
+  callbackPromise = executeAuthCallback()
   try {
-    // ... existing logic
+    return await callbackPromise
   } finally {
-    callbackInProgress = false
+    callbackPromise = null
   }
 }
-```
 
-### WR-02: Unsafe type assertion on error route search params
-
-**File:** `src/routes/auth/error.tsx:13`
-**Issue:** The `reason` search param is cast with `as '2fa-required' | 'session-expired' | 'auth-failed' | 'not-in-server'` without runtime validation. A user can navigate to `/auth/error?reason=xss-payload` and the value passes through unchecked. While `AuthErrorPage` has a fallback (`errorConfig[reason] || errorConfig['auth-failed']` on line 47), the `reason` prop type is declared as a strict union, so TypeScript trusts the assertion and won't catch invalid values.
-
-**Fix:** Validate in `validateSearch`:
-```typescript
-const VALID_REASONS = ['2fa-required', 'session-expired', 'auth-failed', 'not-in-server'] as const
-type ErrorReason = typeof VALID_REASONS[number]
-
-export const Route = createFileRoute('/auth/error')({
-  validateSearch: (search: Record<string, unknown>): { reason: ErrorReason } => ({
-    reason: VALID_REASONS.includes(search.reason as ErrorReason)
-      ? (search.reason as ErrorReason)
-      : 'auth-failed',
-  }),
-  component: AuthErrorRoute,
-})
-```
-
-### WR-03: Silent login block when `VITE_WTCS_GUILD_ID` env var is missing
-
-**File:** `src/lib/auth-helpers.ts:96`
-**Issue:** `const WTCS_GUILD_ID = import.meta.env.VITE_WTCS_GUILD_ID || ''` silently falls back to empty string. If the env var is not set (e.g., missing from deployment config), no guild ID will ever match, and ALL users will be rejected with `not-in-server` -- with no error log indicating the env var is the root cause. This is fail-closed (good for security) but makes debugging very difficult.
-
-**Fix:** Add an explicit check with a descriptive error:
-```typescript
-const WTCS_GUILD_ID = import.meta.env.VITE_WTCS_GUILD_ID
-if (!WTCS_GUILD_ID) {
-  console.error('VITE_WTCS_GUILD_ID is not configured. All guild membership checks will fail.')
-  await supabase.auth.signOut()
-  return { success: false, reason: 'auth-failed' }
+async function executeAuthCallback(): Promise<AuthCallbackResult> {
+  // ... existing try/catch/finally logic (without the callbackInProgress guard)
 }
 ```
-
-### WR-04: Submit-vote Edge Function does not verify `mfa_verified` at submission time
-
-**File:** `supabase/functions/submit-vote/index.ts:71-76`
-**Issue:** The Edge Function checks `profile.guild_member` at submission time (line 77) but does not check `profile.mfa_verified`. The auth callback verifies MFA at login and sets `mfa_verified = true` in the profile, but if a user later disables 2FA on Discord, their existing session remains valid and `mfa_verified` stays `true` in the DB until the next login. This is acceptable as a design decision (MFA is verified per-login, not per-submission), but it creates an asymmetry with the guild membership enforcement pattern. If the intent is defense-in-depth, `mfa_verified` should also be checked at submission time.
-
-**Fix:** If defense-in-depth is desired, add `mfa_verified` to the profile select:
-```typescript
-const { data: profile } = await supabaseAdmin
-  .from('profiles')
-  .select('guild_member, mfa_verified')
-  .eq('id', user.id)
-  .single()
-
-if (!profile?.guild_member || !profile?.mfa_verified) {
-  return new Response(
-    JSON.stringify({ error: 'Your account does not meet the requirements to respond' }),
-    { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  )
-}
-```
+This ensures both callers get the same real result without double-executing the verification.
 
 ## Info
 
-### IN-01: `.env.example` missing `VITE_WTCS_GUILD_ID` documentation
+### IN-01: Test suite does not reset module-level callbackInProgress state
 
-**File:** `.env.example:3`
-**Issue:** The `VITE_WTCS_GUILD_ID=` line has no comment explaining what value to put there or where to find it, unlike the other env vars which have placeholder values. New developers won't know this is the Discord server/guild ID.
+**File:** `src/__tests__/auth/callback-behavior.test.tsx`
+**Issue:** The `callbackInProgress` module-level variable in `auth-helpers.ts` is not explicitly reset between tests. Currently this works because every test `await`s `handleAuthCallback()` to completion (reaching the `finally` block). However, if a test were to time out or throw during execution without completing the `finally` block, the variable would remain `true` and silently cause all subsequent tests in the suite to return `{ success: true }` without verification -- making test failures invisible.
+**Fix:** If adopting the shared-promise approach from WR-02, this concern is resolved. Otherwise, export a test-only reset function:
+```typescript
+// In auth-helpers.ts
+export function __resetCallbackStateForTests() { callbackInProgress = false }
 
-**Fix:** Add a descriptive comment:
+// In test beforeEach
+beforeEach(() => { __resetCallbackStateForTests() })
 ```
-# Discord server (guild) ID for WTCS membership verification
-# Find in Discord: Server Settings > Widget > Server ID, or right-click server name > Copy Server ID
-VITE_WTCS_GUILD_ID=your-discord-guild-id-here
-```
-
-### IN-02: Rate limit source analysis tests are brittle
-
-**File:** `src/__tests__/integrity/rate-limit-edge-function.test.ts:18-46`
-**Issue:** These tests read the Edge Function source code as a string and assert on substring presence (e.g., `expect(submitVoteSource).toContain("slidingWindow(5, '60 s')")`). While creative for verifying structural properties without running Deno, any refactoring of the Edge Function code (renaming variables, reformatting, adding comments between tokens) will break these tests even if behavior is unchanged. This is a maintenance concern, not a correctness issue.
-
-**Fix:** Accept as a known trade-off and add a comment in the test file explaining the brittleness and why it's chosen over integration tests (Deno runtime not available in Vitest). Consider adding a note about updating these tests when refactoring the Edge Function.
 
 ---
 
-_Reviewed: 2026-04-07T12:00:00Z_
+_Reviewed: 2026-04-07T14:30:00Z_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: deep_
