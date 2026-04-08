@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase'
 
 export type AuthCallbackResult =
   | { success: true }
-  | { success: false; reason: 'auth-failed' | '2fa-required' }
+  | { success: false; reason: 'auth-failed' | '2fa-required' | 'not-in-server' }
 
 /**
  * Verifies Discord 2FA and syncs profile after OAuth sign-in.
@@ -62,6 +62,45 @@ export async function handleAuthCallback(): Promise<AuthCallbackResult> {
       return { success: false, reason: '2fa-required' }
     }
 
+    // Check Discord server membership via guilds endpoint (D-01, D-03)
+    // Addresses review concern: OAuth callback error handling -- explicit handling for
+    // API error, network error, malformed response, and empty guild list
+    let guilds: Array<{ id: string }>
+    try {
+      const guildsResponse = await fetch('https://discord.com/api/users/@me/guilds', {
+        headers: { Authorization: `Bearer ${providerToken}` },
+      })
+
+      if (!guildsResponse.ok) {
+        console.error('Discord guilds API error:', guildsResponse.status)
+        await supabase.auth.signOut()
+        return { success: false, reason: 'auth-failed' }
+      }
+
+      const guildsData: unknown = await guildsResponse.json()
+
+      // Guard against malformed response (non-array)
+      if (!Array.isArray(guildsData)) {
+        console.error('Discord guilds API returned non-array:', typeof guildsData)
+        await supabase.auth.signOut()
+        return { success: false, reason: 'auth-failed' }
+      }
+
+      guilds = guildsData as Array<{ id: string }>
+    } catch (guildsError) {
+      console.error('Failed to check Discord guild membership:', guildsError)
+      await supabase.auth.signOut()
+      return { success: false, reason: 'auth-failed' }
+    }
+
+    const WTCS_GUILD_ID = import.meta.env.VITE_WTCS_GUILD_ID || ''
+    const isMember = guilds.some(g => g.id === WTCS_GUILD_ID)
+
+    if (!isMember) {
+      await supabase.auth.signOut()
+      return { success: false, reason: 'not-in-server' }
+    }
+
     // Update profile via RPC (SECURITY DEFINER — sets mfa_verified server-side)
     const avatarUrl = discordUser.avatar && discordUser.id
       ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
@@ -71,6 +110,7 @@ export async function handleAuthCallback(): Promise<AuthCallbackResult> {
       p_mfa_verified: true,
       p_discord_username: discordUser.global_name || discordUser.username || 'Unknown',
       p_avatar_url: avatarUrl ?? '',
+      p_guild_member: true,
     })
 
     if (rpcError) {

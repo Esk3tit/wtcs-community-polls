@@ -39,6 +39,27 @@ Deno.serve(async (req) => {
       )
     }
 
+    // Use service_role client for writes (bypasses RLS)
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    )
+
+    // Enforce guild membership at submission time (not just login)
+    // Addresses review: downstream enforcement -- prevents stale sessions or bypasses
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('guild_member')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile?.guild_member) {
+      return new Response(
+        JSON.stringify({ error: 'You must be a member of the WTCS Discord server to respond' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // Parse and validate request body
     let poll_id: string, choice_id: string
     try {
@@ -57,12 +78,6 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
-
-    // Use service_role client for writes (bypasses RLS)
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    )
 
     // Validate poll exists and is active (reject votes on closed suggestions)
     const { data: poll } = await supabaseAdmin
