@@ -85,11 +85,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const result = await handleAuthCallback()
           verifyingRef.current = false
           if (!result.success) {
-            // Verification failed — user is already signed out by handleAuthCallback
-            setSession(null)
-            setUser(null)
-            setProfile(null)
-            setLoading(false)
+            // Redirect immediately — don't update React state, page is navigating away.
+            // Changing state would cause a re-render that briefly flashes the login screen.
             window.location.href = `/auth/error?reason=${result.reason}`
             return
           }
