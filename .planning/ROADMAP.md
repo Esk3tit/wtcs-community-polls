@@ -72,8 +72,8 @@ Plans:
   3. Response integrity checks have tests (server membership rejection, rate limiting behavior)
 **Plans**: 2 plans (revised after cross-AI review)
 Plans:
-- [ ] 03-01-PLAN.md -- Guild membership verification (migration, auth callback guilds check, downstream enforcement in submit-vote, AuthErrorPage not-in-server variant, comprehensive failure-mode auth tests, schema push checkpoint)
-- [ ] 03-02-PLAN.md -- Upstash Redis rate limiting on submit-vote Edge Function, client-side toast tests, server-side Edge Function behavior tests, Upstash setup checkpoint
+- [x] 03-01-PLAN.md -- Guild membership verification (migration, auth callback guilds check, downstream enforcement in submit-vote, AuthErrorPage not-in-server variant, comprehensive failure-mode auth tests, schema push checkpoint)
+- [x] 03-02-PLAN.md -- Upstash Redis rate limiting on submit-vote Edge Function, client-side toast tests, server-side Edge Function behavior tests, Upstash setup checkpoint
 
 ### Phase 4: Admin Panel & Suggestion Management
 **Goal**: Admins can create, configure, and manage suggestions end-to-end through the app -- from creation with dynamic choices and images, through lifecycle management, to archival with resolution status
