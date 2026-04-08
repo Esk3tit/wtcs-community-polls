@@ -3,7 +3,6 @@ import { ChevronDown } from 'lucide-react'
 import {
   Collapsible,
   CollapsibleContent,
-  CollapsibleTrigger,
 } from '@/components/ui/collapsible'
 import { CategoryBadge, ResolutionBadge } from '@/components/suggestions/StatusBadge'
 import { PinnedBanner } from '@/components/suggestions/PinnedBanner'
@@ -84,21 +83,24 @@ export function SuggestionCard({
           !isPinned &&
             'cursor-pointer hover:border-foreground/20'
         )}
+        {...(!isPinned ? {
+          role: 'button',
+          tabIndex: 0,
+          onClick: () => setIsOpen(!isOpen),
+          onKeyDown: (e: React.KeyboardEvent) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setIsOpen(!isOpen)
+            }
+          },
+        } : {})}
       >
         <div className="p-5">
-          {/* Header: only this area is the collapsible trigger (avoids nested interactive elements) */}
-          {isPinned ? (
-            headerContent
-          ) : (
-            <CollapsibleTrigger asChild>
-              <div role="button" tabIndex={0}>
-                {headerContent}
-              </div>
-            </CollapsibleTrigger>
-          )}
+          {/* Header */}
+          {headerContent}
 
           {/* Collapsible content: description, image, choices/results */}
-          <CollapsibleContent>
+          <CollapsibleContent onClick={(e: React.MouseEvent) => e.stopPropagation()}>
             {suggestion.description && (
               <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
                 {suggestion.description}
