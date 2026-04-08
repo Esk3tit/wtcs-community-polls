@@ -99,7 +99,13 @@ export async function handleAuthCallback(): Promise<AuthCallbackResult> {
       return { success: false, reason: 'auth-failed' }
     }
 
-    const WTCS_GUILD_ID = import.meta.env.VITE_WTCS_GUILD_ID || ''
+    const WTCS_GUILD_ID = import.meta.env.VITE_WTCS_GUILD_ID
+    if (!WTCS_GUILD_ID) {
+      console.error('VITE_WTCS_GUILD_ID is not configured. All guild membership checks will fail.')
+      await supabase.auth.signOut()
+      return { success: false, reason: 'auth-failed' }
+    }
+
     const isMember = guilds.some(g => g.id === WTCS_GUILD_ID)
 
     if (!isMember) {
