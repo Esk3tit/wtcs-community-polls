@@ -168,8 +168,11 @@ Deliver the full admin surface for creating, configuring, and managing suggestio
 <specifics>
 ## Specific Ideas
 
-- **Admin count is tiny (2-3 total).** The seed migration for D-05 is literally a 3-row INSERT. Promote UI design doesn't need to scale to hundreds of admins.
-- **WTCS logo is reused from the existing map-vote site** — source file location is an open question (see below). Apply it app-wide in the navbar, left-aligned.
+- **Admin count is tiny (2 at launch).** The seed migration for D-05 is a 2-row INSERT. Promote UI design doesn't need to scale to hundreds of admins.
+- **Seed admin Discord IDs** (for the D-05 migration):
+  - `267747104607305738` — Khai (project owner)
+  - `290377966251409410` — second admin
+- **WTCS logo** is at `src/assets/wtcs-logo.png` (resolved). Apply it app-wide in the navbar, left-aligned, via Vite asset import.
 - **Migrating existing map-vote admins is NOT a cross-app data migration.** It's seeding the handful of Discord IDs we already know into `admin_discord_ids`. No email linking, no Convex-to-Supabase sync — identity is Discord-ID-only.
 - **Resolution status tone** — the user has already decided (per PROJECT.md) to avoid "Rejected" / "Implemented" framing. Addressed / Forwarded / Closed stands.
 - **Close-expired-polls function is built here but scheduled in Phase 5.** Phase 4's acceptance: function exists, manual invoke works, tests pass. Phase 5's acceptance: scheduled and runs daily.
@@ -179,7 +182,7 @@ Deliver the full admin surface for creating, configuring, and managing suggestio
 <open_questions>
 ## Open Questions (Needed During Planning, Not Blocking This Doc)
 
-1. **The 2-3 Discord IDs to seed into `admin_discord_ids`.** Needed before the seed migration can be written. Planner should prompt for them during plan creation if still missing.
+None — all open questions resolved. Logo at `src/assets/wtcs-logo.png`; seed admin Discord IDs captured in `<specifics>` above.
 
 </open_questions>
 
