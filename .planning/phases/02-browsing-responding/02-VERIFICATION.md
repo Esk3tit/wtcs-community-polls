@@ -1,7 +1,9 @@
 ---
 phase: 02-browsing-responding
 verified: 2026-04-07T05:15:00Z
-status: human_needed
+status: resolved
+resolved: 2026-04-11T00:00:00Z
+resolved_by: 02-UAT.md
 score: 7/7 must-haves verified
 overrides_applied: 0
 re_verification:
@@ -16,19 +18,23 @@ human_verification:
   - test: "Browse active suggestions on /topics page"
     expected: "Authenticated user sees suggestion cards loaded from Supabase with expand/collapse, category filtering, and text search"
     why_human: "Visual layout, touch target sizing, and mobile responsiveness cannot be verified programmatically"
+    resolved_by: "02-UAT.md test 9 (Mobile responsiveness) — pass"
   - test: "Submit a response and verify respond-then-reveal flow"
     expected: "Click a choice button, see spinner, then choice buttons replaced by result bars with percentages and counts"
     why_human: "End-to-end flow requires running app with Supabase backend and real Edge Function invocation"
+    resolved_by: "02-UAT.md test 5 (Vote submission works) — pass"
   - test: "Verify live polling updates"
     expected: "After voting, have a second user vote. First user's result bars update within 8 seconds without page refresh."
     why_human: "Requires multiple simultaneous sessions and real-time observation"
+    resolved_by: "02-UAT.md test 7 (Live polling updates results) — pass"
 ---
 
 # Phase 2: Browsing & Responding Verification Report
 
 **Phase Goal:** Authenticated users can browse active suggestions, submit one response per suggestion through server-validated Edge Functions, and see live-updating results only after responding
 **Verified:** 2026-04-07T05:15:00Z
-**Status:** human_needed
+**Resolved:** 2026-04-11 — all three human_verification items covered by 02-UAT.md (tests 5, 7, 9 — all pass)
+**Status:** resolved
 **Re-verification:** Yes -- after gap closure (Plan 04)
 
 ## Goal Achievement
