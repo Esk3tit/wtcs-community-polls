@@ -48,11 +48,13 @@ created: 2026-04-11
 
 ## Wave 0 Requirements
 
-- [ ] `src/test/admin-auth.test.ts` — source-analysis stubs for ADMN-02/03/04 (verify `_shared/admin-auth.ts` returns 403 on non-admin, 403 on self-demote)
-- [ ] `src/test/suggestion-crud-edge.test.ts` — source-analysis stubs for POLL-01..07 (verify Edge Functions exist, import admin-auth helper, use EXISTS guards)
-- [ ] `src/test/category-crud-edge.test.ts` — source-analysis stubs for CATG-01
-- [ ] `src/test/lifecycle.test.ts` — source-analysis stubs for LIFE-01/02/03 (verify `polls_effective` view used in client reads, `close-expired-polls` EF exists)
-- [ ] `src/test/rls-admin-bypass.test.ts` — integration test that `is_current_user_admin()` helper exists and admin-bypass policies reference it
+- [ ] `src/__tests__/admin/admin-auth-coverage.test.ts` — source-analysis coverage for ADMN-02/03/04 (asserts every gated Edge Function imports `_shared/admin-auth.ts` and calls `requireAdmin`, returns 403 on non-admin)
+- [ ] `src/__tests__/admin/suggestion-crud-edge.test.ts` — source-analysis stubs for POLL-01..07 (verify create/update/close/pin/delete/set-resolution/get-upload-url Edge Functions exist, import admin-auth helper, use EXISTS guards for D-17/D-18)
+- [ ] `src/__tests__/admin/category-crud-edge.test.ts` — source-analysis stubs for CATG-01 (create/rename/delete-category)
+- [ ] `src/__tests__/admin/lifecycle-edge.test.ts` — source-analysis stubs for LIFE-01/02/03 (verify `close-expired-polls` EF exists with sweep UPDATE and documented no-auth carve-out)
+- [ ] `src/__tests__/admin/admin-migration.test.ts` — source-analysis test verifying `is_current_user_admin()` helper is defined and admin-bypass RLS policies reference it in `00000000000005_admin_phase4.sql`
+- [ ] `src/__tests__/admin/promote-admin.test.ts` — source-analysis stubs for ADMN-04 promote flow (both `target_user_id` and `target_discord_id` branches, snowflake regex)
+- [ ] `src/__tests__/admin/demote-admin.test.ts` — source-analysis stubs for D-06 self-demote guard (asserts server returns 400 "Cannot demote yourself")
 - [ ] No new framework install needed — vitest already configured
 
 ---

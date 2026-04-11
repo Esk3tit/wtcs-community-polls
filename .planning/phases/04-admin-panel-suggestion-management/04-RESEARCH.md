@@ -956,7 +956,7 @@ return json({ success: true }, 200, corsHeaders)
 
 **If the planner is uncomfortable with any MEDIUM assumptions (A8 especially), add a Wave 0 verification task that creates the view and runs a `SELECT` as a non-admin user in a test database.**
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 None that block planning. CONTEXT.md resolved all the substantive questions; this research confirms the technical patterns for each locked decision. The only items requiring human judgment during planning are the Claude's Discretion items from CONTEXT.md (bucket name, exact validation limits, soft cap, etc.), which the planner can call.
 
