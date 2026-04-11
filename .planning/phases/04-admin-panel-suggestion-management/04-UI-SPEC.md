@@ -150,6 +150,21 @@ Per phase: all confirmation dialogs for destructive actions, plus destructive ke
 
 All components use shadcn/ui primitives. New components added this phase must run through the registry gate (see below). Existing Phase 1/2 components (Card, Button, Input, Sonner, DropdownMenu, Collapsible, Badge, Progress, Sheet) are reused.
 
+### Visual Hierarchy & Focal Points
+
+Each primary Phase 4 surface has an explicit first-glance anchor so the executor doesn't have to guess visual priority:
+
+| Surface | Primary focal point | Why |
+|---------|---------------------|-----|
+| `/admin` → Suggestions tab (empty) | The `[+ Create suggestion]` primary CTA in the empty state | When there's nothing to manage, the only meaningful action is "create one". Empty-state CTA uses `primary` fill so it wins vs. surrounding neutral shell. |
+| `/admin` → Suggestions tab (populated) | The topmost pinned row (📌 badge + row card), OR the first active row if nothing is pinned | Pinned = "admin judged this most important"; surfacing it first matches that intent. Filter chips and `[+ New suggestion]` sit above but are secondary — they're navigation, not content. |
+| `/admin` → Categories tab | The `[+ New category]` button top-right of the list | Category CRUD is lightweight; the create affordance is the expected first action when the list is short. |
+| `/admin` → Admins tab | The `[+ Promote admin]` button above the admin list | With 2-3 admins at launch, the list itself is low-information; the action to add another is the clear anchor. |
+| `/admin/suggestions/new` and `/edit` | Page heading ("Create suggestion" / "Edit suggestion") + the Title input immediately below | Forms flow top-to-bottom; the heading sets context, the first required field is where fill-in actually begins. `text-2xl font-semibold` heading wins hierarchy against body-sized field labels. |
+| Public `/topics` (pin-aware) | The topmost pinned card (📌 badge, elevated via sort order) | Phase 2's focal point was the first-active card; pinning now promotes admin-flagged rows above the default sort. No layout change — the sort itself surfaces the anchor. |
+
+In all cases, `primary` color, larger type (`text-2xl font-semibold` for headings, `text-base font-medium` for primary CTAs), and sort order — not weight alone — carry the hierarchy. Within a tab, only ONE primary-filled button is visible at a time, so there's never ambiguity about "which is the main action here".
+
 ### 1. Navbar with Logo (D-03, app-wide)
 
 Existing `src/components/layout/Navbar.tsx` gains a left-aligned WTCS logo. Applies to public and admin surfaces.
