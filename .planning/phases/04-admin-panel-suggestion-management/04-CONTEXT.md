@@ -16,7 +16,7 @@ Deliver the full admin surface for creating, configuring, and managing suggestio
 ### Admin Shell & Navigation
 - **D-01:** Admin panel is a **single `/admin` route with tabs**: Suggestions, Categories, Admins. Mobile-friendly, matches a small-surface admin tool, fastest to ship. The existing `/admin/index.tsx` stub is replaced.
 - **D-02:** Suggestion create/edit uses **dedicated form pages**: `/admin/suggestions/new` and `/admin/suggestions/:id/edit`. Full-screen forms are the only sane layout for the dynamic-choices + image + timer combo on phones. Edit pages are URL-sharable for resume.
-- **D-03:** **WTCS logo** goes in the navbar on the left, **app-wide** (public and admin surfaces). Logo source file location is TBD — see `<open_questions>`.
+- **D-03:** **WTCS logo** goes in the navbar on the left, **app-wide** (public and admin surfaces). Source file is `src/assets/wtcs-logo.png` (9.9 KB). Imported via Vite's asset pipeline (`import logo from '@/assets/wtcs-logo.png'`) so it gets cache-busting hashing on build — not `public/`.
 
 ### Admin Promotion, Demotion, and Seeding
 - **D-04:** Promote UX is **search existing profiles + paste Discord ID fallback**. The search input does a server-side `ilike` query on `profiles.discord_username` with a min-2-char trigger and a 10-row limit (no scroll-a-list UX). If the target hasn't signed in yet, an admin can paste the raw Discord snowflake to pre-authorize them via `admin_discord_ids` — they become admin the first time they log in.
@@ -179,8 +179,7 @@ Deliver the full admin surface for creating, configuring, and managing suggestio
 <open_questions>
 ## Open Questions (Needed During Planning, Not Blocking This Doc)
 
-1. **WTCS logo source file.** Where do I get the SVG/PNG? Options: (a) path in the `wtcsmapvote` repo if it's local, (b) a URL on wtcsmapvote.com I can download, (c) the user drops a file in `public/` before planning starts. Need to know before the navbar plan lands.
-2. **The 2-3 Discord IDs to seed into `admin_discord_ids`.** Needed before the seed migration can be written. Planner should prompt for them during plan creation if still missing.
+1. **The 2-3 Discord IDs to seed into `admin_discord_ids`.** Needed before the seed migration can be written. Planner should prompt for them during plan creation if still missing.
 
 </open_questions>
 
