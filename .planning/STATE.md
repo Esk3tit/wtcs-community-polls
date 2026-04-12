@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-01-PLAN.md (Task 3 remote apply deferred to user)
-last_updated: "2026-04-12T00:14:25.517Z"
+stopped_at: Completed 04-02-PLAN.md (admin Edge Functions, all 250 tests green)
+last_updated: "2026-04-12T01:42:27.821Z"
 last_activity: 2026-04-12 -- Completed 04-01-PLAN.md
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 14
-  completed_plans: 11
-  percent: 79
+  completed_plans: 12
+  percent: 86
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-06)
 ## Current Position
 
 Phase: 4
-Plan: 02 (next)
-Status: Executing (04-01 complete; Task 3 remote apply deferred to user)
-Last activity: 2026-04-12 -- Completed 04-01-PLAN.md
+Plan: 03 (next)
+Status: Executing (04-02 complete; admin Edge Functions landed, EF deployment deferred to Phase 5)
+Last activity: 2026-04-11 -- Completed 04-02-PLAN.md
 
-Progress: [████████░░] 79%
+Progress: [█████████░] 86%
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Progress: [████████░░] 79%
 | Plan         | Duration | Tasks   | Files   |
 |--------------|----------|---------|---------|
 | Phase 04 P01 | 3min     | 2 tasks | 2 files |
+| Phase 04 P02 | 8min | 2 tasks tasks | 21 files files |
 
 ## Accumulated Context
 
@@ -74,6 +75,9 @@ Recent decisions affecting current work:
 - [Phase 3]: Edge Function deployed with --no-verify-jwt (ES256 gateway compatibility)
 - [Phase 3]: RPC error handling is fail-closed (sign out on profile update failure)
 - [Phase 04]: update_poll_with_choices RPC wraps UPDATE+DELETE+INSERT in plpgsql for transactional safety (HIGH #1 fix)
+- [Phase 04]: [Phase 04-02]: update-poll EF surfaces 409 via its own EXISTS pre-check before invoking the update_poll_with_choices RPC, so the UI sees a clean status code instead of an opaque RPC exception string
+- [Phase 04]: [Phase 04-02]: close-expired-polls returns 503 'Sweeper not configured' if CLOSE_SWEEPER_SECRET unset, making missing-secret state loud and visible (Phase 5 provisions)
+- [Phase 04]: [Phase 04-02]: Phase 4 admin EFs use source-analysis tests only; live integration tests deferred to Phase 5/6
 
 ### Pending Todos
 
@@ -85,6 +89,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-12T00:14:01.673Z
-Stopped at: Completed 04-01-PLAN.md (Task 3 remote apply deferred to user)
-Resume file: .planning/phases/04-admin-panel-suggestion-management/04-02-PLAN.md
+Last session: 2026-04-12T01:42:16.457Z
+Stopped at: Completed 04-02-PLAN.md (admin Edge Functions, all 250 tests green)
+Resume file: None

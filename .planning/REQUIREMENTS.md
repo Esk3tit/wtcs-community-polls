@@ -18,16 +18,16 @@
 ### Admin Management
 
 - [ ] **ADMN-01**: Initial admin accounts are seeded by Discord user ID in the database
-- [ ] **ADMN-02**: Existing admin can promote another Discord user to admin via in-app button
-- [ ] **ADMN-03**: Existing admin can demote another admin (except self)
+- [x] **ADMN-02**: Existing admin can promote another Discord user to admin via in-app button
+- [x] **ADMN-03**: Existing admin can demote another admin (except self)
 - [x] **ADMN-04**: Admin status is checked server-side on all admin actions
 
 ### Suggestion Creation (admin-facing: "poll creation")
 
 - [x] **POLL-01**: Admin can create a suggestion with a title, description, and N configurable choices (with presets: Yes/No binary, 4-choice multiple choice — presets pre-fill choices but admin can always add/remove)
-- [ ] **POLL-02**: Admin can attach an image to a suggestion (upload to Supabase Storage or paste external URL)
-- [ ] **POLL-03**: Admin can set a suggestion timer (7 days, 14 days, or custom duration)
-- [ ] **POLL-04**: Admin can assign a suggestion to a category
+- [x] **POLL-02**: Admin can attach an image to a suggestion (upload to Supabase Storage or paste external URL)
+- [x] **POLL-03**: Admin can set a suggestion timer (7 days, 14 days, or custom duration)
+- [x] **POLL-04**: Admin can assign a suggestion to a category
 - [x] **POLL-05**: Admin can pin/highlight a suggestion to surface it above others
 - [x] **POLL-06**: Admin can edit a suggestion before the first response is submitted
 - [x] **POLL-07**: Admin can manually close a suggestion at any time
@@ -72,7 +72,7 @@
 - [ ] **TEST-02**: Auth flows have unit/integration tests (login, 2FA rejection, session persistence, logout)
 - [ ] **TEST-03**: Response submission and result visibility have unit/integration tests (one-response enforcement, respond-then-reveal, respondents-only results)
 - [ ] **TEST-04**: Response integrity checks have tests (server membership rejection, rate limiting)
-- [ ] **TEST-05**: Admin actions have tests (suggestion CRUD, admin promotion/demotion, server-side auth checks)
+- [x] **TEST-05**: Admin actions have tests (suggestion CRUD, admin promotion/demotion, server-side auth checks)
 - [ ] **TEST-06**: E2E smoke tests cover the critical path (login → browse → respond → see results)
 
 ### Infrastructure
@@ -129,13 +129,13 @@
 | AUTH-04 | Phase 1 | Pending |
 | AUTH-05 | Phase 1 | Pending |
 | ADMN-01 | Phase 1 | Pending |
-| ADMN-02 | Phase 4 | Pending |
-| ADMN-03 | Phase 4 | Pending |
+| ADMN-02 | Phase 4 | Complete |
+| ADMN-03 | Phase 4 | Complete |
 | ADMN-04 | Phase 4 | Complete |
 | POLL-01 | Phase 4 | Complete |
-| POLL-02 | Phase 4 | Pending |
-| POLL-03 | Phase 4 | Pending |
-| POLL-04 | Phase 4 | Pending |
+| POLL-02 | Phase 4 | Complete |
+| POLL-03 | Phase 4 | Complete |
+| POLL-04 | Phase 4 | Complete |
 | POLL-05 | Phase 4 | Complete |
 | POLL-06 | Phase 4 | Complete |
 | POLL-07 | Phase 4 | Complete |
@@ -166,7 +166,7 @@
 | TEST-02 | Phase 1 | Pending |
 | TEST-03 | Phase 2 | Pending |
 | TEST-04 | Phase 3 | Pending |
-| TEST-05 | Phase 4 | Pending |
+| TEST-05 | Phase 4 | Complete |
 | TEST-06 | Phase 5 | Pending |
 
 **Coverage:**
