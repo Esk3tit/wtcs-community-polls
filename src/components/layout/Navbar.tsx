@@ -10,6 +10,7 @@ import {
 import { useAuth } from '@/hooks/useAuth'
 import { useTheme } from '@/components/theme-provider'
 import { MobileNav } from '@/components/layout/MobileNav'
+import logo from '@/assets/wtcs-logo.png'
 
 export function Navbar() {
   const { user, profile, signOut, signInWithDiscord } = useAuth()
@@ -18,9 +19,17 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 bg-card border-b">
       <div className="flex items-center justify-between py-3 px-4 md:px-6 mx-auto max-w-2xl">
-        {/* Left: Logo */}
-        <Link to="/" className="text-lg font-semibold text-foreground">
-          WTCS
+        {/* Left: WTCS logo (D-03 — app-wide leftmost element) */}
+        <Link
+          to="/"
+          className="min-h-[44px] flex items-center"
+          aria-label="WTCS Community Suggestions"
+        >
+          <img
+            src={logo}
+            alt="WTCS Community Suggestions"
+            className="h-8 w-auto md:h-9"
+          />
         </Link>
 
         {/* Center: Desktop nav links */}
