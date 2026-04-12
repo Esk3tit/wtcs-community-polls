@@ -7,6 +7,7 @@ import {
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { CategoriesList } from './CategoriesList'
 import { AdminsList } from './AdminsList'
+import { AdminSuggestionsTab } from './AdminSuggestionsTab'
 
 type TabId = 'suggestions' | 'categories' | 'admins'
 
@@ -49,10 +50,7 @@ export function AdminTabs() {
         </TabsTrigger>
       </TabsList>
       <TabsContent value="suggestions" className="pt-6" data-tab="suggestions">
-        {/* Plan 04 fills this */}
-        <div className="text-sm text-muted-foreground py-8 text-center">
-          Suggestions list — see Plan 04
-        </div>
+        <AdminSuggestionsTab />
       </TabsContent>
       <TabsContent value="categories" className="pt-6" data-tab="categories">
         <CategoriesList />

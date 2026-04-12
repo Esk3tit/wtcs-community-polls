@@ -4,14 +4,19 @@ import { AdminGuard } from '@/components/auth/AdminGuard'
 import { AdminTabs } from '@/components/admin/AdminTabs'
 
 const VALID_TABS = ['suggestions', 'categories', 'admins'] as const
+const VALID_FILTERS = ['active', 'closed', 'all'] as const
 type AdminTab = (typeof VALID_TABS)[number]
-type AdminSearch = { tab?: AdminTab }
+type AdminFilter = (typeof VALID_FILTERS)[number]
+type AdminSearch = { tab?: AdminTab; filter?: AdminFilter }
 
 export const Route = createFileRoute('/admin/')({
   component: AdminPage,
   validateSearch: (search: Record<string, unknown>): AdminSearch => ({
     tab: VALID_TABS.includes(search.tab as AdminTab)
       ? (search.tab as AdminTab)
+      : undefined,
+    filter: VALID_FILTERS.includes(search.filter as AdminFilter)
+      ? (search.filter as AdminFilter)
       : undefined,
   }),
 })
