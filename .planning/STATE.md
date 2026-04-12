@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-02-PLAN.md (admin Edge Functions, all 250 tests green)
-last_updated: "2026-04-12T01:42:27.821Z"
-last_activity: 2026-04-12 -- Completed 04-01-PLAN.md
+stopped_at: Completed 04-03-PLAN.md (admin shell UI, 271 tests green)
+last_updated: "2026-04-12T01:58:48.486Z"
+last_activity: 2026-04-11 -- Completed 04-03-PLAN.md
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 14
-  completed_plans: 12
-  percent: 86
+  completed_plans: 13
+  percent: 93
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-06)
 ## Current Position
 
 Phase: 4
-Plan: 03 (next)
-Status: Executing (04-02 complete; admin Edge Functions landed, EF deployment deferred to Phase 5)
-Last activity: 2026-04-11 -- Completed 04-02-PLAN.md
+Plan: 04 (next)
+Status: Executing (04-03 complete; admin shell UI landed, 271 tests green, build clean)
+Last activity: 2026-04-11 -- Completed 04-03-PLAN.md
 
-Progress: [█████████░] 86%
+Progress: [█████████░] 93%
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ Progress: [█████████░] 86%
 |--------------|----------|---------|---------|
 | Phase 04 P01 | 3min     | 2 tasks | 2 files |
 | Phase 04 P02 | 8min | 2 tasks tasks | 21 files files |
+| Phase 04 P03 | 70min | 4 tasks | 23 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,11 @@ Recent decisions affecting current work:
 - [Phase 04]: [Phase 04-02]: update-poll EF surfaces 409 via its own EXISTS pre-check before invoking the update_poll_with_choices RPC, so the UI sees a clean status code instead of an opaque RPC exception string
 - [Phase 04]: [Phase 04-02]: close-expired-polls returns 503 'Sweeper not configured' if CLOSE_SWEEPER_SECRET unset, making missing-secret state loud and visible (Phase 5 provisions)
 - [Phase 04]: [Phase 04-02]: Phase 4 admin EFs use source-analysis tests only; live integration tests deferred to Phase 5/6
+- [Phase 04]: [Phase 04-03]: Admin shell uses URL-synced ?tab= via TanStack validateSearch whitelist (mitigates T-04-13 URL injection)
+- [Phase 04]: [Phase 04-03]: CategoriesList delete dialog queries REAL affected-count from polls BEFORE opening (D-21 LOW resolution — no hardcoded 0)
+- [Phase 04]: [Phase 04-03]: Both CategoriesList/AdminsList render shadcn Alert variant=destructive + Retry on fetch failure (MEDIUM #7)
+- [Phase 04]: [Phase 04-03]: Profiles SELECT RLS verified via grep-based preflight test (HIGH #2) — no live-DB dependency in CI
+- [Phase 04]: [Phase 04-03]: Deferred-effect setState pattern (setTimeout+cleanup) adopted to satisfy react-hooks/set-state-in-effect
 
 ### Pending Todos
 
@@ -89,6 +95,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-12T01:42:16.457Z
-Stopped at: Completed 04-02-PLAN.md (admin Edge Functions, all 250 tests green)
+Last session: 2026-04-12T01:58:48.484Z
+Stopped at: Completed 04-03-PLAN.md (admin shell UI, 271 tests green)
 Resume file: None
