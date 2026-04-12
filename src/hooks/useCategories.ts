@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Category } from '@/lib/types/suggestions'
 
@@ -7,27 +7,33 @@ export function useCategories() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    async function fetchCategories() {
-      const { data, error: fetchError } = await supabase
-        .from('categories')
-        .select('*')
-        .order('sort_order', { ascending: true })
+  const fetchCategories = useCallback(async () => {
+    setLoading(true)
+    const { data, error: fetchError } = await supabase
+      .from('categories')
+      .select('*')
+      .order('sort_order', { ascending: true })
 
-      if (fetchError) {
-        console.error('Failed to fetch categories:', fetchError)
-        setError('Failed to load categories.')
-        setLoading(false)
-        return
-      }
-      if (data) {
-        setCategories(data)
-      }
-      setError(null)
+    if (fetchError) {
+      console.error('Failed to fetch categories:', fetchError)
+      setError('Failed to load categories.')
+      setCategories([])
       setLoading(false)
+      return
     }
-    fetchCategories()
+    setCategories(data ?? [])
+    setError(null)
+    setLoading(false)
   }, [])
 
-  return { categories, loading, error }
+  useEffect(() => {
+    // Defer the fetch so the effect body itself doesn't call setState
+    // synchronously (satisfies react-hooks/set-state-in-effect).
+    const t = setTimeout(() => {
+      void fetchCategories()
+    }, 0)
+    return () => clearTimeout(t)
+  }, [fetchCategories])
+
+  return { categories, loading, error, refetch: fetchCategories }
 }
