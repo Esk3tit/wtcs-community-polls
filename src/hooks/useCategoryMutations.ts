@@ -1,23 +1,7 @@
 import { useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
-
-type FunctionError = {
-  context?: { json?: () => Promise<{ error?: string }> }
-}
-
-async function extractMessage(error: unknown, fallback: string): Promise<string> {
-  try {
-    const ctx = (error as FunctionError)?.context
-    if (ctx?.json) {
-      const body = await ctx.json()
-      if (body?.error) return body.error
-    }
-  } catch {
-    /* fall through to fallback */
-  }
-  return fallback
-}
+import { extractFunctionErrorMessage } from '@/lib/fn-error'
 
 export function useCategoryMutations() {
   const [submitting, setSubmitting] = useState(false)
@@ -30,7 +14,7 @@ export function useCategoryMutations() {
         { body: { name } },
       )
       if (error) {
-        toast.error(await extractMessage(error, 'Could not create category. Try again.'))
+        toast.error(await extractFunctionErrorMessage(error, 'Could not create category. Try again.'))
         return { ok: false as const }
       }
       toast.success('Category created')
@@ -47,7 +31,7 @@ export function useCategoryMutations() {
         body: { category_id, name },
       })
       if (error) {
-        toast.error(await extractMessage(error, 'Could not rename category. Try again.'))
+        toast.error(await extractFunctionErrorMessage(error, 'Could not rename category. Try again.'))
         return { ok: false as const }
       }
       toast.success('Category renamed')
@@ -68,7 +52,7 @@ export function useCategoryMutations() {
         body: { category_id },
       })
       if (error) {
-        toast.error(await extractMessage(error, 'Could not delete category. Try again.'))
+        toast.error(await extractFunctionErrorMessage(error, 'Could not delete category. Try again.'))
         return { ok: false as const }
       }
       if (affectedCount > 0) {

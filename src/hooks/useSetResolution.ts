@@ -2,23 +2,7 @@ import { useState, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import type { Resolution } from '@/hooks/useClosePoll'
-
-type FunctionError = {
-  context?: { json?: () => Promise<{ error?: string }> }
-}
-
-async function extractMessage(error: unknown, fallback: string): Promise<string> {
-  try {
-    const ctx = (error as FunctionError)?.context
-    if (ctx?.json) {
-      const body = await ctx.json()
-      if (body?.error) return body.error
-    }
-  } catch {
-    /* fall through */
-  }
-  return fallback
-}
+import { extractFunctionErrorMessage } from '@/lib/fn-error'
 
 export function useSetResolution() {
   const [submitting, setSubmitting] = useState(false)
@@ -34,7 +18,7 @@ export function useSetResolution() {
           body: input,
         })
         if (error) {
-          toast.error(await extractMessage(error, 'Could not update resolution. Try again.'))
+          toast.error(await extractFunctionErrorMessage(error, 'Could not update resolution. Try again.'))
           return { ok: false as const }
         }
         toast.success('Resolution updated')

@@ -1,29 +1,7 @@
 import { useState, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
-
-type FunctionError = {
-  context?: {
-    status?: number
-    json?: () => Promise<{ error?: string }>
-  }
-}
-
-async function extractMessage(error: unknown, fallback: string): Promise<{ msg: string; status: number | undefined }> {
-  let status: number | undefined
-  let msg = fallback
-  try {
-    const ctx = (error as FunctionError)?.context
-    status = ctx?.status
-    if (ctx?.json) {
-      const body = await ctx.json()
-      if (body?.error) msg = body.error
-    }
-  } catch {
-    /* fall through */
-  }
-  return { msg, status }
-}
+import { extractFunctionError } from '@/lib/fn-error'
 
 export function useDeletePoll() {
   const [submitting, setSubmitting] = useState(false)
@@ -36,7 +14,7 @@ export function useDeletePoll() {
     try {
       const { error } = await supabase.functions.invoke('delete-poll', { body: input })
       if (error) {
-        const { msg, status } = await extractMessage(
+        const { msg, status } = await extractFunctionError(
           error,
           'Could not delete suggestion. Try again.',
         )

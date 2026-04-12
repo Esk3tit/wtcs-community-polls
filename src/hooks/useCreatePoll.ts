@@ -2,23 +2,7 @@ import { useState, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import type { SuggestionFormInput } from '@/lib/validation/suggestion-form'
-
-type FunctionError = {
-  context?: { json?: () => Promise<{ error?: string }> }
-}
-
-async function extractMessage(error: unknown, fallback: string): Promise<string> {
-  try {
-    const ctx = (error as FunctionError)?.context
-    if (ctx?.json) {
-      const body = await ctx.json()
-      if (body?.error) return body.error
-    }
-  } catch {
-    /* fall through */
-  }
-  return fallback
-}
+import { extractFunctionErrorMessage } from '@/lib/fn-error'
 
 export function useCreatePoll() {
   const [submitting, setSubmitting] = useState(false)
@@ -34,7 +18,7 @@ export function useCreatePoll() {
         { body: input },
       )
       if (error) {
-        const msg = await extractMessage(error, 'Could not create suggestion. Try again.')
+        const msg = await extractFunctionErrorMessage(error, 'Could not create suggestion. Try again.')
         toast.error(msg)
         return { ok: false as const, id: null }
       }
