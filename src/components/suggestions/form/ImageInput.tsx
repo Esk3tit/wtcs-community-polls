@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react'
-import { ImagePlus, Loader2, X } from 'lucide-react'
+import { ImagePlus, Loader2, X, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { uploadImage } from '@/hooks/useUploadImage'
+import { cn } from '@/lib/utils'
 
 interface Props {
   value: string | null
@@ -11,8 +13,13 @@ interface Props {
   disabled?: boolean
 }
 
+const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp']
+const MAX_BYTES = 2 * 1024 * 1024
+
 export function ImageInput({ value, onChange, disabled }: Props) {
   const [uploading, setUploading] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
+  const [dropError, setDropError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const handleFile = async (file: File) => {
@@ -25,6 +32,28 @@ export function ImageInput({ value, onChange, disabled }: Props) {
     } finally {
       setUploading(false)
     }
+  }
+
+  // LR-07: validate a dropped file inline before handing off to uploadImage.
+  // uploadImage also validates and throws, but surfacing an inline error in
+  // the dropzone gives screen-reader users live feedback and avoids a bare
+  // toast for drops.
+  const validateAndAccept = (file: File) => {
+    setDropError(null)
+    if (!ALLOWED_MIME.includes(file.type)) {
+      setDropError('Unsupported format. Use JPG, PNG, or WebP.')
+      return
+    }
+    if (file.size > MAX_BYTES) {
+      setDropError('Image too large. Max 2 MB.')
+      return
+    }
+    void handleFile(file)
+  }
+
+  const openPicker = () => {
+    if (disabled || uploading) return
+    fileRef.current?.click()
   }
 
   return (
@@ -63,26 +92,82 @@ export function ImageInput({ value, onChange, disabled }: Props) {
               disabled={disabled || uploading}
               onChange={(e) => {
                 const f = e.target.files?.[0]
-                if (f) void handleFile(f)
+                if (f) {
+                  setDropError(null)
+                  void handleFile(f)
+                }
               }}
             />
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              disabled={disabled || uploading}
-              onClick={() => fileRef.current?.click()}
+            {/* LR-07: dropzone. Whole region is a button so keyboard Enter/Space
+                opens the file picker; drag-over adds a ring via tokens. */}
+            <div
+              role="region"
+              aria-label="Image upload"
+              className="space-y-2"
             >
-              {uploading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-1 animate-spin" /> Uploading…
-                </>
-              ) : (
-                <>
-                  <ImagePlus className="h-4 w-4 mr-1" /> Choose image (JPG/PNG/WebP, max 2 MB)
-                </>
-              )}
-            </Button>
+              <button
+                type="button"
+                disabled={disabled || uploading}
+                onClick={openPicker}
+                onDragEnter={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  if (disabled || uploading) return
+                  setDragOver(true)
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  if (disabled || uploading) return
+                  setDragOver(true)
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  setDragOver(false)
+                }}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  setDragOver(false)
+                  if (disabled || uploading) return
+                  const f = e.dataTransfer?.files?.[0]
+                  if (f) validateAndAccept(f)
+                }}
+                className={cn(
+                  'flex w-full flex-col items-center justify-center gap-2 rounded-md border border-dashed px-4 py-8 text-sm transition-colors',
+                  'hover:bg-muted/40',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                  dragOver && 'bg-muted/60 ring-2 ring-ring',
+                  (disabled || uploading) && 'cursor-not-allowed opacity-60',
+                )}
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <span className="text-muted-foreground">Uploading…</span>
+                  </>
+                ) : (
+                  <>
+                    <ImagePlus className="h-8 w-8 text-muted-foreground" />
+                    <span className="font-medium">
+                      Drop an image here, or click to browse
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      JPG, PNG, or WebP · max 2 MB
+                    </span>
+                  </>
+                )}
+              </button>
+              <div aria-live="polite" role="status" className="min-h-0">
+                {dropError && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{dropError}</AlertDescription>
+                  </Alert>
+                )}
+              </div>
+            </div>
           </TabsContent>
           <TabsContent value="url" className="pt-3">
             <Input
