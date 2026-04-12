@@ -30,15 +30,24 @@ export function AdminSuggestionsTab() {
       const query = filter === 'all' ? base : base.eq('status', filter)
       const { data, error } = await query
       if (error) throw error
-      setItems(((data ?? []) as unknown) as AdminSuggestion[])
+      const rows = ((data ?? []) as unknown) as AdminSuggestion[]
+      setItems(rows)
 
-      const { data: vcData, error: vcErr } = await supabase
-        .from('vote_counts')
-        .select('poll_id, count')
-      if (vcErr) throw vcErr
+      // ME-05: scope the vote_counts query to only the poll IDs currently
+      // in view. Previously the query pulled the full vote_counts table on
+      // every filter change, which was O(all-polls-ever) — same class of
+      // issue as HI-01 but admin-side.
+      const pollIds = rows.map((r) => r.id)
       const counts: Record<string, number> = {}
-      for (const r of (vcData ?? []) as Array<{ poll_id: string; count: number | null }>) {
-        counts[r.poll_id] = (counts[r.poll_id] ?? 0) + (r.count ?? 0)
+      if (pollIds.length > 0) {
+        const { data: vcData, error: vcErr } = await supabase
+          .from('vote_counts')
+          .select('poll_id, count')
+          .in('poll_id', pollIds)
+        if (vcErr) throw vcErr
+        for (const r of (vcData ?? []) as Array<{ poll_id: string; count: number | null }>) {
+          counts[r.poll_id] = (counts[r.poll_id] ?? 0) + (r.count ?? 0)
+        }
       }
       setVoteCounts(counts)
     } catch (err) {

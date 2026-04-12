@@ -17,17 +17,20 @@ function makeThenable<T>(
   select: () => typeof b
   order: () => typeof b
   eq: () => typeof b
+  in: () => typeof b
 } {
   const b = {
     select: () => b,
     order: () => b,
     eq: () => b,
+    in: () => b,
     then: (onFulfilled: (v: MockResult<T>) => unknown, onRejected?: (e: unknown) => unknown) =>
       resolver().then(onFulfilled, onRejected),
   } as unknown as PromiseLike<MockResult<T>> & {
     select: () => typeof b
     order: () => typeof b
     eq: () => typeof b
+    in: () => typeof b
   }
   return b
 }
@@ -136,7 +139,26 @@ describe('AdminSuggestionsTab error state (MEDIUM #7)', () => {
   })
 
   it('renders Alert + Retry on vote_counts fetch failure', async () => {
-    pollsResolver.mockReset().mockResolvedValue({ data: [], error: null })
+    // ME-05: vote_counts query is now scoped to visible pollIds via .in(),
+    // so the failing query only fires when polls_effective returned
+    // at least one row. Seed one poll so the vote_counts call happens.
+    pollsResolver.mockReset().mockResolvedValue({
+      data: [
+        {
+          id: 'p1',
+          title: 'Only one',
+          status: 'active',
+          raw_status: 'active',
+          resolution: null,
+          is_pinned: false,
+          closes_at: null,
+          closed_at: null,
+          category_id: null,
+          created_at: '2026-04-01',
+        },
+      ],
+      error: null,
+    })
     voteCountsResolver.mockReset().mockResolvedValue({
       data: null,
       error: new Error('network'),
