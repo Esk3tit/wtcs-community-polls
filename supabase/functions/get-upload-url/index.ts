@@ -26,6 +26,20 @@ function sanitizeFilename(name: string): string {
   return cleaned.length > 0 ? cleaned : 'upload'
 }
 
+// ME-02: force the on-disk filename extension to match the validated
+// contentType so browsers / CDNs that sniff by extension never disagree
+// with the stored Content-Type header. Security is still enforced by
+// the EF's contentType allowlist + Supabase Storage's MIME allowlist at
+// PUT time; this is a UX / cache-consistency hardening.
+function extensionForContentType(contentType: string): string {
+  switch (contentType) {
+    case 'image/jpeg': return 'jpg'
+    case 'image/png': return 'png'
+    case 'image/webp': return 'webp'
+    default: return 'bin'
+  }
+}
+
 Deno.serve(async (req) => {
   const corsHeaders = getCorsHeaders(req)
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
@@ -67,7 +81,13 @@ Deno.serve(async (req) => {
       return json({ error: 'Invalid contentType (allowed: image/jpeg, image/png, image/webp)' }, 400, corsHeaders)
     }
 
-    const path = `${crypto.randomUUID()}/${sanitizeFilename(filename)}`
+    // ME-02: overwrite any client-supplied extension with the one that
+    // matches the validated contentType. Strip the final .ext (if any)
+    // from the sanitized base name before appending the canonical ext.
+    const sanitized = sanitizeFilename(filename)
+    const baseName = sanitized.replace(/\.[^.]+$/, '') || 'upload'
+    const canonicalExt = extensionForContentType(contentType)
+    const path = `${crypto.randomUUID()}/${baseName}.${canonicalExt}`
     const { data, error } = await supabaseAdmin
       .storage
       .from('poll-images')
