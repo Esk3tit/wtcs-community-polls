@@ -89,7 +89,7 @@ Plans:
   7. Admin actions have tests (suggestion CRUD, admin promotion/demotion, server-side auth checks)
 **Plans**: 4 plans
 Plans:
-- [ ] 04-01-PLAN.md -- Migration spine: polls_effective view, is_current_user_admin helper, admin-bypass RLS patches, create_poll_with_choices RPC, poll-images bucket, seed admins (BLOCKING supabase db push)
+- [x] 04-01-PLAN.md -- Migration spine: polls_effective view, is_current_user_admin helper, admin-bypass RLS patches, create_poll_with_choices RPC, poll-images bucket, seed admins (BLOCKING supabase db push)
 - [ ] 04-02-PLAN.md -- 14 admin Edge Functions + _shared/admin-auth.ts helper + 6 source-analysis test files
 - [ ] 04-03-PLAN.md -- Admin shell (tabs), navbar logo, Categories tab CRUD, Admins tab promote/demote, shadcn tabs/dialog/label/textarea/select install
 - [ ] 04-04-PLAN.md -- Suggestion form (create/edit) with choices/image/timer/category, Admin Suggestions tab + kebab menu + lifecycle dialogs, public pin sort + badge, archive resolution pills, polls_effective switch
