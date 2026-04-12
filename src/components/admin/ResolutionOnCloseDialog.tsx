@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { CheckCircle2, Send, XCircle } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -17,10 +19,10 @@ interface Props {
   onClosed: () => void
 }
 
-const OPTIONS: { value: Resolution; label: string }[] = [
-  { value: 'addressed', label: 'Addressed' },
-  { value: 'forwarded', label: 'Forwarded' },
-  { value: 'closed', label: 'Closed' },
+const OPTIONS: { value: Resolution; label: string; Icon: LucideIcon }[] = [
+  { value: 'addressed', label: 'Addressed', Icon: CheckCircle2 },
+  { value: 'forwarded', label: 'Forwarded', Icon: Send },
+  { value: 'closed', label: 'Closed', Icon: XCircle },
 ]
 
 export function ResolutionOnCloseDialog({ open, onOpenChange, pollId, onClosed }: Props) {
@@ -43,19 +45,20 @@ export function ResolutionOnCloseDialog({ open, onOpenChange, pollId, onClosed }
         <DialogHeader>
           <DialogTitle>Close this suggestion?</DialogTitle>
           <DialogDescription>
-            Pick the resolution that best describes how this suggestion was handled. This closes
-            voting immediately.
+            Closing will stop accepting new responses. Choose a resolution status — this can be
+            changed later.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-3 gap-2">
-          {OPTIONS.map((opt) => (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          {OPTIONS.map(({ value, label, Icon }) => (
             <Button
-              key={opt.value}
+              key={value}
               type="button"
-              variant={selected === opt.value ? 'default' : 'outline'}
-              onClick={() => setSelected(opt.value)}
+              variant={selected === value ? 'default' : 'outline'}
+              onClick={() => setSelected(value)}
             >
-              {opt.label}
+              <Icon className="h-4 w-4 mr-2" />
+              {label}
             </Button>
           ))}
         </div>

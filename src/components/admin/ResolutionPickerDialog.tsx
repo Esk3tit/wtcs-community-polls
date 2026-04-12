@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { CheckCircle2, Send, XCircle } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -18,10 +20,10 @@ interface Props {
   onUpdated: () => void
 }
 
-const OPTIONS: { value: Resolution; label: string }[] = [
-  { value: 'addressed', label: 'Addressed' },
-  { value: 'forwarded', label: 'Forwarded' },
-  { value: 'closed', label: 'Closed' },
+const OPTIONS: { value: Resolution; label: string; Icon: LucideIcon }[] = [
+  { value: 'addressed', label: 'Addressed', Icon: CheckCircle2 },
+  { value: 'forwarded', label: 'Forwarded', Icon: Send },
+  { value: 'closed', label: 'Closed', Icon: XCircle },
 ]
 
 export function ResolutionPickerDialog({
@@ -58,15 +60,16 @@ export function ResolutionPickerDialog({
         <DialogHeader>
           <DialogTitle>Set resolution status</DialogTitle>
         </DialogHeader>
-        <div className="grid grid-cols-3 gap-2">
-          {OPTIONS.map((opt) => (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          {OPTIONS.map(({ value, label, Icon }) => (
             <Button
-              key={opt.value}
+              key={value}
               type="button"
-              variant={selected === opt.value ? 'default' : 'outline'}
-              onClick={() => setSelected(opt.value)}
+              variant={selected === value ? 'default' : 'outline'}
+              onClick={() => setSelected(value)}
             >
-              {opt.label}
+              <Icon className="h-4 w-4 mr-2" />
+              {label}
             </Button>
           ))}
         </div>
