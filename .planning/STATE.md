@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 04-03-PLAN.md (admin shell UI, 271 tests green)
-last_updated: "2026-04-12T01:58:48.486Z"
-last_activity: 2026-04-11 -- Completed 04-03-PLAN.md
+status: phase-04-complete
+stopped_at: Completed 04-04-PLAN.md — Phase 4 execution complete, 299 tests green
+last_updated: "2026-04-11T19:15:00.000Z"
+last_activity: 2026-04-11 -- Completed 04-04-PLAN.md (Phase 4 done)
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 14
-  completed_plans: 13
-  percent: 93
+  completed_plans: 14
+  percent: 100
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** Community members can vote on competitive scene proposals with confidence that results are legitimate
-**Current focus:** Phase 04 executing — 04-01 (DB substrate) complete; user must apply migration to remote Supabase before 04-02 can run live
+**Current focus:** Phase 04 execution complete — all 4 plans landed. Ready for Phase 05 (launch/deploy Edge Functions + verify-phase).
 
 ## Current Position
 
-Phase: 4
-Plan: 04 (next)
-Status: Executing (04-03 complete; admin shell UI landed, 271 tests green, build clean)
-Last activity: 2026-04-11 -- Completed 04-03-PLAN.md
+Phase: 4 (execution complete)
+Plan: All 4 plans done
+Status: Phase 4 complete (299 tests green, build clean). Phase 5 pending (Edge Function deploy + live integration).
+Last activity: 2026-04-11 -- Completed 04-04-PLAN.md
 
-Progress: [█████████░] 93%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -62,6 +62,7 @@ Progress: [█████████░] 93%
 | Phase 04 P01 | 3min     | 2 tasks | 2 files |
 | Phase 04 P02 | 8min | 2 tasks tasks | 21 files files |
 | Phase 04 P03 | 70min | 4 tasks | 23 files |
+| Phase 04 P04 | 35min | 4 tasks | 26 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,10 @@ Recent decisions affecting current work:
 - [Phase 04]: [Phase 04-03]: Both CategoriesList/AdminsList render shadcn Alert variant=destructive + Retry on fetch failure (MEDIUM #7)
 - [Phase 04]: [Phase 04-03]: Profiles SELECT RLS verified via grep-based preflight test (HIGH #2) — no live-DB dependency in CI
 - [Phase 04]: [Phase 04-03]: Deferred-effect setState pattern (setTimeout+cleanup) adopted to satisfy react-hooks/set-state-in-effect
+- [Phase 04]: [Phase 04-04]: useSuggestions now reads polls_effective (MEDIUM #5 invariant); choices + categories hydrated via separate IN() queries because PostgREST views don't preserve FK relationships
+- [Phase 04]: [Phase 04-04]: polls-effective-invariant grep test walks src/routes+hooks+components, allowlists only CategoriesList.tsx (admin-only category_id count)
+- [Phase 04]: [Phase 04-04]: SuggestionForm edit-mode fetch-failure + AdminSuggestionsTab fetch-failure both render destructive Alert + Retry (MEDIUM #7 complete across Plans 3+4)
+- [Phase 04]: [Phase 04-04]: lint-staged eslint now uses --no-warn-ignored so generated routeTree.gen.ts can be staged alongside source without tripping --max-warnings 0
 
 ### Pending Todos
 
@@ -95,6 +100,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-12T01:58:48.484Z
-Stopped at: Completed 04-03-PLAN.md (admin shell UI, 271 tests green)
+Last session: 2026-04-11T19:15:00.000Z
+Stopped at: Completed 04-04-PLAN.md — Phase 4 execution complete (299 tests / 28 files, build clean)
 Resume file: None
