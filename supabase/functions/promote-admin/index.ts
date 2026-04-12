@@ -64,6 +64,9 @@ Deno.serve(async (req) => {
 
     // Branch 1: existing profile -> flip is_admin to true
     if (target_user_id) {
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(target_user_id)) {
+        return json({ error: 'Invalid user ID format' }, 400, corsHeaders)
+      }
       const { error } = await supabaseAdmin
         .from('profiles')
         .update({ is_admin: true })
@@ -95,16 +98,21 @@ Deno.serve(async (req) => {
     }
 
     // Retroactively flip any matching profile rows so a returning user is admin.
-    const { error: flipError } = await supabaseAdmin
+    const { data: promotedProfiles, error: flipError } = await supabaseAdmin
       .from('profiles')
       .update({ is_admin: true })
       .eq('discord_id', target_discord_id)
+      .select('id')
     if (flipError) {
       console.error('promote-admin retroactive profile flip failed:', flipError)
-      // Don't fail the whole request; pre-auth still succeeded.
+      return json({ error: 'Internal error' }, 500, corsHeaders)
     }
 
-    return json({ success: true, mode: 'preauth' }, 200, corsHeaders)
+    return json(
+      { success: true, mode: 'preauth', promotedExistingProfiles: (promotedProfiles ?? []).length },
+      200,
+      corsHeaders,
+    )
   } catch (err) {
     console.error('promote-admin error:', err)
     return json({ error: 'Internal error' }, 500, corsHeaders)

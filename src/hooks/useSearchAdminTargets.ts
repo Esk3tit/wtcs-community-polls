@@ -13,6 +13,8 @@ export function useSearchAdminTargets() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<AdminTarget[]>([])
   const [searching, setSearching] = useState(false)
+  const normalizedQuery = query.trim()
+  const canSearch = normalizedQuery.length >= 2
   const debounced = useDebounce(query, 300)
 
   useEffect(() => {
@@ -64,5 +66,5 @@ export function useSearchAdminTargets() {
     }
   }, [debounced])
 
-  return { query, setQuery, results, searching }
+  return { query, normalizedQuery, canSearch, setQuery, results, searching }
 }

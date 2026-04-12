@@ -21,7 +21,8 @@ vi.mock('@/hooks/useAuth', () => ({
   }),
 }))
 
-const eqMock = vi.fn()
+const orderMock = vi.fn()
+const eqMock = vi.fn().mockReturnValue({ order: orderMock })
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
@@ -41,6 +42,8 @@ vi.mock('@/hooks/useDemoteAdmin', () => ({
 vi.mock('@/hooks/useSearchAdminTargets', () => ({
   useSearchAdminTargets: () => ({
     query: '',
+    normalizedQuery: '',
+    canSearch: false,
     setQuery: vi.fn(),
     results: [],
     searching: false,
@@ -52,7 +55,7 @@ vi.mock('@/hooks/useSearchAdminTargets', () => ({
 describe('AdminsList', () => {
   beforeEach(() => {
     cleanup()
-    eqMock.mockReset().mockResolvedValue({
+    orderMock.mockReset().mockResolvedValue({
       data: [
         {
           id: 'self-uid',
@@ -69,6 +72,7 @@ describe('AdminsList', () => {
       ],
       error: null,
     })
+    eqMock.mockReset().mockReturnValue({ order: orderMock })
   })
 
   it('renders Admins title and Promote button', async () => {
@@ -122,10 +126,11 @@ describe('AdminsList error state (MEDIUM #7)', () => {
   })
 
   it('renders Alert + Retry button on fetch failure (not a silent empty list)', async () => {
-    eqMock.mockReset().mockResolvedValue({
+    orderMock.mockReset().mockResolvedValue({
       data: null,
       error: new Error('network'),
     })
+    eqMock.mockReset().mockReturnValue({ order: orderMock })
     render(<AdminsList />)
     await waitFor(() =>
       expect(screen.getByRole('alert')).toBeInTheDocument(),

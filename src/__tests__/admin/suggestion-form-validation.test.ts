@@ -90,4 +90,26 @@ describe('validateSuggestionForm', () => {
     })
     expect(r.ok).toBe(true)
   })
+
+  it('rejects closes_at less than 60 seconds in the future', () => {
+    const r = validateSuggestionForm({
+      ...valid(),
+      closes_at: new Date(Date.now() + 59_000).toISOString(),
+    })
+    expect(r.ok).toBe(false)
+    if (!r.ok) expect(r.errors.closes_at).toMatch(/future/)
+  })
+
+  it('normalizes blank optional fields to null', () => {
+    const r = validateSuggestionForm({
+      ...valid(),
+      category_id: '   ',
+      image_url: '   ',
+    })
+    expect(r.ok).toBe(true)
+    if (r.ok) {
+      expect(r.value.category_id).toBeNull()
+      expect(r.value.image_url).toBeNull()
+    }
+  })
 })

@@ -20,7 +20,7 @@ type Props = {
 }
 
 export function PromoteAdminDialog({ open, onOpenChange, onPromoted }: Props) {
-  const { query, setQuery, results, searching } = useSearchAdminTargets()
+  const { query, canSearch, setQuery, results, searching } = useSearchAdminTargets()
   const { promote, submitting } = usePromoteAdmin()
   const [discordId, setDiscordId] = useState('')
 
@@ -47,7 +47,7 @@ export function PromoteAdminDialog({ open, onOpenChange, onPromoted }: Props) {
   }
 
   const showNoMatches =
-    query.length >= 2 && results.length === 0 && !searching
+    canSearch && results.length === 0 && !searching
 
   return (
     <Dialog

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { UserMinus, AlertCircle, UserPlus, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
@@ -21,8 +21,10 @@ export function AdminsList() {
   const [error, setError] = useState<Error | null>(null)
   const [promoteOpen, setPromoteOpen] = useState(false)
   const [demoteTarget, setDemoteTarget] = useState<Admin | null>(null)
+  const requestSeq = useRef(0)
 
   const refetch = useCallback(async () => {
+    const requestId = ++requestSeq.current
     setLoading(true)
     setError(null)
     try {
@@ -30,6 +32,8 @@ export function AdminsList() {
         .from('profiles')
         .select('id, discord_id, discord_username, avatar_url')
         .eq('is_admin', true)
+        .order('discord_username', { ascending: true })
+      if (requestId !== requestSeq.current) return
       if (qErr) {
         setError(new Error(qErr.message))
         setAdmins([])
@@ -37,10 +41,13 @@ export function AdminsList() {
         setAdmins((data ?? []) as Admin[])
       }
     } catch (err) {
+      if (requestId !== requestSeq.current) return
       setError(err instanceof Error ? err : new Error('Could not load admins'))
       setAdmins([])
     } finally {
-      setLoading(false)
+      if (requestId === requestSeq.current) {
+        setLoading(false)
+      }
     }
   }, [])
 

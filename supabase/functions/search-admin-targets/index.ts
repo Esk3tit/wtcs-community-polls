@@ -63,6 +63,7 @@ Deno.serve(async (req) => {
       .from('profiles')
       .select('id, discord_id, discord_username, avatar_url')
       .ilike('discord_username', `%${escapedQuery}%`)
+      .order('discord_username', { ascending: true })
       .limit(10)
     if (error) {
       console.error('search-admin-targets query failed:', error)

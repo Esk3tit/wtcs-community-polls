@@ -61,8 +61,12 @@ describe('Phase 4 close-expired-polls Edge Function (HIGH #4 — cron-secret gat
   })
 
   it('header check appears BEFORE the polls.update() call', () => {
-    const headerIdx = src.search(/X-Cron-Secret/i)
-    const updateIdx = src.search(/from\(\s*['"]polls['"]\s*\)\s*\.\s*update/)
+    const headerIdx = src.search(
+      /req\.headers\.get\(\s*['"]X-Cron-Secret['"]\s*\)/,
+    )
+    const updateIdx = src.search(
+      /\.from\(\s*['"]polls['"]\s*\)[\s\S]{0,120}\.update\(/,
+    )
     expect(headerIdx).toBeGreaterThan(-1)
     expect(updateIdx).toBeGreaterThan(-1)
     expect(headerIdx).toBeLessThan(updateIdx)

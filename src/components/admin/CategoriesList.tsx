@@ -76,6 +76,7 @@ export function CategoriesList() {
   }
 
   const handleSaveEdit = async (catId: string) => {
+    if (submitting) return
     const trimmed = editValue.trim()
     if (!trimmed) return
     const result = await rename(catId, trimmed)
@@ -96,6 +97,7 @@ export function CategoriesList() {
   }
 
   const handleSaveNew = async () => {
+    if (submitting) return
     const trimmed = newRowValue.trim()
     if (!trimmed) return
     const result = await create(trimmed)

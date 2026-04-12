@@ -42,14 +42,21 @@ Deno.serve(async (req) => {
 
     let body: { poll_id?: unknown }
     try {
-      body = await req.json()
+      const parsed: unknown = await req.json()
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return json({ error: 'Invalid JSON body' }, 400, corsHeaders)
+      }
+      body = parsed as { poll_id?: unknown }
     } catch {
       return json({ error: 'Invalid JSON body' }, 400, corsHeaders)
     }
 
-    const poll_id = typeof body.poll_id === 'string' ? body.poll_id : ''
+    const poll_id = typeof body.poll_id === 'string' ? body.poll_id.trim() : ''
     if (!poll_id) {
       return json({ error: 'Missing poll_id' }, 400, corsHeaders)
+    }
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(poll_id)) {
+      return json({ error: 'Invalid poll_id' }, 400, corsHeaders)
     }
 
     // EXISTS guard: refuse to delete if any votes already exist (D-18).

@@ -40,7 +40,11 @@ Deno.serve(async (req) => {
 
     let body: { poll_id?: unknown; is_pinned?: unknown }
     try {
-      body = await req.json()
+      const parsed: unknown = await req.json()
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return json({ error: 'Invalid JSON body' }, 400, corsHeaders)
+      }
+      body = parsed as { poll_id?: unknown; is_pinned?: unknown }
     } catch {
       return json({ error: 'Invalid JSON body' }, 400, corsHeaders)
     }

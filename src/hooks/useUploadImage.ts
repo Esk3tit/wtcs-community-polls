@@ -1,15 +1,13 @@
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
-
-const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp']
-const MAX_BYTES = 2 * 1024 * 1024
+import { ALLOWED_IMAGE_MIME, MAX_IMAGE_BYTES } from '@/lib/imageConstraints'
 
 export async function uploadImage(file: File): Promise<string> {
-  if (!ALLOWED_MIME.includes(file.type)) {
+  if (!ALLOWED_IMAGE_MIME.includes(file.type)) {
     toast.error('Unsupported format. Use JPG, PNG, or WebP.')
     throw new Error('mime')
   }
-  if (file.size > MAX_BYTES) {
+  if (file.size > MAX_IMAGE_BYTES) {
     toast.error('Image too large. Max 2 MB.')
     throw new Error('size')
   }

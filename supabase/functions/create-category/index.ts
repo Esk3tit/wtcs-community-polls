@@ -51,9 +51,19 @@ Deno.serve(async (req) => {
       return json({ error: 'Category name must be between 1 and 50 characters' }, 400, corsHeaders)
     }
 
+    // Generate kebab-case slug from name (e.g. "Lineup Changes" -> "lineup-changes")
+    const slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+
+    if (!slug) {
+      return json({ error: 'Category name must contain at least one alphanumeric character' }, 400, corsHeaders)
+    }
+
     const { data, error } = await supabaseAdmin
       .from('categories')
-      .insert({ name })
+      .insert({ name, slug })
       .select('id, name')
       .single()
     if (error) {

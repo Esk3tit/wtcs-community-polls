@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { uploadImage } from '@/hooks/useUploadImage'
+import { ALLOWED_IMAGE_MIME, MAX_IMAGE_BYTES } from '@/lib/imageConstraints'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -12,9 +13,6 @@ interface Props {
   onChange: (next: string | null) => void
   disabled?: boolean
 }
-
-const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp']
-const MAX_BYTES = 2 * 1024 * 1024
 
 export function ImageInput({ value, onChange, disabled }: Props) {
   const [uploading, setUploading] = useState(false)
@@ -41,11 +39,11 @@ export function ImageInput({ value, onChange, disabled }: Props) {
   // toast for drops.
   const validateAndAccept = (file: File) => {
     setDropError(null)
-    if (!ALLOWED_MIME.includes(file.type)) {
+    if (!ALLOWED_IMAGE_MIME.includes(file.type)) {
       setDropError('Unsupported format. Use JPG, PNG, or WebP.')
       return
     }
-    if (file.size > MAX_BYTES) {
+    if (file.size > MAX_IMAGE_BYTES) {
       setDropError('Image too large. Max 2 MB.')
       return
     }
@@ -92,10 +90,12 @@ export function ImageInput({ value, onChange, disabled }: Props) {
               className="hidden"
               disabled={disabled || uploading}
               onChange={(e) => {
-                const f = e.target.files?.[0]
+                const input = e.currentTarget
+                const f = input.files?.[0]
                 if (f) {
                   validateAndAccept(f)
                 }
+                input.value = ''
               }}
             />
             {/* LR-07: dropzone. Whole region is a button so keyboard Enter/Space
