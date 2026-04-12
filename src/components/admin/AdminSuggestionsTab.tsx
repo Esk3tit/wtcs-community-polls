@@ -4,9 +4,23 @@ import { Plus, Inbox, Archive, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { supabase } from '@/lib/supabase'
+import { usePinPoll } from '@/hooks/usePinPoll'
 import { AdminSuggestionRow, type AdminSuggestion } from './AdminSuggestionRow'
 
 type Filter = 'active' | 'closed' | 'all'
+
+// NIT-02: the visible list ordering must mirror the server ORDER BY:
+//   is_pinned DESC, created_at DESC
+// When we optimistically flip is_pinned we also re-sort locally so the row
+// visually jumps into the pinned section immediately. The subsequent
+// refetch is the reconciliation step and authoritative.
+function sortAdminSuggestions(rows: AdminSuggestion[]): AdminSuggestion[] {
+  return [...rows].sort((a, b) => {
+    if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1
+    // created_at DESC
+    return a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0
+  })
+}
 
 export function AdminSuggestionsTab() {
   const search = useSearch({ strict: false }) as { tab?: string; filter?: Filter }
@@ -17,6 +31,8 @@ export function AdminSuggestionsTab() {
   const [voteCounts, setVoteCounts] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<Error | null>(null)
+
+  const { pinPoll } = usePinPoll()
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
@@ -64,6 +80,32 @@ export function AdminSuggestionsTab() {
 
   const setFilter = (f: Filter) =>
     navigate({ to: '/admin', search: { tab: 'suggestions', filter: f } })
+
+  // NIT-02: optimistic pin. Flip the row's is_pinned locally and re-sort
+  // before firing the mutation. If the mutation fails we revert. The
+  // post-mutation refetch is the reconciliation step so server state
+  // always wins.
+  const handleTogglePin = useCallback(
+    async (pollId: string, nextPinned: boolean) => {
+      const prev = items
+      const optimistic = sortAdminSuggestions(
+        items.map((it) =>
+          it.id === pollId ? { ...it, is_pinned: nextPinned } : it,
+        ),
+      )
+      setItems(optimistic)
+      const res = await pinPoll({ poll_id: pollId, is_pinned: nextPinned })
+      if (!res.ok) {
+        // Revert to the pre-optimistic snapshot. The toast was already
+        // surfaced by usePinPoll's error path.
+        setItems(prev)
+        return
+      }
+      // Reconciliation — fetch canonical state.
+      void fetchAll()
+    },
+    [items, pinPoll, fetchAll],
+  )
 
   return (
     <div>
@@ -152,6 +194,7 @@ export function AdminSuggestionsTab() {
               suggestion={s}
               voteCount={voteCounts[s.id] ?? 0}
               onChanged={fetchAll}
+              onTogglePin={(pid, next) => void handleTogglePin(pid, next)}
             />
           ))}
         </div>

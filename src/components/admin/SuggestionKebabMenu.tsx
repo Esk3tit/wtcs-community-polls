@@ -12,7 +12,6 @@ import {
 import { ResolutionOnCloseDialog } from './ResolutionOnCloseDialog'
 import { ResolutionPickerDialog } from './ResolutionPickerDialog'
 import { DeleteSuggestionDialog } from './DeleteSuggestionDialog'
-import { usePinPoll } from '@/hooks/usePinPoll'
 import type { Resolution } from '@/hooks/useClosePoll'
 
 interface Props {
@@ -22,6 +21,10 @@ interface Props {
   resolution: Resolution | null
   voteCount: number
   onChanged: () => void
+  // NIT-02: pin is owned by the parent list so it can apply an optimistic
+  // update before the mutation round-trips. When this prop is provided the
+  // kebab will not call usePinPoll itself.
+  onTogglePin: (nextPinned: boolean) => void
 }
 
 export function SuggestionKebabMenu({
@@ -31,9 +34,9 @@ export function SuggestionKebabMenu({
   resolution,
   voteCount,
   onChanged,
+  onTogglePin,
 }: Props) {
   const navigate = useNavigate()
-  const { pinPoll } = usePinPoll()
   const [closeOpen, setCloseOpen] = useState(false)
   const [resolutionOpen, setResolutionOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -44,9 +47,8 @@ export function SuggestionKebabMenu({
   const closeItemDisabled = status !== 'active'
   const resolutionItemDisabled = status !== 'closed'
 
-  const handlePin = async () => {
-    const r = await pinPoll({ poll_id: pollId, is_pinned: !isPinned })
-    if (r.ok) onChanged()
+  const handlePin = () => {
+    onTogglePin(!isPinned)
   }
 
   const viewHref = status === 'active' ? '/topics' : '/archive'
@@ -94,7 +96,7 @@ export function SuggestionKebabMenu({
               </span>
             )}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => void handlePin()}>
+          <DropdownMenuItem onClick={handlePin}>
             {isPinned ? (
               <>
                 <PinOff className="h-4 w-4 mr-2" /> Unpin

@@ -20,9 +20,15 @@ interface Props {
   suggestion: AdminSuggestion
   voteCount: number
   onChanged: () => void
+  onTogglePin: (pollId: string, nextPinned: boolean) => void
 }
 
-export function AdminSuggestionRow({ suggestion, voteCount, onChanged }: Props) {
+export function AdminSuggestionRow({
+  suggestion,
+  voteCount,
+  onChanged,
+  onTogglePin,
+}: Props) {
   const s = suggestion
   const isClosed = s.status === 'closed'
   // D-15: amber flag for closed-with-null-resolution (any path, not just auto).
@@ -38,7 +44,10 @@ export function AdminSuggestionRow({ suggestion, voteCount, onChanged }: Props) 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           {s.is_pinned && (
-            <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+            <span
+              data-testid={`pin-badge-${s.id}`}
+              className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+            >
               <Pin className="h-3 w-3" /> Pinned
             </span>
           )}
@@ -68,6 +77,7 @@ export function AdminSuggestionRow({ suggestion, voteCount, onChanged }: Props) 
         resolution={s.resolution as Resolution | null}
         voteCount={voteCount}
         onChanged={onChanged}
+        onTogglePin={(next) => onTogglePin(s.id, next)}
       />
     </div>
   )
