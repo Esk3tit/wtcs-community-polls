@@ -67,19 +67,29 @@ export function AdminSuggestionsTab() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          {(['active', 'closed', 'all'] as const).map((f) => (
-            <Button
-              key={f}
-              size="sm"
-              variant={filter === f ? 'default' : 'outline'}
-              className="h-8 px-3 rounded-full text-xs font-medium"
-              onClick={() => setFilter(f)}
-            >
-              {f === 'active' ? 'Active' : f === 'closed' ? 'Closed' : 'All'}
-            </Button>
-          ))}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <div
+          role="tablist"
+          aria-label="Filter suggestions"
+          className="flex items-center gap-2"
+        >
+          {(['active', 'closed', 'all'] as const).map((f) => {
+            const label = f === 'active' ? 'Active' : f === 'closed' ? 'Closed' : 'All'
+            const selected = filter === f
+            return (
+              <Button
+                key={f}
+                role="tab"
+                aria-selected={selected}
+                size="sm"
+                variant={selected ? 'default' : 'outline'}
+                className="h-8 px-3 rounded-full text-xs font-medium"
+                onClick={() => setFilter(f)}
+              >
+                {label}
+              </Button>
+            )
+          })}
         </div>
         <Button onClick={() => navigate({ to: '/admin/suggestions/new' })}>
           <Plus className="h-4 w-4 mr-1" /> Create suggestion

@@ -111,9 +111,11 @@ describe('AdminSuggestionsTab', () => {
 
   it('renders filter chips and Create suggestion button', () => {
     render(<AdminSuggestionsTab />)
-    expect(screen.getByRole('button', { name: 'Active' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Closed' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'All' })).toBeInTheDocument()
+    // LR-04: filter chips now expose role="tab" inside a role="tablist"
+    expect(screen.getByRole('tablist', { name: /filter suggestions/i })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Active' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Closed' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'All' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /create suggestion/i })).toBeInTheDocument()
   })
 
