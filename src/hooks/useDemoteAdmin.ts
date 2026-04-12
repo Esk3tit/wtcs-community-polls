@@ -1,23 +1,7 @@
 import { useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
-
-type FunctionError = {
-  context?: { json?: () => Promise<{ error?: string }> }
-}
-
-async function extractMessage(error: unknown, fallback: string): Promise<string> {
-  try {
-    const ctx = (error as FunctionError)?.context
-    if (ctx?.json) {
-      const body = await ctx.json()
-      if (body?.error) return body.error
-    }
-  } catch {
-    /* fall through */
-  }
-  return fallback
-}
+import { extractFunctionErrorMessage } from '@/lib/fn-error'
 
 export function useDemoteAdmin() {
   const [submitting, setSubmitting] = useState(false)
@@ -29,7 +13,7 @@ export function useDemoteAdmin() {
         body: { target_user_id },
       })
       if (error) {
-        const msg = await extractMessage(error, 'Could not demote admin. Try again.')
+        const msg = await extractFunctionErrorMessage(error, 'Could not demote admin. Try again.')
         if (/cannot demote yourself/i.test(msg)) {
           toast.error('Cannot demote yourself.')
         } else {
@@ -39,6 +23,12 @@ export function useDemoteAdmin() {
       }
       toast.success(`${target_username} demoted`)
       return { ok: true as const }
+    } catch {
+      // ME-06: mirror useCreatePoll — catch synchronous throws from
+      // supabase.functions.invoke so the caller never sees an unhandled
+      // rejection when the client is in a bad state.
+      toast.error('Could not demote admin. Try again.')
+      return { ok: false as const }
     } finally {
       setSubmitting(false)
     }

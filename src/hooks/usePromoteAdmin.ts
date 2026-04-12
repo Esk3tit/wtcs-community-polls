@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
+import { extractFunctionErrorMessage } from '@/lib/fn-error'
 
 type PromoteArgs = {
   target_user_id?: string
@@ -11,23 +12,6 @@ type PromoteResponse = {
   success: true
   mode: 'existing' | 'preauth'
   username?: string
-}
-
-type FunctionError = {
-  context?: { json?: () => Promise<{ error?: string }> }
-}
-
-async function extractMessage(error: unknown, fallback: string): Promise<string> {
-  try {
-    const ctx = (error as FunctionError)?.context
-    if (ctx?.json) {
-      const body = await ctx.json()
-      if (body?.error) return body.error
-    }
-  } catch {
-    /* fall through */
-  }
-  return fallback
 }
 
 export function usePromoteAdmin() {
@@ -41,7 +25,7 @@ export function usePromoteAdmin() {
         { body: args },
       )
       if (error) {
-        toast.error(await extractMessage(error, 'Could not promote admin. Try again.'))
+        toast.error(await extractFunctionErrorMessage(error, 'Could not promote admin. Try again.'))
         return { ok: false as const }
       }
       if (data?.mode === 'preauth') {
@@ -54,6 +38,12 @@ export function usePromoteAdmin() {
         )
       }
       return { ok: true as const, mode: data?.mode }
+    } catch {
+      // ME-06: mirror useCreatePoll — if supabase.functions.invoke throws
+      // synchronously (network failure, bad client URL), surface a toast
+      // instead of letting the rejection propagate unhandled.
+      toast.error('Could not promote admin. Try again.')
+      return { ok: false as const }
     } finally {
       setSubmitting(false)
     }
