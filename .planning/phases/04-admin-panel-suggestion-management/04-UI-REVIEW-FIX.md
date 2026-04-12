@@ -2,8 +2,8 @@
 phase: 04
 date: 2026-04-11
 findings_total: 19
-findings_fixed: 17
-findings_deferred: 2
+findings_fixed: 19
+findings_deferred: 0
 ---
 
 # Phase 4 UI-Review-Fix Report
@@ -130,3 +130,37 @@ All of the above are allowed per spec §Terminology Enforcement.
 
 **Go/no-go for PR merge:** **GO.**
 All HIGH and MEDIUM findings resolved. Two LOW/NIT findings deferred as explicitly-optional per the source review. Tests 308/308. Build clean. Terminology audit clean. PR #3 is mergeable.
+
+## Follow-up pass: deferred optionals (2026-04-11)
+
+| ID | Severity | File | Commit | Test delta |
+|---|---|---|---|---|
+| LR-07 | LOW | src/components/suggestions/form/ImageInput.tsx | 80ab362 | 308→316 |
+| NIT-02 | NIT | AdminSuggestionsTab.tsx + AdminSuggestionRow.tsx + SuggestionKebabMenu.tsx + usePinPoll (consumer) | a8658e2 | 316→319 |
+
+Final finding count: **19/19 fixed · 0 deferred**
+
+### 80ab362 — LR-07: image drag-and-drop dropzone
+`src/components/suggestions/form/ImageInput.tsx` — the upload tab now renders a dashed-border dropzone region wrapped in `role="region" aria-label="Image upload"`. The dropzone is a keyboard-reachable `<button type="button">` so Enter/Space still opens the native file picker; drag-over adds `ring-2 ring-ring` + `bg-muted/60` via shadcn tokens only. Drop handlers validate `file.type` against `['image/jpeg','image/png','image/webp']` and `file.size` against 2 MB before calling `uploadImage`; rejection surfaces via `aria-live="polite"` inline `<Alert variant="destructive">` using the existing form error pattern. Click-to-browse falls back to the hidden `<input type="file">`, and the Paste URL tab is unchanged. Parent `SuggestionForm` interface (`value: string | null`, `onChange(next)`, `disabled?`) unchanged — pure additive change.
+
+Test file added: `src/__tests__/admin/image-input.test.tsx` (+8 tests). Covers valid drop accept, oversize reject, wrong-type reject, Enter-to-open-picker, click-to-browse regression (spy on hidden input `.click()`), URL paste regression, and error-clearing after a subsequent valid drop.
+
+### a8658e2 — NIT-02: optimistic pin for AdminSuggestionRow
+- `src/components/admin/AdminSuggestionsTab.tsx` — now owns the `usePinPoll()` mutation. New `handleTogglePin(pollId, next)` snapshots the current `items`, applies the optimistic `is_pinned` flip, re-sorts via a local `sortAdminSuggestions()` helper that mirrors the server `ORDER BY is_pinned DESC, created_at DESC`, then fires `pinPoll`. On mutation failure restores the snapshot. On success calls existing `fetchAll()` as the reconciliation step. Toast error path is unchanged — still surfaced by `usePinPoll` internally.
+- `src/components/admin/AdminSuggestionRow.tsx` — new `onTogglePin: (pollId, next) => void` prop; row has no local pin state. The pinned badge got `data-testid="pin-badge-{id}"` so tests can assert the optimistic transition deterministically.
+- `src/components/admin/SuggestionKebabMenu.tsx` — dropped its `useState`/`usePinPoll` for pin and now delegates via a new required `onTogglePin(next)` prop. Kebab no longer imports `usePinPoll`. Backward-compat is a non-issue since the kebab is only used from `AdminSuggestionRow` (grep-confirmed).
+- Because the list re-sorts locally on optimistic flip, a pinned row visually jumps into the pinned section immediately — desirable and spec-compliant; not suppressed.
+
+Test file updated: `src/__tests__/admin/admin-suggestions-tab.test.tsx` (+3 tests, total file 5→7). The `vi.mock('@/hooks/usePinPoll', …)` shim now exposes a per-test configurable `pinPollMock` so each scenario can seed pending / success / failure behavior. New tests:
+- "flips the pin badge immediately on click, before the mutation resolves" — uses a deliberately-pending `new Promise()` to observe the interim optimistic state while the mutation is still in flight;
+- "reverts the pin on mutation error" — `mockResolvedValueOnce({ ok: false })`, asserts the badge goes away again;
+- "keeps the pin after mutation success + reconciliation refetch" — chains the `pollsResolver` mock so the reconciliation call returns the server-authoritative pinned state.
+
+### Post-follow-up test/build totals
+- Tests: **319/319** (308 baseline → 316 after LR-07 → 319 after NIT-02)
+- Build: **clean** (bundle size unchanged vs. the previous pass within rounding)
+- Type-check: clean (`tsc --noEmit`)
+- Lint: clean (pre-commit hook ran eslint + tsc on both commits)
+
+### Closing state
+All 19 findings from `04-UI-REVIEW.md` are now closed. No deferred items remain. PR #3 is merge-ready.
