@@ -64,7 +64,7 @@ created: 2026-04-11
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
 | Admin form mobile layout | Success Criterion 6 | Visual/responsive check on real device | Open `/admin/suggestions/new` on phone screen (375px), confirm all fields reachable without horizontal scroll |
-| Image upload end-to-end | POLL-04 | Requires Supabase Storage interaction | Log in as seed admin, upload JPEG ≤2MB, confirm image appears on public poll card |
+| Image upload end-to-end | POLL-02 | Requires Supabase Storage interaction | Log in as seed admin, upload JPEG ≤2MB, confirm image appears on public poll card |
 | Auto-close on timer expiry | LIFE-01 | Requires time passage or manual trigger | Create suggestion with 5-minute custom timer, wait, confirm public view shows closed status via `polls_effective` view (lazy close) |
 
 ---

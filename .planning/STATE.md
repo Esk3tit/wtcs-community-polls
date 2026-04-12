@@ -60,7 +60,7 @@ Progress: [██████████] 100%
 | Plan         | Duration | Tasks   | Files   |
 |--------------|----------|---------|---------|
 | Phase 04 P01 | 3min     | 2 tasks | 2 files |
-| Phase 04 P02 | 8min | 2 tasks tasks | 21 files files |
+| Phase 04 P02 | 8min | 2 tasks | 21 files |
 | Phase 04 P03 | 70min | 4 tasks | 23 files |
 | Phase 04 P04 | 35min | 4 tasks | 26 files |
 

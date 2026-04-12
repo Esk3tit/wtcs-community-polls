@@ -175,7 +175,7 @@ No gaps remaining. Both previously identified gaps have been closed by Plan 04:
 1. **topics.tsx regression** -- CLOSED. File now imports and renders `<SuggestionList status="active" />` inside `<AuthGuard>`. No Phase 1 placeholder remnants.
 2. **archive.tsx regression** -- CLOSED. File now imports and renders `<SuggestionList status="closed" />` inside `<AuthGuard>`. No Phase 1 placeholder remnants.
 
-All 13 Phase 2 requirements are SATISFIED. All 26 artifacts are VERIFIED. All 13 key links are WIRED. All 4 data flows are FLOWING. TypeScript compiles clean. All 19 tests pass. Status is `human_needed` solely for 3 items requiring visual/interactive verification.
+All 13 Phase 2 requirements are SATISFIED. All 26 artifacts are VERIFIED. All 13 key links are WIRED. All 4 data flows are FLOWING. TypeScript compiles clean. All 19 tests pass. All 3 previously `human_needed` items have been covered by 02-UAT.md (tests 5, 7, 9 — all pass). Status is `resolved`.
 
 ---
 
