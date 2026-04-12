@@ -59,11 +59,12 @@ Deno.serve(async (req) => {
       return json({ error: 'Category name must be between 1 and 50 characters' }, 400, corsHeaders)
     }
 
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
     const { data, error } = await supabaseAdmin
       .from('categories')
-      .update({ name })
+      .update({ name, slug })
       .eq('id', category_id)
-      .select('id, name')
+      .select('id, name, slug')
       .single()
     if (error) {
       if (error.code === 'PGRST116') {
