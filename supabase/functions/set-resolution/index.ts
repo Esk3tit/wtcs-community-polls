@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
       .from('polls')
       .update({ resolution })
       .eq('id', poll_id)
-      .eq('status', 'closed')
+      .or(`status.eq.closed,and(status.eq.active,closes_at.lt.${new Date().toISOString()})`)
       .select('id')
       .single()
     if (error) {

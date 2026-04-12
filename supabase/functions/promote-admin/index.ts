@@ -46,16 +46,20 @@ Deno.serve(async (req) => {
 
     let body: { target_user_id?: unknown; target_discord_id?: unknown }
     try {
-      body = await req.json()
+      const parsed = await req.json()
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return json({ error: 'Invalid JSON body' }, 400, corsHeaders)
+      }
+      body = parsed
     } catch {
       return json({ error: 'Invalid JSON body' }, 400, corsHeaders)
     }
 
-    const target_user_id = typeof body.target_user_id === 'string' ? body.target_user_id : ''
-    const target_discord_id = typeof body.target_discord_id === 'string' ? body.target_discord_id : ''
+    const target_user_id = typeof body.target_user_id === 'string' ? body.target_user_id.trim() : ''
+    const target_discord_id = typeof body.target_discord_id === 'string' ? body.target_discord_id.trim() : ''
 
-    if (!target_user_id && !target_discord_id) {
-      return json({ error: 'Must provide target_user_id or target_discord_id' }, 400, corsHeaders)
+    if (!!target_user_id === !!target_discord_id) {
+      return json({ error: 'Must provide exactly one of target_user_id or target_discord_id' }, 400, corsHeaders)
     }
 
     // Branch 1: existing profile -> flip is_admin to true

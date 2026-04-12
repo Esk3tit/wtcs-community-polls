@@ -1,7 +1,10 @@
 import { readFileSync, existsSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { resolve, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { describe, it, expect } from 'vitest'
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 const root = resolve(__dirname, '../../../')
 
 describe('Public surface extensions (Phase 4 Plan 04 Task 4)', () => {

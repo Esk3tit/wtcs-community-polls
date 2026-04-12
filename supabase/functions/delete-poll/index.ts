@@ -71,7 +71,12 @@ Deno.serve(async (req) => {
       .from('polls')
       .delete()
       .eq('id', poll_id)
+      .select('id')
+      .single()
     if (error) {
+      if (error.code === 'PGRST116') {
+        return json({ error: 'Poll not found' }, 404, corsHeaders)
+      }
       console.error('delete-poll failed:', error)
       return json({ error: 'Internal error' }, 500, corsHeaders)
     }

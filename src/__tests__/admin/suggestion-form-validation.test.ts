@@ -59,7 +59,7 @@ describe('validateSuggestionForm', () => {
   it('rejects empty choice', () => {
     const r = validateSuggestionForm({ ...valid(), choices: ['Yes', ''] })
     expect(r.ok).toBe(false)
-    if (!r.ok) expect(r.errors.choices).toMatch(/empty/)
+    if (!r.ok) expect(r.errors.choices).toMatch(/between 1 and 200/)
   })
 
   it('rejects duplicate choices (case-insensitive)', () => {

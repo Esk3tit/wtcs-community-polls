@@ -37,6 +37,12 @@ describe('Phase 4 close-expired-polls Edge Function (HIGH #4 — cron-secret gat
     )
   })
 
+  it('returns 503 when CLOSE_SWEEPER_SECRET is not configured', () => {
+    expect(src).toMatch(
+      /Sweeper not configured[\s\S]{0,300}503|503[\s\S]{0,300}Sweeper not configured/,
+    )
+  })
+
   it('updates polls table filtering on status active and closes_at lt now', () => {
     expect(src).toMatch(/from\(\s*['"]polls['"]\s*\)/)
     expect(src).toMatch(/\.update\(/)

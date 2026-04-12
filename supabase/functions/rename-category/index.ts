@@ -41,7 +41,11 @@ Deno.serve(async (req) => {
 
     let body: { category_id?: unknown; name?: unknown }
     try {
-      body = await req.json()
+      const parsed = await req.json()
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return json({ error: 'Invalid JSON body' }, 400, corsHeaders)
+      }
+      body = parsed
     } catch {
       return json({ error: 'Invalid JSON body' }, 400, corsHeaders)
     }
@@ -62,6 +66,9 @@ Deno.serve(async (req) => {
       .select('id, name')
       .single()
     if (error) {
+      if (error.code === 'PGRST116') {
+        return json({ error: 'Category not found' }, 404, corsHeaders)
+      }
       if (error.code === '23505') {
         return json({ error: 'Category already exists' }, 409, corsHeaders)
       }

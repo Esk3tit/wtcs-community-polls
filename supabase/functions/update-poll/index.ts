@@ -86,6 +86,10 @@ Deno.serve(async (req) => {
     if (choices.some((c) => c.length < 1 || c.length > 200)) {
       return json({ error: 'Each choice must be between 1 and 200 characters' }, 400, corsHeaders)
     }
+    const normalizedChoices = choices.map((c) => c.toLowerCase())
+    if (new Set(normalizedChoices).size !== normalizedChoices.length) {
+      return json({ error: 'Duplicate choice' }, 400, corsHeaders)
+    }
     const closesAtDate = new Date(closes_at)
     if (Number.isNaN(closesAtDate.getTime()) || closesAtDate.getTime() <= Date.now() + 60_000) {
       return json({ error: 'closes_at must be a valid ISO date at least 1 minute in the future' }, 400, corsHeaders)

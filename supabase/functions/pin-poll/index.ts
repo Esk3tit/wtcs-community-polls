@@ -46,13 +46,17 @@ Deno.serve(async (req) => {
     }
 
     const poll_id = typeof body.poll_id === 'string' ? body.poll_id : ''
+    const isPinned = typeof body.is_pinned === 'boolean' ? body.is_pinned : null
     if (!poll_id) {
       return json({ error: 'Missing poll_id' }, 400, corsHeaders)
+    }
+    if (isPinned === null) {
+      return json({ error: 'Missing or invalid is_pinned' }, 400, corsHeaders)
     }
 
     const { error } = await supabaseAdmin
       .from('polls')
-      .update({ is_pinned: !!body.is_pinned })
+      .update({ is_pinned: isPinned })
       .eq('id', poll_id)
       .select('id')
       .single()

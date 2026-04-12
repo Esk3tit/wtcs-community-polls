@@ -25,17 +25,23 @@ export function AdminsList() {
   const refetch = useCallback(async () => {
     setLoading(true)
     setError(null)
-    const { data, error: qErr } = await supabase
-      .from('profiles')
-      .select('id, discord_id, discord_username, avatar_url')
-      .eq('is_admin', true)
-    if (qErr) {
-      setError(new Error(qErr.message))
+    try {
+      const { data, error: qErr } = await supabase
+        .from('profiles')
+        .select('id, discord_id, discord_username, avatar_url')
+        .eq('is_admin', true)
+      if (qErr) {
+        setError(new Error(qErr.message))
+        setAdmins([])
+      } else {
+        setAdmins((data ?? []) as Admin[])
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Could not load admins'))
       setAdmins([])
-    } else {
-      setAdmins((data ?? []) as Admin[])
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }, [])
 
   useEffect(() => {

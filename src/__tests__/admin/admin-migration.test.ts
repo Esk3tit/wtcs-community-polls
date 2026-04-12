@@ -182,3 +182,41 @@ describe('Phase 4 ME-01 migration (00000000000006_update_poll_rpc_error_codes.sq
     expect(sql6).toMatch(/EXISTS\s*\(\s*SELECT 1 FROM public\.votes/i)
   })
 })
+
+// ME-02: migration 7 applies cardinality(), service-role-only EXECUTE,
+// FOR UPDATE serialization lock, and bucket ON CONFLICT DO UPDATE.
+const MIGRATION7_PATH = resolve(
+  __dirname,
+  '../../../supabase/migrations/00000000000007_fix_pr_review.sql',
+)
+
+describe('Phase 4 review-fix migration (00000000000007_fix_pr_review.sql)', () => {
+  it('exists', () => {
+    expect(existsSync(MIGRATION7_PATH)).toBe(true)
+  })
+
+  const sql7 = existsSync(MIGRATION7_PATH)
+    ? readFileSync(MIGRATION7_PATH, 'utf-8')
+    : ''
+
+  it('uses cardinality() in both poll RPC choice guards', () => {
+    expect(sql7).toMatch(/CREATE OR REPLACE FUNCTION\s+public\.create_poll_with_choices[\s\S]*cardinality\(p_choices\)/i)
+    expect(sql7).toMatch(/CREATE OR REPLACE FUNCTION\s+public\.update_poll_with_choices[\s\S]*cardinality\(p_choices\)/i)
+  })
+
+  it('restricts both RPCs to service_role only', () => {
+    expect(sql7).toMatch(/REVOKE EXECUTE ON FUNCTION\s+public\.create_poll_with_choices[\s\S]*FROM PUBLIC, anon, authenticated/i)
+    expect(sql7).toMatch(/GRANT EXECUTE ON FUNCTION\s+public\.create_poll_with_choices[\s\S]*TO service_role/i)
+    expect(sql7).toMatch(/REVOKE EXECUTE ON FUNCTION\s+public\.update_poll_with_choices[\s\S]*FROM PUBLIC, anon, authenticated/i)
+    expect(sql7).toMatch(/GRANT EXECUTE ON FUNCTION\s+public\.update_poll_with_choices[\s\S]*TO service_role/i)
+  })
+
+  it('locks current choices before the votes EXISTS check', () => {
+    expect(sql7).toMatch(/FROM public\.choices[\s\S]*FOR UPDATE[\s\S]*IF EXISTS \(SELECT 1 FROM public\.votes/i)
+  })
+
+  it('converges the poll-images bucket with DO UPDATE', () => {
+    expect(sql7).toMatch(/INSERT INTO storage\.buckets/i)
+    expect(sql7).toMatch(/ON CONFLICT \(id\) DO UPDATE/i)
+  })
+})

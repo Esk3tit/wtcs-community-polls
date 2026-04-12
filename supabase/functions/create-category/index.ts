@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
       return json({ error: 'Internal error' }, 500, corsHeaders)
     }
 
-    return json({ success: true, category: data }, 200, corsHeaders)
+    return json(data, 200, corsHeaders)
   } catch (err) {
     console.error('create-category error:', err)
     return json({ error: 'Internal error' }, 500, corsHeaders)

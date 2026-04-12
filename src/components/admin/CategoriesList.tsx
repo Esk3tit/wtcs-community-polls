@@ -140,8 +140,8 @@ export function CategoriesList() {
   }
 
   const handleConfirmDelete = async () => {
-    if (!deleteTarget) return
-    const result = await remove(deleteTarget.id, deleteTarget.affectedCount ?? 0)
+    if (!deleteTarget || deleteTarget.countError || deleteTarget.affectedCount == null) return
+    const result = await remove(deleteTarget.id, deleteTarget.affectedCount)
     if (result.ok) {
       setDeleteTarget(null)
       await refetch?.()
@@ -328,7 +328,11 @@ export function CategoriesList() {
             <Button
               variant="destructive"
               onClick={() => void handleConfirmDelete()}
-              disabled={submitting}
+              disabled={
+                submitting ||
+                !!deleteTarget?.countError ||
+                deleteTarget?.affectedCount == null
+              }
             >
               Delete
             </Button>

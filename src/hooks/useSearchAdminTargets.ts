@@ -49,6 +49,10 @@ export function useSearchAdminTargets() {
           }
           setResults(data.results ?? [])
         })
+        .catch(() => {
+          if (cancelled) return
+          setResults([])
+        })
         .finally(() => {
           if (!cancelled) setSearching(false)
         })

@@ -94,8 +94,7 @@ export function ImageInput({ value, onChange, disabled }: Props) {
               onChange={(e) => {
                 const f = e.target.files?.[0]
                 if (f) {
-                  setDropError(null)
-                  void handleFile(f)
+                  validateAndAccept(f)
                 }
               }}
             />

@@ -24,8 +24,9 @@ export function validateSuggestionForm(input: SuggestionFormInput): ValidationRe
   const choices = (input.choices ?? []).map((c) => (c ?? '').trim())
   if (choices.length < 2) errors.choices = 'At least 2 choices required.'
   else if (choices.length > 10) errors.choices = 'Maximum 10 choices.'
-  else if (choices.some((c) => c === '')) errors.choices = 'Choice cannot be empty.'
-  else {
+  else if (choices.some((c) => c.length < 1 || c.length > 200)) {
+    errors.choices = 'Each choice must be between 1 and 200 characters.'
+  } else {
     const lower = choices.map((c) => c.toLowerCase())
     const uniq = new Set(lower)
     if (uniq.size !== lower.length) errors.choices = 'Duplicate choice.'

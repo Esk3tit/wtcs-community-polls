@@ -50,7 +50,11 @@ Deno.serve(async (req) => {
       choices?: unknown
     }
     try {
-      body = await req.json()
+      const parsed = await req.json()
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return json({ error: 'Invalid JSON body' }, 400, corsHeaders)
+      }
+      body = parsed
     } catch {
       return json({ error: 'Invalid JSON body' }, 400, corsHeaders)
     }

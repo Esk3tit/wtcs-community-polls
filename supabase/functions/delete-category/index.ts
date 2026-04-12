@@ -56,7 +56,12 @@ Deno.serve(async (req) => {
       .from('categories')
       .delete()
       .eq('id', category_id)
+      .select('id')
+      .single()
     if (error) {
+      if (error.code === 'PGRST116') {
+        return json({ error: 'Category not found' }, 404, corsHeaders)
+      }
       console.error('delete-category failed:', error)
       return json({ error: 'Internal error' }, 500, corsHeaders)
     }
