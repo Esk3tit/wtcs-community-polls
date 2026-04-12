@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { UserMinus, AlertCircle, UserPlus } from 'lucide-react'
+import { UserMinus, AlertCircle, UserPlus, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { useAuth } from '@/hooks/useAuth'
@@ -89,11 +89,15 @@ export function AdminsList() {
           ))}
         </div>
       ) : (
-        <div className="divide-y border rounded-md">
+        <div className={admins.length === 0 ? '' : 'divide-y border rounded-md'}>
           {admins.length === 0 ? (
-            <div className="flex items-center justify-center py-8 text-center">
-              <p className="text-sm text-muted-foreground">
-                No admins yet. Promote one to get started.
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Users className="h-10 w-10 text-muted-foreground" />
+              <p className="text-lg font-medium text-foreground mt-4">
+                No admins yet.
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Promote one to get started.
               </p>
             </div>
           ) : (

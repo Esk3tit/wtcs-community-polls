@@ -177,10 +177,12 @@ export function CategoriesList() {
           ))}
         </div>
       ) : showEmpty ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
+        <div className="flex flex-col items-center justify-center py-16 text-center">
           <Folder className="h-10 w-10 text-muted-foreground mb-3" />
-          <p className="text-sm font-medium">No categories yet.</p>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-lg font-medium text-foreground mt-4">
+            No categories yet.
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
             Create one to organize suggestions.
           </p>
           <Button className="mt-4" size="sm" onClick={handleStartNew}>

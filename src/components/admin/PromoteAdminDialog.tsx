@@ -73,6 +73,7 @@ export function PromoteAdminDialog({ open, onOpenChange, onPromoted }: Props) {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               id="promote-search"
+              autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Start typing a username..."

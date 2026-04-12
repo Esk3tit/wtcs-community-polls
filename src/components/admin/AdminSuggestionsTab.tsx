@@ -125,7 +125,7 @@ export function AdminSuggestionsTab() {
           ) : (
             <Inbox className="h-10 w-10 text-muted-foreground" />
           )}
-          <p className="text-lg font-medium mt-4">
+          <p className="text-lg font-medium text-foreground mt-4">
             {filter === 'closed' ? 'No closed suggestions yet.' : 'No active suggestions.'}
           </p>
           <p className="text-sm text-muted-foreground mt-1">

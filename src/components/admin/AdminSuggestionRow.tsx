@@ -31,7 +31,7 @@ export function AdminSuggestionRow({ suggestion, voteCount, onChanged }: Props) 
   return (
     <div
       className={cn(
-        'flex items-start justify-between gap-3 py-3 px-4 bg-card',
+        'flex items-start justify-between gap-3 p-4 min-h-[72px] bg-card hover:bg-muted/30 transition-colors',
         needsResolution && 'border-l-2 border-amber-500',
       )}
     >
