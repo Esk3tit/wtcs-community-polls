@@ -120,12 +120,25 @@ Deno.serve(async (req) => {
       p_choices: choices,
     })
     if (rpcError) {
-      // The RPC re-checks the edit lock as defense-in-depth; surface that as 409 too.
-      if (typeof rpcError.message === 'string' && /responses already received/i.test(rpcError.message)) {
+      // ME-01: match on stable SQLSTATE codes from migration 6 instead of
+      // regexing free-form RAISE EXCEPTION messages. Codes allocated:
+      //   P0002 -> poll not found
+      //   P0003 -> responses already received (edit lock)
+      //   P0004 -> choice count out of range (defense-in-depth; EF already
+      //            validated 2..10 above, so this is only hit by a direct
+      //            service-role caller that bypassed the EF).
+      // Fall back to the legacy message regex for resilience while the new
+      // migration is propagating to environments.
+      const rpcCode = (rpcError as { code?: string }).code
+      const rpcMsg = typeof rpcError.message === 'string' ? rpcError.message : ''
+      if (rpcCode === 'P0003' || /responses already received/i.test(rpcMsg)) {
         return json({ error: 'Cannot edit: responses already received' }, 409, corsHeaders)
       }
-      if (typeof rpcError.message === 'string' && /Poll not found/i.test(rpcError.message)) {
+      if (rpcCode === 'P0002' || /Poll not found/i.test(rpcMsg)) {
         return json({ error: 'Poll not found' }, 404, corsHeaders)
+      }
+      if (rpcCode === 'P0004') {
+        return json({ error: 'Must provide between 2 and 10 choices' }, 400, corsHeaders)
       }
       console.error('update_poll_with_choices failed:', rpcError)
       return json({ error: 'Internal error' }, 500, corsHeaders)

@@ -85,6 +85,16 @@ describe('Phase 4 suggestion CRUD Edge Functions (source analysis)', () => {
       expect(rpcIdx).toBeGreaterThan(-1)
       expect(votesIdx).toBeLessThan(rpcIdx)
     })
+
+    it('ME-01: maps RPC errors via stable SQLSTATE code (P0003 edit lock)', () => {
+      // The EF must match rpcError.code, not just regex the message.
+      expect(src).toMatch(/rpcError\s*\)?\s*\.code|\(\s*rpcError[^)]*\)\.code|rpcCode/)
+      expect(src).toMatch(/P0003/)
+    })
+
+    it('ME-01: maps RPC errors via stable SQLSTATE code (P0002 not found)', () => {
+      expect(src).toMatch(/P0002/)
+    })
   })
 
   describe('close-poll', () => {

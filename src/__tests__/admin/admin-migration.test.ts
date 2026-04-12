@@ -123,3 +123,49 @@ describe('Phase 4 admin migration (00000000000005_admin_phase4.sql)', () => {
     expect(count).toBeGreaterThanOrEqual(3)
   })
 })
+
+// ME-01: migration 6 replaces update_poll_with_choices to raise stable
+// SQLSTATE codes instead of free-form strings. The Edge Function matches
+// on these codes; both sides must stay in sync.
+const MIGRATION6_PATH = resolve(
+  __dirname,
+  '../../../supabase/migrations/00000000000006_update_poll_rpc_error_codes.sql',
+)
+
+describe('Phase 4 ME-01 migration (00000000000006_update_poll_rpc_error_codes.sql)', () => {
+  it('exists', () => {
+    expect(existsSync(MIGRATION6_PATH)).toBe(true)
+  })
+
+  const sql6 = existsSync(MIGRATION6_PATH)
+    ? readFileSync(MIGRATION6_PATH, 'utf-8')
+    : ''
+
+  it('redefines update_poll_with_choices (CREATE OR REPLACE)', () => {
+    expect(sql6).toMatch(
+      /CREATE OR REPLACE FUNCTION\s+public\.update_poll_with_choices/i,
+    )
+  })
+
+  it('raises P0003 for responses-already-received (edit lock)', () => {
+    expect(sql6).toMatch(/responses already received[\s\S]*ERRCODE\s*=\s*'P0003'/i)
+  })
+
+  it('raises P0002 for Poll not found', () => {
+    expect(sql6).toMatch(/Poll not found[\s\S]*ERRCODE\s*=\s*'P0002'/i)
+  })
+
+  it('raises P0004 for choice count out of range', () => {
+    expect(sql6).toMatch(/Choices must be between[\s\S]*ERRCODE\s*=\s*'P0004'/i)
+  })
+
+  it('preserves the 2..10 choice guard', () => {
+    expect(sql6).toMatch(
+      /array_length\(p_choices, 1\) < 2 OR array_length\(p_choices, 1\) > 10/,
+    )
+  })
+
+  it('preserves the defense-in-depth EXISTS votes re-check', () => {
+    expect(sql6).toMatch(/EXISTS\s*\(\s*SELECT 1 FROM public\.votes/i)
+  })
+})
