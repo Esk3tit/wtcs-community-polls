@@ -58,10 +58,14 @@ Deno.serve(async (req) => {
     }
 
     // Last-admin guard: ensure at least one admin remains after demotion.
-    const { count: adminCount } = await supabaseAdmin
+    const { count: adminCount, error: countError } = await supabaseAdmin
       .from('profiles')
       .select('*', { count: 'exact', head: true })
       .eq('is_admin', true)
+    if (countError) {
+      console.error('demote-admin count check failed:', countError)
+      return json({ error: 'Internal error' }, 500, corsHeaders)
+    }
     if (adminCount !== null && adminCount <= 1) {
       return json({ error: 'Cannot demote: at least one admin must remain' }, 400, corsHeaders)
     }

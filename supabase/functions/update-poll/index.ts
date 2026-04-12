@@ -60,16 +60,26 @@ Deno.serve(async (req) => {
       return json({ error: 'Invalid JSON body' }, 400, corsHeaders)
     }
 
-    const poll_id = typeof body.poll_id === 'string' ? body.poll_id : ''
+    const poll_id = typeof body.poll_id === 'string' ? body.poll_id.trim() : ''
     const title = typeof body.title === 'string' ? body.title.trim() : ''
     const description = typeof body.description === 'string' ? body.description : ''
-    const category_id = typeof body.category_id === 'string' && body.category_id.trim() !== '' ? body.category_id : null
-    const image_url = typeof body.image_url === 'string' && body.image_url.trim() !== '' ? body.image_url : null
+    const categoryIdRaw = typeof body.category_id === 'string' ? body.category_id.trim() : ''
+    const category_id = categoryIdRaw === '' ? null : categoryIdRaw
+    if (
+      category_id !== null &&
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(category_id)
+    ) {
+      return json({ error: 'category_id must be a valid UUID' }, 400, corsHeaders)
+    }
+    const image_url = typeof body.image_url === 'string' && body.image_url.trim() !== '' ? body.image_url.trim() : null
     const closes_at = typeof body.closes_at === 'string' ? body.closes_at : ''
     const choicesRaw = body.choices
 
     if (!poll_id) {
       return json({ error: 'Missing poll_id' }, 400, corsHeaders)
+    }
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(poll_id)) {
+      return json({ error: 'Invalid poll_id' }, 400, corsHeaders)
     }
     if (title.length < 3 || title.length > 120) {
       return json({ error: 'Title must be between 3 and 120 characters' }, 400, corsHeaders)
@@ -89,6 +99,10 @@ Deno.serve(async (req) => {
     const normalizedChoices = choices.map((c) => c.toLowerCase())
     if (new Set(normalizedChoices).size !== normalizedChoices.length) {
       return json({ error: 'Duplicate choice' }, 400, corsHeaders)
+    }
+    const ISO_WITH_TZ = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/
+    if (!ISO_WITH_TZ.test(closes_at)) {
+      return json({ error: 'closes_at must be ISO-8601 with timezone (e.g. 2024-12-31T23:59:59Z)' }, 400, corsHeaders)
     }
     const closesAtDate = new Date(closes_at)
     if (Number.isNaN(closesAtDate.getTime()) || closesAtDate.getTime() <= Date.now() + 60_000) {

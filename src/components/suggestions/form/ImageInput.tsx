@@ -86,7 +86,7 @@ export function ImageInput({ value, onChange, disabled }: Props) {
             <input
               ref={fileRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept={ALLOWED_IMAGE_MIME.join(',')}
               className="hidden"
               disabled={disabled || uploading}
               onChange={(e) => {

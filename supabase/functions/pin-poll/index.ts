@@ -49,10 +49,13 @@ Deno.serve(async (req) => {
       return json({ error: 'Invalid JSON body' }, 400, corsHeaders)
     }
 
-    const poll_id = typeof body.poll_id === 'string' ? body.poll_id : ''
+    const poll_id = typeof body.poll_id === 'string' ? body.poll_id.trim() : ''
     const isPinned = typeof body.is_pinned === 'boolean' ? body.is_pinned : null
     if (!poll_id) {
       return json({ error: 'Missing poll_id' }, 400, corsHeaders)
+    }
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(poll_id)) {
+      return json({ error: 'Invalid poll_id' }, 400, corsHeaders)
     }
     if (isPinned === null) {
       return json({ error: 'Missing or invalid is_pinned' }, 400, corsHeaders)

@@ -23,6 +23,8 @@ export function PromoteAdminDialog({ open, onOpenChange, onPromoted }: Props) {
   const { query, canSearch, setQuery, results, searching } = useSearchAdminTargets()
   const { promote, submitting } = usePromoteAdmin()
   const [discordId, setDiscordId] = useState('')
+  const isValidSnowflake = /^\d{17,19}$/.test(discordId.trim())
+  const showSnowflakeHint = discordId.trim().length > 0 && !isValidSnowflake
 
   const handlePromoteTarget = async (target_user_id: string) => {
     const result = await promote({ target_user_id })
@@ -134,6 +136,11 @@ export function PromoteAdminDialog({ open, onOpenChange, onPromoted }: Props) {
             placeholder="e.g. 267747104607305738"
             className="h-9 text-sm font-mono"
           />
+          {showSnowflakeHint && (
+            <p className="text-xs text-destructive">
+              Discord IDs are 17-19 digit numbers
+            </p>
+          )}
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs text-muted-foreground">
               The user becomes admin on their next sign-in.

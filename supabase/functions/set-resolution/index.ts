@@ -52,10 +52,13 @@ Deno.serve(async (req) => {
       return json({ error: 'Invalid JSON body' }, 400, corsHeaders)
     }
 
-    const poll_id = typeof body.poll_id === 'string' ? body.poll_id : ''
+    const poll_id = typeof body.poll_id === 'string' ? body.poll_id.trim() : ''
     const resolution = typeof body.resolution === 'string' ? body.resolution : ''
     if (!poll_id) {
       return json({ error: 'Missing poll_id' }, 400, corsHeaders)
+    }
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(poll_id)) {
+      return json({ error: 'Invalid poll_id' }, 400, corsHeaders)
     }
     if (!ALLOWED_RESOLUTIONS.includes(resolution as typeof ALLOWED_RESOLUTIONS[number])) {
       return json({ error: 'Invalid resolution' }, 400, corsHeaders)
