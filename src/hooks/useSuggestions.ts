@@ -92,13 +92,15 @@ export function useSuggestions(status: 'active' | 'closed') {
         catsById = new Map((cats ?? []).map((c) => [c.id, c]))
       }
 
-      // 4. User votes
+      // 4. User votes — scope to the polls actually in view so the payload
+      //    stays bounded and the map only contains relevant keys (HI-01).
       let votesMap = new Map<string, string>()
-      if (user) {
+      if (user && pollIds.length > 0) {
         const { data: votes, error: votesError } = await supabase
           .from('votes')
           .select('poll_id, choice_id')
           .eq('user_id', user.id)
+          .in('poll_id', pollIds)
 
         if (cancelled) return
 
@@ -114,7 +116,9 @@ export function useSuggestions(status: 'active' | 'closed') {
         }
       }
 
-      // Guard against stale fetches
+      // Guard against stale fetches (HI-01: make authoritative — the
+      // cancelled closure flag handles cleanup ordering, this guards
+      // against a race where a new fetch was started via refetch()).
       if (fetchRef.current !== fetchId) return
 
       const merged: SuggestionWithChoices[] = pollRows.map((p) => ({
