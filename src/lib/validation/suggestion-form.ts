@@ -32,9 +32,15 @@ export function validateSuggestionForm(input: SuggestionFormInput): ValidationRe
     if (uniq.size !== lower.length) errors.choices = 'Duplicate choice.'
   }
 
-  const closesAtMs = Date.parse(input.closes_at ?? '')
-  if (isNaN(closesAtMs) || closesAtMs <= Date.now() + 60_000) {
-    errors.closes_at = 'Close time must be in the future.'
+  const ISO_WITH_TZ = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/
+  const closesAtStr = input.closes_at ?? ''
+  if (!ISO_WITH_TZ.test(closesAtStr)) {
+    errors.closes_at = 'Close time must be ISO-8601 with timezone.'
+  } else {
+    const closesAtMs = Date.parse(closesAtStr)
+    if (isNaN(closesAtMs) || closesAtMs <= Date.now() + 60_000) {
+      errors.closes_at = 'Close time must be in the future.'
+    }
   }
 
   const categoryId = input.category_id?.trim() ? input.category_id.trim() : null

@@ -1,19 +1,13 @@
-// supabase/functions/create-poll/index.ts
-//
-// Admin-gated poll (suggestion) creation. Wraps create_poll_with_choices RPC
-// (Plan 04-01) so the polls + choices write is transactional. Body must include
-// title, description (optional), category_id (optional), image_url (optional),
-// closes_at (ISO string, > now + 60s), and 2..10 choices.
+// Admin-gated poll creation wrapping create_poll_with_choices RPC.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { requireAdmin, adminCheckResponse } from '../_shared/admin-auth.ts'
 
 function json(body: unknown, status: number, cors: HeadersInit) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...(cors as Record<string, string>), 'Content-Type': 'application/json' },
-  })
+  const headers = new Headers(cors)
+  headers.set('Content-Type', 'application/json')
+  return new Response(JSON.stringify(body), { status, headers })
 }
 
 Deno.serve(async (req) => {

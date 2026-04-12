@@ -1,23 +1,13 @@
-// supabase/functions/update-poll/index.ts
-//
-// Admin-gated poll edit. HIGH #1 (cross-AI review) — choice replacement is
-// delegated to update_poll_with_choices RPC (Plan 04-01) which wraps
-// UPDATE polls + DELETE+INSERT on the choices table in a single plpgsql
-// transaction. The supabase-js client in this file MUST NOT touch the
-// choices table directly; the RPC owns that write.
-//
-// The EF also performs an EXISTS pre-check on votes -> 409 BEFORE invoking
-// the RPC, so the UI sees a clean 409 instead of an opaque RPC exception.
+// Admin-gated poll edit. RPC owns choice-table writes; EXISTS pre-check on votes returns 409.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { requireAdmin, adminCheckResponse } from '../_shared/admin-auth.ts'
 
 function json(body: unknown, status: number, cors: HeadersInit) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...(cors as Record<string, string>), 'Content-Type': 'application/json' },
-  })
+  const headers = new Headers(cors)
+  headers.set('Content-Type', 'application/json')
+  return new Response(JSON.stringify(body), { status, headers })
 }
 
 Deno.serve(async (req) => {
@@ -55,7 +45,11 @@ Deno.serve(async (req) => {
       choices?: unknown
     }
     try {
-      body = await req.json()
+      const parsed: unknown = await req.json()
+      if (parsed === null || Array.isArray(parsed) || typeof parsed !== 'object') {
+        return json({ error: 'JSON body must be an object' }, 400, corsHeaders)
+      }
+      body = parsed as typeof body
     } catch {
       return json({ error: 'Invalid JSON body' }, 400, corsHeaders)
     }
@@ -109,9 +103,7 @@ Deno.serve(async (req) => {
       return json({ error: 'closes_at must be a valid ISO date at least 1 minute in the future' }, 400, corsHeaders)
     }
 
-    // EXISTS pre-check: refuse to edit if any votes already exist for this poll.
-    // This is the EF-layer mirror of the DB-layer guard inside update_poll_with_choices.
-    // We surface 409 here so the UI sees a clean status instead of an opaque RPC string.
+    // Pre-check: refuse edit if votes exist (409 instead of opaque RPC error).
     const { data: voteRow, error: voteCheckError } = await supabaseAdmin
       .from('votes')
       .select('id')
@@ -126,8 +118,7 @@ Deno.serve(async (req) => {
       return json({ error: 'Cannot edit: responses already received' }, 409, corsHeaders)
     }
 
-    // HIGH #1: choice replacement happens inside the RPC (single Postgres transaction).
-    // The supabase-js client in this file MUST NOT touch the choices table directly.
+    // Choice replacement delegated to RPC (single transaction).
     const { data: updatedId, error: rpcError } = await supabaseAdmin.rpc('update_poll_with_choices', {
       p_poll_id: poll_id,
       p_title: title,
@@ -138,15 +129,7 @@ Deno.serve(async (req) => {
       p_choices: choices,
     })
     if (rpcError) {
-      // ME-01: match on stable SQLSTATE codes from migration 6 instead of
-      // regexing free-form RAISE EXCEPTION messages. Codes allocated:
-      //   P0002 -> poll not found
-      //   P0003 -> responses already received (edit lock)
-      //   P0004 -> choice count out of range (defense-in-depth; EF already
-      //            validated 2..10 above, so this is only hit by a direct
-      //            service-role caller that bypassed the EF).
-      // Fall back to the legacy message regex for resilience while the new
-      // migration is propagating to environments.
+      // Match SQLSTATE codes (P0002/P0003/P0004) with message-regex fallback.
       const rpcCode = (rpcError as { code?: string }).code
       const rpcMsg = typeof rpcError.message === 'string' ? rpcError.message : ''
       if (rpcCode === 'P0003' || /responses already received/i.test(rpcMsg)) {
