@@ -70,7 +70,7 @@ export function SuggestionKebabMenu({
           </DropdownMenuItem>
           <DropdownMenuItem
             disabled={editDisabled}
-            title={editDisabled ? 'Cannot edit after responses received.' : undefined}
+            aria-describedby={editDisabled ? 'kebab-edit-reason' : undefined}
             onClick={() =>
               !editDisabled &&
               navigate({
@@ -78,8 +78,19 @@ export function SuggestionKebabMenu({
                 params: { id: pollId },
               })
             }
+            className="flex-col items-start gap-0.5"
           >
-            <Pencil className="h-4 w-4 mr-2" /> Edit
+            <span className="flex items-center">
+              <Pencil className="h-4 w-4 mr-2" /> Edit
+            </span>
+            {editDisabled && (
+              <span
+                id="kebab-edit-reason"
+                className="text-xs text-muted-foreground pl-6"
+              >
+                Cannot edit after responses received.
+              </span>
+            )}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handlePin}>
             {isPinned ? (
@@ -109,11 +120,21 @@ export function SuggestionKebabMenu({
           <DropdownMenuSeparator />
           <DropdownMenuItem
             disabled={deleteDisabled}
-            title={deleteDisabled ? 'Cannot delete after responses received.' : undefined}
-            className="text-destructive focus:text-destructive"
+            aria-describedby={deleteDisabled ? 'kebab-delete-reason' : undefined}
+            className="text-destructive focus:text-destructive flex-col items-start gap-0.5"
             onClick={() => !deleteDisabled && setDeleteOpen(true)}
           >
-            <Trash2 className="h-4 w-4 mr-2" /> Delete
+            <span className="flex items-center">
+              <Trash2 className="h-4 w-4 mr-2" /> Delete
+            </span>
+            {deleteDisabled && (
+              <span
+                id="kebab-delete-reason"
+                className="text-xs text-muted-foreground pl-6"
+              >
+                Cannot delete after responses received.
+              </span>
+            )}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
