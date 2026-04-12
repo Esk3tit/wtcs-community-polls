@@ -1,19 +1,27 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createFileRoute } from '@tanstack/react-router'
 import { AdminGuard } from '@/components/auth/AdminGuard'
-import { Settings } from 'lucide-react'
+import { AdminTabs } from '@/components/admin/AdminTabs'
+
+const VALID_TABS = ['suggestions', 'categories', 'admins'] as const
+type AdminTab = (typeof VALID_TABS)[number]
+type AdminSearch = { tab?: AdminTab }
 
 export const Route = createFileRoute('/admin/')({
   component: AdminPage,
+  validateSearch: (search: Record<string, unknown>): AdminSearch => ({
+    tab: VALID_TABS.includes(search.tab as AdminTab)
+      ? (search.tab as AdminTab)
+      : undefined,
+  }),
 })
 
 function AdminPage() {
   return (
     <AdminGuard>
-      <h1 className="text-2xl font-semibold">Admin Panel</h1>
-      <div className="flex flex-col items-center justify-center mt-16">
-        <Settings className="h-10 w-10 text-muted-foreground" />
-        <h2 className="text-lg font-medium text-foreground mt-4">Admin tools coming soon.</h2>
-        <p className="text-sm text-muted-foreground mt-1">Poll creation and management tools will be available in a future update.</p>
+      <div className="max-w-4xl mx-auto px-4 md:px-6 py-6">
+        <h1 className="text-2xl font-semibold mb-6">Admin</h1>
+        <AdminTabs />
       </div>
     </AdminGuard>
   )
