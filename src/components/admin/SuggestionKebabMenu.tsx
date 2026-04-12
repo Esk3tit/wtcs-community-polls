@@ -94,7 +94,7 @@ export function SuggestionKebabMenu({
               </span>
             )}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handlePin}>
+          <DropdownMenuItem onClick={() => void handlePin()}>
             {isPinned ? (
               <>
                 <PinOff className="h-4 w-4 mr-2" /> Unpin
