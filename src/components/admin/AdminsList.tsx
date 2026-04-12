@@ -30,7 +30,7 @@ export function AdminsList() {
       .select('id, discord_id, discord_username, avatar_url')
       .eq('is_admin', true)
     if (qErr) {
-      setError(qErr as unknown as Error)
+      setError(new Error(qErr.message))
       setAdmins([])
     } else {
       setAdmins((data ?? []) as Admin[])

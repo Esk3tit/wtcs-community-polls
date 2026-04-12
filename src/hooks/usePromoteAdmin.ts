@@ -28,16 +28,20 @@ export function usePromoteAdmin() {
         toast.error(await extractFunctionErrorMessage(error, 'Could not promote admin. Try again.'))
         return { ok: false as const }
       }
-      if (data?.mode === 'preauth') {
+      if (!data?.mode) {
+        toast.error('Could not promote admin. Try again.')
+        return { ok: false as const }
+      }
+      if (data.mode === 'preauth') {
         toast.success('Discord ID pre-authorized. User becomes admin on next sign-in.')
       } else {
         toast.success(
-          data?.username
+          data.username
             ? `${data.username} promoted to admin.`
             : 'User promoted to admin.',
         )
       }
-      return { ok: true as const, mode: data?.mode }
+      return { ok: true as const, mode: data.mode }
     } catch {
       // ME-06: mirror useCreatePoll — if supabase.functions.invoke throws
       // synchronously (network failure, bad client URL), surface a toast

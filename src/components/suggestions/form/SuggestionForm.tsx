@@ -39,7 +39,12 @@ export function SuggestionForm({ mode, pollId }: Props) {
   const [loadError, setLoadError] = useState<Error | null>(null)
 
   const loadPoll = useCallback(async () => {
-    if (mode !== 'edit' || !pollId) return
+    if (mode !== 'edit') return
+    if (!pollId) {
+      setLoadError(new Error('Missing poll id for edit mode'))
+      setLoaded(true)
+      return
+    }
     setLoadError(null)
     setLoaded(false)
     try {

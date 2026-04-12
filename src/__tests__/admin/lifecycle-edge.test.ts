@@ -32,7 +32,9 @@ describe('Phase 4 close-expired-polls Edge Function (HIGH #4 — cron-secret gat
   })
 
   it('returns 401 on missing/mismatched secret (HIGH #4)', () => {
-    expect(src).toMatch(/401/)
+    expect(src).toMatch(
+      /Unauthorized[\s\S]{0,300}401|401[\s\S]{0,300}Unauthorized/,
+    )
   })
 
   it('updates polls table filtering on status active and closes_at lt now', () => {

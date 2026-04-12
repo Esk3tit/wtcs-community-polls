@@ -27,14 +27,20 @@ describe('Phase 4 admin migration (00000000000005_admin_phase4.sql)', () => {
       /CASE\s+WHEN\s+status\s*=\s*'active'\s+AND\s+closes_at\s*<\s*now\(\)\s+THEN\s+'closed'/i,
     )
     expect(sql).toMatch(/status\s+AS\s+raw_status/i)
+    expect(sql).toMatch(
+      /ALTER VIEW\s+public\.polls_effective\s+SET\s*\(\s*security_invoker\s*=\s*on\s*\)/i,
+    )
   })
 
-  it('defines is_current_user_admin() as SECURITY DEFINER STABLE', () => {
+  it('defines is_current_user_admin() as SECURITY DEFINER STABLE with search_path', () => {
     expect(sql).toMatch(
       /CREATE OR REPLACE FUNCTION\s+public\.is_current_user_admin\(\)/i,
     )
     expect(sql).toMatch(/SECURITY DEFINER/i)
     expect(sql).toMatch(/\bSTABLE\b/i)
+    expect(sql).toMatch(
+      /CREATE OR REPLACE FUNCTION\s+public\.is_current_user_admin\(\)[\s\S]*SET\s+search_path\s*=\s*public/i,
+    )
   })
 
   it('replaces votes SELECT policy with admin-bypass branch', () => {
@@ -54,6 +60,7 @@ describe('Phase 4 admin migration (00000000000005_admin_phase4.sql)', () => {
     expect(sql).toMatch(
       /CREATE POLICY "Vote counts visible to voters or admin"\s+ON public\.vote_counts/i,
     )
+    expect(sql).toMatch(/OR\s+public\.is_current_user_admin\(\)/i)
   })
 
   it('defines create_poll_with_choices RPC with 7 params and 2..10 choice guard', () => {
@@ -69,6 +76,9 @@ describe('Phase 4 admin migration (00000000000005_admin_phase4.sql)', () => {
     expect(sql).toMatch(/p_choices TEXT\[\]/)
     expect(sql).toMatch(
       /array_length\(p_choices, 1\) < 2 OR array_length\(p_choices, 1\) > 10/,
+    )
+    expect(sql).toMatch(
+      /CREATE OR REPLACE FUNCTION\s+public\.create_poll_with_choices[\s\S]*SET\s+search_path\s*=\s*public/i,
     )
   })
 
@@ -92,6 +102,9 @@ describe('Phase 4 admin migration (00000000000005_admin_phase4.sql)', () => {
     // 2..10 guard
     expect(sql).toMatch(
       /array_length\(p_choices, 1\) < 2 OR array_length\(p_choices, 1\) > 10/,
+    )
+    expect(sql).toMatch(
+      /CREATE OR REPLACE FUNCTION\s+public\.update_poll_with_choices[\s\S]*SET\s+search_path\s*=\s*public/i,
     )
   })
 

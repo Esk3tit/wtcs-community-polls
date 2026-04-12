@@ -23,6 +23,13 @@ interface Props {
   onTogglePin: (pollId: string, nextPinned: boolean) => void
 }
 
+const VALID_RESOLUTIONS: Resolution[] = ['addressed', 'forwarded', 'closed']
+
+function normalizeResolution(raw: string | null): Resolution | null {
+  if (raw === null) return null
+  return VALID_RESOLUTIONS.includes(raw as Resolution) ? (raw as Resolution) : null
+}
+
 export function AdminSuggestionRow({
   suggestion,
   voteCount,
@@ -74,7 +81,7 @@ export function AdminSuggestionRow({
         pollId={s.id}
         status={s.status}
         isPinned={s.is_pinned}
-        resolution={s.resolution as Resolution | null}
+        resolution={normalizeResolution(s.resolution)}
         voteCount={voteCount}
         onChanged={onChanged}
         onTogglePin={(next) => onTogglePin(s.id, next)}

@@ -14,7 +14,10 @@ describe('Public surface extensions (Phase 4 Plan 04 Task 4)', () => {
   it('useSuggestions sorts by is_pinned DESC then created_at DESC', () => {
     const src = readFileSync(resolve(root, 'src/hooks/useSuggestions.ts'), 'utf-8')
     expect(src).toMatch(/\.order\(['"]is_pinned['"]/)
-    expect(src).toMatch(/ascending:\s*false/)
+    expect(src).toMatch(/\.order\(['"]created_at['"]/)
+    expect(src).toMatch(
+      /order\(['"]is_pinned['"][\s\S]*ascending:\s*false[\s\S]*order\(['"]created_at['"][\s\S]*ascending:\s*false/,
+    )
   })
 
   it('topics route or its card component exposes a Pinned badge', () => {

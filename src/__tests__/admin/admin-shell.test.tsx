@@ -17,6 +17,10 @@ vi.mock('@/components/admin/AdminsList', () => ({
   AdminsList: () => <div data-testid="stub-admins-list" />,
 }))
 
+vi.mock('@/components/admin/AdminSuggestionsTab', () => ({
+  AdminSuggestionsTab: () => <div data-testid="stub-suggestions-tab" />,
+}))
+
 describe('AdminTabs', () => {
   it('renders all three tab triggers', () => {
     render(<AdminTabs />)

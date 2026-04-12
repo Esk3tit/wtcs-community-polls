@@ -280,6 +280,7 @@ export function CategoriesList() {
                         variant="ghost"
                         className="h-9 w-9"
                         aria-label={`Edit category ${cat.name}`}
+                        disabled={submitting}
                         onClick={() => handleStartEdit(cat)}
                       >
                         <Pencil className="h-4 w-4" />
@@ -289,6 +290,7 @@ export function CategoriesList() {
                         variant="ghost"
                         className="h-9 w-9 text-destructive hover:text-destructive"
                         aria-label={`Delete category ${cat.name}`}
+                        disabled={submitting}
                         onClick={() => void handleAskDelete(cat)}
                       >
                         <Trash2 className="h-4 w-4" />

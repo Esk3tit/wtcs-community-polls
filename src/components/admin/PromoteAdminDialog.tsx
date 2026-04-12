@@ -36,6 +36,8 @@ export function PromoteAdminDialog({ open, onOpenChange, onPromoted }: Props) {
   const handlePreauth = async () => {
     const trimmed = discordId.trim()
     if (!trimmed) return
+    // Discord snowflake IDs are 17-19 digit numeric strings
+    if (!/^\d{17,19}$/.test(trimmed)) return
     const result = await promote({ target_discord_id: trimmed })
     if (result.ok) {
       setQuery('')
@@ -139,7 +141,7 @@ export function PromoteAdminDialog({ open, onOpenChange, onPromoted }: Props) {
             <Button
               size="sm"
               onClick={() => void handlePreauth()}
-              disabled={submitting || discordId.trim().length === 0}
+              disabled={submitting || !/^\d{17,19}$/.test(discordId.trim())}
             >
               Pre-authorize
             </Button>

@@ -57,7 +57,9 @@ describe('Phase 4 promote-admin Edge Function (source analysis)', () => {
   })
 
   it('returns 400 on invalid input', () => {
-    expect(src).toMatch(/400/)
+    expect(src).toMatch(
+      /(status\s*:\s*400\b|new\s+Response\s*\([^)]*400\b|json\s*\([^)]*400\b)/,
+    )
   })
 })
 
@@ -79,8 +81,8 @@ describe('Phase 4 search-admin-targets Edge Function (source analysis)', () => {
   })
 
   it('enforces min 2-char query length', () => {
-    expect(src).toMatch(/length/)
-    expect(src).toMatch(/2/)
+    expect(src).toMatch(/length\s*[<>=]|\.length/)
+    expect(src).toMatch(/length[\s\S]{0,50}2|2[\s\S]{0,50}length/)
   })
 
   it('limits results to 10', () => {

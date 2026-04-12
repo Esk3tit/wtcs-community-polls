@@ -9,21 +9,28 @@ export function useCategories() {
 
   const fetchCategories = useCallback(async () => {
     setLoading(true)
-    const { data, error: fetchError } = await supabase
-      .from('categories')
-      .select('*')
-      .order('sort_order', { ascending: true })
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('categories')
+        .select('*')
+        .order('sort_order', { ascending: true })
 
-    if (fetchError) {
-      console.error('Failed to fetch categories:', fetchError)
+      if (fetchError) {
+        console.error('Failed to fetch categories:', fetchError)
+        setError('Failed to load categories.')
+        setCategories([])
+        return
+      }
+
+      setCategories(data ?? [])
+      setError(null)
+    } catch (err) {
+      console.error('Failed to fetch categories:', err)
       setError('Failed to load categories.')
       setCategories([])
+    } finally {
       setLoading(false)
-      return
     }
-    setCategories(data ?? [])
-    setError(null)
-    setLoading(false)
   }, [])
 
   useEffect(() => {

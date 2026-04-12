@@ -22,8 +22,12 @@ export function useCreatePoll() {
         toast.error(msg)
         return { ok: false as const, id: null }
       }
+      if (!data?.id) {
+        toast.error('Could not create suggestion. Try again.')
+        return { ok: false as const, id: null }
+      }
       toast.success('Suggestion created')
-      return { ok: true as const, id: data?.id ?? null }
+      return { ok: true as const, id: data.id }
     } catch {
       toast.error('Could not create suggestion. Try again.')
       return { ok: false as const, id: null }

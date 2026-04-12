@@ -74,7 +74,7 @@ export function SuggestionKebabMenu({
           </DropdownMenuItem>
           <DropdownMenuItem
             disabled={editDisabled}
-            aria-describedby={editDisabled ? 'kebab-edit-reason' : undefined}
+            aria-describedby={editDisabled ? `kebab-edit-reason-${pollId}` : undefined}
             onClick={() =>
               !editDisabled &&
               navigate({
@@ -89,7 +89,7 @@ export function SuggestionKebabMenu({
             </span>
             {editDisabled && (
               <span
-                id="kebab-edit-reason"
+                id={`kebab-edit-reason-${pollId}`}
                 className="text-xs text-muted-foreground pl-6"
               >
                 Cannot edit after responses received.
@@ -124,7 +124,7 @@ export function SuggestionKebabMenu({
           <DropdownMenuSeparator />
           <DropdownMenuItem
             disabled={deleteDisabled}
-            aria-describedby={deleteDisabled ? 'kebab-delete-reason' : undefined}
+            aria-describedby={deleteDisabled ? `kebab-delete-reason-${pollId}` : undefined}
             className="text-destructive focus:text-destructive flex-col items-start gap-0.5"
             onClick={() => !deleteDisabled && setDeleteOpen(true)}
           >
@@ -133,7 +133,7 @@ export function SuggestionKebabMenu({
             </span>
             {deleteDisabled && (
               <span
-                id="kebab-delete-reason"
+                id={`kebab-delete-reason-${pollId}`}
                 className="text-xs text-muted-foreground pl-6"
               >
                 Cannot delete after responses received.

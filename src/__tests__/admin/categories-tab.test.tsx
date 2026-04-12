@@ -10,7 +10,7 @@ const useCategoriesMock = vi.fn(() => ({
     { id: 'c2', name: 'Bugs', sort_order: 2 },
   ],
   loading: false,
-  error: null,
+  error: null as string | null,
   refetch: vi.fn().mockResolvedValue(undefined),
 }))
 
@@ -110,8 +110,7 @@ describe('CategoriesList error state (MEDIUM #7)', () => {
     useCategoriesMock.mockReturnValueOnce({
       categories: [],
       loading: false,
-      // @ts-expect-error — runtime shape acceptable, string is fine for the UI branch
-      error: 'network',
+      error: 'Failed to load categories.',
       refetch: vi.fn(),
     })
     render(<CategoriesList />)

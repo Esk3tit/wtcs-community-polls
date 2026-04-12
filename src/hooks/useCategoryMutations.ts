@@ -19,6 +19,9 @@ export function useCategoryMutations() {
       }
       toast.success('Category created')
       return { ok: true as const, category: data }
+    } catch {
+      toast.error('Could not create category. Try again.')
+      return { ok: false as const }
     } finally {
       setSubmitting(false)
     }
@@ -36,6 +39,9 @@ export function useCategoryMutations() {
       }
       toast.success('Category renamed')
       return { ok: true as const }
+    } catch {
+      toast.error('Could not rename category. Try again.')
+      return { ok: false as const }
     } finally {
       setSubmitting(false)
     }
@@ -57,12 +63,15 @@ export function useCategoryMutations() {
       }
       if (affectedCount > 0) {
         toast.success(
-          `Category deleted. ${affectedCount} suggestion${affectedCount === 1 ? '' : 's'} are now uncategorized.`,
+          `Category deleted. ${affectedCount} suggestion${affectedCount === 1 ? ' is' : 's are'} now uncategorized.`,
         )
       } else {
         toast.success('Category deleted.')
       }
       return { ok: true as const }
+    } catch {
+      toast.error('Could not delete category. Try again.')
+      return { ok: false as const }
     } finally {
       setSubmitting(false)
     }

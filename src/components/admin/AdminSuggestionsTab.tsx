@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { Plus, Inbox, Archive, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -25,7 +25,11 @@ function sortAdminSuggestions(rows: AdminSuggestion[]): AdminSuggestion[] {
 export function AdminSuggestionsTab() {
   const search = useSearch({ strict: false }) as { tab?: string; filter?: Filter }
   const navigate = useNavigate()
-  const filter: Filter = search.filter ?? 'active'
+  const rawFilter = search.filter
+  const filter: Filter =
+    rawFilter === 'active' || rawFilter === 'closed' || rawFilter === 'all'
+      ? rawFilter
+      : 'active'
 
   const [items, setItems] = useState<AdminSuggestion[]>([])
   const [voteCounts, setVoteCounts] = useState<Record<string, number>>({})
@@ -33,8 +37,10 @@ export function AdminSuggestionsTab() {
   const [loadError, setLoadError] = useState<Error | null>(null)
 
   const { pinPoll } = usePinPoll()
+  const fetchIdRef = useRef(0)
 
   const fetchAll = useCallback(async () => {
+    const id = ++fetchIdRef.current
     setLoading(true)
     setLoadError(null)
     try {
@@ -46,6 +52,7 @@ export function AdminSuggestionsTab() {
       const query = filter === 'all' ? base : base.eq('status', filter)
       const { data, error } = await query
       if (error) throw error
+      if (id !== fetchIdRef.current) return // stale response
       const rows = ((data ?? []) as unknown) as AdminSuggestion[]
       setItems(rows)
 
@@ -61,16 +68,18 @@ export function AdminSuggestionsTab() {
           .select('poll_id, count')
           .in('poll_id', pollIds)
         if (vcErr) throw vcErr
+        if (id !== fetchIdRef.current) return // stale response
         for (const r of (vcData ?? []) as Array<{ poll_id: string; count: number | null }>) {
           counts[r.poll_id] = (counts[r.poll_id] ?? 0) + (r.count ?? 0)
         }
       }
       setVoteCounts(counts)
     } catch (err) {
+      if (id !== fetchIdRef.current) return // stale response
       console.error('Failed to load admin suggestions:', err)
       setLoadError(err instanceof Error ? err : new Error(String(err)))
     } finally {
-      setLoading(false)
+      if (id === fetchIdRef.current) setLoading(false)
     }
   }, [filter])
 

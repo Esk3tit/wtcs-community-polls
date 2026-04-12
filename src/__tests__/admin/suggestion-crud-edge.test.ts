@@ -31,17 +31,16 @@ describe('Phase 4 suggestion CRUD Edge Functions (source analysis)', () => {
 
     it('validates title length and choices array bounds', () => {
       // Title bounds 3..120
-      expect(src).toMatch(/title/)
-      expect(src).toMatch(/120/)
-      expect(src).toMatch(/3/)
+      expect(src).toMatch(/title[\s\S]{0,100}3[\s\S]{0,100}120|title[\s\S]{0,200}between\s+3\s+and\s+120/i)
       // Choices array bounds 2..10
       expect(src).toMatch(/Array\.isArray\(\s*choices\s*\)|choices\.length/)
-      expect(src).toMatch(/10/)
-      expect(src).toMatch(/2/)
+      expect(src).toMatch(/choices[\s\S]{0,100}2[\s\S]{0,100}10|between\s+2\s+and\s+10/i)
     })
 
     it('returns 400 on validation failure', () => {
-      expect(src).toMatch(/400/)
+      expect(src).toMatch(
+        /(status\s*:\s*400\b|new\s+Response\s*\([^)]*400\b|json\s*\([^)]*400\b)/,
+      )
     })
   })
 
@@ -121,7 +120,9 @@ describe('Phase 4 suggestion CRUD Edge Functions (source analysis)', () => {
     })
 
     it('returns 400 on missing/invalid resolution', () => {
-      expect(src).toMatch(/400/)
+      expect(src).toMatch(
+        /(status\s*:\s*400\b|new\s+Response\s*\([^)]*400\b|json\s*\([^)]*400\b)/,
+      )
     })
   })
 
@@ -230,7 +231,9 @@ describe('Phase 4 suggestion CRUD Edge Functions (source analysis)', () => {
     })
 
     it('returns 400 on disallowed content type', () => {
-      expect(src).toMatch(/400/)
+      expect(src).toMatch(
+        /(status\s*:\s*400\b|new\s+Response\s*\([^)]*400\b|json\s*\([^)]*400\b)/,
+      )
     })
   })
 })

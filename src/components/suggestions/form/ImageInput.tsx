@@ -20,6 +20,7 @@ export function ImageInput({ value, onChange, disabled }: Props) {
   const [uploading, setUploading] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const [dropError, setDropError] = useState<string | null>(null)
+  const [urlInput, setUrlInput] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
 
   const handleFile = async (file: File) => {
@@ -174,6 +175,8 @@ export function ImageInput({ value, onChange, disabled }: Props) {
               type="url"
               placeholder="https://…"
               disabled={disabled}
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
               onBlur={(e) => {
                 const v = e.currentTarget.value.trim()
                 onChange(v || null)

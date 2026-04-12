@@ -21,7 +21,8 @@ export function useSearchAdminTargets() {
     // react-hooks/set-state-in-effect).
     let cancelled = false
 
-    if (debounced.length < 2) {
+    const normalized = debounced.trim()
+    if (normalized.length < 2) {
       const t = setTimeout(() => {
         if (cancelled) return
         setResults([])
@@ -38,7 +39,7 @@ export function useSearchAdminTargets() {
       setSearching(true)
       void supabase.functions
         .invoke<{ results: AdminTarget[] }>('search-admin-targets', {
-          body: { query: debounced },
+          body: { query: normalized },
         })
         .then(({ data, error }) => {
           if (cancelled) return

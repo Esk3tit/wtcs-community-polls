@@ -36,9 +36,12 @@ export function validateSuggestionForm(input: SuggestionFormInput): ValidationRe
     errors.closes_at = 'Close time must be in the future.'
   }
 
-  if (input.image_url) {
+  const categoryId = input.category_id?.trim() ? input.category_id.trim() : null
+  const imageUrl = input.image_url?.trim() ? input.image_url.trim() : null
+
+  if (imageUrl) {
     try {
-      new URL(input.image_url)
+      new URL(imageUrl)
     } catch {
       errors.image_url = 'Must be a valid image URL.'
     }
@@ -51,8 +54,8 @@ export function validateSuggestionForm(input: SuggestionFormInput): ValidationRe
       title,
       description,
       choices,
-      category_id: input.category_id ?? null,
-      image_url: input.image_url ?? null,
+      category_id: categoryId,
+      image_url: imageUrl,
       closes_at: input.closes_at,
     },
   }

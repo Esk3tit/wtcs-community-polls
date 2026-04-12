@@ -130,7 +130,7 @@ export function ChoicesEditor({ value, onChange, disabled, error }: Props) {
             <Button variant="ghost" onClick={() => setPendingPreset(null)}>
               Cancel
             </Button>
-            <Button onClick={confirmPreset}>Replace</Button>
+            <Button onClick={confirmPreset} disabled={disabled}>Replace</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

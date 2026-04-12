@@ -53,8 +53,19 @@ function formatAbsolute(iso: string): string {
   }
 }
 
+function inferMode(iso: string): Mode {
+  try {
+    const ms = new Date(iso).getTime() - Date.now()
+    if (Math.abs(ms - 7 * 86400_000) < 60_000) return '7d'
+    if (Math.abs(ms - 14 * 86400_000) < 60_000) return '14d'
+    return 'custom'
+  } catch {
+    return '7d'
+  }
+}
+
 export function TimerPicker({ value, onChange, disabled, error }: Props) {
-  const [mode, setMode] = useState<Mode>('7d')
+  const [mode, setMode] = useState<Mode>(() => inferMode(value))
 
   const setPreset = (m: Mode) => {
     setMode(m)

@@ -30,7 +30,9 @@ describe('Phase 4 demote-admin Edge Function (source analysis)', () => {
 
   it('returns 400 with "Cannot demote yourself" message', () => {
     expect(src).toMatch(/Cannot demote yourself/)
-    expect(src).toMatch(/400/)
+    expect(src).toMatch(
+      /Cannot demote yourself[\s\S]{0,250}400|400[\s\S]{0,250}Cannot demote yourself/,
+    )
   })
 
   it('updates profiles SET is_admin=false', () => {

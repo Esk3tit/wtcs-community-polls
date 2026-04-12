@@ -40,7 +40,10 @@ export function ResolutionOnCloseDialog({ open, onOpenChange, pollId, onClosed }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(o) => {
+      if (!o) setSelected(null)
+      onOpenChange(o)
+    }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Close this suggestion?</DialogTitle>

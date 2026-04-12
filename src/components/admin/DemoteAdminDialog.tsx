@@ -29,6 +29,7 @@ export function DemoteAdminDialog({ admin, open, onOpenChange, onDemoted }: Prop
   const handleConfirm = async () => {
     const result = await demote(admin.id, admin.discord_username)
     if (result.ok) {
+      onOpenChange(false)
       onDemoted()
     }
   }
