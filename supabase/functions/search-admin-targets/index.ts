@@ -6,7 +6,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders } from '../_shared/cors.ts'
-import { requireAdmin } from '../_shared/admin-auth.ts'
+import { requireAdmin, adminCheckResponse } from '../_shared/admin-auth.ts'
 
 function json(body: unknown, status: number, cors: HeadersInit) {
   return new Response(JSON.stringify(body), {
@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
     )
 
     const adminCheck = await requireAdmin(supabaseAdmin, user.id)
-    if (!adminCheck.ok) return json({ error: 'Forbidden' }, 403, corsHeaders)
+    if (!adminCheck.ok) { const r = adminCheckResponse(adminCheck); return json({ error: r.error }, r.status, corsHeaders) }
 
     let body: { query?: unknown }
     try {
@@ -52,10 +52,13 @@ Deno.serve(async (req) => {
       return json({ error: 'Query must be at least 2 characters' }, 400, corsHeaders)
     }
 
+    // Escape LIKE special characters so they are matched literally.
+    const escapedQuery = query.replace(/[%_\\]/g, '\\$&')
+
     const { data, error } = await supabaseAdmin
       .from('profiles')
       .select('id, discord_id, discord_username, avatar_url')
-      .ilike('discord_username', `%${query}%`)
+      .ilike('discord_username', `%${escapedQuery}%`)
       .limit(10)
     if (error) {
       console.error('search-admin-targets query failed:', error)

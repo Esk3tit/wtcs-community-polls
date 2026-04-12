@@ -5,7 +5,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders } from '../_shared/cors.ts'
-import { requireAdmin } from '../_shared/admin-auth.ts'
+import { requireAdmin, adminCheckResponse } from '../_shared/admin-auth.ts'
 
 function json(body: unknown, status: number, cors: HeadersInit) {
   return new Response(JSON.stringify(body), {
@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     )
 
     const adminCheck = await requireAdmin(supabaseAdmin, user.id)
-    if (!adminCheck.ok) return json({ error: 'Forbidden' }, 403, corsHeaders)
+    if (!adminCheck.ok) { const r = adminCheckResponse(adminCheck); return json({ error: r.error }, r.status, corsHeaders) }
 
     let body: { name?: unknown }
     try {

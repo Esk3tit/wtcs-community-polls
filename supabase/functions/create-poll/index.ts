@@ -7,7 +7,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders } from '../_shared/cors.ts'
-import { requireAdmin } from '../_shared/admin-auth.ts'
+import { requireAdmin, adminCheckResponse } from '../_shared/admin-auth.ts'
 
 function json(body: unknown, status: number, cors: HeadersInit) {
   return new Response(JSON.stringify(body), {
@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
     )
 
     const adminCheck = await requireAdmin(supabaseAdmin, user.id)
-    if (!adminCheck.ok) return json({ error: 'Forbidden' }, 403, corsHeaders)
+    if (!adminCheck.ok) { const r = adminCheckResponse(adminCheck); return json({ error: r.error }, r.status, corsHeaders) }
 
     let body: {
       title?: unknown
@@ -57,8 +57,8 @@ Deno.serve(async (req) => {
 
     const title = typeof body.title === 'string' ? body.title.trim() : ''
     const description = typeof body.description === 'string' ? body.description : ''
-    const category_id = typeof body.category_id === 'string' ? body.category_id : null
-    const image_url = typeof body.image_url === 'string' ? body.image_url : null
+    const category_id = typeof body.category_id === 'string' && body.category_id.trim() !== '' ? body.category_id : null
+    const image_url = typeof body.image_url === 'string' && body.image_url.trim() !== '' ? body.image_url : null
     const closes_at = typeof body.closes_at === 'string' ? body.closes_at : ''
     const choices = body.choices
 

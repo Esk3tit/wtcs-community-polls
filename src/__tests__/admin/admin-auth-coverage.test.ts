@@ -48,6 +48,7 @@ describe('Phase 4 admin-auth coverage (source analysis)', () => {
     expect(src).toMatch(/profile_not_found/)
     expect(src).toMatch(/not_admin/)
     expect(src).toMatch(/integrity_failed/)
+    expect(src).toMatch(/query_failed/)
   })
 
   for (const name of GATED_EF_PATHS) {
@@ -65,9 +66,9 @@ describe('Phase 4 admin-auth coverage (source analysis)', () => {
         expect(src).toMatch(/requireAdmin/)
       })
 
-      it('calls requireAdmin and gates with 403 on failure', () => {
+      it('calls requireAdmin and gates on failure via adminCheckResponse', () => {
         expect(src).toMatch(/requireAdmin\s*\(/)
-        expect(src).toMatch(/403/)
+        expect(src).toMatch(/adminCheckResponse/)
       })
 
       it('checks Authorization header and returns 401 on missing auth', () => {
