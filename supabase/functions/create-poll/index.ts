@@ -91,8 +91,14 @@ Deno.serve(async (req) => {
       return json({ error: 'closes_at must be ISO-8601 with timezone (e.g. 2024-12-31T23:59:59Z)' }, 400, corsHeaders)
     }
     const closesAtDate = new Date(closes_at)
-    if (Number.isNaN(closesAtDate.getTime()) || closesAtDate.getTime() <= Date.now() + 60_000) {
-      return json({ error: 'closes_at must be a valid ISO date at least 1 minute in the future' }, 400, corsHeaders)
+    if (Number.isNaN(closesAtDate.getTime())) {
+      return json({ error: 'closes_at must be a valid ISO date' }, 400, corsHeaders)
+    }
+    if (closesAtDate.toISOString().slice(0, 10) !== closes_at.slice(0, 10)) {
+      return json({ error: 'closes_at contains an impossible date' }, 400, corsHeaders)
+    }
+    if (closesAtDate.getTime() <= Date.now() + 60_000) {
+      return json({ error: 'closes_at must be at least 1 minute in the future' }, 400, corsHeaders)
     }
 
     const { data: pollId, error: rpcError } = await supabaseAdmin.rpc('create_poll_with_choices', {

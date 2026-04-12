@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
       console.error('demote-admin count check failed:', countError)
       return json({ error: 'Internal error' }, 500, corsHeaders)
     }
-    if (adminCount !== null && adminCount <= 1) {
+    if (adminCount === null || adminCount <= 1) {
       return json({ error: 'Cannot demote: at least one admin must remain' }, 400, corsHeaders)
     }
 

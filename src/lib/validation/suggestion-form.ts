@@ -37,9 +37,14 @@ export function validateSuggestionForm(input: SuggestionFormInput): ValidationRe
   if (!ISO_WITH_TZ.test(closesAtStr)) {
     errors.closes_at = 'Close time must be ISO-8601 with timezone.'
   } else {
-    const closesAtMs = Date.parse(closesAtStr)
-    if (isNaN(closesAtMs) || closesAtMs <= Date.now() + 60_000) {
-      errors.closes_at = 'Close time must be in the future.'
+    const closesAtDate = new Date(closesAtStr)
+    const closesAtMs = closesAtDate.getTime()
+    if (isNaN(closesAtMs)) {
+      errors.closes_at = 'Close time must be a valid date.'
+    } else if (closesAtDate.toISOString().slice(0, 10) !== closesAtStr.slice(0, 10)) {
+      errors.closes_at = 'Close time contains an impossible date.'
+    } else if (closesAtMs <= Date.now() + 60_000) {
+      errors.closes_at = 'Close time must be at least 1 minute in the future.'
     }
   }
 

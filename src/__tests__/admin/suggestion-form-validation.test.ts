@@ -74,7 +74,7 @@ describe('validateSuggestionForm', () => {
       closes_at: new Date(Date.now() - 1000).toISOString(),
     })
     expect(r.ok).toBe(false)
-    if (!r.ok) expect(r.errors.closes_at).toMatch(/future/)
+    if (!r.ok) expect(r.errors.closes_at).toMatch(/at least 1 minute/)
   })
 
   it('rejects invalid image URL', () => {
@@ -97,7 +97,16 @@ describe('validateSuggestionForm', () => {
       closes_at: new Date(Date.now() + 59_000).toISOString(),
     })
     expect(r.ok).toBe(false)
-    if (!r.ok) expect(r.errors.closes_at).toMatch(/future/)
+    if (!r.ok) expect(r.errors.closes_at).toMatch(/at least 1 minute/)
+  })
+
+  it('rejects impossible dates like Feb 30 (round-trip check)', () => {
+    const r = validateSuggestionForm({
+      ...valid(),
+      closes_at: '2099-02-30T12:00:00Z',
+    })
+    expect(r.ok).toBe(false)
+    if (!r.ok) expect(r.errors.closes_at).toMatch(/impossible/)
   })
 
   it('normalizes blank optional fields to null', () => {

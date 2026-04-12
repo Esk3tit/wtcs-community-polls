@@ -35,6 +35,13 @@ describe('Phase 4 demote-admin Edge Function (source analysis)', () => {
     )
   })
 
+  it('last-admin guard fails closed on null adminCount', () => {
+    // The guard must use `adminCount === null || adminCount <= 1` (fail-closed)
+    // not `adminCount !== null && adminCount <= 1` (fail-open on null).
+    expect(src).toMatch(/adminCount\s*===\s*null\s*\|\|\s*adminCount\s*<=\s*1/)
+    expect(src).not.toMatch(/adminCount\s*!==\s*null\s*&&\s*adminCount\s*<=\s*1/)
+  })
+
   it('updates profiles SET is_admin=false', () => {
     expect(src).toMatch(/from\(\s*['"]profiles['"]\s*\)/)
     expect(src).toMatch(/\.update\(/)
