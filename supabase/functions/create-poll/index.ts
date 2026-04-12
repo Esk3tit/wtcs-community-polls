@@ -94,7 +94,14 @@ Deno.serve(async (req) => {
     if (Number.isNaN(closesAtDate.getTime())) {
       return json({ error: 'closes_at must be a valid ISO date' }, 400, corsHeaders)
     }
-    if (closesAtDate.toISOString().slice(0, 10) !== closes_at.slice(0, 10)) {
+    const [datePart] = closes_at.split('T')
+    const [year, month, day] = datePart.split('-').map(Number)
+    const calendarDate = new Date(Date.UTC(year, month - 1, day))
+    if (
+      calendarDate.getUTCFullYear() !== year ||
+      calendarDate.getUTCMonth() + 1 !== month ||
+      calendarDate.getUTCDate() !== day
+    ) {
       return json({ error: 'closes_at contains an impossible date' }, 400, corsHeaders)
     }
     if (closesAtDate.getTime() <= Date.now() + 60_000) {

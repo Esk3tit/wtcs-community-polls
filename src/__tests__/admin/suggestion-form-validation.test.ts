@@ -109,6 +109,14 @@ describe('validateSuggestionForm', () => {
     if (!r.ok) expect(r.errors.closes_at).toMatch(/impossible/)
   })
 
+  it('accepts valid ISO timestamps with explicit offsets', () => {
+    const r = validateSuggestionForm({
+      ...valid(),
+      closes_at: '2099-01-01T00:30:00+02:00',
+    })
+    expect(r.ok).toBe(true)
+  })
+
   it('normalizes blank optional fields to null', () => {
     const r = validateSuggestionForm({
       ...valid(),

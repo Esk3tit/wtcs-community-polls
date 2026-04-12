@@ -41,10 +41,19 @@ export function validateSuggestionForm(input: SuggestionFormInput): ValidationRe
     const closesAtMs = closesAtDate.getTime()
     if (isNaN(closesAtMs)) {
       errors.closes_at = 'Close time must be a valid date.'
-    } else if (closesAtDate.toISOString().slice(0, 10) !== closesAtStr.slice(0, 10)) {
-      errors.closes_at = 'Close time contains an impossible date.'
-    } else if (closesAtMs <= Date.now() + 60_000) {
-      errors.closes_at = 'Close time must be at least 1 minute in the future.'
+    } else {
+      const [datePart] = closesAtStr.split('T')
+      const [year, month, day] = datePart.split('-').map(Number)
+      const calendarDate = new Date(Date.UTC(year, month - 1, day))
+      if (
+        calendarDate.getUTCFullYear() !== year ||
+        calendarDate.getUTCMonth() + 1 !== month ||
+        calendarDate.getUTCDate() !== day
+      ) {
+        errors.closes_at = 'Close time contains an impossible date.'
+      } else if (closesAtMs <= Date.now() + 60_000) {
+        errors.closes_at = 'Close time must be at least 1 minute in the future.'
+      }
     }
   }
 
