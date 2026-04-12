@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
   Dialog,
   DialogContent,
@@ -60,7 +59,7 @@ export function ChoicesEditor({ value, onChange, disabled, error }: Props) {
   return (
     <div className="space-y-3">
       <div>
-        <Label>Choices</Label>
+        <h3 className="text-base font-semibold">Choices</h3>
         <p className="text-xs text-muted-foreground mt-1">
           How should people respond? Minimum 2, maximum 10.
         </p>

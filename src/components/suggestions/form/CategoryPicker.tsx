@@ -57,10 +57,10 @@ export function CategoryPicker({ value, onChange, disabled }: Props) {
 
   return (
     <div className="space-y-2">
-      <Label>Category</Label>
+      <h3 className="text-base font-semibold">Category</h3>
       <Select value={value ?? NONE_VALUE} onValueChange={handleValueChange} disabled={disabled}>
         <SelectTrigger>
-          <SelectValue placeholder="Uncategorized" />
+          <SelectValue placeholder="Select a category…" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={NONE_VALUE}>Uncategorized</SelectItem>
@@ -78,12 +78,16 @@ export function CategoryPicker({ value, onChange, disabled }: Props) {
           <DialogHeader>
             <DialogTitle>Create new category</DialogTitle>
           </DialogHeader>
-          <Input
-            autoFocus
-            placeholder="Category name"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-          />
+          <div className="space-y-2">
+            <Label htmlFor="new-category-name">Category name</Label>
+            <Input
+              id="new-category-name"
+              autoFocus
+              placeholder="e.g. Balance, Maps, Lineups"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+            />
+          </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setDialogOpen(false)}>
               Cancel
