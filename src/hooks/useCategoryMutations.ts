@@ -57,9 +57,10 @@ export function useCategoryMutations() {
     }
   }, [])
 
-  // Cross-AI LOW fix (D-21): caller MUST pass the real affectedCount (queried via
-  // `supabase.from('polls').select('id', { count: 'exact', head: true }).eq('category_id', ...)`)
-  // BEFORE calling remove(). Never default to 0 — the count ships into the success toast.
+  // Cross-AI LOW fix (D-21): caller MUST pass the real affectedCount
+  // (queried via a category_id count against the polls table — see
+  // CategoriesList.handleAskDelete) BEFORE calling remove(). Never default
+  // to 0 — the count ships into the success toast.
   const remove = useCallback(async (category_id: string, affectedCount: number) => {
     setSubmitting(true)
     try {
