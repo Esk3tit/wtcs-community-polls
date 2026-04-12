@@ -50,6 +50,8 @@ export function SuggestionKebabMenu({
   }
 
   const viewHref = status === 'active' ? '/topics' : '/archive'
+  const handleViewResults = () =>
+    navigate({ to: viewHref, search: { focus: pollId } })
 
   return (
     <>
@@ -65,7 +67,7 @@ export function SuggestionKebabMenu({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => navigate({ to: viewHref })}>
+          <DropdownMenuItem onClick={handleViewResults}>
             <BarChart3 className="h-4 w-4 mr-2" /> View results
           </DropdownMenuItem>
           <DropdownMenuItem
