@@ -7,7 +7,7 @@ source:
   - .planning/phases/04-admin-panel-suggestion-management/04-03-SUMMARY.md
   - .planning/phases/04-admin-panel-suggestion-management/04-04-SUMMARY.md
 started: 2026-04-19T04:38:31Z
-updated: 2026-04-19T04:47:00Z
+updated: 2026-04-19T05:29:03Z
 ---
 
 ## Environment Prerequisites
@@ -37,9 +37,7 @@ result: pass
 
 ### 3. Admin Shell Tabs + URL Sync
 expected: On `/admin`, three tabs render: **Suggestions | Categories | Admins**. Clicking a tab updates the URL to `?tab=categories` / `?tab=admins` / `?tab=suggestions`. Refreshing the page with `?tab=admins` in the URL lands on the Admins tab. Pasting `?tab=INVALID` falls back to the default (Suggestions) — no crash.
-result: issue
-reported: "No UI entry point to /admin — admins must type the URL manually. Navbar has Topics and Archive links but no conditional admin link based on useAuth().isAdmin (which is already exposed at src/contexts/AuthContext.tsx:151). MobileNav also has no /admin entry."
-severity: major
+result: pass
 
 ### 4. Categories CRUD + Real Affected Count
 expected: On the Categories tab: (a) create a category named "Test Category" — it appears in the list with toast "Category created". (b) Rename it to "Renamed" — change persists. (c) Delete it — confirmation dialog appears. If 0 polls use it, dialog says "No suggestions use this category. This cannot be undone." If some polls use it, dialog says "{N} suggestion{s} will become uncategorized. This cannot be undone." with the REAL number (not 0).
@@ -110,8 +108,8 @@ result: pass
 ## Summary
 
 total: 15
-passed: 5
-issues: 1
+passed: 6
+issues: 0
 pending: 0
 skipped: 0
 blocked: 9
@@ -119,7 +117,8 @@ blocked: 9
 ## Gaps
 
 - truth: "Admins can reach /admin from the UI without typing the URL manually"
-  status: failed
+  status: closed
+  closed_by: 04-05-PLAN.md
   reason: "User reported: No UI entry point to /admin — admins must type the URL manually. Navbar has Topics and Archive links but no conditional admin link based on useAuth().isAdmin (which is already exposed at src/contexts/AuthContext.tsx:151). MobileNav also has no /admin entry."
   severity: major
   test: 3
