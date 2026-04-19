@@ -14,6 +14,13 @@ findings:
   info: 2
   total: 2
 status: clean
+resolved:
+  - id: IN-01
+    commit: 7e806fa
+    note: Anchored /admin/i → /^admin$/i (and topics/archive for consistency) in both unit test files.
+  - id: IN-02
+    commit: 7e806fa
+    note: Added MobileNav.integration.test.tsx exercising real Radix Sheet portal (no mock). +2 cases, 339 total passing.
 ---
 
 # Phase 04 Gap-05: Code Review Report
