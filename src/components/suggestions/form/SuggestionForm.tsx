@@ -70,7 +70,17 @@ export function SuggestionForm({ mode, pollId }: Props) {
         setTitle(poll.title ?? '')
         setDescription(poll.description ?? '')
         setImageUrl(poll.image_url ?? null)
-        setClosesAt(poll.closes_at ?? new Date(Date.now() + 7 * 86400_000).toISOString())
+        // LO-v2-04: if the stored closes_at is missing, unparseable, or in
+        // the past (lazy-closed no-vote poll reached via direct edit URL),
+        // fall back to +7 days so the future-date validator doesn't reject
+        // on submit with an unexplained error. 60s margin mirrors the
+        // server-side "at least 1 minute in the future" guard.
+        const existingCloseMs = poll.closes_at ? Date.parse(poll.closes_at) : NaN
+        setClosesAt(
+          Number.isFinite(existingCloseMs) && existingCloseMs > Date.now() + 60_000
+            ? poll.closes_at
+            : new Date(Date.now() + 7 * 86400_000).toISOString(),
+        )
         setCategoryId(poll.category_id ?? null)
       }
       if (ch && ch.length > 0) setChoices(ch.map((c: { label: string }) => c.label))
