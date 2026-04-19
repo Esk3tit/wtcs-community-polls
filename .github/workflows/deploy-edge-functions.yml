@@ -1,0 +1,30 @@
+name: Deploy Edge Functions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/**'
+      - '.github/workflows/deploy-edge-functions.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-edge-functions
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.92.1
+      # --use-api skips Docker (Pitfall 9 fix) and deploys all functions under supabase/functions/.
+      # No function-name arg = deploy-all mode (all 15 EFs).
+      - name: Deploy all Edge Functions
+        run: supabase functions deploy --project-ref "${SUPABASE_PROJECT_REF}" --use-api
