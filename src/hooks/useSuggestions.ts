@@ -40,7 +40,10 @@ export function useSuggestions(status: 'active' | 'closed') {
       if (cancelled) return
 
       if (pollsError) {
-        console.error('Failed to fetch suggestions:', pollsError)
+        // NIT-v2-02: stage suffix in console.error distinguishes which fetch
+        // phase failed when reading bug reports, without churning the
+        // user-visible copy across four sites.
+        console.error('[useSuggestions:polls] Failed to fetch suggestions:', pollsError)
         setError('Failed to load topics. Try refreshing the page.')
         setLoading(false)
         return
@@ -59,7 +62,7 @@ export function useSuggestions(status: 'active' | 'closed') {
           .order('sort_order', { ascending: true })
         if (cancelled) return
         if (choicesError) {
-          console.error('Failed to fetch choices:', choicesError)
+          console.error('[useSuggestions:choices] Failed to fetch choices:', choicesError)
           setError('Failed to load topics. Try refreshing the page.')
           setLoading(false)
           return
@@ -84,7 +87,7 @@ export function useSuggestions(status: 'active' | 'closed') {
           .in('id', catIds)
         if (cancelled) return
         if (catsError) {
-          console.error('Failed to fetch categories:', catsError)
+          console.error('[useSuggestions:cats] Failed to fetch categories:', catsError)
           setError('Failed to load topics. Try refreshing the page.')
           setLoading(false)
           return
@@ -105,7 +108,7 @@ export function useSuggestions(status: 'active' | 'closed') {
         if (cancelled) return
 
         if (votesError) {
-          console.error('Failed to fetch votes:', votesError)
+          console.error('[useSuggestions:votes] Failed to fetch votes:', votesError)
           setError('Failed to load your responses. Try refreshing the page.')
           setLoading(false)
           return
