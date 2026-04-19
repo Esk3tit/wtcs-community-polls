@@ -7,7 +7,6 @@ export type AdminSuggestion = {
   id: string
   title: string
   status: string
-  raw_status: string
   resolution: string | null
   is_pinned: boolean
   closes_at: string | null
