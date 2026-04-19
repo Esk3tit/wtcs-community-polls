@@ -59,7 +59,13 @@ Deno.serve(async (req) => {
       return json({ error: 'Category name must be between 1 and 50 characters' }, 400, corsHeaders)
     }
 
+    // LO-v2-01: mirror create-category's empty-slug guard. A name like "!!!"
+    // slugifies to '' which would hit a NOT NULL violation and surface as a
+    // generic 500. Reject cleanly with a 400 instead.
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    if (!slug) {
+      return json({ error: 'Category name must contain at least one alphanumeric character' }, 400, corsHeaders)
+    }
     const { data, error } = await supabaseAdmin
       .from('categories')
       .update({ name, slug })
