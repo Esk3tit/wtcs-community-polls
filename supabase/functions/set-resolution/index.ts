@@ -3,7 +3,7 @@
 // Admin-gated resolution edit on closed polls. Validates resolution against
 // ['addressed','forwarded','closed'] allowlist.
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { requireAdmin, adminCheckResponse } from '../_shared/admin-auth.ts'
 

@@ -3,7 +3,7 @@
 // Admin-gated category create. Validates name length 1..50.
 // Maps PostgreSQL 23505 (unique violation) to 409 "Category already exists".
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { requireAdmin, adminCheckResponse } from '../_shared/admin-auth.ts'
 

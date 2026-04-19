@@ -3,7 +3,7 @@
 // Admin-gated manual close (D-15). Body MUST include resolution
 // in ['addressed','forwarded','closed']; the EF rejects 400 otherwise.
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { requireAdmin, adminCheckResponse } from '../_shared/admin-auth.ts'
 
