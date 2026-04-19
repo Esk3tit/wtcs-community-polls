@@ -9,8 +9,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
+import { useAuth } from '@/hooks/useAuth'
 
 export function MobileNav() {
+  const { isAdmin } = useAuth()
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -46,6 +49,17 @@ export function MobileNav() {
               Archive
             </Link>
           </SheetClose>
+          {isAdmin && (
+            <SheetClose asChild>
+              <Link
+                to="/admin"
+                className="py-3 text-sm text-foreground hover:text-foreground/80 transition-colors"
+                activeProps={{ className: 'font-medium' }}
+              >
+                Admin
+              </Link>
+            </SheetClose>
+          )}
         </nav>
       </SheetContent>
     </Sheet>

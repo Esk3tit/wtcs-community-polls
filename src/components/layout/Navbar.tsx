@@ -13,7 +13,7 @@ import { MobileNav } from '@/components/layout/MobileNav'
 import logo from '@/assets/wtcs-logo.png'
 
 export function Navbar() {
-  const { user, profile, signOut, signInWithDiscord } = useAuth()
+  const { user, profile, signOut, signInWithDiscord, isAdmin } = useAuth()
   const { setTheme } = useTheme()
 
   return (
@@ -49,6 +49,15 @@ export function Navbar() {
             >
               Archive
             </Link>
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                activeProps={{ className: 'text-foreground' }}
+              >
+                Admin
+              </Link>
+            )}
           </nav>
         )}
 
