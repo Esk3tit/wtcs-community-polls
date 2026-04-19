@@ -1,10 +1,11 @@
 ---
 phase: 5
 slug: launch-hardening
-status: draft
+status: approved
 shadcn_initialized: true
 preset: shadcn Maia style, Neutral base (bbVJxbc)
-created: 2026-04-18
+created: 2026-04-19
+reviewed_at: 2026-04-19
 ---
 
 # Phase 5 — UI Design Contract
