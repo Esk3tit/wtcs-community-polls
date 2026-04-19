@@ -1,132 +1,167 @@
 ---
 phase: 5
-reviewers: [codex]
-reviewers_skipped: [claude (self — Claude Code CLI session), gemini (not installed), opencode (not installed), qwen (not installed), cursor (auth required — run `cursor agent login`), coderabbit (reviews git working tree, not committed plan artifacts)]
+round: 2
+reviewers: [codex, cursor]
+reviewers_skipped: [claude (self — Claude Code CLI), gemini/opencode/qwen (not installed), coderabbit (reviews git diff, plans are committed)]
 reviewed_at: 2026-04-19
 plans_reviewed: [05-01-PLAN.md, 05-02-PLAN.md, 05-03-PLAN.md, 05-04-PLAN.md, 05-05-PLAN.md, 05-06-PLAN.md, 05-07-PLAN.md, 05-08-PLAN.md, 05-09-PLAN.md, 05-10-PLAN.md]
+previous_review_round: round 1 (codex only) — see git history for commit 7bdff09
 ---
 
-# Cross-AI Plan Review — Phase 5
+# Cross-AI Plan Review — Phase 5 (Round 2, post-revision)
 
-## Runtime Notes
-
-Only **codex** produced a review. Claude was skipped because this session IS Claude Code (self-review is not independent). Cursor needs `cursor agent login`. Gemini, OpenCode, and Qwen are not installed. CodeRabbit reviews the git working tree and the plans were already committed, so it would not diff anything.
-
-To add a second independent review, run `cursor agent login` and re-invoke `/gsd-review --phase 5`, or install `gemini-cli`.
+This is a **revision review** — plans were updated via `/gsd-plan-phase 5 --reviews` to address round-1 codex feedback. Reviewers were asked to verify each prior HIGH/MEDIUM concern was actually resolved AND to flag any new concerns the revisions introduced.
 
 ---
 
 ## Codex Review
 
-## Summary
+### 1. Resolution Audit
 
-The Phase 5 plan set is strong overall: it is concrete, falsifiable, sequenced, and mostly aligned with the actual launch criteria. The best part is that it treats this as an infra/process hardening phase rather than pretending it is a feature phase. The main weaknesses are a few internal contradictions between plans, several execution details that are still underspecified or too optimistic, and one high-risk E2E auth approach that may fail in practice or create unnecessary complexity. The biggest operational risk is 05-08: cutover depends on multiple external systems, but the plan still mixes "documentation of a manual runbook" with "actually proving production works," and it leaves a few important gateway/auth details ambiguous.
+**HIGH**
 
-## Strengths
+- `05-03` / `05-04` preload-policy contradiction: **RESOLVED**. The revised plan removes app-wide `defaultPreload` in `05-03` and verifies its absence (`05-03-PLAN.md:24-27`, `84-90`, `300-303`, `458-460`). `05-04` now makes Topics/Archive explicit `preload="intent"` links and requires Admin to have no preload attribute at all, with tripwires for both nav files plus `src/main.tsx` (`05-04-PLAN.md:19-21`, `54-58`, `200-207`, `237-249`). Validation maps both checks (`05-VALIDATION.md:54`, `56`).
+- `05-05` magic-link / `generateLink()` auth helper brittleness: **PARTIALLY RESOLVED**. The plan clearly switches to `signInWithPassword` and bans `generateLink|magicLink|SUPABASE_SERVICE_ROLE_KEY` in the helper (`05-05-PLAN.md:23-28`, `80-85`, `180-245`, `297-323`; `05-VALIDATION.md:58`). But it still does not verify that the injected localStorage payload is actually accepted by the app in a real authenticated run; acceptance only checks greps and `playwright test --list`, not a working login path (`05-05-PLAN.md:318-323`, `490-505`).
+- `05-05` missing dependency on `05-02`: **RESOLVED**. `depends_on` now includes `02` (`05-05-PLAN.md:6`) and the objective explicitly calls that out as the codex resolution (`05-05-PLAN.md:87-89`).
+- `05-08` cron auth contract ambiguous: **RESOLVED**. `05-07` now specifies both headers, explains why `Authorization: Bearer ${SUPABASE_ANON_KEY}` is required, validates `"success":true` and `"swept"`, and verifies those conditions in acceptance criteria and validation (`05-07-PLAN.md:19-20`, `62-80`, `203-208`, `230-245`, `266-284`; `05-VALIDATION.md:62`). `05-01`, `05-08`, and `05-10` propagate `SUPABASE_ANON_KEY` consistently.
 
-- The wave structure is mostly sensible: `05-01` foundational pins/deps, `05-02/03/04` implementation, `05-05/06/07` automation, `05-08` cutover, `05-09/10` docs.
-- The plans are unusually verifiable. Most tasks include grep-able acceptance criteria instead of hand-wavy "looks good."
-- Supply-chain hardening is taken seriously where it matters most for this stack: `esm.sh` pinning in `05-02`, `npm ci` in CI/Netlify, and Dependabot in `05-07`.
-- `05-07` correctly treats Dependabot as both dependency hygiene and cron-keepalive infrastructure. That is good systems thinking.
-- `05-06` and `05-07` split CI, deploy, and cron instead of building one mega-workflow. That reduces blast radius and makes failures easier to reason about.
-- `05-03` is explicit about privacy boundaries for PostHog and Sentry. The "Discord snowflake only" rule is the right bias.
-- `05-04` explicitly guards against admin-route preload bugs. That is exactly the kind of subtle issue these launch phases usually miss.
-- `05-08` captures the correct cutover ordering: deploy on Netlify first, dual-register redirects, then flip DNS.
-- README/documentation scope in `05-10` is appropriate for a public repo and consistent with the product framing.
+**MEDIUM**
 
-## Concerns
+- TypeScript `~` pin exception: **RESOLVED** (`05-01-PLAN.md:18, 117-129, 141-143`).
+- `npx playwright install --with-deps` portability: **RESOLVED** — now advisory locally, CI is source of truth.
+- Sentry Replay + PostHog payload/perf budget: **PARTIALLY RESOLVED**. Adds lazy replay and a 400 KB budget (`05-03-PLAN.md:24-25, 34, 86-92, 413-421, 445-468`). **But the stated metric is "gzipped" while the command measures raw file size with `du`** — the budget is not being verified as described.
+- Sentry Replay pre-consent: **RESOLVED**. Replay removed from `Sentry.init`, moved to lazy loader, guarded by `analytics_opted_out`.
+- `05-06` seed-flow ambiguity: **RESOLVED**. Canonical two-step flow with acceptance ordering check.
+- `05-06` local keys as GH secrets: **RESOLVED**. Derived from `supabase status --output json`; tripwires ban `LOCAL_*` secrets.
+- `05-08` operationally dense cutover: **PARTIALLY RESOLVED**. Adds preview checkpoint + rollback runbook, but still one large plan covering provisioning → preview → DNS → cert → prod smoke → cron → UAT reruns.
 
-- **HIGH**: `05-03` and `05-04` conflict on router preload policy. `05-03 Task 2` sets `defaultPreload: 'intent'` app-wide, while `05-04` says Admin must stay cold and only explicitly overrides `preload={false}` in nav links. That does not guarantee admin routes never preload from other links or programmatic navigation. The plans disagree on the safe default.
-- **HIGH**: `05-05 Task 1` proposes session minting via `admin.auth.admin.generateLink()` and parsing tokens out of the magic link. That is brittle and may not produce a valid browser session payload in the shape Supabase localStorage expects. This is the biggest technical execution risk in the whole phase.
-- **HIGH**: `05-05` depends only on `[01, 03]`, but the E2E suite exercises admin-create and submit-response flows that likely depend on the exact EF behavior and pinned imports from `05-02`. It should depend on `02` too, or at least be explicit about what it assumes from prior phases.
-- **HIGH**: `05-08` still leaves the cron auth contract ambiguous. It says to maybe add `Authorization: Bearer <ANON_KEY>` if needed. That is not acceptable at plan level for a launch-critical workflow. The EF gateway auth requirement must be resolved before implementation.
-- **MEDIUM**: `05-01` includes a "typescript tilde exception," but the phase-level decision in D-16 says strip `^` and `~` for exact pins. That exception is either valid and should be elevated into canonical context, or it is a plan-local contradiction.
-- **MEDIUM**: `05-01` requires `npx playwright install --with-deps chromium` locally. Installing OS deps is not portable and can fail outside CI. For a repo plan, browser install is fine; OS package installation on arbitrary developer machines is not a reliable acceptance criterion.
-- **MEDIUM**: `05-03` adds both Sentry Replay and PostHog session recording on a mobile-first app. For a $0/mo product, that is a bundle-size and runtime-cost concern. The plan mentions privacy but not payload/perf budgets.
-- **MEDIUM**: `05-03` initializes Sentry replay unconditionally in `main.tsx`. That may violate the intended "non-blocking consent chip" model if replay starts before opt-out state is known.
-- **MEDIUM**: `05-06` seeds local Supabase by applying `e2e/fixtures/seed.sql` directly after `supabase start`, but it does not clearly establish whether base schema + base seed are already present or whether reset/migrations must run first. The sample YAML and narrative are inconsistent across docs.
-- **MEDIUM**: `05-06` stores `LOCAL_ANON_KEY` and `LOCAL_SERVICE_ROLE_KEY` as GitHub secrets even though they are deterministic local defaults. That is harmless, but unnecessary complexity for a zero-budget repo.
-- **MEDIUM**: `05-08` marks itself `autonomous: false`, which is correct, but it is doing too much: Netlify config, SaaS account creation, env/secrets provisioning, Supabase config, Discord app config, DNS cutover, prod smoke, cron verification, and rerunning blocked UAT. That is operationally dense and failure-prone.
-- **LOW**: `05-09` asks for a git commit inside a human-action checkpoint. That is awkward if these plans are being executed as part of a larger branch/PR rather than individually.
-- **LOW**: `05-10` hardcodes version examples in README. That will drift quickly unless generated or carefully maintained.
+### 2. New Concerns Introduced by Revisions
 
-## Suggestions
+- **MEDIUM:** `05-05` claims Playwright config has `storageState` auth fixture, but the shown config does not set `storageState`, and acceptance downgrades to `storageState OR webServer`. Internal contradiction (`05-05-PLAN.md:22, 31-32, 118-140, 299-300`).
+- **MEDIUM:** The auth-helper plan contradicts itself on storage-key discovery. Objective says `loginAs` "must read the ref from the running app's storage once" (`73-78`), but implementation derives it from `new URL(SUPABASE_URL).hostname.split('.')[0]` (`197-201`). Still fragile.
+- **MEDIUM:** Bundle-budget verification is mislabeled — plan says "400 KB gzipped" but `du` measures uncompressed disk size. May reject acceptable builds or miss real transfer-size regressions.
+- **MEDIUM:** `05-08` sequencing contradiction. Objective says env/secret provisioning must happen before Netlify site link (`68-70`), but Task 3 begins by linking/importing the site and only then adds env vars (`197-213`). Netlify import can trigger an initial build immediately.
+- **LOW-MEDIUM:** `05-04`/`05-05` rely on "document in the commit message" for selector choices. Weak operational coupling; the contract should live in the plan or code.
+- **LOW-MEDIUM:** `05-07` response validation greps exact `"success":true`. If the function returns `"success": true` (with whitespace), the workflow falsely fails.
 
-- `05-03 Task 2` / `05-04 Task 2`: remove app-wide `defaultPreload: 'intent'` entirely and keep preload explicit on allowed links only. That is simpler and avoids the admin-route contradiction. If you want invisible preload globally later, do it after admin route guards are proven preload-safe.
-- `05-05 Task 1`: replace the magic-link token parsing approach with a simpler, deterministic auth fixture strategy.
-  - Best option: seed users with known email/password and use the public auth API to sign in in the helper, then inject the returned session.
-  - Better option if supported cleanly: use a test-only helper/RPC in local dev only.
-  - Avoid parsing tokens out of URLs.
-- `05-05`: add dependency on `05-02`, or explicitly state the suite assumes all prior EF code paths are already stable from Phase 4 and `05-02` is non-functional pinning only.
-- `05-05 Task 2`: do not rely on speculative selectors like `role="progressbar"` or `data-testid="suggestion-card"` unless those hooks already exist. Add a pre-task to inspect actual DOM affordances and define stable selectors. Otherwise this suite will be noisy from day one.
-- `05-06 Task 1`: make the DB setup path explicit and single-source.
-  - Either `supabase db reset --local` then apply additive E2E seed.
-  - Or rely on `supabase start` bootstrapping migrations + `supabase/seed.sql`, then apply only additive E2E fixtures.
-  - Do not leave both models floating around.
-- `05-06 Task 1`: use the known local Supabase anon/service-role keys directly in workflow env or derive them from `supabase status` output. Repo secrets are unnecessary here.
-- `05-07 Task 2`: resolve now whether the cron request requires `Authorization: Bearer <anon key>`. This should be decided in the plan, not discovered during launch. If needed, add `SUPABASE_ANON_KEY` to GitHub secrets and `.env.example`/README contracts consistently.
-- `05-07 Task 2`: add explicit response-body validation for a known success shape, not just HTTP 200. A misconfigured function can still 200 with the wrong behavior.
-- `05-08`: split this into two plans or at least two checkpoints in execution terms:
-  - provisioning and preview verification
-  - DNS/OAuth cutover and production verification
-  This phase is otherwise too operationally dense for one plan.
-- `05-08 Task 5`: add rollback instructions.
-  - If Discord callback fails after CNAME flip, what exact steps revert traffic?
-  - If Netlify cert stalls, what is the temporary safe state?
-  A launch plan without rollback is incomplete.
-- `05-03`: gate session replay behind consent state or at minimum defer replay start until dismissal/opt-out state is loaded. The current plan reads like replay is active immediately and only later opt-out is offered.
-- `05-03`: add a lightweight bundle/perf verification step, at least `npm run build` artifact size comparison or a threshold note, because Sentry + PostHog on a mobile-first app is non-trivial.
-- `05-01`: resolve the TypeScript pin contradiction in canonical docs. If `~6.0.2` is allowed, D-16 and the must-have truth should say so globally, not only in one task.
-- `05-10`: keep README version numbers high-level unless there is a process to update them during dependency bumps. Otherwise the doc will decay.
+### 3. Updated Risk Assessment
 
-## Risk Assessment
+**MEDIUM** — lower than prior MEDIUM but not LOW. Four prior HIGH issues are mostly addressed; only Playwright auth is not fully closed because it is not end-to-end verified. Remaining risk is execution-risk from new contradictions: `storageState` mismatch, heuristic storage-key derivation, fake "gzipped" budget measurement, and the Netlify link-before-env sequencing bug.
 
-**Overall risk: MEDIUM**
+### 4. Final Go/No-Go
 
-The plans are good enough to succeed, but not low risk. The core launch goals are covered: cron keepalive, custom-domain SPA deployment, admin-create to public visibility, and Playwright smoke in CI. What keeps this from LOW risk is execution ambiguity in the hardest parts:
+**No-go for execution as written.** One more planning pass is warranted. The revised set is materially better, but still has avoidable failure points: Playwright auth injection is still not proven, the `storageState` contract is inconsistent, the bundle budget check is measuring the wrong thing, and `05-08` contradicts itself on Netlify sequencing. Tighten those and it is execute-ready.
 
-- the E2E auth/session-injection method is not yet robust,
-- the preload strategy is internally inconsistent,
-- the cron auth contract is still not fully resolved before cutover,
-- and the production cutover plan is operationally dense without explicit rollback.
+---
 
-If those are tightened, the phase drops to LOW-MEDIUM. Without fixing them, the most likely failure mode is not "bad architecture," it is "launch-week integration churn."
+## Cursor Review
+
+### 1. Resolution Audit
+
+**HIGH concerns**
+
+- **H1: 05-03 vs 05-04 preload contradiction** — **RESOLVED**. `05-03` forbids app-wide `defaultPreload` with tripwire on `src/main.tsx` (`26, 84, 303, 458`). `05-04` sets `preload="intent"` only on Topics/Archive; Admin link has no preload attr (`200-204, 238-243`). Validation cross-checks both (`05-VALIDATION.md:54, 56, 95`).
+- **H2: brittle Playwright auth via `generateLink` URL parsing** — **RESOLVED**. `signInWithPassword` + `addInitScript` (`23, 56, 83, 220`). Negative tripwires ban `generateLink|magicLink` and service-role in helper (`28, 303-304, 322`). Validation row encodes same checks.
+- **H3: 05-05 missing dependency on 05-02** — **RESOLVED**. `depends_on` includes `02` (`05-05-PLAN.md:6`); rationale called out explicitly.
+- **H4: cron auth contract ambiguous ("maybe Bearer")** — **RESOLVED**. Both headers mandated (`X-Cron-Secret` + `Authorization: Bearer ${SUPABASE_ANON_KEY}`). Response-shape validation for `"success":true` and `"swept"`. Propagated to env/secrets docs.
+
+**MEDIUM concerns**
+
+- **M1: TypeScript tilde exception** — **RESOLVED**. Must-have now says zero `^`/`~` including TypeScript. Tripwire specifically checks no `~` on TypeScript.
+- **M2: local `playwright install --with-deps` portability** — **RESOLVED**. `--with-deps` optional locally; CI source of truth.
+- **M3: Sentry+PostHog perf/bundle budget** — **PARTIALLY RESOLVED**. 400 KB budget + verification command present, code-splitting via dynamic replay import. **But command uses `du` on built JS, not gzipped size**, despite plan claiming "gzipped".
+- **M4: Replay initialized before consent known** — **PARTIALLY RESOLVED**. Replay removed from `Sentry.init`, moved to lazy loader, opt-out localStorage gate exists. **But fresh users are still replay-enabled on mount before explicit action** — opt-out gating, not true consent gating. (Note: this matches UI-SPEC Contract 3 by design, so it's a policy question not a bug.)
+- **M5: 05-06 seed flow ambiguous** — **RESOLVED**. Canonical two-step flow with ordering acceptance check.
+- **M6: unnecessary GH secrets for local keys** — **RESOLVED**. Keys derived from `supabase status --output json`; tripwires ban `LOCAL_ANON_KEY`/`LOCAL_SERVICE_ROLE_KEY` refs.
+- **M7: 05-08 operational density / missing rollback** — **PARTIALLY RESOLVED**. Preview dry-run `Task 5a` + rollback contingencies A/B added. Still one dense human-run plan, reduced but not truly decomposed.
+
+### 2. New Concerns Introduced by Revisions
+
+- **Bundle metric is mislabeled and likely inaccurate** (new). `05-03` claims "gzipped ≤ 400 KB" but computes raw file size with `du` — can create false pass/fail signals.
+- **Consent model remains opt-out, not explicit opt-in**. Replay loads on mount for non-opted-out users. If regulatory/product intent shifts toward explicit consent, this plan won't satisfy it. (Note: aligns with UI-SPEC Contract 3 intent.)
+- **E2E fixture password committed in plaintext constant** — local-only and hashed in SQL, but still a committed reusable password string. Low practical risk.
+- **Selector strategy still leaves executor-choice forks** — `05-04` allows multiple outcomes for ResultBars/admin selectors and depends on commit-message coordination. Non-deterministic handoff risk.
+- **README hardcodes dependency versions again** (prior LOW drift risk persists).
+
+### 3. Updated Risk Assessment
+
+**MEDIUM** (improved from prior MEDIUM, still MEDIUM). All 4 HIGH issues are concretely addressed with acceptance tripwires; most MEDIUMs resolved. Remaining risk is execution-quality risk: inaccurate perf budget check, opt-out replay semantics ambiguity, still-dense cutover plan.
+
+### 4. Final Go/No-Go
+
+**Go, with guardrails.** Revision is materially stronger and fixes the prior launch-blocking ambiguities. Execute with two pre-execution tighten-ups: (1) fix the bundle check to measure actual gzip/brotli artifacts, and (2) explicitly confirm whether "opt-out replay on first visit" is acceptable policy. If those two are acknowledged, execution-ready.
 
 ---
 
 ## Consensus Summary
 
-Only one independent reviewer (codex). Treat this as a single critique, not consensus. Codex rated the plan set **MEDIUM risk overall** — success-capable, but with four HIGH-severity items worth addressing before `/gsd-execute-phase 5`.
+**Two independent reviewers (codex + cursor)** — actual consensus this round.
 
-### Top Concerns (HIGH severity — Codex)
+### Agreed RESOLVED (strong consensus)
 
-1. **Preload policy contradiction between 05-03 and 05-04.** `defaultPreload: 'intent'` app-wide vs. per-link `preload={false}` on Admin is not airtight. Codex suggests dropping the app-wide default and using explicit `preload="intent"` only on Topics/Archive.
-2. **Playwright session-injection via `generateLink` URL parsing is brittle.** Codex suggests seeding fixture users with known email/password and signing in via the public auth API, or adding a test-only local RPC.
-3. **Cron auth contract unresolved.** 05-07 Task 2 / 05-08 leaves `Authorization: Bearer <ANON_KEY>` as "if needed." Should be decided in planning — if needed, add `SUPABASE_ANON_KEY` to GH secrets and `.env.example` consistently.
-4. **05-05 missing dependency on 05-02.** E2E suite exercises flows served by the pinned EFs; dependency should be explicit or the suite should document that the pin sweep is non-functional.
+- ✓ Preload policy (HIGH #1)
+- ✓ 05-05 depends_on (HIGH #4)
+- ✓ Cron auth contract (HIGH #3)
+- ✓ TypeScript pin exception
+- ✓ `npx playwright install --with-deps` portability
+- ✓ Sentry Replay moved out of init (the mechanism)
+- ✓ 05-06 seed flow canonical
+- ✓ 05-06 local keys derived from supabase status
 
-### Noteworthy MEDIUMs
+### Agreed PARTIALLY RESOLVED (both reviewers flagged the same gap)
 
-- Sentry Replay + PostHog session recording on mobile-first — no bundle-size/perf budget stated.
-- Sentry Replay starts before consent state is known — possibly violates UI-SPEC Contract 3 intent.
-- 05-01 typescript `~6.0.2` exception contradicts D-16 §1 (should lift to canonical or remove).
-- 05-06 seed flow ambiguity (`supabase db reset` vs. implicit bootstrap).
-- 05-08 is operationally dense — Codex suggests splitting into "provisioning + preview" and "DNS/OAuth cutover + prod".
-- 05-08 missing rollback runbook (Discord callback fail, Netlify cert stall).
-- 05-05 uses speculative DOM selectors that may not exist yet.
+1. **Bundle budget mismatch (HIGH-priority fix).** Plan claims "400 KB gzipped" but verification uses `du` on uncompressed JS. Both reviewers flagged this as a material defect. One-line fix: replace `du -ck dist/assets/*.js` with a real gzip size measurement (e.g., `find dist/assets -name '*.js' -exec gzip -c {} \; | wc -c`, or use `vite-plugin-compression` output, or a jq-friendly `vite build` reporter option).
+2. **Playwright auth not end-to-end verified.** The helper is grep-verified but the plan does not prove an injected session actually logs in. Codex calls this unresolved; cursor calls it resolved-by-mechanism. Fix: add an acceptance criterion that boots the app headlessly, runs the helper, and asserts an authenticated DOM state (e.g., the user menu renders).
+3. **05-08 still dense** — both flagged, both stopped short of calling it blocking.
 
-### Strengths Codex Flagged
+### New Concerns Codex Raised (cursor did not)
 
-- Wave structure, separate CI/deploy/cron workflows, grep-verifiable acceptance criteria, esm.sh + `npm ci` + Dependabot triad, Dependabot doubling as GH Actions keepalive, PostHog/Sentry snowflake-only identify, admin-preload guard in 05-04, correct cutover ordering in 05-08, README scope.
+- **05-05 `storageState` contradiction** — plan objective says storageState is configured, but the shown config doesn't set it, and acceptance downgrades to "storageState OR webServer". One-line fix: pick one.
+- **`loginAs` storage-key derivation contradiction** — objective says "read ref from running app's storage once"; implementation uses `URL.hostname.split('.')[0]`. Reconcile to a single method.
+- **05-08 Netlify link-before-env sequencing bug** — objective says env/secrets first, Task 3 links the site first. Netlify's auto-build-on-import could fire before env vars are set. Reorder Task 3 steps.
+- **`05-07` response grep fragile to whitespace.** `grep -q '"success":true'` fails on `"success": true`. Fix: use `jq -e '.success == true'`.
 
-### Divergent Views
+### New Concerns Cursor Raised (codex did not)
 
-Not applicable — single reviewer.
+- **Consent model is opt-out not opt-in** — matches UI-SPEC Contract 3 by design; policy decision, not a bug. Only a concern if product/regulatory intent shifts. Recommend acknowledging explicitly in CONTEXT.md addendum or accept as-is.
+- **Fixture password plaintext committed** — low risk, local-only. Acknowledge in plan.
 
-### Recommendation
+### Divergent Verdicts
 
-The four HIGH concerns are legitimate and worth a `/gsd-plan-phase 5 --reviews` pass before execution — especially the preload policy, the Playwright auth technique, and the cron auth contract (all three decide concrete code that lands in Wave 1–2 and is hard to change later). The 05-08 density + missing rollback is a smaller-but-real fix. Alternatively, accept the risk and let the executor discover and patch during Wave 1 — Codex argues against that path, and I agree for the Playwright + cron-auth items specifically.
+- **Codex: No-go.** Wants another planning pass before execution.
+- **Cursor: Go with guardrails.** Wants the bundle-budget fix + consent-model confirmation, then execute.
+
+Both agree the remaining items are small and surgical — not architectural. The divergence is whether "small and surgical" is worth another planning round (codex) or can be handled by a 10-minute targeted edit pass (cursor).
+
+### Updated Overall Risk
+
+**MEDIUM (lower than round 1).** Down from round 1's MEDIUM but not LOW. If the 4 codex-specific issues (bundle method, storageState, loginAs ref, Netlify sequencing, response grep) + the shared bundle-budget issue are fixed in a quick targeted pass, drops to LOW-MEDIUM.
 
 ---
 
-*Generated by `/gsd-review --phase 5 --all` on 2026-04-19*
+## Recommended Next Step
+
+Two viable paths:
+
+### Path A — Quick targeted patch (cursor's lean, 10-min edit)
+
+Apply these 5 surgical fixes directly to the plans without a full `/gsd-plan-phase --reviews` pass:
+
+1. **05-03:** Replace `du` bundle-size command with a real gzip measurement.
+2. **05-05:** Pick `storageState` OR `webServer`-only and make config + acceptance consistent.
+3. **05-05:** Reconcile `loginAs` storage-key discovery — either "read from app" OR "derive from URL" (not both).
+4. **05-07:** Replace `grep '"success":true'` with `jq -e '.success == true'`.
+5. **05-08:** Reorder Task 3 — Netlify env vars before site link.
+
+Then proceed to `/gsd-execute-phase 5`.
+
+### Path B — Full re-plan (codex's lean)
+
+`/gsd-plan-phase 5 --reviews` again. Higher thoroughness, lower speed. Planner context is reloaded fresh.
+
+My recommendation: **Path A.** All five items are mechanical text edits with no design trade-off. A full replan would re-read 200 KB of plan text to fix one-liners. That's the wrong tool for this job.
+
+---
+
+*Generated by `/gsd-review --phase 5 --all` (round 2) on 2026-04-19.*
+*Round 1 review preserved in git history at commit `7bdff09`.*
