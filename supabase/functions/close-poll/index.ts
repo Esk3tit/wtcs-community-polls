@@ -61,6 +61,11 @@ Deno.serve(async (req) => {
       return json({ error: 'Invalid resolution' }, 400, corsHeaders)
     }
 
+    // ME-v2-01 / LO-01: guard on status='active' so double-close or close on
+    // a lazy-closed (closes_at<now but raw_status='active') poll does NOT
+    // overwrite closed_at/resolution. PGRST116 here means either the poll
+    // doesn't exist OR it is already closed — both are safe no-ops from the
+    // audit-trail perspective, so we return a clearer collapsed message.
     const { error } = await supabaseAdmin
       .from('polls')
       .update({
@@ -69,11 +74,12 @@ Deno.serve(async (req) => {
         resolution,
       })
       .eq('id', poll_id)
+      .eq('status', 'active')
       .select('id')
       .single()
     if (error) {
       if (error.code === 'PGRST116') {
-        return json({ error: 'Poll not found' }, 404, corsHeaders)
+        return json({ error: 'Poll not found or already closed' }, 404, corsHeaders)
       }
       console.error('close-poll update failed:', error)
       return json({ error: 'Internal error' }, 500, corsHeaders)
