@@ -37,6 +37,7 @@ export function Navbar() {
           <nav className="hidden md:flex items-center gap-4">
             <Link
               to="/topics"
+              preload="intent"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               activeProps={{ className: 'text-foreground' }}
             >
@@ -44,12 +45,14 @@ export function Navbar() {
             </Link>
             <Link
               to="/archive"
+              preload="intent"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               activeProps={{ className: 'text-foreground' }}
             >
               Archive
             </Link>
             {isAdmin && (
+              // No preload — AdminGuard beforeLoad would redirect non-admins on hover (RESEARCH Pitfall 6). Per-link opt-in only; no app-wide default set.
               <Link
                 to="/admin"
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"

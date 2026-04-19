@@ -34,6 +34,7 @@ export function MobileNav() {
           <SheetClose asChild>
             <Link
               to="/topics"
+              preload="intent"
               className="py-3 text-sm text-foreground hover:text-foreground/80 transition-colors"
               activeProps={{ className: 'font-medium' }}
             >
@@ -43,6 +44,7 @@ export function MobileNav() {
           <SheetClose asChild>
             <Link
               to="/archive"
+              preload="intent"
               className="py-3 text-sm text-foreground hover:text-foreground/80 transition-colors"
               activeProps={{ className: 'font-medium' }}
             >
@@ -50,6 +52,7 @@ export function MobileNav() {
             </Link>
           </SheetClose>
           {isAdmin && (
+            // No preload — AdminGuard beforeLoad would redirect non-admins on hover (RESEARCH Pitfall 6). Per-link opt-in only; no app-wide default set.
             <SheetClose asChild>
               <Link
                 to="/admin"
