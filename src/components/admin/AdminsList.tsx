@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
+import { deferSetState } from '@/lib/deferSetState'
 import { PromoteAdminDialog } from './PromoteAdminDialog'
 import { DemoteAdminDialog } from './DemoteAdminDialog'
 
@@ -54,15 +55,10 @@ export function AdminsList() {
   useEffect(() => {
     // Defer the initial fetch so the effect body itself doesn't call
     // setState synchronously (react-hooks/set-state-in-effect).
-    let cancelled = false
-    const t = setTimeout(() => {
-      if (cancelled) return
+    const handle = deferSetState(() => {
       void refetch()
-    }, 0)
-    return () => {
-      cancelled = true
-      clearTimeout(t)
-    }
+    })
+    return handle.cancel
   }, [refetch])
 
   // MEDIUM #7: fetch-failure error state (NOT a silent empty list)

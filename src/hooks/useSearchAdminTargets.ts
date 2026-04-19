@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { deferSetState } from '@/lib/deferSetState'
 import { useDebounce } from './useDebounce'
 
 export type AdminTarget = {
@@ -18,33 +19,26 @@ export function useSearchAdminTargets() {
   const debounced = useDebounce(query, 300)
 
   useEffect(() => {
-    // All setState calls below run inside microtask/async callbacks so the
+    // All setState calls below run inside deferred / async callbacks so the
     // effect body itself never calls setState synchronously (required by
     // react-hooks/set-state-in-effect).
-    let cancelled = false
-
     const normalized = debounced.trim()
     if (normalized.length < 2) {
-      const t = setTimeout(() => {
-        if (cancelled) return
+      const handle = deferSetState(() => {
         setResults([])
         setSearching(false)
-      }, 0)
-      return () => {
-        cancelled = true
-        clearTimeout(t)
-      }
+      })
+      return handle.cancel
     }
 
-    const startTimer = setTimeout(() => {
-      if (cancelled) return
+    const handle = deferSetState(() => {
       setSearching(true)
       void supabase.functions
         .invoke<{ results: AdminTarget[] }>('search-admin-targets', {
           body: { query: normalized },
         })
         .then(({ data, error }) => {
-          if (cancelled) return
+          if (handle.isCancelled()) return
           if (error || !data) {
             setResults([])
             return
@@ -52,18 +46,14 @@ export function useSearchAdminTargets() {
           setResults(data.results ?? [])
         })
         .catch(() => {
-          if (cancelled) return
+          if (handle.isCancelled()) return
           setResults([])
         })
         .finally(() => {
-          if (!cancelled) setSearching(false)
+          if (!handle.isCancelled()) setSearching(false)
         })
-    }, 0)
-
-    return () => {
-      cancelled = true
-      clearTimeout(startTimer)
-    }
+    })
+    return handle.cancel
   }, [debounced])
 
   return { query, normalizedQuery, canSearch, setQuery, results, searching }

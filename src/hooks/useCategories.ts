@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
+import { deferSetState } from '@/lib/deferSetState'
 import type { Category } from '@/lib/types/suggestions'
 
 export function useCategories() {
@@ -36,10 +37,10 @@ export function useCategories() {
   useEffect(() => {
     // Defer the fetch so the effect body itself doesn't call setState
     // synchronously (satisfies react-hooks/set-state-in-effect).
-    const t = setTimeout(() => {
+    const handle = deferSetState(() => {
       void fetchCategories()
-    }, 0)
-    return () => clearTimeout(t)
+    })
+    return handle.cancel
   }, [fetchCategories])
 
   return { categories, loading, error, refetch: fetchCategories }
