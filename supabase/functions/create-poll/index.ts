@@ -64,6 +64,16 @@ Deno.serve(async (req) => {
       return json({ error: 'category_id must be a valid UUID' }, 400, corsHeaders)
     }
     const image_url = typeof body.image_url === 'string' && body.image_url.trim() !== '' ? body.image_url.trim() : null
+    // LO-v2-02: match client-side validation (validateSuggestionForm). Without
+    // this guard, a curl request bypassing the form can persist arbitrary
+    // strings in polls.image_url and render as a broken <img src>.
+    if (image_url !== null) {
+      try {
+        new URL(image_url)
+      } catch {
+        return json({ error: 'image_url must be a valid URL' }, 400, corsHeaders)
+      }
+    }
     const closes_at = typeof body.closes_at === 'string' ? body.closes_at : ''
     const choices = body.choices
 
