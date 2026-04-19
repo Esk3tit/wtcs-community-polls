@@ -142,7 +142,10 @@ export function AdminSuggestionsTab() {
             )
           })}
         </div>
-        <Button onClick={() => navigate({ to: '/admin/suggestions/new' })}>
+        <Button
+          data-testid="admin-create-suggestion"
+          onClick={() => navigate({ to: '/admin/suggestions/new' })}
+        >
           <Plus className="h-4 w-4 mr-1" /> Create suggestion
         </Button>
       </div>
