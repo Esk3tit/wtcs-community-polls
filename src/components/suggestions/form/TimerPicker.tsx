@@ -59,7 +59,10 @@ function inferMode(iso: string): Mode {
     if (Math.abs(ms - 7 * 86400_000) < 60_000) return '7d'
     if (Math.abs(ms - 14 * 86400_000) < 60_000) return '14d'
     return 'custom'
-  } catch {
+  } catch (e) {
+    // LO-v2-03: surface parse failures to devtools so a corrupt closes_at
+    // doesn't silently default to the 7d preset.
+    console.warn('TimerPicker.inferMode failed to parse iso:', iso, e)
     return '7d'
   }
 }
