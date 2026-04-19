@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: phase-05-context-gathered
-stopped_at: Phase 5 CONTEXT.md written and committed. Ready for /gsd-plan-phase 5.
+status: phase-05-ui-spec-approved
+stopped_at: Phase 5 UI-SPEC approved (3 visual + 1 behavior contract). Ready for /gsd-plan-phase 5.
 last_updated: "2026-04-19T00:00:00.000Z"
-last_activity: 2026-04-19 -- Phase 5 context discussion complete (scheduler, E2E, deploy, observability, UX polish, README, dep pinning)
+last_activity: 2026-04-19 -- Phase 5 UI-SPEC checker verified (6/6 dims pass, no revisions needed)
 progress:
   total_phases: 5
   completed_phases: 4
@@ -102,5 +102,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-04-19T00:00:00.000Z
-Stopped at: Phase 5 CONTEXT.md and DISCUSSION-LOG committed (9fab313). Ready for /gsd-plan-phase 5.
-Resume file: .planning/phases/05-launch-hardening/05-CONTEXT.md
+Stopped at: Phase 5 UI-SPEC approved (559bcfd). CONTEXT + UI-SPEC locked. Ready for /gsd-plan-phase 5.
+Resume file: .planning/phases/05-launch-hardening/05-UI-SPEC.md
