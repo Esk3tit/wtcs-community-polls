@@ -1,8 +1,10 @@
 ---
-status: diagnosed
+status: resolved
 trigger: "UAT Test 3: No UI entry point to /admin — admins must type the URL manually. Navbar has Topics and Archive links but no conditional admin link based on useAuth().isAdmin."
 created: 2026-04-18
-updated: 2026-04-18
+updated: 2026-04-19
+closed_by: 04-05-PLAN.md
+resolution: "Gap-closure plan 04-05 added a conditional <Link to=\"/admin\">Admin</Link> to desktop Navbar and mobile Sheet, gated on useAuth().isAdmin. Shipped in PR #3 (merged 2026-04-19)."
 ---
 
 ## Current Focus

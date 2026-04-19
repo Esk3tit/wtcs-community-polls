@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: phase-04-shipped
-stopped_at: Phase 4 shipped — PR #3 updated (title/body refreshed for full phase), approved, mergeable, all checks green
-last_updated: "2026-04-19T00:00:00.000Z"
-last_activity: 2026-04-19 -- Shipped Phase 4 (PR #3 approved, awaiting merge)
+status: phase-04-merged
+stopped_at: Phase 4 merged to main (PR #3 squash-merged 2026-04-19T06:02Z). Ready for Phase 5 discuss/plan.
+last_updated: "2026-04-19T06:10:00.000Z"
+last_activity: 2026-04-19 -- Phase 4 PR #3 merged; on main synced
 progress:
   total_phases: 5
   completed_phases: 4
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** Community members can vote on competitive scene proposals with confidence that results are legitimate
-**Current focus:** Phase 04 fully closed — all 5 plans landed (including 04-05 gap-closure for admin nav link). Ready for Phase 05 (launch/deploy Edge Functions + verify-phase).
+**Current focus:** Phase 04 merged to main via PR #3 (2026-04-19). Ready for Phase 05 discuss/plan (launch hardening — EF deploy, cron, keepalive, prod deploy).
 
 ## Current Position
 
-Phase: 4 (execution complete incl. gap-closure)
-Plan: All 5 plans done (04-01…04-05)
-Status: Phase 4 complete (337 tests green, build clean, UAT Test 3 now passing). Phase 5 pending (Edge Function deploy + live integration).
-Last activity: 2026-04-18 -- Completed 04-05-PLAN.md (admin nav gap-closure)
+Phase: 4 (merged)
+Plan: All 5 plans done (04-01…04-05) + PR #3 merged
+Status: On main, synced. Phase 5 not yet started — no CONTEXT.md, no plans on disk. 9 UAT tests in 04-UAT.md remain blocked on Phase 5 EF deploy.
+Last activity: 2026-04-19 -- Phase 4 PR #3 merged
 
 Progress: [██████████] 100%
 
