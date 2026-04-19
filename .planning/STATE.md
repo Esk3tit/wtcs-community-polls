@@ -10,8 +10,8 @@ progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 25
-  completed_plans: 19
-  percent: 76
+  completed_plans: 22
+  percent: 88
 ---
 
 # Project State
