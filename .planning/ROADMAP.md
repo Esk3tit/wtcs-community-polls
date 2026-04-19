@@ -104,7 +104,18 @@ Plans:
   2. App is accessible at polls.wtcsmapvote.com with correct SPA routing (deep links and refresh work)
   3. End-to-end flow works in production: login, browse suggestions, respond, see results, admin creates suggestion
   4. E2E smoke tests cover the critical path (login -> browse -> respond -> see results)
-**Plans**: TBD
+**Plans**: 10 plans
+Plans:
+- [ ] 05-01-PLAN.md -- Wave 0 scaffold: pin deps (D-16 §1) + install Sentry/PostHog/Playwright + extend .env.example (D-12)
+- [ ] 05-02-PLAN.md -- EF esm.sh pin sweep across all 15 Edge Functions + shared admin-auth (D-16 §3)
+- [ ] 05-03-PLAN.md -- Observability wiring: Sentry init + sourcemap upload + PostHog identify/reset + AppErrorFallback + ConsentChip (D-13)
+- [ ] 05-04-PLAN.md -- UX polish: SuggestionSkeleton silhouette upgrade + preload="intent" on Topics/Archive (D-14, excluding Admin per Pitfall 6)
+- [ ] 05-05-PLAN.md -- Playwright E2E scaffold + four @smoke specs covering D-08 critical path (TEST-06, D-04..D-08)
+- [ ] 05-06-PLAN.md -- GitHub Actions CI workflow: lint, unit, supabase start, Playwright smoke, npm audit (D-07, D-16 §2, §4)
+- [ ] 05-07-PLAN.md -- GitHub Actions deploy-edge-functions + cron-sweep (INFR-02) + Dependabot config (D-01..D-03, D-09, D-16 §5)
+- [ ] 05-08-PLAN.md -- Production cutover: netlify.toml + env var / secret provisioning + Discord dual-register + OVH CNAME flip (D-10, D-11, D-12)
+- [ ] 05-09-PLAN.md -- Capture 4 README screenshots from live prod to docs/screenshots/ (D-15 §3)
+- [ ] 05-10-PLAN.md -- README wholesale rewrite with 13 D-15 sections + upgrade ritual (D-15)
 
 ## Progress
 
@@ -117,4 +128,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Browsing & Responding | 4/4 | Complete | - |
 | 3. Response Integrity | 0/2 | Planned | - |
 | 4. Admin Panel & Suggestion Management | 4/4 | Complete | 2026-04-11 |
-| 5. Launch Hardening | 0/? | Not started | - |
+| 5. Launch Hardening | 0/10 | Planned | - |
