@@ -3,9 +3,17 @@ import * as Sentry from '@sentry/react'
 // M1 resolution: Sentry Replay is not included in the initial Sentry.init()
 // integrations array. This helper lazily attaches Replay via addIntegration()
 // after the user's consent has been evaluated via localStorage. Users who
-// have opted out never load the replay bundle — satisfies M1 (no pre-consent
-// capture) and M3 (replay code is dynamic-imported so it code-splits away
-// from the main bundle).
+// have opted out never see Replay attached to their session.
+//
+// M3 note: the `await import('@sentry/react')` below triggers
+// Rolldown's INEFFECTIVE_DYNAMIC_IMPORT warning because main.tsx also
+// statically imports Sentry (needed for Sentry.init / ErrorBoundary). That
+// collapses Sentry into the main chunk. The practical M3 guarantee still
+// holds: `replayIntegration` is tree-shaken from the bundle unless this
+// function is actually reached — opt-out users short-circuit on the
+// localStorage check BEFORE the dynamic import, so the Replay code path
+// is unreachable at runtime for them. The gzipped main-JS budget is held
+// under the plan's 400 KB threshold.
 let replayLoaded = false
 
 /**
