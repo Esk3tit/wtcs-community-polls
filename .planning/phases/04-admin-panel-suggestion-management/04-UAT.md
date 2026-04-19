@@ -1,5 +1,5 @@
 ---
-status: partial
+status: diagnosed
 phase: 04-admin-panel-suggestion-management
 source:
   - .planning/phases/04-admin-panel-suggestion-management/04-01-SUMMARY.md
@@ -7,7 +7,7 @@ source:
   - .planning/phases/04-admin-panel-suggestion-management/04-03-SUMMARY.md
   - .planning/phases/04-admin-panel-suggestion-management/04-04-SUMMARY.md
 started: 2026-04-19T04:38:31Z
-updated: 2026-04-19T04:45:00Z
+updated: 2026-04-19T04:47:00Z
 ---
 
 ## Environment Prerequisites
@@ -123,5 +123,18 @@ blocked: 9
   reason: "User reported: No UI entry point to /admin — admins must type the URL manually. Navbar has Topics and Archive links but no conditional admin link based on useAuth().isAdmin (which is already exposed at src/contexts/AuthContext.tsx:151). MobileNav also has no /admin entry."
   severity: major
   test: 3
-  artifacts: []
-  missing: []
+  root_cause: "Feature omission in Phase 4 Plan 04-03 — the plan scoped Navbar.tsx edits strictly for the WTCS logo (D-03) and explicitly instructed implementers 'Do NOT remove existing navbar links ... only ADD the logo' (04-03-PLAN.md:221). No task in Plans 04-01..04-04 ever scoped a conditional Admin link in desktop Navbar or MobileNav. All prerequisites (isAdmin via useAuth(), AdminGuard route protection) already exist."
+  artifacts:
+    - path: "src/components/layout/Navbar.tsx"
+      issue: "Desktop nav block (lines 36-53) renders only /topics and /archive links under {user && ...}; useAuth() is imported but isAdmin is not destructured at line 16"
+    - path: "src/components/layout/MobileNav.tsx"
+      issue: "Sheet body (lines 30-49) has only /topics and /archive links; no useAuth import or isAdmin gate anywhere in the file"
+  missing:
+    - "Destructure isAdmin from useAuth() in Navbar.tsx line 16"
+    - "Add conditional {isAdmin && <Link to=\"/admin\">Admin</Link>} inside the desktop <nav> (lines 37-52), matching existing Topics/Archive link className and activeProps"
+    - "Import useAuth from @/hooks/useAuth in MobileNav.tsx and destructure isAdmin"
+    - "Add matching {isAdmin && <SheetClose asChild><Link to=\"/admin\">Admin</Link></SheetClose>} to the Sheet nav (lines 30-49), reusing existing mobile-link className"
+    - "Order in both surfaces: Topics | Archive | Admin (admin last)"
+    - "Gate on isAdmin (not user) so non-admins never see the link — AdminGuard remains defensive backstop"
+    - "Optional: new src/__tests__/layout/Navbar.test.tsx + MobileNav.test.tsx using AuthContext-mock pattern from src/__tests__/auth/auth-guard.test.tsx — two cases each (renders when isAdmin=true, hides when false)"
+  debug_session: .planning/debug/navbar-missing-admin-link.md
