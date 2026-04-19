@@ -42,7 +42,7 @@ describe('Navbar', () => {
 
     render(<Navbar />)
 
-    const adminLink = screen.getByRole('link', { name: /admin/i })
+    const adminLink = screen.getByRole('link', { name: /^admin$/i })
     expect(adminLink).toBeInTheDocument()
     expect(adminLink).toHaveAttribute('data-to', '/admin')
   })
@@ -52,7 +52,7 @@ describe('Navbar', () => {
 
     render(<Navbar />)
 
-    expect(screen.queryByRole('link', { name: /admin/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /^admin$/i })).not.toBeInTheDocument()
   })
 
   it('does NOT render the Admin link when user is unauthenticated', () => {
@@ -60,7 +60,7 @@ describe('Navbar', () => {
 
     render(<Navbar />)
 
-    expect(screen.queryByRole('link', { name: /admin/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /^admin$/i })).not.toBeInTheDocument()
   })
 
   it('renders Topics and Archive links when user is present (regression guard)', () => {
@@ -68,7 +68,7 @@ describe('Navbar', () => {
 
     render(<Navbar />)
 
-    expect(screen.getByRole('link', { name: /topics/i })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /archive/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /^topics$/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /^archive$/i })).toBeInTheDocument()
   })
 })

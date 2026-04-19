@@ -46,7 +46,7 @@ describe('MobileNav', () => {
 
     render(<MobileNav />)
 
-    const adminLink = screen.getByRole('link', { name: /admin/i })
+    const adminLink = screen.getByRole('link', { name: /^admin$/i })
     expect(adminLink).toBeInTheDocument()
     expect(adminLink).toHaveAttribute('data-to', '/admin')
   })
@@ -56,7 +56,7 @@ describe('MobileNav', () => {
 
     render(<MobileNav />)
 
-    expect(screen.queryByRole('link', { name: /admin/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /^admin$/i })).not.toBeInTheDocument()
   })
 
   it('renders Topics and Archive links when isAdmin=false (regression guard)', () => {
@@ -64,7 +64,7 @@ describe('MobileNav', () => {
 
     render(<MobileNav />)
 
-    expect(screen.getByRole('link', { name: /topics/i })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /archive/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /^topics$/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /^archive$/i })).toBeInTheDocument()
   })
 })
