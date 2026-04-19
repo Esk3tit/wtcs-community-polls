@@ -18,25 +18,25 @@
 ### Admin Management
 
 - [ ] **ADMN-01**: Initial admin accounts are seeded by Discord user ID in the database
-- [ ] **ADMN-02**: Existing admin can promote another Discord user to admin via in-app button
-- [ ] **ADMN-03**: Existing admin can demote another admin (except self)
-- [ ] **ADMN-04**: Admin status is checked server-side on all admin actions
+- [x] **ADMN-02**: Existing admin can promote another Discord user to admin via in-app button
+- [x] **ADMN-03**: Existing admin can demote another admin (except self)
+- [x] **ADMN-04**: Admin status is checked server-side on all admin actions
 
 ### Suggestion Creation (admin-facing: "poll creation")
 
-- [ ] **POLL-01**: Admin can create a suggestion with a title, description, and N configurable choices (with presets: Yes/No binary, 4-choice multiple choice — presets pre-fill choices but admin can always add/remove)
-- [ ] **POLL-02**: Admin can attach an image to a suggestion (upload to Supabase Storage or paste external URL)
-- [ ] **POLL-03**: Admin can set a suggestion timer (7 days, 14 days, or custom duration)
-- [ ] **POLL-04**: Admin can assign a suggestion to a category
-- [ ] **POLL-05**: Admin can pin/highlight a suggestion to surface it above others
-- [ ] **POLL-06**: Admin can edit a suggestion before the first response is submitted
-- [ ] **POLL-07**: Admin can manually close a suggestion at any time
+- [x] **POLL-01**: Admin can create a suggestion with a title, description, and N configurable choices (with presets: Yes/No binary, 4-choice multiple choice — presets pre-fill choices but admin can always add/remove)
+- [x] **POLL-02**: Admin can attach an image to a suggestion (upload to Supabase Storage or paste external URL)
+- [x] **POLL-03**: Admin can set a suggestion timer (7 days, 14 days, or custom duration)
+- [x] **POLL-04**: Admin can assign a suggestion to a category
+- [x] **POLL-05**: Admin can pin/highlight a suggestion to surface it above others
+- [x] **POLL-06**: Admin can edit a suggestion before the first response is submitted
+- [x] **POLL-07**: Admin can manually close a suggestion at any time
 
 ### Suggestion Lifecycle
 
-- [ ] **LIFE-01**: Active suggestions auto-close when their timer expires (via pg_cron or equivalent)
-- [ ] **LIFE-02**: Closed suggestions can be marked with a resolution status: Addressed, Forwarded, or Closed
-- [ ] **LIFE-03**: Closed suggestions appear in a public archive section
+- [x] **LIFE-01**: Active suggestions auto-close when their timer expires (via pg_cron or equivalent)
+- [x] **LIFE-02**: Closed suggestions can be marked with a resolution status: Addressed, Forwarded, or Closed
+- [x] **LIFE-03**: Closed suggestions appear in a public archive section
 
 ### Responding (internal: "voting")
 
@@ -55,7 +55,7 @@
 
 ### Categories & Navigation
 
-- [ ] **CATG-01**: Admin can create, rename, and delete categories
+- [x] **CATG-01**: Admin can create, rename, and delete categories
 - [ ] **CATG-02**: Active suggestions are displayed in a browsable list on the main page
 - [ ] **CATG-03**: Users can filter suggestions by category via tabs/pills
 - [ ] **CATG-04**: Users can search/filter suggestions by text
@@ -72,7 +72,7 @@
 - [ ] **TEST-02**: Auth flows have unit/integration tests (login, 2FA rejection, session persistence, logout)
 - [ ] **TEST-03**: Response submission and result visibility have unit/integration tests (one-response enforcement, respond-then-reveal, respondents-only results)
 - [ ] **TEST-04**: Response integrity checks have tests (server membership rejection, rate limiting)
-- [ ] **TEST-05**: Admin actions have tests (suggestion CRUD, admin promotion/demotion, server-side auth checks)
+- [x] **TEST-05**: Admin actions have tests (suggestion CRUD, admin promotion/demotion, server-side auth checks)
 - [ ] **TEST-06**: E2E smoke tests cover the critical path (login → browse → respond → see results)
 
 ### Infrastructure
@@ -129,19 +129,19 @@
 | AUTH-04 | Phase 1 | Pending |
 | AUTH-05 | Phase 1 | Pending |
 | ADMN-01 | Phase 1 | Pending |
-| ADMN-02 | Phase 4 | Pending |
-| ADMN-03 | Phase 4 | Pending |
-| ADMN-04 | Phase 4 | Pending |
-| POLL-01 | Phase 4 | Pending |
-| POLL-02 | Phase 4 | Pending |
-| POLL-03 | Phase 4 | Pending |
-| POLL-04 | Phase 4 | Pending |
-| POLL-05 | Phase 4 | Pending |
-| POLL-06 | Phase 4 | Pending |
-| POLL-07 | Phase 4 | Pending |
-| LIFE-01 | Phase 4 | Pending |
-| LIFE-02 | Phase 4 | Pending |
-| LIFE-03 | Phase 4 | Pending |
+| ADMN-02 | Phase 4 | Complete |
+| ADMN-03 | Phase 4 | Complete |
+| ADMN-04 | Phase 4 | Complete |
+| POLL-01 | Phase 4 | Complete |
+| POLL-02 | Phase 4 | Complete |
+| POLL-03 | Phase 4 | Complete |
+| POLL-04 | Phase 4 | Complete |
+| POLL-05 | Phase 4 | Complete |
+| POLL-06 | Phase 4 | Complete |
+| POLL-07 | Phase 4 | Complete |
+| LIFE-01 | Phase 4 | Complete |
+| LIFE-02 | Phase 4 | Complete |
+| LIFE-03 | Phase 4 | Complete |
 | VOTE-01 | Phase 2 | Pending |
 | VOTE-02 | Phase 2 | Pending |
 | VOTE-03 | Phase 2 | Pending |
@@ -151,7 +151,7 @@
 | RSLT-03 | Phase 2 | Pending |
 | RSLT-04 | Phase 2 | Pending |
 | RSLT-05 | Phase 2 | Pending |
-| CATG-01 | Phase 4 | Pending |
+| CATG-01 | Phase 4 | Complete |
 | CATG-02 | Phase 2 | Pending |
 | CATG-03 | Phase 2 | Pending |
 | CATG-04 | Phase 2 | Pending |
@@ -166,7 +166,7 @@
 | TEST-02 | Phase 1 | Pending |
 | TEST-03 | Phase 2 | Pending |
 | TEST-04 | Phase 3 | Pending |
-| TEST-05 | Phase 4 | Pending |
+| TEST-05 | Phase 4 | Complete |
 | TEST-06 | Phase 5 | Pending |
 
 **Coverage:**

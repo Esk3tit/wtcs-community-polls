@@ -1,0 +1,82 @@
+// supabase/functions/create-category/index.ts
+//
+// Admin-gated category create. Validates name length 1..50.
+// Maps PostgreSQL 23505 (unique violation) to 409 "Category already exists".
+
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { getCorsHeaders } from '../_shared/cors.ts'
+import { requireAdmin, adminCheckResponse } from '../_shared/admin-auth.ts'
+
+function json(body: unknown, status: number, cors: HeadersInit) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...(cors as Record<string, string>), 'Content-Type': 'application/json' },
+  })
+}
+
+Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req)
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+  if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405, corsHeaders)
+
+  try {
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) return json({ error: 'Unauthorized' }, 401, corsHeaders)
+
+    const supabaseUser = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } },
+    )
+    const { data: { user }, error: authError } = await supabaseUser.auth.getUser()
+    if (authError || !user) return json({ error: 'Unauthorized' }, 401, corsHeaders)
+
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    )
+
+    const adminCheck = await requireAdmin(supabaseAdmin, user.id)
+    if (!adminCheck.ok) { const r = adminCheckResponse(adminCheck); return json({ error: r.error }, r.status, corsHeaders) }
+
+    let body: { name?: unknown }
+    try {
+      body = await req.json()
+    } catch {
+      return json({ error: 'Invalid JSON body' }, 400, corsHeaders)
+    }
+
+    const name = typeof body.name === 'string' ? body.name.trim() : ''
+    if (name.length < 1 || name.length > 50) {
+      return json({ error: 'Category name must be between 1 and 50 characters' }, 400, corsHeaders)
+    }
+
+    // Generate kebab-case slug from name (e.g. "Lineup Changes" -> "lineup-changes")
+    const slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+
+    if (!slug) {
+      return json({ error: 'Category name must contain at least one alphanumeric character' }, 400, corsHeaders)
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('categories')
+      .insert({ name, slug })
+      .select('id, name')
+      .single()
+    if (error) {
+      if (error.code === '23505') {
+        return json({ error: 'Category already exists' }, 409, corsHeaders)
+      }
+      console.error('create-category insert failed:', error)
+      return json({ error: 'Internal error' }, 500, corsHeaders)
+    }
+
+    return json(data, 200, corsHeaders)
+  } catch (err) {
+    console.error('create-category error:', err)
+    return json({ error: 'Internal error' }, 500, corsHeaders)
+  }
+})

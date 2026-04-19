@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation & Authentication** - Supabase schema with RLS, Discord OAuth, routing scaffold, light/dark responsive shell (shadcn/ui + Tailwind), deployment pipeline, testing infrastructure setup with auth tests
 - [x] **Phase 2: Browsing & Responding** - Suggestion listing with category filtering, response submission via Edge Function, respond-then-reveal results with live HTTP polling, response/results tests
 - [x] **Phase 3: Response Integrity** - Discord server membership verification via OAuth guilds scope, Upstash Redis rate limiting on response submissions, integrity tests
-- [ ] **Phase 4: Admin Panel & Suggestion Management** - Admin suggestion creation with dynamic choices, category management, suggestion lifecycle (timers, close, archive with resolution status), admin promotion/demotion, admin action tests
+- [x] **Phase 4: Admin Panel & Suggestion Management** - Admin suggestion creation with dynamic choices, category management, suggestion lifecycle (timers, close, archive with resolution status), admin promotion/demotion, admin action tests
 - [ ] **Phase 5: Launch Hardening** - Supabase keepalive cron, production deployment at polls.wtcsmapvote.com, E2E smoke tests, end-to-end verification
 
 ## Phase Details
@@ -87,7 +87,12 @@ Plans:
   5. Admin can create, rename, and delete suggestion categories
   6. Admin panel is usable on phone screens (suggestion creation form, category management, admin controls)
   7. Admin actions have tests (suggestion CRUD, admin promotion/demotion, server-side auth checks)
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [x] 04-01-PLAN.md -- Migration spine: polls_effective view, is_current_user_admin helper, admin-bypass RLS patches, create_poll_with_choices RPC, poll-images bucket, seed admins (BLOCKING supabase db push)
+- [x] 04-02-PLAN.md -- 14 admin Edge Functions + _shared/admin-auth.ts helper + 6 source-analysis test files
+- [x] 04-03-PLAN.md -- Admin shell (tabs), navbar logo, Categories tab CRUD, Admins tab promote/demote, shadcn tabs/dialog/label/textarea/select install
+- [x] 04-04-PLAN.md -- Suggestion form (create/edit) with choices/image/timer/category, Admin Suggestions tab + kebab menu + lifecycle dialogs, public pin sort + badge, archive resolution pills, polls_effective switch
 **UI hint**: yes
 
 ### Phase 5: Launch Hardening
@@ -111,5 +116,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Foundation & Authentication | 4/4 | Complete | - |
 | 2. Browsing & Responding | 4/4 | Complete | - |
 | 3. Response Integrity | 0/2 | Planned | - |
-| 4. Admin Panel & Suggestion Management | 0/? | Not started | - |
+| 4. Admin Panel & Suggestion Management | 4/4 | Complete | 2026-04-11 |
 | 5. Launch Hardening | 0/? | Not started | - |

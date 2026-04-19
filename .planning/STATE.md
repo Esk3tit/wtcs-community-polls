@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Phase 3 complete — ready for Phase 4
-last_updated: "2026-04-08T16:30:00.000Z"
-last_activity: 2026-04-08
+status: phase-04-shipped
+stopped_at: Phase 4 shipped — PR #3 updated (title/body refreshed for full phase), approved, mergeable, all checks green
+last_updated: "2026-04-19T00:00:00.000Z"
+last_activity: 2026-04-19 -- Shipped Phase 4 (PR #3 approved, awaiting merge)
 progress:
   total_phases: 5
-  completed_phases: 3
-  total_plans: 10
-  completed_plans: 10
-  percent: 60
+  completed_phases: 4
+  total_plans: 15
+  completed_plans: 15
+  percent: 100
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** Community members can vote on competitive scene proposals with confidence that results are legitimate
-**Current focus:** Phase 03 complete — ready for Phase 04 (admin)
+**Current focus:** Phase 04 fully closed — all 5 plans landed (including 04-05 gap-closure for admin nav link). Ready for Phase 05 (launch/deploy Edge Functions + verify-phase).
 
 ## Current Position
 
-Phase: 4
-Plan: Not started
-Status: Phase 3 shipped and merged. Ready for Phase 4.
-Last activity: 2026-04-08
+Phase: 4 (execution complete incl. gap-closure)
+Plan: All 5 plans done (04-01…04-05)
+Status: Phase 4 complete (337 tests green, build clean, UAT Test 3 now passing). Phase 5 pending (Edge Function deploy + live integration).
+Last activity: 2026-04-18 -- Completed 04-05-PLAN.md (admin nav gap-closure)
 
-Progress: [██████░░░░] 60%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -55,6 +55,15 @@ Progress: [██████░░░░] 60%
 
 *Updated after each plan completion*
 
+**Execution Log:**
+
+| Plan         | Duration | Tasks   | Files   |
+|--------------|----------|---------|---------|
+| Phase 04 P01 | 3min     | 2 tasks | 2 files |
+| Phase 04 P02 | 8min | 2 tasks | 21 files |
+| Phase 04 P03 | 70min | 4 tasks | 23 files |
+| Phase 04 P04 | 35min | 4 tasks | 26 files |
+
 ## Accumulated Context
 
 ### Decisions
@@ -67,6 +76,19 @@ Recent decisions affecting current work:
 - [Phase 3]: Guild membership uses OAuth guilds scope (not Bot API) via provider_token
 - [Phase 3]: Edge Function deployed with --no-verify-jwt (ES256 gateway compatibility)
 - [Phase 3]: RPC error handling is fail-closed (sign out on profile update failure)
+- [Phase 04]: update_poll_with_choices RPC wraps UPDATE+DELETE+INSERT in plpgsql for transactional safety (HIGH #1 fix)
+- [Phase 04]: [Phase 04-02]: update-poll EF surfaces 409 via its own EXISTS pre-check before invoking the update_poll_with_choices RPC, so the UI sees a clean status code instead of an opaque RPC exception string
+- [Phase 04]: [Phase 04-02]: close-expired-polls returns 503 'Sweeper not configured' if CLOSE_SWEEPER_SECRET unset, making missing-secret state loud and visible (Phase 5 provisions)
+- [Phase 04]: [Phase 04-02]: Phase 4 admin EFs use source-analysis tests only; live integration tests deferred to Phase 5/6
+- [Phase 04]: [Phase 04-03]: Admin shell uses URL-synced ?tab= via TanStack validateSearch whitelist (mitigates T-04-13 URL injection)
+- [Phase 04]: [Phase 04-03]: CategoriesList delete dialog queries REAL affected-count from polls BEFORE opening (D-21 LOW resolution — no hardcoded 0)
+- [Phase 04]: [Phase 04-03]: Both CategoriesList/AdminsList render shadcn Alert variant=destructive + Retry on fetch failure (MEDIUM #7)
+- [Phase 04]: [Phase 04-03]: Profiles SELECT RLS verified via grep-based preflight test (HIGH #2) — no live-DB dependency in CI
+- [Phase 04]: [Phase 04-03]: Deferred-effect setState pattern (setTimeout+cleanup) adopted to satisfy react-hooks/set-state-in-effect
+- [Phase 04]: [Phase 04-04]: useSuggestions now reads polls_effective (MEDIUM #5 invariant); choices + categories hydrated via separate IN() queries because PostgREST views don't preserve FK relationships
+- [Phase 04]: [Phase 04-04]: polls-effective-invariant grep test walks src/routes+hooks+components, allowlists only CategoriesList.tsx (admin-only category_id count)
+- [Phase 04]: [Phase 04-04]: SuggestionForm edit-mode fetch-failure + AdminSuggestionsTab fetch-failure both render destructive Alert + Retry (MEDIUM #7 complete across Plans 3+4)
+- [Phase 04]: [Phase 04-04]: lint-staged eslint now uses --no-warn-ignored so generated routeTree.gen.ts can be staged alongside source without tripping --max-warnings 0
 
 ### Pending Todos
 
@@ -78,6 +100,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-08T16:30:00.000Z
-Stopped at: Phase 3 complete — ready for Phase 4
-Resume file: N/A — clean start for Phase 4
+Last session: 2026-04-11T19:15:00.000Z
+Stopped at: Completed 04-04-PLAN.md — Phase 4 execution complete (299 tests / 28 files, build clean)
+Resume file: None

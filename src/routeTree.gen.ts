@@ -15,6 +15,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AuthErrorRouteImport } from './routes/auth/error'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
+import { Route as AdminSuggestionsNewRouteImport } from './routes/admin/suggestions/new'
+import { Route as AdminSuggestionsIdEditRouteImport } from './routes/admin/suggestions/$id.edit'
 
 const TopicsRoute = TopicsRouteImport.update({
   id: '/topics',
@@ -46,6 +48,16 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminSuggestionsNewRoute = AdminSuggestionsNewRouteImport.update({
+  id: '/admin/suggestions/new',
+  path: '/admin/suggestions/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSuggestionsIdEditRoute = AdminSuggestionsIdEditRouteImport.update({
+  id: '/admin/suggestions/$id/edit',
+  path: '/admin/suggestions/$id/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +66,8 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/error': typeof AuthErrorRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/suggestions/new': typeof AdminSuggestionsNewRoute
+  '/admin/suggestions/$id/edit': typeof AdminSuggestionsIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +76,8 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/error': typeof AuthErrorRoute
   '/admin': typeof AdminIndexRoute
+  '/admin/suggestions/new': typeof AdminSuggestionsNewRoute
+  '/admin/suggestions/$id/edit': typeof AdminSuggestionsIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +87,8 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/error': typeof AuthErrorRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/suggestions/new': typeof AdminSuggestionsNewRoute
+  '/admin/suggestions/$id/edit': typeof AdminSuggestionsIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,8 +99,18 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/error'
     | '/admin/'
+    | '/admin/suggestions/new'
+    | '/admin/suggestions/$id/edit'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/archive' | '/topics' | '/auth/callback' | '/auth/error' | '/admin'
+  to:
+    | '/'
+    | '/archive'
+    | '/topics'
+    | '/auth/callback'
+    | '/auth/error'
+    | '/admin'
+    | '/admin/suggestions/new'
+    | '/admin/suggestions/$id/edit'
   id:
     | '__root__'
     | '/'
@@ -91,6 +119,8 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/error'
     | '/admin/'
+    | '/admin/suggestions/new'
+    | '/admin/suggestions/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -100,6 +130,8 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthErrorRoute: typeof AuthErrorRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminSuggestionsNewRoute: typeof AdminSuggestionsNewRoute
+  AdminSuggestionsIdEditRoute: typeof AdminSuggestionsIdEditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -146,6 +178,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/suggestions/new': {
+      id: '/admin/suggestions/new'
+      path: '/admin/suggestions/new'
+      fullPath: '/admin/suggestions/new'
+      preLoaderRoute: typeof AdminSuggestionsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/suggestions/$id/edit': {
+      id: '/admin/suggestions/$id/edit'
+      path: '/admin/suggestions/$id/edit'
+      fullPath: '/admin/suggestions/$id/edit'
+      preLoaderRoute: typeof AdminSuggestionsIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -156,6 +202,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   AuthErrorRoute: AuthErrorRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminSuggestionsNewRoute: AdminSuggestionsNewRoute,
+  AdminSuggestionsIdEditRoute: AdminSuggestionsIdEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -268,7 +268,57 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      polls_effective: {
+        Row: {
+          category_id: string | null
+          closed_at: string | null
+          closes_at: string
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_pinned: boolean
+          raw_status: string
+          resolution: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: never
+          closed_at?: never
+          closes_at?: never
+          created_at?: never
+          created_by?: never
+          description?: never
+          id?: never
+          image_url?: never
+          is_pinned?: never
+          raw_status?: never
+          resolution?: never
+          status?: never
+          title?: never
+          updated_at?: never
+        }
+        Update: {
+          category_id?: never
+          closed_at?: never
+          closes_at?: never
+          created_at?: never
+          created_by?: never
+          description?: never
+          id?: never
+          image_url?: never
+          is_pinned?: never
+          raw_status?: never
+          resolution?: never
+          status?: never
+          title?: never
+          updated_at?: never
+        }
+        Relationships: []
+      }
     }
     Functions: {
       update_profile_after_auth: {

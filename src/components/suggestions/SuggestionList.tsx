@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { useSuggestions } from '@/hooks/useSuggestions'
 import { useCategories } from '@/hooks/useCategories'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -10,12 +10,24 @@ import { EmptyState } from '@/components/suggestions/EmptyState'
 import { SuggestionSkeleton } from '@/components/suggestions/SuggestionSkeleton'
 import { SuggestionCard } from '@/components/suggestions/SuggestionCard'
 
-export function SuggestionList({ status }: { status: 'active' | 'closed' }) {
+interface SuggestionListProps {
+  status: 'active' | 'closed'
+  /**
+   * MR-06: when an admin clicks "View results" in the kebab menu the
+   * public list is deep-linked with `?focus=<pollId>`. On mount we
+   * scroll the matching card into view and add a transient ring so
+   * the user can identify which row they came from.
+   */
+  focusId?: string
+}
+
+export function SuggestionList({ status, focusId }: SuggestionListProps) {
   const { suggestions, userVotes, loading, error, addOptimisticVote } = useSuggestions(status)
   const { categories } = useCategories()
   const [searchText, setSearchText] = useState('')
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null)
   const debouncedSearch = useDebounce(searchText, 300)
+  const focusScrolledRef = useRef(false)
 
   const suggestionIds = useMemo(() => new Set(suggestions.map(s => s.id)), [suggestions])
   const votedPollIds = useMemo(
@@ -48,6 +60,20 @@ export function SuggestionList({ status }: { status: 'active' | 'closed' }) {
     setSearchText('')
     setActiveCategoryId(null)
   }
+
+  // MR-06: scroll to the focused suggestion once it's in the rendered
+  // list. Runs once per mount so user-driven scroll isn't hijacked.
+  useEffect(() => {
+    if (focusScrolledRef.current) return
+    if (!focusId) return
+    if (loading) return
+    if (!suggestions.some((s) => s.id === focusId)) return
+    const el = document.getElementById(`suggestion-${focusId}`)
+    if (el) {
+      focusScrolledRef.current = true
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    }
+  }, [focusId, loading, suggestions])
 
   if (loading) {
     return (
@@ -107,16 +133,25 @@ export function SuggestionList({ status }: { status: 'active' | 'closed' }) {
                 : 0
 
               return (
-                <SuggestionCard
+                <div
                   key={suggestion.id}
-                  suggestion={suggestion}
-                  categoryIndex={categoryIndex >= 0 ? categoryIndex : 0}
-                  userChoiceId={userVotes.get(suggestion.id)}
-                  onVote={submitVote}
-                  voteCounts={voteCounts.get(suggestion.id)}
-                  submittingPollId={submittingPollId}
-                  submittingChoiceId={submittingChoiceId}
-                />
+                  id={`suggestion-${suggestion.id}`}
+                  className={
+                    focusId === suggestion.id
+                      ? 'rounded-md ring-2 ring-primary ring-offset-2 ring-offset-background transition-shadow'
+                      : undefined
+                  }
+                >
+                  <SuggestionCard
+                    suggestion={suggestion}
+                    categoryIndex={categoryIndex >= 0 ? categoryIndex : 0}
+                    userChoiceId={userVotes.get(suggestion.id)}
+                    onVote={submitVote}
+                    voteCounts={voteCounts.get(suggestion.id)}
+                    submittingPollId={submittingPollId}
+                    submittingChoiceId={submittingChoiceId}
+                  />
+                </div>
               )
             })}
           </div>
