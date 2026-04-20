@@ -31,3 +31,4 @@ supabase/.temp/
 .netlify
 .agents/
 .claude/
+.playwright-mcp/
