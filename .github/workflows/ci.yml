@@ -90,6 +90,14 @@ jobs:
             echo "ANON_KEY empty: $([ -z "$ANON_KEY" ] && echo yes || echo no)"
             echo "SERVICE_ROLE_KEY empty: $([ -z "$SERVICE_ROLE_KEY" ] && echo yes || echo no)"
             echo "DB_URL empty: $([ -z "$DB_URL" ] && echo yes || echo no)"
+            # LO-01 (Phase 5 review): dump the JSON top-level keys (but not
+            # the values — keys might be sensitive) so a future Supabase CLI
+            # shape change is diagnosable without having to reproduce
+            # locally. `jq 'keys'` is masked-friendly because our add-mask
+            # covers the actual key material; any brand-new shape without
+            # recognizable names will still surface here.
+            echo "--- supabase status JSON top-level keys ---"
+            echo "$STATUS" | jq -r 'paths(scalars) | join(".")' 2>/dev/null | sort -u || echo "jq failed to parse status JSON"
             exit 1
           fi
           echo "::add-mask::$ANON_KEY"
