@@ -2,7 +2,11 @@
 # SPA fallback stays in public/_redirects (already correct); no redirects block here.
 
 [build]
-  command = "npm ci && npm run build"
+  # VITE_COMMIT_SHA is re-exported from Netlify's built-in $COMMIT_REF so Sentry
+  # error reports tag the exact deploy commit (src/main.tsx reads it at build time).
+  # Keep this in the build command — Netlify UI env vars are literal strings and
+  # don't expand $COMMIT_REF.
+  command = "VITE_COMMIT_SHA=$COMMIT_REF npm ci && npm run build"
   publish = "dist"
 
 [build.environment]
