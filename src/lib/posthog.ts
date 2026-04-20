@@ -20,6 +20,9 @@ export function initPostHog() {
     session_recording: { maskAllInputs: true },
     autocapture: false,
   })
+  // Shared PostHog project with sibling WTCS Map Vote Ban app — tag every event
+  // so dashboards can filter per-app without needing a separate project.
+  posthog.register({ app: 'community-polls' })
   initialized = true
   return posthog
 }
