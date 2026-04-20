@@ -5,7 +5,6 @@ import * as Sentry from '@sentry/react'
 import { PostHogProvider } from 'posthog-js/react'
 import { initPostHog } from '@/lib/posthog'
 import { AppErrorFallback } from '@/components/AppErrorFallback'
-import { ConsentChip } from '@/components/ConsentChip'
 import { routeTree } from './routeTree.gen'
 import './index.css'
 
@@ -47,8 +46,15 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Sentry.ErrorBoundary fallback={<AppErrorFallback />} showDialog={false}>
       <PostHogProvider client={posthog}>
+        {/* HI-01 (Phase 5 review): ConsentChip was previously rendered here as
+            a SIBLING of RouterProvider. That meant ConsentChip's
+            `useRouterState()` call had no router context (TanStack Router's
+            context is propagated only to descendants of RouterProvider). The
+            chip now lives inside src/routes/__root.tsx's RootLayout so it
+            sits UNDER the router tree AND keeps access to AuthProvider +
+            ThemeProvider, while ErrorBoundary + PostHogProvider still wrap
+            everything from the outside. */}
         <RouterProvider router={router} />
-        <ConsentChip />
       </PostHogProvider>
     </Sentry.ErrorBoundary>
   </StrictMode>,
