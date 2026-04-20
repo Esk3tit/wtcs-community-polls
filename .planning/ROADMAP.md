@@ -114,8 +114,8 @@ Plans:
 - [x] 05-06-PLAN.md -- GitHub Actions CI workflow: lint, unit, supabase start, Playwright smoke, npm audit (D-07, D-16 §2, §4)
 - [x] 05-07-PLAN.md -- GitHub Actions deploy-edge-functions + cron-sweep (INFR-02) + Dependabot config (D-01..D-03, D-09, D-16 §5)
 - [x] 05-08-PLAN.md -- Production cutover: netlify.toml + env var / secret provisioning + Discord dual-register + Netlify DNS CNAME (D-10, D-11, D-12)
-- [ ] 05-09-PLAN.md -- Capture 4 README screenshots from live prod to docs/screenshots/ (D-15 §3)
-- [ ] 05-10-PLAN.md -- README wholesale rewrite with 13 D-15 sections + upgrade ritual (D-15)
+- [x] 05-09-PLAN.md -- Capture 4 README screenshots from live prod to docs/screenshots/ (D-15 §3)
+- [x] 05-10-PLAN.md -- README wholesale rewrite with 13 D-15 sections + upgrade ritual (D-15)
 
 ## Progress
 
@@ -128,4 +128,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Browsing & Responding | 4/4 | Complete | - |
 | 3. Response Integrity | 0/2 | Planned | - |
 | 4. Admin Panel & Suggestion Management | 4/4 | Complete | 2026-04-11 |
-| 5. Launch Hardening | 8/10 | In Progress | - |
+| 5. Launch Hardening | 10/10 | Complete | 2026-04-20 |
