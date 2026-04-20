@@ -8,7 +8,12 @@ import { sentryVitePlugin } from '@sentry/vite-plugin'
 // Sentry plugin MUST be LAST in the plugins array — tree-shaking landmine
 // (05-RESEARCH.md Pattern 6). `SENTRY_AUTH_TOKEN` is intentionally NOT
 // `VITE_*`-prefixed: it is build-time only and must stay server-side (T-05-02).
-export default defineConfig({
+//
+// `disable` uses Vite's `mode` parameter (not process.env.NODE_ENV) because the
+// config is loaded before Vite promotes NODE_ENV to 'production', so reading
+// the env var at config-load time silently disables sourcemap upload on hosts
+// like Netlify that don't set NODE_ENV=production in the shell.
+export default defineConfig(({ mode }) => ({
   plugins: [
     tanstackRouter({
       target: 'react',
@@ -21,7 +26,7 @@ export default defineConfig({
       project: process.env.SENTRY_PROJECT,
       authToken: process.env.SENTRY_AUTH_TOKEN,
       sourcemaps: { filesToDeleteAfterUpload: './dist/**/*.map' },
-      disable: process.env.NODE_ENV !== 'production',
+      disable: mode !== 'production',
     }),
   ],
   build: { sourcemap: 'hidden' },
@@ -38,4 +43,4 @@ export default defineConfig({
     passWithNoTests: true,
     exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
   },
-})
+}))
