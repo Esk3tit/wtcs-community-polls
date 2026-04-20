@@ -10,6 +10,10 @@ import { fixtureUsers } from '../fixtures/test-users'
  *   - data-testid="admin-create-suggestion" — primary toolbar Create button
  *     (05-04 Task 3 M7 hook; confirmed in 05-04 SUMMARY Decisions #1 that
  *     the hook lives on AdminSuggestionsTab's primary button).
+ *   - data-testid="suggestion-form-submit" — the single submit button on
+ *     <SuggestionForm> (AD-01 Phase 5 review fix). Replaces the earlier
+ *     /create|publish|submit/i role matcher which could match unrelated
+ *     buttons in nested form components.
  *   - Admin create button navigates to /admin/suggestions/new where
  *     <SuggestionForm mode="create"> renders.
  *
@@ -30,9 +34,12 @@ test('[@smoke] admin creates suggestion and it appears for users', async ({ page
   const uniqueTitle = `[E2E] Admin-create ${Date.now()}`
   await page.getByLabel(/title/i).fill(uniqueTitle)
 
-  // Submit. The primary submit is labelled "Create suggestion" / "Create"
-  // / "Publish" depending on form variant — match broadly.
-  await page.getByRole('button', { name: /create|publish|submit/i }).last().click()
+  // AD-01 (Phase 5 review): tightened from a loose /create|publish|submit/i
+  // role matcher to the explicit testid on SuggestionForm's single submit
+  // button. The previous selector could race with `.last()` against any
+  // nested button (choice rows, etc) that happened to contain one of those
+  // words.
+  await page.getByTestId('suggestion-form-submit').click()
 
   // After submit we land back on the admin list and the new row is visible.
   await expect(page).toHaveURL(/\/admin/, { timeout: 10_000 })
