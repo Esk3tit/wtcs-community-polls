@@ -5,15 +5,13 @@ import * as Sentry from '@sentry/react'
 // after the user's consent has been evaluated via localStorage. Users who
 // have opted out never see Replay attached to their session.
 //
-// M3 note: the `await import('@sentry/react')` below triggers
-// Rolldown's INEFFECTIVE_DYNAMIC_IMPORT warning because main.tsx also
-// statically imports Sentry (needed for Sentry.init / ErrorBoundary). That
-// collapses Sentry into the main chunk. The practical M3 guarantee still
-// holds: `replayIntegration` is tree-shaken from the bundle unless this
-// function is actually reached — opt-out users short-circuit on the
-// localStorage check BEFORE the dynamic import, so the Replay code path
-// is unreachable at runtime for them. The gzipped main-JS budget is held
-// under the plan's 400 KB threshold.
+// M3 / ME-02 (Phase 5 review) resolution: Replay is code-split via the
+// dedicated re-export module at ./sentry-replay. Because that module is ONLY
+// dynamically imported (never statically), Rolldown places it in its own
+// chunk and the ~40 KB replayIntegration code is not shipped to opt-out
+// users. The main chunk still statically imports @sentry/react for
+// Sentry.init + Sentry.ErrorBoundary — tree-shaking keeps replayIntegration
+// out of that import.
 let replayLoaded = false
 
 /**
@@ -37,7 +35,12 @@ export async function loadSentryReplayIfConsented(): Promise<void> {
   if (optedOut) return
   const client = Sentry.getClient()
   if (!client) return
-  const { replayIntegration } = await import('@sentry/react')
+  // ME-02 (Phase 5 review): dynamic-import via the isolated re-export module
+  // so Rolldown actually code-splits replayIntegration into its own chunk.
+  // Importing '@sentry/react' directly here produced an
+  // INEFFECTIVE_DYNAMIC_IMPORT warning because main.tsx also imports it
+  // statically, collapsing Replay into the main bundle.
+  const { replayIntegration } = await import('./sentry-replay')
   client.addIntegration(
     replayIntegration({
       maskAllText: true,
