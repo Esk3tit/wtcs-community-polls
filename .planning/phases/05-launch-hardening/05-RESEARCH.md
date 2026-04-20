@@ -614,7 +614,7 @@ Dependabot does NOT scan `esm.sh` imports — those are unmanaged strings. D-16 
 **Warning signs:** "Error response from daemon" in CI logs.
 
 ### Pitfall 10: Netlify cert provisioning stalls
-**What goes wrong:** After CNAME flip, `https://polls.wtcsmapvote.com` serves a cert error for hours.
+**What goes wrong:** After CNAME flip, `https://polls.wtcsmapban.com` serves a cert error for hours.
 **Why it happens:** Let's Encrypt HTTP-01 challenge can stall if DNS hasn't fully propagated or if Netlify's verification runs before the CNAME is live.
 **How to avoid:** D-11 sequence (verify Netlify default URL first, then dual-register Discord, then CNAME flip) minimizes this. If stall happens, Netlify dashboard has a "Renew certificate" action that re-triggers the provisioning. `[CITED: docs.netlify.com/manage/domains/secure-domains-with-https/]`
 **Warning signs:** Netlify dashboard shows "Provisioning certificate" for > 2 hours.
@@ -707,8 +707,8 @@ All primary patterns are inlined in Architecture Patterns §§1–10 above. No n
 | D-04–D-07 | `e2e/playwright.config.ts` exists; CI `ci.yml` job `e2e` runs green | `gh run list --workflow=ci.yml --status=success` shows green runs |
 | D-08 | Four spec files exist in `e2e/tests/` and each has at least one `@smoke` test | `ls e2e/tests/` + `grep -l '@smoke' e2e/tests/*.spec.ts` |
 | D-09 | `.github/workflows/deploy-edge-functions.yml` exists; Supabase dashboard Functions tab lists all 15 functions with "deployed at" timestamps after this phase commit | Supabase dashboard screen; also `supabase functions list --project-ref=…` |
-| D-10 | `https://polls.wtcsmapvote.com` returns 200 HTML; preview URL `https://<branch>--<site>.netlify.app` works for a test branch | `curl -I https://polls.wtcsmapvote.com` |
-| D-11 | Discord OAuth flow from `https://polls.wtcsmapvote.com` successfully logs in a test user | Manual E2E on prod after cutover |
+| D-10 | `https://polls.wtcsmapban.com` returns 200 HTML; preview URL `https://<branch>--<site>.netlify.app` works for a test branch | `curl -I https://polls.wtcsmapban.com` |
+| D-11 | Discord OAuth flow from `https://polls.wtcsmapban.com` successfully logs in a test user | Manual E2E on prod after cutover |
 | D-12 | Running `supabase secrets list --project-ref=…` shows CLOSE_SWEEPER_SECRET, UPSTASH_*, DISCORD_GUILD_ID; Netlify site env shows 4 VITE_* keys; GH repo secrets page shows 3 expected keys | Multi-dashboard check; also `.env.example` diff shows all keys documented |
 | D-13 (Sentry) | `Sentry.init` visible in `src/main.tsx`; build upload log shows "N sourcemaps uploaded"; Sentry dashboard shows at least one test exception from production URL within 10 min of deploy | Sentry issues feed; `grep -r 'Sentry.init' src/` |
 | D-13 (PostHog) | `posthog.init` runs on production load; PostHog dashboard shows at least one session within 10 min; identify event carries a Discord snowflake, NOT email/username | PostHog events feed — filter by production host |
@@ -727,7 +727,7 @@ All primary patterns are inlined in Architecture Patterns §§1–10 above. No n
 - **Per task commit:** `npm test -- --run && npm run lint` (unit + lint, < 30s)
 - **Per PR:** Full CI (unit + Playwright smoke subset, ~3–5 min)
 - **Per wave merge:** Full Playwright suite + manual prod smoke (curl + login)
-- **Phase gate:** Everything green + D-11 live on `polls.wtcsmapvote.com` + Sentry/PostHog test events visible
+- **Phase gate:** Everything green + D-11 live on `polls.wtcsmapban.com` + Sentry/PostHog test events visible
 
 ### Wave 0 Gaps
 

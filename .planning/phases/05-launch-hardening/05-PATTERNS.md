@@ -514,7 +514,7 @@ import type { Session, User } from '@supabase/supabase-js'
 ### CORS headers — pattern for any new EF or change
 **Source:** `supabase/functions/_shared/cors.ts` (18 lines total — multi-origin, Vary: Origin)
 **Apply to:** any EF header block.
-**Production surface must include:** `https://polls.wtcsmapvote.com` (line 2) — already present.
+**Production surface must include:** `https://polls.wtcsmapban.com` (line 2) — already present.
 
 ### Admin gate in EFs
 **Source:** `supabase/functions/_shared/admin-auth.ts` `requireAdmin()` (lines 19-42)

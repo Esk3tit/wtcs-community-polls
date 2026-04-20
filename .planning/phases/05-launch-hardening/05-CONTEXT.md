@@ -6,7 +6,7 @@
 <domain>
 ## Phase Boundary
 
-Take the WTCS Community Polls platform live in production at `polls.wtcsmapvote.com`. This phase covers: (1) wiring a daily scheduled job that both sweeps expired suggestions via the existing `close-expired-polls` Edge Function AND keeps the Supabase free-tier project alive (INFR-02); (2) deploying the SPA to Netlify with working DNS, Discord OAuth callback, and SPA routing; (3) deploying all 15 Supabase Edge Functions to production via CI; (4) adding Playwright E2E smoke tests covering the critical path (TEST-06); (5) shipping launch-grade observability via Sentry (errors) and PostHog (analytics + session replays) — closes SEED-001; (6) pre-launch UX polish (loading skeletons + prefetch-on-hover) — closes the `2026-04-08` notes/todo; (7) rewriting the README into a public-product-grade document; (8) hardening the dependency supply chain by pinning npm and `esm.sh` versions exactly. Unblocks the 9 Phase 4 UAT items in `04-UAT.md` that depend on production EF deploy.
+Take the WTCS Community Polls platform live in production at `polls.wtcsmapban.com`. This phase covers: (1) wiring a daily scheduled job that both sweeps expired suggestions via the existing `close-expired-polls` Edge Function AND keeps the Supabase free-tier project alive (INFR-02); (2) deploying the SPA to Netlify with working DNS, Discord OAuth callback, and SPA routing; (3) deploying all 15 Supabase Edge Functions to production via CI; (4) adding Playwright E2E smoke tests covering the critical path (TEST-06); (5) shipping launch-grade observability via Sentry (errors) and PostHog (analytics + session replays) — closes SEED-001; (6) pre-launch UX polish (loading skeletons + prefetch-on-hover) — closes the `2026-04-08` notes/todo; (7) rewriting the README into a public-product-grade document; (8) hardening the dependency supply chain by pinning npm and `esm.sh` versions exactly. Unblocks the 9 Phase 4 UAT items in `04-UAT.md` that depend on production EF deploy.
 
 This phase does NOT add any new product features (no new suggestion types, no new admin tools, no Discord webhooks, no v2 work). All scope is launch-readiness for the v1 capabilities already shipped in Phases 1–4.
 
@@ -33,13 +33,13 @@ This phase does NOT add any new product features (no new suggestion types, no ne
 
 ### Production Deployment
 - **D-09:** **Edge Functions deploy via GitHub Actions on push-to-main.** A workflow runs `supabase functions deploy <name>` for every EF in `supabase/functions/` on every merge to `main`, authed by `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF` repo secrets. Auditable via CI logs, no dev-machine lock-in, removes "what's deployed?" ambiguity.
-- **D-10:** **Netlify = push-to-main → prod, PR → preview.** Standard Netlify Git integration: `main` auto-deploys to `polls.wtcsmapvote.com`; each PR gets a unique `<branch>--<site>.netlify.app` preview URL. SPA fallback already provided by `public/_redirects` (`/*  /index.html  200`).
+- **D-10:** **Netlify = push-to-main → prod, PR → preview.** Standard Netlify Git integration: `main` auto-deploys to `polls.wtcsmapban.com`; each PR gets a unique `<branch>--<site>.netlify.app` preview URL. SPA fallback already provided by `public/_redirects` (`/*  /index.html  200`).
 - **D-11:** **DNS + OAuth cutover sequence (near-zero-downtime):**
   1. Netlify deploys the app to its default `<site>.netlify.app` URL first.
   2. Manually verify the deploy on the Netlify URL.
-  3. In the Discord developer portal, add **both** `https://<site>.netlify.app/auth/callback` AND `https://polls.wtcsmapvote.com/auth/callback` to the OAuth redirect URI allowlist. Dual-registration means OAuth works during cutover.
+  3. In the Discord developer portal, add **both** `https://<site>.netlify.app/auth/callback` AND `https://polls.wtcsmapban.com/auth/callback` to the OAuth redirect URI allowlist. Dual-registration means OAuth works during cutover.
   4. Flip the OVH CNAME from current target to Netlify.
-  5. Verify on `polls.wtcsmapvote.com` (DNS propagation, custom-domain HTTPS cert auto-provisioning by Netlify).
+  5. Verify on `polls.wtcsmapban.com` (DNS propagation, custom-domain HTTPS cert auto-provisioning by Netlify).
 - **D-12:** **Secrets layout (canonical split):**
   - **Netlify env vars** (client build, must be `VITE_*` prefixed):
     - `VITE_SUPABASE_URL`
@@ -203,7 +203,7 @@ This phase does NOT add any new product features (no new suggestion types, no ne
 - **Netlify dashboard** (out-of-repo) — link to GitHub, set the four `VITE_*` env vars, custom domain, HTTPS auto-cert.
 - **Supabase dashboard** (out-of-repo) — `supabase secrets set` for runtime EF env, OAuth Discord provider config (already configured for the WTCS Discord app, but need to add the prod redirect URI).
 - **Discord developer portal** (out-of-repo) — dual-register the OAuth redirect URIs per D-11.
-- **OVH DNS** (out-of-repo) — flip CNAME for `polls.wtcsmapvote.com` to Netlify per D-11.
+- **OVH DNS** (out-of-repo) — flip CNAME for `polls.wtcsmapban.com` to Netlify per D-11.
 - **Sentry account + project** (out-of-repo, free tier) — set up project, get DSN, configure sourcemap upload.
 - **PostHog account + project** (out-of-repo, free tier) — set up project, get API key, configure session replay.
 - **`README.md`** — wholesale replace (D-15).

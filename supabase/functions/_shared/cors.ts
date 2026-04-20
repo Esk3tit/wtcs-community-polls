@@ -1,5 +1,5 @@
 const ALLOWED_ORIGINS = [
-  'https://polls.wtcsmapvote.com',
+  'https://polls.wtcsmapban.com',
   'http://localhost:5173',
 ]
 

@@ -251,7 +251,7 @@ Then if zero rows match, return 409 or just let the `success: true` response sta
 
 **File:** `supabase/functions/_shared/cors.ts:9`
 **Category:** security hardening
-**Issue:** `const resolvedOrigin = allowedOrigin ?? (ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0])`. When the browser sends no Origin header or an unknown one, the function echoes `ALLOWED_ORIGINS[0]` (`'https://polls.wtcsmapvote.com'`). That's fine — but in a curl-from-backend context (no Origin header) the response carries an `Access-Control-Allow-Origin: https://polls.wtcsmapvote.com` header that is a lie. It won't cause browser XS-exposure because browsers require the origin to match exactly, but it does confuse log-ingest tools that trust the header at face value.
+**Issue:** `const resolvedOrigin = allowedOrigin ?? (ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0])`. When the browser sends no Origin header or an unknown one, the function echoes `ALLOWED_ORIGINS[0]` (`'https://polls.wtcsmapban.com'`). That's fine — but in a curl-from-backend context (no Origin header) the response carries an `Access-Control-Allow-Origin: https://polls.wtcsmapban.com` header that is a lie. It won't cause browser XS-exposure because browsers require the origin to match exactly, but it does confuse log-ingest tools that trust the header at face value.
 
 **Evidence:** Line 9.
 

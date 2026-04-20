@@ -125,7 +125,7 @@
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Shared branding | Same logo, color scheme, and overall feel as wtcsmapvote.com. Feels like one ecosystem. | |
+| Shared branding | Same logo, color scheme, and overall feel as wtcsmapban.com. Feels like one ecosystem. | |
 | Independent but cohesive | Distinct visual identity that complements but doesn't copy the main site. Own personality. | ✓ |
 | You decide | Claude designs something appropriate for an esports voting platform | |
 

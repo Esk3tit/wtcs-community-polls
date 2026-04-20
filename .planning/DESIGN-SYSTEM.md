@@ -64,7 +64,7 @@ with personality.
   Admin UI can use "poll", "vote", and internal terminology freely — users never see it.
 
 ### Primary user flow
-1. Admin shares a link in Discord (e.g., `polls.wtcsmapvote.com/s/remove-mig29`)
+1. Admin shares a link in Discord (e.g., `polls.wtcsmapban.com/s/remove-mig29`)
 2. User clicks link → lands on suggestion page
 3. If not authenticated → Discord OAuth → redirect back to suggestion
 4. User reads suggestion, responds, sees results

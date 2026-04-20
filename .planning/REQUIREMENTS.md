@@ -77,7 +77,7 @@
 
 ### Infrastructure
 
-- [ ] **INFR-01**: App is deployed on Netlify at polls.wtcsmapvote.com
+- [ ] **INFR-01**: App is deployed on Netlify at polls.wtcsmapban.com
 - [ ] **INFR-02**: Supabase free tier keepalive cron pings the database every 3-4 days
 - [ ] **INFR-03**: All reads go direct from browser via Supabase JS client with RLS policies
 - [ ] **INFR-04**: All response writes go through Supabase Edge Functions

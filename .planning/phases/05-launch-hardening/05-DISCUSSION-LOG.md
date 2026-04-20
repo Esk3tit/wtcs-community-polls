@@ -92,7 +92,7 @@
 |--------|-------------|----------|
 | Local dev (`npm run e2e`) | Always available; run against `supabase start` during manual verification. | ✓ (Recommended) |
 | CI on every PR | Run against Netlify deploy preview / local Supabase on each PR. Catches regressions before merge. | ✓ (Recommended) |
-| Post-deploy prod smoke | After every prod deploy, run a subset against `polls.wtcsmapvote.com`. Good safety net but pollutes prod DB. | |
+| Post-deploy prod smoke | After every prod deploy, run a subset against `polls.wtcsmapban.com`. Good safety net but pollutes prod DB. | |
 
 **User's choice:** Local dev + CI on every PR.
 

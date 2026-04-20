@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A community suggestion and opinion-gathering platform for the War Thunder Competitive Scene (WTCS). Admins create suggestions/topics (e.g. "Remove MiG-29 12-3 from this lineup"), community members share their opinions via Discord OAuth. Hosted at polls.wtcsmapvote.com as a sibling to the main WTCS Map Vote/Ban app — fully independent, sharing only admin accounts conceptually.
+A community suggestion and opinion-gathering platform for the War Thunder Competitive Scene (WTCS). Admins create suggestions/topics (e.g. "Remove MiG-29 12-3 from this lineup"), community members share their opinions via Discord OAuth. Hosted at polls.wtcsmapban.com as a sibling to the main WTCS Map Vote/Ban app — fully independent, sharing only admin accounts conceptually.
 
 **User-facing name:** WTCS Community Suggestions
 **Internal/admin name:** WTCS Community Polls (used in code, DB, admin UI)
@@ -66,12 +66,12 @@ This platform gathers community **opinions**, not binding votes. Nothing on the 
 
 ## Context
 
-- **Sibling project:** WTCS Map Vote/Ban system at wtcsmapvote.com uses Convex + Vite + React + TanStack Router. This app is fully independent but targets the same admin community.
+- **Sibling project:** WTCS Map Vote/Ban system at wtcsmapban.com uses Convex + Vite + React + TanStack Router. This app is fully independent but targets the same admin community.
 - **Admin context:** Most admins are esports organizers, not technical users. UI/UX must be intuitive with minimal learning curve.
 - **Community size:** ~300-400 respondents per week, ~20-30 concurrent at peak. Small enough for free tier services.
 - **Primary user flow:** Admin shares a link in Discord → user clicks → lands on suggestion page → authenticates → responds → sees results.
 - **Existing codebase:** Fresh Vite + React 19 + TypeScript scaffold. Moving to shadcn/ui + Tailwind CSS v4.
-- **DNS:** CNAME on OVH pointing polls.wtcsmapvote.com to Netlify.
+- **DNS:** CNAME on OVH pointing polls.wtcsmapban.com to Netlify.
 - **Two separate surfaces:** User-facing (no admin awareness) and admin-facing (separate /admin/* routes).
 
 ## Constraints

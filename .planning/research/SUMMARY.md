@@ -128,7 +128,7 @@ Based on research, the dependency chain is rigid: Schema -> Auth -> Reads -> Wri
 ### Phase 5: Polish and Deployment Hardening
 
 **Rationale:** Once core functionality works, remaining features are additive and independently deployable. This phase also addresses operational concerns (keepalive, monitoring) that must be in place before going public.
-**Delivers:** Poll archive page with resolution status display, search (if poll count warrants), image upload for polls, optional Cloudflare Turnstile if abuse detected, GitHub Actions keepalive cron, UptimeRobot monitoring, Netlify deploy with `_redirects` for SPA routing, CNAME to polls.wtcsmapvote.com.
+**Delivers:** Poll archive page with resolution status display, search (if poll count warrants), image upload for polls, optional Cloudflare Turnstile if abuse detected, GitHub Actions keepalive cron, UptimeRobot monitoring, Netlify deploy with `_redirects` for SPA routing, CNAME to polls.wtcsmapban.com.
 **Addresses:** Poll archive, optional CAPTCHA, deployment infrastructure
 **Avoids:** Pitfall 5 (database pausing — keepalive cron job), Pitfall 9 (Discord OAuth token refresh — test session expiry UX before launch)
 **Stack used:** Cloudflare Turnstile (optional), GitHub Actions, Netlify, date-fns (archive date formatting)

@@ -133,7 +133,7 @@ const { data, error } = await supabase.auth.signInWithOAuth({
 | Technology | Purpose | Tier | Why | Confidence |
 |------------|---------|------|-----|------------|
 | Supabase | Database, Auth, Storage, Edge Functions | Free (500MB DB, 1GB storage, 2M edge invocations/month) | Locked decision. Full BaaS with Postgres, built-in Discord OAuth, Edge Functions for server-side validation, Storage for poll images. | HIGH |
-| Netlify | Static hosting, SPA routing | Legacy free tier | Locked decision. `_redirects` file for SPA routing. CNAME from polls.wtcsmapvote.com. | HIGH |
+| Netlify | Static hosting, SPA routing | Legacy free tier | Locked decision. `_redirects` file for SPA routing. CNAME from polls.wtcsmapban.com. | HIGH |
 | Upstash Redis | Rate limiting in Edge Functions | Free (10K commands/day, 256MB) | HTTP-based Redis, works in Deno edge runtime. 10K commands/day is plenty for ~400 voters/week. | HIGH |
 | Cloudflare Turnstile | Bot protection (optional) | Free (unlimited) | Privacy-first CAPTCHA. Only activate if abuse detected. | HIGH |
 

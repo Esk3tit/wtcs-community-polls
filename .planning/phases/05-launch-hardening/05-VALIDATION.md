@@ -37,7 +37,7 @@ updated: 2026-04-19
 
 - **After every task commit:** Run `npm test -- --run && npm run lint` (< 30s)
 - **After every plan wave:** Run `npm run build && npx playwright test --grep @smoke`
-- **Before `/gsd-verify-work`:** Full suite green + manual production smoke (curl https://polls.wtcsmapvote.com + Discord OAuth login)
+- **Before `/gsd-verify-work`:** Full suite green + manual production smoke (curl https://polls.wtcsmapban.com + Discord OAuth login)
 - **Max feedback latency:** 30s per task commit; 5 min per wave merge
 
 ---
@@ -66,7 +66,7 @@ updated: 2026-04-19
 | 05-08/T3 | 08 | 3 | D-12 | D-12 | T-05-02 | manual (checkpoint) | R2 ordering: Netlify site created via "Deploy manually" FIRST → env vars added → THEN repo linked (prevents empty-VITE_* initial build). Secrets visible in Netlify, Supabase, GH dashboards — GH list includes SUPABASE_ANON_KEY (HIGH #3); LOCAL_* keys NOT stored (M5) | n/a | ⬜ pending |
 | 05-08/T4 | 08 | 3 | D-10, D-11 | D-10, D-11 | T-05-15 | manual (checkpoint) | Netlify default URL serves app; Discord OAuth completes; dual-register visible in Discord portal | n/a | ⬜ pending |
 | 05-08/T5a | 08 | 3 | INFR-02, TEST-06 | D-10, D-11 | T-05-15 | manual (checkpoint) | Preview URL dry-run: Discord login + submit response + admin create + cron workflow_dispatch all green BEFORE touching OVH (M6 — new row) | n/a | ⬜ pending |
-| 05-08/T5 | 08 | 3 | INFR-01, INFR-02 | D-11 | T-05-15 | manual (checkpoint) | `curl -I https://polls.wtcsmapvote.com` returns 200; cron workflow_dispatch green with body validation; 04-UAT runnable; rollback runbook documented (M6) | n/a | ⬜ pending |
+| 05-08/T5 | 08 | 3 | INFR-01, INFR-02 | D-11 | T-05-15 | manual (checkpoint) | `curl -I https://polls.wtcsmapban.com` returns 200; cron workflow_dispatch green with body validation; 04-UAT runnable; rollback runbook documented (M6) | n/a | ⬜ pending |
 | 05-09/T1 | 09 | 4 | — | D-15 §3 | — | manual (checkpoint) | 4 PNG screenshots captured from prod | n/a | ⬜ pending |
 | 05-09/T2 | 09 | 4 | — | D-15 §3 | — | shell-file | `for f in topics-list suggestion-with-results admin-shell mobile-view; do test -f docs/screenshots/$f.png; done && [ $(file docs/screenshots/*.png \| grep -c 'PNG image data') = 4 ]` | ✅ | ⬜ pending |
 | 05-10/T1 | 10 | 4 | — | D-15 | — | shell-grep | `test -f README.md && test -z "$(grep 'Currently, two official plugins' README.md)" && for k in "WTCS Community Suggestions" "img.shields.io" "docs/screenshots/topics-list.png" "opinions" "Tech stack" "supabase start" "playwright" "VITE_SENTRY_DSN" "CLOSE_SWEEPER_SECRET" "SUPABASE_ANON_KEY" "Upgrade ritual" "esm.sh" "Dependabot" "Apache"; do grep -q "$k" README.md \|\| exit 1; done && test -z "$(grep LOCAL_ANON_KEY README.md)" && test -z "$(grep LOCAL_SERVICE_ROLE_KEY README.md)"` (HIGH #3 + M5 — SUPABASE_ANON_KEY present, LOCAL_* absent) | ✅ | ⬜ pending |
@@ -85,7 +85,7 @@ updated: 2026-04-19
 | D-04–D-07 | `e2e/playwright.config.ts` exists; `ci.yml` `e2e` job green | `gh run list --workflow=ci.yml --status=success` | 05-05/T1, 05-06/T1 |
 | D-08 | Four spec files in `e2e/tests/` each with a `@smoke` test | `ls e2e/tests/ && grep -l '@smoke' e2e/tests/*.spec.ts` | 05-05/T2 |
 | D-09 | `.github/workflows/deploy-edge-functions.yml` exists; all 15 EFs visible with recent deploy timestamps | `supabase functions list --project-ref=<ref>` | 05-07/T1 + 05-08/T5 |
-| D-10 | `https://polls.wtcsmapvote.com` returns 200; `<branch>--<site>.netlify.app` preview works | `curl -I https://polls.wtcsmapvote.com` | 05-08/T4, T5a, T5 |
+| D-10 | `https://polls.wtcsmapban.com` returns 200; `<branch>--<site>.netlify.app` preview works | `curl -I https://polls.wtcsmapban.com` | 05-08/T4, T5a, T5 |
 | D-11 | Discord OAuth flow on prod URL logs in a test user successfully | Manual E2E post-cutover | 05-08/T5 |
 | D-12 | Supabase, Netlify, and GH secrets dashboards all show expected keys; `.env.example` documents them | Multi-dashboard check + `diff .env.example` | 05-01/T2 + 05-08/T3 |
 | D-13 Sentry | `Sentry.init` in `src/main.tsx`; build log shows sourcemaps uploaded; prod test exception appears in Sentry within 10 min | Sentry issues feed + `grep -r 'Sentry.init' src/` | 05-03/T1, T2 + 05-08/T5 |
@@ -121,12 +121,12 @@ updated: 2026-04-19
 
 | Behavior | Requirement | Why Manual | Test Instructions | Plan |
 |----------|-------------|------------|-------------------|------|
-| Discord OAuth works on prod URL post-cutover | INFR-01 / D-11 | Needs real Discord account; OAuth flow brittle to automate without Discord's rate limits | Log in with a fixture Discord account at `https://polls.wtcsmapvote.com` | 05-08/T5 |
+| Discord OAuth works on prod URL post-cutover | INFR-01 / D-11 | Needs real Discord account; OAuth flow brittle to automate without Discord's rate limits | Log in with a fixture Discord account at `https://polls.wtcsmapban.com` | 05-08/T5 |
 | Sentry receives a real exception from prod | D-13 Sentry | Requires triggering a known error in prod and watching dashboard | Throw a test error on a hidden route; verify in Sentry issues feed | 05-08/T5 |
 | PostHog session replay appears in dashboard | D-13 PostHog | Replay ingestion is asynchronous and dashboard-only | Complete a full user journey on prod; view session in PostHog replays | 05-08/T5 |
 | Sentry Replay NOT present for opted-out users (M1) | D-13 consent | DOM-level localStorage flag + dashboard session count | Load prod in incognito, click "Opt out", refresh; verify no new Sentry Replay session in dashboard over 5 min | 05-03/T2 + 05-08/T5 |
-| OVH CNAME flip + Netlify cert auto-provision | D-11 | Happens in OVH console + Netlify UI | Follow D-11 runbook; verify HTTPS padlock on `polls.wtcsmapvote.com` | 05-08/T5 |
-| DNS propagation | D-11 | External to the repo | `dig polls.wtcsmapvote.com` resolves to Netlify | 05-08/T5 |
+| OVH CNAME flip + Netlify cert auto-provision | D-11 | Happens in OVH console + Netlify UI | Follow D-11 runbook; verify HTTPS padlock on `polls.wtcsmapban.com` | 05-08/T5 |
+| DNS propagation | D-11 | External to the repo | `dig polls.wtcsmapban.com` resolves to Netlify | 05-08/T5 |
 | Preview URL dry-run (M6) | D-10, D-11 | Requires real Netlify deploy preview; operator judgment | Execute Task 5a checklist on `<branch>--<site>.netlify.app` before DNS flip | 05-08/T5a |
 | First Dependabot PR appears | D-16 §5 | Requires a week to elapse | GH Dependabot activity tab one week after merge | 05-07/T3 (post-ship) |
 | Screenshots captured from live prod | D-15 §3 | Browser + auth needed; Claude has no authenticated headless capability here | Sign in + capture viewport | 05-09/T1 |

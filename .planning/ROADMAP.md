@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Browsing & Responding** - Suggestion listing with category filtering, response submission via Edge Function, respond-then-reveal results with live HTTP polling, response/results tests
 - [x] **Phase 3: Response Integrity** - Discord server membership verification via OAuth guilds scope, Upstash Redis rate limiting on response submissions, integrity tests
 - [x] **Phase 4: Admin Panel & Suggestion Management** - Admin suggestion creation with dynamic choices, category management, suggestion lifecycle (timers, close, archive with resolution status), admin promotion/demotion, admin action tests
-- [ ] **Phase 5: Launch Hardening** - Supabase keepalive cron, production deployment at polls.wtcsmapvote.com, E2E smoke tests, end-to-end verification
+- [ ] **Phase 5: Launch Hardening** - Supabase keepalive cron, production deployment at polls.wtcsmapban.com, E2E smoke tests, end-to-end verification
 
 ## Phase Details
 
@@ -96,12 +96,12 @@ Plans:
 **UI hint**: yes
 
 ### Phase 5: Launch Hardening
-**Goal**: The platform is production-ready at polls.wtcsmapvote.com with infrastructure safeguards preventing database pausing and deployment configured for SPA routing
+**Goal**: The platform is production-ready at polls.wtcsmapban.com with infrastructure safeguards preventing database pausing and deployment configured for SPA routing
 **Depends on**: Phase 4
 **Requirements**: INFR-02, TEST-06
 **Success Criteria** (what must be TRUE):
   1. Supabase database receives a keepalive ping every 3-4 days via automated cron, preventing free-tier pausing
-  2. App is accessible at polls.wtcsmapvote.com with correct SPA routing (deep links and refresh work)
+  2. App is accessible at polls.wtcsmapban.com with correct SPA routing (deep links and refresh work)
   3. End-to-end flow works in production: login, browse suggestions, respond, see results, admin creates suggestion
   4. E2E smoke tests cover the critical path (login -> browse -> respond -> see results)
 **Plans**: 10 plans
