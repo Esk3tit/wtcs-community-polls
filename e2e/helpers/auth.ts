@@ -42,6 +42,21 @@ const STORAGE_KEY = `sb-${PROJECT_REF}-auth-token`
  * `localStorage` before the app's first paint, so the Vite SPA reads it as
  * an already-authenticated session.
  *
+ * **IMPORTANT (LO-03 Phase 5 review):** Callers MUST `await` this helper
+ * before any `page.goto(...)` / `page.navigate(...)`. `page.addInitScript`
+ * only runs on page contexts created AFTER it is registered. If navigation
+ * races ahead of the init-script registration the browser will load the
+ * app in a logged-out state and auth-dependent assertions will fail with
+ * misleading redirect-to-login errors. See Pitfall 7 in 05-RESEARCH.md.
+ *
+ * **Context switch between tests (LO-02 Phase 5 review):** Re-running
+ * `loginAs` with a different fixture user registers an ADDITIONAL init
+ * script on the same page; both fire on the next `page.goto(...)`, in
+ * registration order, so the last-written localStorage wins. In-flight
+ * React/Supabase state from the prior session persists until the next
+ * navigation completes — always follow a re-login with an explicit
+ * `page.goto(...)` before asserting on per-user UI.
+ *
  * @param page         Playwright Page (obtained from the test fixture)
  * @param fixtureUserId  One of the UUIDs from `fixtureUsers.*.id`
  */
