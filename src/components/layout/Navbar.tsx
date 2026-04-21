@@ -19,9 +19,14 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 bg-card border-b">
       <div className="flex items-center justify-between py-3 px-4 md:px-6 mx-auto max-w-2xl">
-        {/* Left: WTCS logo (D-03 — app-wide leftmost element) */}
+        {/* Left: WTCS logo (D-03 — app-wide leftmost element). preload="intent"
+            so tapping the logo from Archive/Admin is not a cold navigation
+            (UI-SPEC Contract 4). Root route redirects to /topics, which is
+            already warm via the Topics link's preload — this just extends the
+            warm-path coverage to the logo entrypoint. */}
         <Link
           to="/"
+          preload="intent"
           className="min-h-[44px] flex items-center"
           aria-label="WTCS Community Suggestions"
         >

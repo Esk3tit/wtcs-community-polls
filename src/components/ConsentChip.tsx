@@ -50,11 +50,17 @@ export function ConsentChip() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-40 max-w-xs rounded-lg border bg-card shadow-md p-3 max-w-[calc(100vw-2rem)] transition-opacity">
+    <div className="fixed bottom-4 right-4 z-40 rounded-lg border bg-card shadow-md p-3 max-w-[min(20rem,calc(100vw-2rem))] transition-opacity">
       <div className="flex items-start gap-2">
         <p className="text-xs text-muted-foreground leading-relaxed flex-1">
           Anonymous usage data helps us improve this.{' '}
-          <Button variant="link" size="sm" className="h-auto p-0 align-baseline" onClick={handleOptOut}>
+          <Button
+            variant="link"
+            size="sm"
+            className="h-auto p-0 align-baseline"
+            onClick={handleOptOut}
+            title="Stop sending anonymous analytics — persists across sessions"
+          >
             Opt out
           </Button>
         </p>
@@ -64,6 +70,7 @@ export function ConsentChip() {
           className="size-6 shrink-0"
           onClick={handleDismiss}
           aria-label="Dismiss"
+          title="Hide this notice — analytics remain on"
         >
           <X className="size-3" />
         </Button>
