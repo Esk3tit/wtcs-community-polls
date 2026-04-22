@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createRootRoute, Outlet } from '@tanstack/react-router'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ThemeProvider } from '@/components/theme-provider'
