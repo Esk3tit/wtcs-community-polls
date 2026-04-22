@@ -16,6 +16,20 @@ describe('SuggestionSkeleton (UI-SPEC Contract 1)', () => {
     expect(wrapper?.getAttribute('aria-label')).toBe('Loading topics')
   })
 
+  it('switches aria-label to "Loading archive" when isArchive is true', () => {
+    const { container } = render(<SuggestionSkeleton isArchive />)
+    const wrapper = container.querySelector('[aria-busy="true"]')
+    expect(wrapper?.getAttribute('aria-label')).toBe('Loading archive')
+  })
+
+  it('includes shadow-sm on each card shell (silhouette parity with SuggestionCard)', () => {
+    const { container } = render(<SuggestionSkeleton />)
+    const cardShells = container.querySelectorAll(
+      '.bg-card.rounded-xl.border.shadow-sm.p-5',
+    )
+    expect(cardShells.length).toBe(3)
+  })
+
   it('renders exactly 3 card silhouette shells matching SuggestionCard outer classes', () => {
     const { container } = render(<SuggestionSkeleton />)
     const cardShells = container.querySelectorAll(

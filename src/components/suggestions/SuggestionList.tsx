@@ -82,7 +82,7 @@ export function SuggestionList({ status, focusId }: SuggestionListProps) {
           {status === 'active' ? 'Active Topics' : 'Archive'}
         </h1>
         <div className="mt-6">
-          <SuggestionSkeleton />
+          <SuggestionSkeleton isArchive={status === 'closed'} />
         </div>
       </div>
     )

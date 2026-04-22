@@ -1,6 +1,12 @@
 const ALLOWED_ORIGINS = [
   'https://polls.wtcsmapban.com',
   'http://localhost:5173',
+  // Vite preview port — used by Playwright E2E (e2e/playwright.config.ts
+  // baseURL) and by `npm run preview` locally. CI runs vite preview on
+  // :4173 without setting ALLOWED_ORIGIN, so EFs must allowlist it
+  // natively or specs that hit EFs (submit-vote, create-poll, etc.) fail
+  // CORS.
+  'http://localhost:4173',
 ]
 
 export function getCorsHeaders(req: Request) {
