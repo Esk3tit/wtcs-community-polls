@@ -35,7 +35,10 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           set -euo pipefail
-          response=$(curl -sS -w "\n%{http_code}" -X POST \
+          # --max-time 60 caps a single attempt so a hung TLS handshake or
+          # stalled response surfaces a clean curl timeout instead of waiting
+          # for the job-level timeout-minutes: 5 ceiling. (coderabbit PR #4 review.)
+          response=$(curl -sS --max-time 60 -w "\n%{http_code}" -X POST \
             -H "Content-Type: application/json" \
             -H "X-Cron-Secret: ${CLOSE_SWEEPER_SECRET}" \
             -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \

@@ -102,6 +102,11 @@ jobs:
           fi
           echo "::add-mask::$ANON_KEY"
           echo "::add-mask::$SERVICE_ROLE_KEY"
+          # DB_URL embeds the local-stack `postgres:postgres@…` credential.
+          # The value is deterministic and only meaningful inside the runner,
+          # but mask it anyway so a future step that logs the outputs can't
+          # surface the connection string verbatim. (coderabbit PR #4 review.)
+          echo "::add-mask::$DB_URL"
           {
             echo "anon_key=$ANON_KEY"
             echo "service_role_key=$SERVICE_ROLE_KEY"
