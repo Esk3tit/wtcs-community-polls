@@ -29,6 +29,10 @@ test('[@smoke] user filters by category and searches', async ({ page }) => {
   // Filter by a category tab. Lineup Changes is a fixture category and
   // contains the MiG-29 fixture poll.
   await page.getByRole('tab', { name: /lineup changes/i }).click()
+  // CR-PR4: wait for a deterministic post-filter signal before reading the
+  // count. The MiG-29 fixture title is the only Lineup Changes poll in the
+  // fixture seed, so its visibility is the strongest "filter applied" signal.
+  await expect(page.getByText(/MiG-29/i).first()).toBeVisible({ timeout: 5_000 })
   const filteredCount = await cards.count()
   expect(filteredCount).toBeGreaterThan(0)
   expect(filteredCount).toBeLessThanOrEqual(initialCount)

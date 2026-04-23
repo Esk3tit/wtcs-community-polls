@@ -42,7 +42,11 @@ test('[@smoke] admin creates suggestion and it appears for users', async ({ page
   await page.getByTestId('suggestion-form-submit').click()
 
   // After submit we land back on the admin list and the new row is visible.
-  await expect(page).toHaveURL(/\/admin/, { timeout: 10_000 })
+  // CR-PR4: previous /\/admin/ matched /admin/suggestions/new too, so the spec
+  // could pass without ever leaving the create form. Tighten to the actual
+  // post-submit landing route (/admin or /admin/suggestions, optional trailing
+  // slash, optional query string) to require real navigation away.
+  await expect(page).toHaveURL(/\/admin(?:\/suggestions)?\/?(?:\?.*)?$/, { timeout: 10_000 })
   await expect(page.getByText(uniqueTitle)).toBeVisible({ timeout: 10_000 })
 
   // --- Member side ----------------------------------------------------

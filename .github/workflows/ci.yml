@@ -113,6 +113,11 @@ jobs:
       # disjoint UUID namespace (d0000000-…, e0000000-…) to avoid colliding
       # with the dev seed's b0000000-… / c0000000-… namespace.
       - name: Apply fixture seed (additive, on top of supabase/seed.sql)
+        # CR-PR4 fail-closed guard: e2e/fixtures/seed.sql refuses to run unless
+        # app.e2e_seed_allowed=true is explicitly set, so accidentally pointing
+        # it at a hosted DB is a no-op instead of provisioning password accounts.
+        env:
+          PGOPTIONS: -c app.e2e_seed_allowed=true
         run: psql "${{ steps.supabase-keys.outputs.db_url }}" -f e2e/fixtures/seed.sql
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
@@ -122,10 +127,13 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ steps.supabase-keys.outputs.anon_key }}
         run: npm run build
       - name: Start preview server
-        env:
-          VITE_SUPABASE_URL: http://localhost:54321
-          VITE_SUPABASE_ANON_KEY: ${{ steps.supabase-keys.outputs.anon_key }}
-        run: npx vite preview --host 0.0.0.0 --port 4173 &
+        # CR-PR4 fix: nohup + explicit stdout/stderr redirection prevents the
+        # backgrounded preview from being killed when the step shell exits
+        # (a known GH Actions flake source) and preserves logs for debugging.
+        # The VITE_SUPABASE_* env vars previously set here were a no-op (those
+        # values are inlined at build time, not preview time) and have been
+        # removed to avoid misleading future debugging.
+        run: nohup npx vite preview --host 0.0.0.0 --port 4173 > preview.log 2>&1 &
         shell: bash
       - name: Wait for preview
         run: |
@@ -156,3 +164,11 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+      - name: Upload preview server log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-log
+          path: preview.log
+          retention-days: 7
+          if-no-files-found: ignore

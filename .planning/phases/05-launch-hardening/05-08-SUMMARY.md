@@ -63,7 +63,7 @@ Completed the Phase 5 production cutover (D-10, D-11, D-12): the app is live at 
 | Discord OAuth redirect allowlist contains both Netlify + custom domain | ✓ user |
 | Preview URL smoke T5a (app-level) | ✓ user |
 | CNAME for `polls.wtcsmapban.com` live | ✓ (Tim/Netlify DNS) |
-| HTTPS cert issued | ✓ (Let's Encrypt, valid till June 1) |
+| HTTPS cert issued | ✓ (Let's Encrypt, valid till 2026-06-01) |
 | Prod smoke on `polls.wtcsmapban.com` (Discord OAuth + EF round-trip) | ✓ user |
 | Rollback runbook documented | ✓ (Contingencies A/B in plan) |
 

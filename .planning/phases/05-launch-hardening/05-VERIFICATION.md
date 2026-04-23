@@ -104,7 +104,7 @@ human_verification:
 | INFR-02 | 05-07 | Supabase keepalive cron every 3-4 days | SATISFIED | cron-sweep.yml scheduled daily at 03:00 UTC (exceeds 3-4d window); each run is a real EF call that queries + writes DB |
 | TEST-06 | 05-05 + 05-06 | E2E smoke tests cover critical path | SATISFIED | 5 `@smoke` tests across 4 specs cover D-08 #1–#4 journeys; CI workflow gates PRs + main |
 
-Note: REQUIREMENTS.md table still lists both as "Pending" (documentation lag — not a gate). Checkboxes unchanged but artifacts and behaviors satisfy the contract.
+Note: REQUIREMENTS.md drift CLOSED (2026-04-21) — INFR-01, INFR-02, and TEST-06 checkboxes flipped to `[x]` and the traceability table marked "Complete" so the two artifacts now agree.
 
 ### Anti-Patterns Found
 

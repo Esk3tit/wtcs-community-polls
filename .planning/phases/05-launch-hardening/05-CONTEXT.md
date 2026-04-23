@@ -54,7 +54,9 @@ This phase does NOT add any new product features (no new suggestion types, no ne
     - `SUPABASE_ACCESS_TOKEN` — for `supabase functions deploy`
     - `SUPABASE_PROJECT_REF` — project linker for the CLI
     - `CLOSE_SWEEPER_SECRET` — same value as the Supabase secret; the cron uses it as the `X-Cron-Secret` header
-  - All variables documented in an updated `.env.example` AND a dedicated env-var table in the new README (D-17).
+    - `SUPABASE_URL` — gateway base URL the cron-sweep workflow curls (`${SUPABASE_URL}/functions/v1/close-expired-polls`); added during 05-07 implementation after this decision was first written
+    - `SUPABASE_ANON_KEY` — sent as `Authorization: Bearer …` so the request clears the EF gateway before the in-handler `X-Cron-Secret` check; same provenance as the row above
+  - All variables documented in an updated `.env.example` AND a dedicated env-var table in the new README (D-16).
 
 ### Observability — SEED-001 Closure
 - **D-13:** **Ship BOTH Sentry and PostHog at launch.** Full observability on day one:

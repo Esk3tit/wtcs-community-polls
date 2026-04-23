@@ -14,7 +14,7 @@
 - **D-02** One daily job @ 03:00 UTC, dual-purpose: keepalive + sweep. curls `close-expired-polls` EF with `X-Cron-Secret: ${{ secrets.CLOSE_SWEEPER_SECRET }}`. Satisfies INFR-02 (7× safety vs 7-day pause).
 - **D-03** Failure visibility = GitHub Actions email-on-failure. No Discord webhook v1.
 - **D-04** E2E framework = **Playwright** (not Cypress, not Vitest-only).
-- **D-05** OAuth bypass via **programmatic Supabase session injection using service-role key**. No real Discord click-through.
+- **D-05** OAuth bypass via **programmatic Supabase session injection using service-role key**. No real Discord click-through. _(Superseded during execution — see HIGH #2 below and `05-05-SUMMARY.md`: shipped pattern is `signInWithPassword` against the public anon key, never the service-role key. This research line is preserved as the snapshot at research time.)_
 - **D-06** Tests run locally (`npm run e2e` vs `supabase start`) + in CI on every PR. No post-deploy prod smoke.
 - **D-07** CI: spin full `supabase start` via Docker in GH Actions, apply migrations, seed fixtures, run against `vite preview`.
 - **D-08** Critical-path smoke = 4 journeys: (1) user browse→respond→results, (2) filter+search, (3) admin create suggestion→visible publicly, (4) auth error states.
@@ -146,7 +146,7 @@ npx playwright install --with-deps chromium
     ┌─────────────────┐      ┌───────────────────┐
     │ Netlify         │      │ Supabase          │
     │ polls.wtcsmap-  │◄────►│ (DB + Auth +      │
-    │ vote.com        │ OAuth│  15 Edge Fns +    │
+    │ ban.com         │ OAuth│  15 Edge Fns +    │
     │ (SPA + _redir)  │      │  Storage)         │
     └───────┬─────────┘      └────────┬──────────┘
             │                         │
@@ -709,7 +709,7 @@ All primary patterns are inlined in Architecture Patterns §§1–10 above. No n
 | D-09 | `.github/workflows/deploy-edge-functions.yml` exists; Supabase dashboard Functions tab lists all 15 functions with "deployed at" timestamps after this phase commit | Supabase dashboard screen; also `supabase functions list --project-ref=…` |
 | D-10 | `https://polls.wtcsmapban.com` returns 200 HTML; preview URL `https://<branch>--<site>.netlify.app` works for a test branch | `curl -I https://polls.wtcsmapban.com` |
 | D-11 | Discord OAuth flow from `https://polls.wtcsmapban.com` successfully logs in a test user | Manual E2E on prod after cutover |
-| D-12 | Running `supabase secrets list --project-ref=…` shows CLOSE_SWEEPER_SECRET, UPSTASH_*, DISCORD_GUILD_ID; Netlify site env shows 4 VITE_* keys; GH repo secrets page shows 3 expected keys | Multi-dashboard check; also `.env.example` diff shows all keys documented |
+| D-12 | Running `supabase secrets list --project-ref=…` shows CLOSE_SWEEPER_SECRET, UPSTASH_*, DISCORD_GUILD_ID; Netlify site env shows 4 VITE_* keys; GH repo secrets page shows the 5 expected keys (SUPABASE_ACCESS_TOKEN, SUPABASE_PROJECT_REF, CLOSE_SWEEPER_SECRET, **SUPABASE_URL**, **SUPABASE_ANON_KEY** — last two added during 05-07 cron-sweep wiring; see CONTEXT.md D-12 footnote) | Multi-dashboard check; also `.env.example` diff shows all keys documented |
 | D-13 (Sentry) | `Sentry.init` visible in `src/main.tsx`; build upload log shows "N sourcemaps uploaded"; Sentry dashboard shows at least one test exception from production URL within 10 min of deploy | Sentry issues feed; `grep -r 'Sentry.init' src/` |
 | D-13 (PostHog) | `posthog.init` runs on production load; PostHog dashboard shows at least one session within 10 min; identify event carries a Discord snowflake, NOT email/username | PostHog events feed — filter by production host |
 | D-13 (consent) | Fresh-session visitor sees the chip; clicking Opt out disables subsequent captures (verify: PostHog dashboard event count for that session_id stops incrementing) | DevTools + PostHog sessions feed |

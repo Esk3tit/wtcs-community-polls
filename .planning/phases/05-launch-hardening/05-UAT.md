@@ -54,7 +54,7 @@ reason: "User noted: well our code is not merged yet so sentry and posthog won't
 expected: Open the GitHub repo's Actions tab. The "CI" workflow has recent successful runs on main and/or a recent PR — both jobs (lint-and-unit, e2e) show green checkmarks. E2E job ran Playwright @smoke tests against a local Supabase stack.
 result: blocked
 blocked_by: prior-phase
-reason: "User reported: nothing there did we deploy this action yet? Honestly we should probably merger the PR and then do this again — .github/workflows/ci.yml not yet on main (or no PR triggered yet); workflow is push-to-main + PR gated. Re-test after opening PR and/or merging."
+reason: "User reported: nothing there did we deploy this action yet? Honestly we should probably merge the PR and then do this again — .github/workflows/ci.yml not yet on main (or no PR triggered yet); workflow is push-to-main + PR gated. Re-test after opening PR and/or merging."
 
 ### 7. Cron-sweep workflow dispatchable (05-07)
 expected: In GitHub Actions, the "Cron Sweep" workflow is listed. Click "Run workflow" → "Run workflow" from main. After ~30s the run completes green and the log shows an HTTP 200 response with a JSON body like `{"success":true,"swept":N}`. (This is the deferred post-merge dry-run from 05-08.)

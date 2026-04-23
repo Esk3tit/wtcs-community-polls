@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import { createFileRoute } from '@tanstack/react-router'
 import { AuthErrorPage } from '@/components/auth/AuthErrorPage'
 
@@ -14,6 +13,7 @@ export const Route = createFileRoute('/auth/error')({
   component: AuthErrorRoute,
 })
 
+// eslint-disable-next-line react-refresh/only-export-components
 function AuthErrorRoute() {
   const { reason } = Route.useSearch()
   return <AuthErrorPage reason={reason} />

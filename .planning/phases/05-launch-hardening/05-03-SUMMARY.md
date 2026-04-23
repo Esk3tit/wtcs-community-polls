@@ -112,7 +112,7 @@ _Note: Task 2 followed TDD (RED → GREEN); REFACTOR step was not needed — the
 ## Decisions Made
 
 - **M1 Replay deferral semantics:** `loadSentryReplayIfConsented()` gates on `analytics_opted_out` only (not `posthog_consent_chip_dismissed`) — dismiss-via-X keeps analytics+replay alive, which matches UI-SPEC Contract 3's copy ("Opt out" is the privacy gesture; `×` is accept-and-hide).
-- **Report issue URL:** hard-coded `https://github.com/wtcs-community/polls/issues` (the plan says executor's discretion between GitHub Issues and `mailto:`).
+- **Report issue URL:** hard-coded `https://github.com/wtcs-community/wtcs-community-polls/issues` (the plan says executor's discretion between GitHub Issues and `mailto:`).
 - **INEFFECTIVE_DYNAMIC_IMPORT tradeoff:** attempted to purge static `import * as Sentry from '@sentry/react'` from `src/lib/sentry.ts`, but `main.tsx` must statically import Sentry (needed for `Sentry.init` and `Sentry.ErrorBoundary`), which collapsed the Replay chunk back into the main bundle and blew the 400 KB budget (405 KB). Reverted to the original static-import pattern — bundle drops back to 343 KB and the runtime consent gate still prevents Replay from starting for opt-out users. Documented the tradeoff in `sentry.ts` comment.
 - **Dismiss button a11y label:** added `aria-label="Dismiss"` so the test can find the X via accessible name (UI-SPEC didn't specify, but the verbatim copy "Anonymous usage data helps us improve this. Opt out" has no text on the X).
 

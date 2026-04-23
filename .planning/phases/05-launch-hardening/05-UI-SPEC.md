@@ -236,9 +236,9 @@ Rationale for bottom-right vs footer: the app has no persistent bottom footer (m
 |------|--------------|--------------|-----------|
 | Top nav: Topics | any route | `/topics` | Primary navigation |
 | Top nav: Archive | any route | `/archive` | Primary navigation |
-| Admin nav: Admin | any route (if admin) | `/admin` | Secondary but high-value |
 
 **Links explicitly NOT prefetched:**
+- `/admin` — kept cold per launch-hardening decision; hover-prefetching a protected route triggers the AuthGuard redirect-on-hover side effect. Admin link is plain `<Link>` with no `preload` attribute.
 - Individual suggestion cards (e.g. `/s/<slug>`) — not implemented yet as discrete routes (cards are collapsible in-place in Phase 2); deferred until those routes exist.
 - External links (Discord OAuth, GitHub Issues) — not navigable within TanStack Router.
 - Sign-out action — intentional cold navigation.

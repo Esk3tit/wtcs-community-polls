@@ -9,6 +9,11 @@ on:
     - cron: '0 3 * * *'
   workflow_dispatch:
 
+# CR-PR4: least-privilege — this workflow only POSTs to a Supabase EF endpoint
+# using repo secrets; it never touches the GitHub repo. Drop all GITHUB_TOKEN
+# permissions so the inherited default cannot widen attack surface.
+permissions: {}
+
 concurrency:
   group: cron-sweep
   cancel-in-progress: false

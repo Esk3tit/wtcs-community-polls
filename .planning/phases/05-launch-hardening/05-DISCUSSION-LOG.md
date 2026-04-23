@@ -86,6 +86,8 @@
 
 **User's choice:** Programmatic session injection.
 
+> **Superseded:** the service-role-key variant of "Programmatic session injection" was replaced during execution by `signInWithPassword` against the public anon key (test-only fixture users seeded into the local Supabase stack). See 05-RESEARCH HIGH #2 and `05-05-SUMMARY.md` — service-role key is **not** used in any test code. Do not copy/paste the original service-role pattern.
+
 ### Q: Where do the E2E smoke tests run? (multi-select)
 
 | Option | Description | Selected |

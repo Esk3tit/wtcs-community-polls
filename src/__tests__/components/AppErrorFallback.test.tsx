@@ -28,10 +28,12 @@ describe('AppErrorFallback (UI-SPEC Contract 2)', () => {
   })
 
   it('does NOT render any stack trace or raw error text (ASVS V7)', () => {
-    render(<AppErrorFallback />)
-    // Typical stack-trace markers should NEVER appear in the rendered DOM
-    expect(screen.queryByText(/at [A-Z][A-Za-z0-9]*/)).not.toBeInTheDocument()
-    expect(screen.queryByText(/Error:/)).not.toBeInTheDocument()
-    expect(screen.queryByText(/stack/i)).not.toBeInTheDocument()
+    const { container } = render(<AppErrorFallback />)
+    // Assert against the full subtree text so multi-line stack frames
+    // (e.g. inside a <pre>) or concatenated text nodes can't slip past.
+    const text = container.textContent ?? ''
+    expect(text).not.toMatch(/at [A-Z][A-Za-z0-9]*/)
+    expect(text).not.toMatch(/Error:/)
+    expect(text).not.toMatch(/\bstack trace\b/i)
   })
 })

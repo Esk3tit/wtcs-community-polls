@@ -65,8 +65,8 @@ import { getCorsHeaders } from '../_shared/cors.ts'
 
 // AFTER (D-16 §3 — exact 3-digit pins)
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
-import { Ratelimit } from 'https://esm.sh/@upstash/ratelimit@2.x.y'   // executor: look up current x.y
-import { Redis } from 'https://esm.sh/@upstash/redis@1.x.y'
+import { Ratelimit } from 'https://esm.sh/@upstash/ratelimit@2.0.5'
+import { Redis } from 'https://esm.sh/@upstash/redis@1.34.6'
 import { getCorsHeaders } from '../_shared/cors.ts'
 ```
 
@@ -188,7 +188,7 @@ createRoot(document.getElementById('root')!).render(
 - Add `initPostHog()` call BEFORE `createRoot`
 - Wrap `<RouterProvider>` with `<Sentry.ErrorBoundary fallback={<AppErrorFallback />}>` and `<PostHogProvider client={posthog}>`
 - Keep `StrictMode` as the outermost wrapper (Pattern 8 landmine — PostHog init must be pre-mount to avoid StrictMode double-init)
-- Router config upgrade (D-14 prefetch): `createRouter({ routeTree, defaultPreload: 'intent', defaultPreloadStaleTime: 30_000 })`
+- Router config: keep `defaultPreload` unset globally; apply `preload="intent"` only on selected `<Link>`s (Topics + Archive). Admin links MUST stay cold per launch-hardening — see UI-SPEC Contract 4 + 05-UI-REVIEW HIGH #1. (Earlier draft of this pattern recommended `createRouter({ routeTree, defaultPreload: 'intent', ... })`; that recommendation was withdrawn.)
 
 ---
 

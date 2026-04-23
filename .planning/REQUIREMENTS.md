@@ -73,12 +73,12 @@
 - [ ] **TEST-03**: Response submission and result visibility have unit/integration tests (one-response enforcement, respond-then-reveal, respondents-only results)
 - [ ] **TEST-04**: Response integrity checks have tests (server membership rejection, rate limiting)
 - [x] **TEST-05**: Admin actions have tests (suggestion CRUD, admin promotion/demotion, server-side auth checks)
-- [ ] **TEST-06**: E2E smoke tests cover the critical path (login → browse → respond → see results)
+- [x] **TEST-06**: E2E smoke tests cover the critical path (login → browse → respond → see results)
 
 ### Infrastructure
 
-- [ ] **INFR-01**: App is deployed on Netlify at polls.wtcsmapban.com
-- [ ] **INFR-02**: Supabase free tier keepalive cron pings the database every 3-4 days
+- [x] **INFR-01**: App is deployed on Netlify at polls.wtcsmapban.com
+- [x] **INFR-02**: Supabase free tier keepalive cron pings the database every 3-4 days
 - [ ] **INFR-03**: All reads go direct from browser via Supabase JS client with RLS policies
 - [ ] **INFR-04**: All response writes go through Supabase Edge Functions
 
@@ -158,8 +158,8 @@
 | UIDN-01 | Phase 1 | Pending |
 | UIDN-02 | Phase 1 | Pending |
 | UIDN-03 | Phase 1 | Pending |
-| INFR-01 | Phase 1 | Pending |
-| INFR-02 | Phase 5 | Pending |
+| INFR-01 | Phase 1 | Complete |
+| INFR-02 | Phase 5 | Complete |
 | INFR-03 | Phase 1 | Pending |
 | INFR-04 | Phase 2 | Pending |
 | TEST-01 | Phase 1 | Pending |
@@ -167,7 +167,7 @@
 | TEST-03 | Phase 2 | Pending |
 | TEST-04 | Phase 3 | Pending |
 | TEST-05 | Phase 4 | Complete |
-| TEST-06 | Phase 5 | Pending |
+| TEST-06 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 45 total
@@ -176,4 +176,4 @@
 
 ---
 *Requirements defined: 2026-04-06*
-*Last updated: 2026-04-06 after terminology and status label formalization*
+*Last updated: 2026-04-21 — INFR-02 / TEST-06 marked Completed after Phase 5 verification; INFR-01 status synced; previous touch 2026-04-06 added terminology and status label formalization*

@@ -226,11 +226,6 @@ export function SuggestionForm({ mode, pollId }: Props) {
           <Button
             type="submit"
             disabled={locked || submitting}
-            // AD-01 (Phase 5 review): stable testid so the admin-create
-            // Playwright spec can target this specific submit button instead
-            // of a loose /create|publish|submit/i role matcher that could
-            // accidentally catch unrelated buttons in sibling form
-            // components (choice rows, etc).
             data-testid="suggestion-form-submit"
           >
             {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}

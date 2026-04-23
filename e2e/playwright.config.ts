@@ -32,7 +32,9 @@ export default defineConfig({
     : {
         command: 'npm run build && npm run preview',
         url: 'http://localhost:4173',
-        reuseExistingServer: !process.env.CI,
+        // CR-PR4: this branch only runs when !CI, so reuseExistingServer is
+        // tautologically true here. Hardcode for clarity.
+        reuseExistingServer: true,
         timeout: 120_000,
       },
 })

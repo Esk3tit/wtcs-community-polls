@@ -24,9 +24,15 @@ test('[@smoke] user browses topics, responds, sees live results', async ({ page 
   const firstCard = page.getByTestId('suggestion-card').first()
   await expect(firstCard).toBeVisible()
 
-  // Open the card (non-pinned cards are collapsible — click expands; pinned
-  // cards start open, so a no-op click is still safe).
-  await firstCard.click()
+  // CR-PR4: clicking firstCard centers on the bounding box, which on a pinned
+  // (already-expanded) card may land on an inner actionable element such as a
+  // choice-button — submitting a vote before the explicit firstChoice.click()
+  // below. Instead, target the CollapsibleTrigger explicitly and only click
+  // when it reports aria-expanded=false.
+  const collapsedTrigger = firstCard.getByRole('button', { expanded: false }).first()
+  if (await collapsedTrigger.count()) {
+    await collapsedTrigger.click()
+  }
 
   // Pick the first choice in the expanded card. ChoiceButtons tags every
   // choice with data-testid="choice-button" so the selector is stable

@@ -30,22 +30,31 @@ export async function loadSentryReplayIfConsented(): Promise<void> {
   // Phase 5 semantics (UI-SPEC Contract 3):
   //  - `posthog_consent_chip_dismissed` = chip is hidden (user has seen it)
   //  - `analytics_opted_out` = user explicitly chose "Opt out"
-  // Only the explicit opt-out blocks Replay. Plain dismissal via X is accept.
+  // Only the explicit opt-out blocks Replay. Plain dismissal via X is accepted.
   const optedOut = window.localStorage.getItem('analytics_opted_out') === 'true'
   if (optedOut) return
   const client = Sentry.getClient()
   if (!client) return
-  // ME-02 (Phase 5 review): dynamic-import via the isolated re-export module
-  // so Rolldown actually code-splits replayIntegration into its own chunk.
-  // Importing '@sentry/react' directly here produced an
-  // INEFFECTIVE_DYNAMIC_IMPORT warning because main.tsx also imports it
-  // statically, collapsing Replay into the main bundle.
-  const { replayIntegration } = await import('./sentry-replay')
-  client.addIntegration(
-    replayIntegration({
-      maskAllText: true,
-      blockAllMedia: true,
-    }),
-  )
+  // Set the flag synchronously BEFORE the await so concurrent callers
+  // (e.g. StrictMode double-invoke of a mount effect) short-circuit on the
+  // early-return check above instead of both racing into addIntegration().
+  // On failure, roll the flag back so a retry can succeed.
   replayLoaded = true
+  try {
+    // ME-02 (Phase 5 review): dynamic-import via the isolated re-export module
+    // so Rolldown actually code-splits replayIntegration into its own chunk.
+    // Importing '@sentry/react' directly here produced an
+    // INEFFECTIVE_DYNAMIC_IMPORT warning because main.tsx also imports it
+    // statically, collapsing Replay into the main bundle.
+    const { replayIntegration } = await import('./sentry-replay')
+    client.addIntegration(
+      replayIntegration({
+        maskAllText: true,
+        blockAllMedia: true,
+      }),
+    )
+  } catch (err) {
+    replayLoaded = false
+    throw err
+  }
 }

@@ -8,6 +8,11 @@ on:
       - '.github/workflows/deploy-edge-functions.yml'
   workflow_dispatch:
 
+# CR-PR4: least-privilege — only `actions/checkout` needs repo read. The deploy
+# itself uses SUPABASE_ACCESS_TOKEN secrets, not the workflow GITHUB_TOKEN.
+permissions:
+  contents: read
+
 concurrency:
   group: deploy-edge-functions
   cancel-in-progress: false

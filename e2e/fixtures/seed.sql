@@ -12,6 +12,21 @@
 -- that would defeat Discord OAuth gating.
 -- ============================================================
 
+-- CR-PR4 fail-closed guard: refuse to apply unless the operator has explicitly
+-- opted in via `app.e2e_seed_allowed=true`. The CI step (and any local seed
+-- command) MUST set this, e.g.:
+--   PGOPTIONS='-c app.e2e_seed_allowed=true' psql "$DATABASE_URL" -f e2e/fixtures/seed.sql
+-- This makes accidentally pointing this script at a hosted DB a no-op instead
+-- of silently provisioning password-login accounts that would defeat Discord
+-- OAuth gating.
+DO $$
+BEGIN
+  IF current_setting('app.e2e_seed_allowed', true) IS DISTINCT FROM 'true' THEN
+    RAISE EXCEPTION
+      'Refusing to apply e2e/fixtures/seed.sql without app.e2e_seed_allowed=true (LOCAL E2E ONLY)';
+  END IF;
+END $$;
+
 -- ------------------------------------------------------------
 -- auth.users — fixture accounts with bcrypt-hashed shared password.
 -- `crypt()` + `gen_salt('bf')` are provided by pgcrypto, which Supabase

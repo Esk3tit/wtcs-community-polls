@@ -22,18 +22,12 @@ describe('SuggestionSkeleton (UI-SPEC Contract 1)', () => {
     expect(wrapper?.getAttribute('aria-label')).toBe('Loading archive')
   })
 
-  it('includes shadow-sm on each card shell (silhouette parity with SuggestionCard)', () => {
+  it('renders exactly 3 card silhouette shells with shadow-sm parity with SuggestionCard', () => {
     const { container } = render(<SuggestionSkeleton />)
+    // The stricter shadow-sm selector also covers the bare outer-class assertion
+    // (every match here is by definition also a .bg-card.rounded-xl.border.p-5).
     const cardShells = container.querySelectorAll(
       '.bg-card.rounded-xl.border.shadow-sm.p-5',
-    )
-    expect(cardShells.length).toBe(3)
-  })
-
-  it('renders exactly 3 card silhouette shells matching SuggestionCard outer classes', () => {
-    const { container } = render(<SuggestionSkeleton />)
-    const cardShells = container.querySelectorAll(
-      '.bg-card.rounded-xl.border.p-5',
     )
     expect(cardShells.length).toBe(3)
   })
@@ -56,9 +50,14 @@ describe('SuggestionSkeleton (UI-SPEC Contract 1)', () => {
     expect(shimmers.length).toBeGreaterThanOrEqual(6)
   })
 
-  it('renders no <img> tags and no text content (purely visual)', () => {
+  it('renders no <img> tags and no visible text (purely visual; sr-only allowed)', () => {
     const { container } = render(<SuggestionSkeleton />)
     expect(container.querySelector('img')).toBeNull()
-    expect(container.textContent?.trim() ?? '').toBe('')
+    // Allow visually-hidden a11y text (e.g. <span class="sr-only">Loading…</span>)
+    // — the aria-busy + aria-label assertions above already cover the screen-reader
+    // contract. Strip any .sr-only subtree before checking for visible text.
+    const clone = container.cloneNode(true) as HTMLElement
+    clone.querySelectorAll('.sr-only').forEach((el) => el.remove())
+    expect(clone.textContent?.trim() ?? '').toBe('')
   })
 })

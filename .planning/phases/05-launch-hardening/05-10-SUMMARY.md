@@ -130,7 +130,7 @@ None — documentation-only plan.
 
 ## Acceptance Criteria Results
 
-All 27 acceptance-criteria greps verified after write:
+26 of 27 acceptance-criteria greps verified after write; the remaining planned `Apache` grep is intentionally invalid because the repository license is MIT (see Deviation #1 below):
 
 - Wholesale-replace confirmed (zero "Currently, two official plugins" / "Vite + React" / scaffold template text remains)
 - All 13 section headers present and in spec order
