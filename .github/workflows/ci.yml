@@ -22,8 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
           cache: 'npm'
@@ -42,15 +42,15 @@ jobs:
     timeout-minutes: 15
     needs: lint-and-unit
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
           cache: 'npm'
       - run: npm ci
       # D-16 §1 — Supabase CLI pinned to exact version (matches Plan 05-07
       # deploy-edge-functions.yml and cron-sweep.yml).
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@v2
         with:
           version: 2.92.1
       # M4 step 1 — `supabase start` bootstraps migrations AND applies
@@ -164,14 +164,14 @@ jobs:
         run: npx playwright test --config e2e/playwright.config.ts --grep @smoke
       - name: Upload Playwright report on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
       - name: Upload preview server log on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: preview-log
           path: preview.log
