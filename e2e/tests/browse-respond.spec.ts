@@ -9,6 +9,10 @@ import { fixtureUsers } from '../fixtures/test-users'
  *
  * Selectors:
  *   - data-testid="suggestion-card" (from 05-04 Task 3 — M7 hook)
+ *   - data-testid="choice-button" (added per greptile PR #4 review —
+ *     was getByRole('button').first() which ambiguously matched the
+ *     CollapsibleTrigger button on non-pinned cards, collapsing the
+ *     card instead of selecting a choice).
  *   - Result bars render role="meter"; visible text includes "{N}%" and
  *     "N total responses" (confirmed in 05-04 SUMMARY Decisions #2).
  */
@@ -24,9 +28,10 @@ test('[@smoke] user browses topics, responds, sees live results', async ({ page 
   // cards start open, so a no-op click is still safe).
   await firstCard.click()
 
-  // Pick the first choice in the expanded card. ChoiceButtons renders the
-  // choice labels as <Button> elements — select by role.
-  const firstChoice = firstCard.getByRole('button').first()
+  // Pick the first choice in the expanded card. ChoiceButtons tags every
+  // choice with data-testid="choice-button" so the selector is stable
+  // across SuggestionCard's CollapsibleTrigger button.
+  const firstChoice = firstCard.getByTestId('choice-button').first()
   await firstChoice.click()
 
   // After submit the card transitions to ResultBars — look for the

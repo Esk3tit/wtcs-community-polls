@@ -14,6 +14,15 @@
   # NPM_FLAGS intentionally unset — `npm ci` already enforces lockfile strictness.
 
 # Production-only headers: forbid framing + enforce MIME sniffing discipline.
+#
+# Content-Security-Policy is intentionally NOT set here. A correct CSP must
+# enumerate connect-src for Sentry ingest (*.ingest.sentry.io), PostHog
+# (us.i.posthog.com), Supabase (https://*.supabase.co), Discord avatar CDN
+# (cdn.discordapp.com), plus img-src/font-src for shadcn assets. Getting any
+# of those wrong silently bricks observability or live data fetches in
+# production. CSP rollout belongs in a follow-up task with Report-Only mode
+# first to surface violations before enforcement (greptile-apps PR #4 review,
+# 2026-04-22 — they qualified CSP as "worth a follow-up").
 [[headers]]
   for = "/*"
   [headers.values]
@@ -21,3 +30,9 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+    # Strict-Transport-Security: 2-year max-age + includeSubDomains + preload
+    # eligibility. Netlify's "Force HTTPS" toggle adds a basic HSTS header
+    # automatically, but declaring it here makes the intent auditable and
+    # locks the policy in version control. Safe to enable now: the site is
+    # already HTTPS-only with a Let's Encrypt cert.
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
