@@ -52,7 +52,7 @@ status: clean
 This is iteration 2 of the code review, following fixes applied for all 7 issues (2 critical, 5 warning) identified in iteration 1. All fixes have been verified as correctly applied:
 
 - **CR-01 (Auth header null check):** `submit-vote/index.ts` now guards against missing Authorization header with an explicit null check and clean 401 response before constructing the Supabase client. Verified at lines 12-18.
-- **CR-02 (CORS wildcard):** `cors.ts` now uses `Deno.env.get('ALLOWED_ORIGIN')` with a safe production default of `https://polls.wtcsmapvote.com`. Verified at line 2.
+- **CR-02 (CORS wildcard):** `cors.ts` now uses `Deno.env.get('ALLOWED_ORIGIN')` with a safe production default of `https://polls.wtcsmapban.com`. Verified at line 2.
 - **WR-01 (Double-submit guard):** `useVoteSubmit.ts` now uses a `useRef(false)` guard that is synchronously set before async work, eliminating the stale closure race condition. Dependencies correctly reduced to `[addOptimisticVote, refetchVoteCounts]`. Verified at lines 11, 14, 51.
 - **WR-02/03/04 (Silent error swallowing):** `useCategories.ts`, `useSuggestions.ts`, and `useVoteCounts.ts` all now log errors via `console.error` with descriptive messages. `useVoteCounts` additionally preserves previous state on error instead of resetting. Verified in each file.
 - **WR-05 (Misleading chevron on pinned cards):** `SuggestionCard.tsx` now conditionally renders the ChevronDown icon only for non-pinned cards via `{!isPinned && (...)}`. Verified at line 134.

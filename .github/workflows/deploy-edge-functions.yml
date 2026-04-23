@@ -1,0 +1,39 @@
+name: Deploy Edge Functions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/**'
+      - '.github/workflows/deploy-edge-functions.yml'
+  workflow_dispatch:
+
+# CR-PR4: least-privilege — only `actions/checkout` needs repo read. The deploy
+# itself uses SUPABASE_ACCESS_TOKEN secrets, not the workflow GITHUB_TOKEN.
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-edge-functions
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.92.1
+      # --use-api skips Docker (Pitfall 9 fix) and deploys all functions under supabase/functions/.
+      # No function-name arg = deploy-all mode (all 15 EFs).
+      # --no-verify-jwt is required because this Supabase project signs JWTs with
+      # ES256 (asymmetric), but the EF gateway's verify_jwt validator only handles
+      # HS256 (symmetric). Each function does its own auth via supabase.auth.getUser().
+      # Documented in STATE.md: "Phase 3: Edge Function deployed with --no-verify-jwt (ES256 gateway compatibility)".
+      - name: Deploy all Edge Functions
+        run: supabase functions deploy --project-ref "${SUPABASE_PROJECT_REF}" --use-api --no-verify-jwt

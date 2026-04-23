@@ -45,6 +45,7 @@ export function ChoiceButtons({
           return (
             <Button
               key={choice.id}
+              data-testid="choice-button"
               variant="outline"
               className="w-full h-11 text-sm font-medium justify-start px-4"
               disabled={isSubmittingThisPoll}

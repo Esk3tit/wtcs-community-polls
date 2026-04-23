@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Browsing & Responding** - Suggestion listing with category filtering, response submission via Edge Function, respond-then-reveal results with live HTTP polling, response/results tests
 - [x] **Phase 3: Response Integrity** - Discord server membership verification via OAuth guilds scope, Upstash Redis rate limiting on response submissions, integrity tests
 - [x] **Phase 4: Admin Panel & Suggestion Management** - Admin suggestion creation with dynamic choices, category management, suggestion lifecycle (timers, close, archive with resolution status), admin promotion/demotion, admin action tests
-- [ ] **Phase 5: Launch Hardening** - Supabase keepalive cron, production deployment at polls.wtcsmapvote.com, E2E smoke tests, end-to-end verification
+- [x] **Phase 5: Launch Hardening** - Supabase keepalive cron, production deployment at polls.wtcsmapban.com, E2E smoke tests, end-to-end verification
 
 ## Phase Details
 
@@ -96,15 +96,26 @@ Plans:
 **UI hint**: yes
 
 ### Phase 5: Launch Hardening
-**Goal**: The platform is production-ready at polls.wtcsmapvote.com with infrastructure safeguards preventing database pausing and deployment configured for SPA routing
+**Goal**: The platform is production-ready at polls.wtcsmapban.com with infrastructure safeguards preventing database pausing and deployment configured for SPA routing
 **Depends on**: Phase 4
 **Requirements**: INFR-02, TEST-06
 **Success Criteria** (what must be TRUE):
   1. Supabase database receives a keepalive ping every 3-4 days via automated cron, preventing free-tier pausing
-  2. App is accessible at polls.wtcsmapvote.com with correct SPA routing (deep links and refresh work)
+  2. App is accessible at polls.wtcsmapban.com with correct SPA routing (deep links and refresh work)
   3. End-to-end flow works in production: login, browse suggestions, respond, see results, admin creates suggestion
   4. E2E smoke tests cover the critical path (login -> browse -> respond -> see results)
-**Plans**: TBD
+**Plans**: 10 plans
+Plans:
+- [x] 05-01-PLAN.md -- Wave 0 scaffold: pin deps (D-16 §1) + install Sentry/PostHog/Playwright + extend .env.example (D-12)
+- [x] 05-02-PLAN.md -- EF esm.sh pin sweep across all 15 Edge Functions + shared admin-auth (D-16 §3)
+- [x] 05-03-PLAN.md -- Observability wiring: Sentry init + sourcemap upload + PostHog identify/reset + AppErrorFallback + ConsentChip (D-13)
+- [x] 05-04-PLAN.md -- UX polish: SuggestionSkeleton silhouette upgrade + preload="intent" on Topics/Archive (D-14, excluding Admin per Pitfall 6)
+- [x] 05-05-PLAN.md -- Playwright E2E scaffold + four @smoke specs covering D-08 critical path (TEST-06, D-04..D-08)
+- [x] 05-06-PLAN.md -- GitHub Actions CI workflow: lint, unit, supabase start, Playwright smoke, npm audit (D-07, D-16 §2, §4)
+- [x] 05-07-PLAN.md -- GitHub Actions deploy-edge-functions + cron-sweep (INFR-02) + Dependabot config (D-01..D-03, D-09, D-16 §5)
+- [x] 05-08-PLAN.md -- Production cutover: netlify.toml + env var / secret provisioning + Discord dual-register + Netlify DNS CNAME (D-10, D-11, D-12)
+- [x] 05-09-PLAN.md -- Capture 4 README screenshots from live prod to docs/screenshots/ (D-15 §3)
+- [x] 05-10-PLAN.md -- README wholesale rewrite with 13 D-15 sections + upgrade ritual (D-15)
 
 ## Progress
 
@@ -115,6 +126,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Foundation & Authentication | 4/4 | Complete | - |
 | 2. Browsing & Responding | 4/4 | Complete | - |
-| 3. Response Integrity | 0/2 | Planned | - |
+| 3. Response Integrity | 2/2 | Complete | - |
 | 4. Admin Panel & Suggestion Management | 4/4 | Complete | 2026-04-11 |
-| 5. Launch Hardening | 0/? | Not started | - |
+| 5. Launch Hardening | 10/10 | Complete | 2026-04-20 |

@@ -18,7 +18,7 @@
 // environment, the function returns 503 "Sweeper not configured" to make the
 // "secret missing" state loud and visible.
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
 import { getCorsHeaders } from '../_shared/cors.ts'
 
 function json(body: unknown, status: number, cors: HeadersInit) {

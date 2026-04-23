@@ -1,0 +1,179 @@
+name: CI
+
+# D-07 — PR gate: lint + unit + E2E smoke against a local Supabase stack.
+# D-16 §2 — npm ci only; §4 — npm audit non-blocking at HIGH.
+# M4 — canonical two-step seed flow (supabase start auto-applies supabase/seed.sql,
+# then CI applies e2e/fixtures/seed.sql as an additive layer).
+# M5 — local Supabase keys are derived at runtime from `supabase status --output json`,
+# not stored as GH secrets (they are fixed-default deterministic values).
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      # D-16 §2 — use `npm ci` (never the non-ci variant). Fails fast if
+      # lockfile and package.json disagree; installs from the lockfile only.
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test -- --run
+      # D-16 §4 — non-blocking supply-chain check. Promotable to blocking
+      # once the launch-week advisory noise floor is understood.
+      - name: npm audit (non-blocking)
+        run: npm audit --audit-level=high || true
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: lint-and-unit
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      # D-16 §1 — Supabase CLI pinned to exact version (matches Plan 05-07
+      # deploy-edge-functions.yml and cron-sweep.yml).
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.92.1
+      # M4 step 1 — `supabase start` bootstraps migrations AND applies
+      # supabase/seed.sql automatically on first start. No `supabase db
+      # reset` needed; the fresh Docker stack has an empty DB.
+      - name: Start Supabase local stack (applies migrations + supabase/seed.sql)
+        run: supabase start
+      - name: Wait for stack ready
+        run: |
+          for i in {1..30}; do
+            if supabase status 2>/dev/null | grep -q 'API URL'; then
+              echo "Supabase ready after ${i} polls"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Supabase did not become ready in 60s"
+          supabase status
+          exit 1
+      # M5 — derive local keys from `supabase status --output json` instead
+      # of storing them as GH secrets. These are deterministic fixed
+      # defaults; treating them as secrets would be theater. Keys are
+      # masked via ::add-mask:: so they never leak to logs regardless.
+      - name: Derive local Supabase keys from supabase status
+        id: supabase-keys
+        run: |
+          STATUS=$(supabase status --output json)
+          ANON_KEY=$(echo "$STATUS" | jq -r '.API.ANON_KEY // .ANON_KEY // empty')
+          SERVICE_ROLE_KEY=$(echo "$STATUS" | jq -r '.API.SERVICE_ROLE_KEY // .SERVICE_ROLE_KEY // empty')
+          DB_URL=$(echo "$STATUS" | jq -r '.DB.URL // .API.DB_URL // .DB_URL // empty')
+          if [ -z "$DB_URL" ]; then
+            # Fallback for CLI versions whose JSON shape differs: parse the text output.
+            DB_URL=$(supabase status | awk '/DB URL/ {print $3}')
+          fi
+          if [ -z "$ANON_KEY" ] || [ -z "$SERVICE_ROLE_KEY" ] || [ -z "$DB_URL" ]; then
+            echo "Failed to derive one or more values from supabase status"
+            echo "ANON_KEY empty: $([ -z "$ANON_KEY" ] && echo yes || echo no)"
+            echo "SERVICE_ROLE_KEY empty: $([ -z "$SERVICE_ROLE_KEY" ] && echo yes || echo no)"
+            echo "DB_URL empty: $([ -z "$DB_URL" ] && echo yes || echo no)"
+            # LO-01 (Phase 5 review): dump the JSON top-level keys (but not
+            # the values — keys might be sensitive) so a future Supabase CLI
+            # shape change is diagnosable without having to reproduce
+            # locally. `jq 'keys'` is masked-friendly because our add-mask
+            # covers the actual key material; any brand-new shape without
+            # recognizable names will still surface here.
+            echo "--- supabase status JSON top-level keys ---"
+            echo "$STATUS" | jq -r 'paths(scalars) | join(".")' 2>/dev/null | sort -u || echo "jq failed to parse status JSON"
+            exit 1
+          fi
+          echo "::add-mask::$ANON_KEY"
+          echo "::add-mask::$SERVICE_ROLE_KEY"
+          # DB_URL embeds the local-stack `postgres:postgres@…` credential.
+          # The value is deterministic and only meaningful inside the runner,
+          # but mask it anyway so a future step that logs the outputs can't
+          # surface the connection string verbatim. (coderabbit PR #4 review.)
+          echo "::add-mask::$DB_URL"
+          {
+            echo "anon_key=$ANON_KEY"
+            echo "service_role_key=$SERVICE_ROLE_KEY"
+            echo "db_url=$DB_URL"
+          } >> "$GITHUB_OUTPUT"
+      # M4 step 2 — apply the additive E2E fixture seed on top of the base
+      # seed that `supabase start` just applied. Plan 05-05 authored this
+      # seed with ON CONFLICT guards so re-application is safe, and with
+      # disjoint UUID namespace (d0000000-…, e0000000-…) to avoid colliding
+      # with the dev seed's b0000000-… / c0000000-… namespace.
+      - name: Apply fixture seed (additive, on top of supabase/seed.sql)
+        # CR-PR4 fail-closed guard: e2e/fixtures/seed.sql refuses to run unless
+        # app.e2e_seed_allowed=true is explicitly set, so accidentally pointing
+        # it at a hosted DB is a no-op instead of provisioning password accounts.
+        env:
+          PGOPTIONS: -c app.e2e_seed_allowed=true
+        run: psql "${{ steps.supabase-keys.outputs.db_url }}" -f e2e/fixtures/seed.sql
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: Build app
+        env:
+          VITE_SUPABASE_URL: http://localhost:54321
+          VITE_SUPABASE_ANON_KEY: ${{ steps.supabase-keys.outputs.anon_key }}
+        run: npm run build
+      - name: Start preview server
+        # CR-PR4 fix: nohup + explicit stdout/stderr redirection prevents the
+        # backgrounded preview from being killed when the step shell exits
+        # (a known GH Actions flake source) and preserves logs for debugging.
+        # The VITE_SUPABASE_* env vars previously set here were a no-op (those
+        # values are inlined at build time, not preview time) and have been
+        # removed to avoid misleading future debugging.
+        run: nohup npx vite preview --host 0.0.0.0 --port 4173 > preview.log 2>&1 &
+        shell: bash
+      - name: Wait for preview
+        run: |
+          for i in {1..30}; do
+            if curl -sf http://localhost:4173 >/dev/null; then
+              echo "Preview ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Preview did not become ready in 30s"
+          exit 1
+      - name: Run Playwright smoke suite
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:4173
+          VITE_SUPABASE_URL: http://localhost:54321
+          VITE_SUPABASE_ANON_KEY: ${{ steps.supabase-keys.outputs.anon_key }}
+          # Service-role key exposed ONLY to the E2E job env; Plan 05-05's
+          # loginAs helper does NOT read it (HIGH #2 resolution). Any
+          # future seeding-style test utilities that need privileged DB
+          # access will read it from here.
+          SUPABASE_SERVICE_ROLE_KEY: ${{ steps.supabase-keys.outputs.service_role_key }}
+        run: npx playwright test --config e2e/playwright.config.ts --grep @smoke
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+      - name: Upload preview server log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-log
+          path: preview.log
+          retention-days: 7
+          if-no-files-found: ignore

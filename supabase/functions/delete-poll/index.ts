@@ -4,7 +4,7 @@
 // votes exist for the poll (uses EXISTS on the votes table — vote_counts is a
 // CACHE and must NEVER be the source of truth for security decisions).
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { requireAdmin, adminCheckResponse } from '../_shared/admin-auth.ts'
 

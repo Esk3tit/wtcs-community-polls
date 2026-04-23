@@ -1,4 +1,4 @@
-import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
 
 export type AdminCheckResult = { ok: true } | { ok: false; reason: string }
 

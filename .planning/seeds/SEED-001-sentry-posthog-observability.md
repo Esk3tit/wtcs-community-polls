@@ -18,7 +18,7 @@ Without error tracking and analytics, production bugs go unnoticed until users c
 
 ## When to Surface
 
-**Trigger:** Phase 5: Launch Hardening — when preparing for production deployment at polls.wtcsmapvote.com
+**Trigger:** Phase 5: Launch Hardening — when preparing for production deployment at polls.wtcsmapban.com
 
 This seed should be presented during `/gsd-new-milestone` when the milestone scope matches any of these conditions:
 - Production deployment or launch hardening

@@ -223,7 +223,11 @@ export function SuggestionForm({ mode, pollId }: Props) {
           <Button type="button" variant="ghost" onClick={() => navigate({ to: '/admin' })}>
             Cancel
           </Button>
-          <Button type="submit" disabled={locked || submitting}>
+          <Button
+            type="submit"
+            disabled={locked || submitting}
+            data-testid="suggestion-form-submit"
+          >
             {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             {submitting ? 'Saving…' : mode === 'create' ? 'Create suggestion' : 'Save changes'}
           </Button>

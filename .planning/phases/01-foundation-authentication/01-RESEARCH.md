@@ -61,7 +61,7 @@ None -- discussion stayed within phase scope
 | UIDN-01 | Light and dark mode via shadcn theme toggle | shadcn Vite ThemeProvider pattern (React Context + `classList` manipulation). Three states: Light, Dark, System. |
 | UIDN-02 | Mobile-first responsive design | Tailwind CSS v4 responsive utilities. Breakpoint `md` (768px). Sheet component for mobile nav. |
 | UIDN-03 | Modern polished design using shadcn/ui Maia style | shadcn/ui init with preset `bbVJxbc`. Neutral base, Neutral theme. |
-| INFR-01 | App deployed on Netlify at polls.wtcsmapvote.com | Vite build to `dist/`, `_redirects` file in `public/` for SPA routing. |
+| INFR-01 | App deployed on Netlify at polls.wtcsmapban.com | Vite build to `dist/`, `_redirects` file in `public/` for SPA routing. |
 | INFR-03 | All reads via Supabase JS client with RLS policies | RLS enabled on all tables. SELECT policies gate access per authenticated user role. |
 | TEST-01 | Testing infrastructure (Vitest + React Testing Library) with CI-ready scripts | Vitest 4.1.2 + @testing-library/react 16.3.2 + jsdom 29.0.1. Config in `vite.config.ts` test block. |
 | TEST-02 | Auth flows have unit/integration tests | Mock Supabase client, test login trigger, 2FA rejection, session restore, logout. |

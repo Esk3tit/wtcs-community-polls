@@ -1,6 +1,6 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { Ratelimit } from 'https://esm.sh/@upstash/ratelimit@2'
-import { Redis } from 'https://esm.sh/@upstash/redis@1'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
+import { Ratelimit } from 'https://esm.sh/@upstash/ratelimit@2.0.5'
+import { Redis } from 'https://esm.sh/@upstash/redis@1.34.6'
 import { getCorsHeaders } from '../_shared/cors.ts'
 
 // Rate limiter: 5 requests per 60-second sliding window, per user

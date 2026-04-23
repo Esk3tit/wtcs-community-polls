@@ -1,0 +1,66 @@
+name: Daily close-expired-polls sweep
+
+on:
+  schedule:
+    # 03:00 UTC daily — avoids midnight-UTC queue storm (Pitfall 1).
+    # Satisfies INFR-02 (each run is a real DB write via the EF sweep → 7× headroom vs 7-day pause).
+    # Note: scheduled workflows auto-disable after 60 days of repo inactivity (Pitfall 2);
+    # Dependabot weekly PRs (see .github/dependabot.yml) keep the clock alive.
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+# CR-PR4: least-privilege — this workflow only POSTs to a Supabase EF endpoint
+# using repo secrets; it never touches the GitHub repo. Drop all GITHUB_TOKEN
+# permissions so the inherited default cannot widen attack surface.
+permissions: {}
+
+concurrency:
+  group: cron-sweep
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # NO continue-on-error — we want GH's default email-on-failure to fire (D-03).
+    steps:
+      - name: Invoke close-expired-polls
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          CLOSE_SWEEPER_SECRET: ${{ secrets.CLOSE_SWEEPER_SECRET }}
+          # HIGH #3 — supabase/config.toml has no per-function verify_jwt override for
+          # close-expired-polls, so the gateway default (verify_jwt = true) applies.
+          # The anon key is a valid JWT and satisfies the gateway check without
+          # identifying any real user (handler then enforces the X-Cron-Secret gate).
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+          # --max-time 60 caps a single attempt so a hung TLS handshake or
+          # stalled response surfaces a clean curl timeout instead of waiting
+          # for the job-level timeout-minutes: 5 ceiling. (coderabbit PR #4 review.)
+          response=$(curl -sS --max-time 60 -w "\n%{http_code}" -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-Cron-Secret: ${CLOSE_SWEEPER_SECRET}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            "${SUPABASE_URL}/functions/v1/close-expired-polls")
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          echo "HTTP ${http_code}: ${body}"
+          if [ "${http_code}" != "200" ]; then
+            echo "Sweep failed. 503 = CLOSE_SWEEPER_SECRET not set in Supabase secrets; 401 from gateway = missing/invalid Authorization: Bearer header (SUPABASE_ANON_KEY); 401 from handler = wrong X-Cron-Secret; anything else = EF error."
+            exit 1
+          fi
+          # HIGH #3 — response-body validation: confirm EF actually did the sweep.
+          # Expected shape on success (see supabase/functions/close-expired-polls/index.ts):
+          #   { "success": true, "swept": <number>, "ids": [<uuid>...] }
+          # Use jq (preinstalled on ubuntu-latest) for whitespace-tolerant JSON parsing —
+          # a plain grep for '"success":true' would falsely fail on pretty-printed output
+          # like '"success": true' (with whitespace).
+          if ! echo "$body" | jq -e '.success == true' >/dev/null; then
+            echo "Response .success != true — EF may be misconfigured despite HTTP 200."
+            exit 1
+          fi
+          if ! echo "$body" | jq -e 'has("swept")' >/dev/null; then
+            echo "Response missing .swept field — EF may be returning an unexpected shape."
+            exit 1
+          fi

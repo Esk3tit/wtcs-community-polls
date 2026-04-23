@@ -32,7 +32,7 @@ status: all_fixed
 
 **Files modified:** `supabase/functions/_shared/cors.ts`
 **Commit:** 9dce379
-**Applied fix:** Replaced `Access-Control-Allow-Origin: *` with `Deno.env.get('ALLOWED_ORIGIN') ?? 'https://polls.wtcsmapvote.com'`. Production defaults to the real domain; local development can override via the `ALLOWED_ORIGIN` environment variable.
+**Applied fix:** Replaced `Access-Control-Allow-Origin: *` with `Deno.env.get('ALLOWED_ORIGIN') ?? 'https://polls.wtcsmapban.com'`. Production defaults to the real domain; local development can override via the `ALLOWED_ORIGIN` environment variable.
 
 ### WR-01: Stale closure in useVoteSubmit double-submit guard
 

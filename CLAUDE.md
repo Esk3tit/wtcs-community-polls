@@ -3,7 +3,7 @@
 
 **WTCS Community Polls**
 
-A community suggestion and opinion-gathering platform for the War Thunder Competitive Scene (WTCS). Admins create suggestions/topics (e.g. "Remove MiG-29 12-3 from this lineup"), community members share their opinions via Discord OAuth. Hosted at polls.wtcsmapvote.com as a sibling to the main WTCS Map Vote/Ban app — fully independent, sharing only admin accounts conceptually.
+A community suggestion and opinion-gathering platform for the War Thunder Competitive Scene (WTCS). Admins create suggestions/topics (e.g. "Remove MiG-29 12-3 from this lineup"), community members share their opinions via Discord OAuth. Hosted at polls.wtcsmapban.com as a sibling to the main WTCS Map Vote/Ban app — fully independent, sharing only admin accounts conceptually.
 
 **User-facing name:** WTCS Community Suggestions
 **Internal/admin name:** WTCS Community Polls (used in code, DB, admin UI)

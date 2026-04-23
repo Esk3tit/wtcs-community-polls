@@ -3,7 +3,7 @@
 // Admin-gated demotion. D-06: server-side guard prevents an admin from
 // demoting themselves (which would risk locking the system out of admins).
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { requireAdmin, adminCheckResponse } from '../_shared/admin-auth.ts'
 

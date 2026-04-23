@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { handleAuthCallback } from '@/lib/auth-helpers'
+import { posthog } from '@/lib/posthog'
 import type { Profile } from '@/lib/types/suggestions'
 
 interface AuthState {
@@ -107,6 +108,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(newSession)
         setUser(newSession?.user ?? null)
         if (newSession?.user) {
+          // PostHog identify — AFTER the auth gate (verification succeeded).
+          // Discord snowflake (provider_id) ONLY — NEVER email/username/discriminator (T-05-05).
+          // Defensive: skip if provider_id is missing (Assumption A5).
+          const providerId = newSession.user.user_metadata?.provider_id
+          if (providerId) {
+            posthog.identify(providerId)
+          }
           fetchProfile(newSession.user.id).then(() => setLoading(false))
         } else {
           setProfile(null)
@@ -125,6 +133,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null)
     setUser(null)
     setProfile(null)
+    // Reset PostHog BEFORE the API call so analytics stop attributing
+    // events to the signed-out user even if the server call is slow/fails.
+    posthog.reset()
     supabase.auth.signOut().catch(() => {
       // Session already cleared from state — worst case the server
       // session expires naturally

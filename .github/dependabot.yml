@@ -1,0 +1,33 @@
+# Weekly grouped dependency updates.
+#
+# Architecturally significant (not just supply-chain hygiene): Dependabot's
+# weekly Monday commits reset the 60-day scheduled-workflow inactivity clock
+# (Pitfall 2) — this is what keeps .github/workflows/cron-sweep.yml alive for
+# low-traffic launch periods.
+#
+# Note: Dependabot does NOT scan esm.sh imports in supabase/functions/** —
+# those are unmanaged strings. D-16 §3 pins them manually; the upgrade ritual
+# is documented in README §12 (Plan 05-10).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+    open-pull-requests-limit: 5
+    labels: [dependencies, automated]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ['*']
+    open-pull-requests-limit: 3
+    labels: [dependencies, ci]

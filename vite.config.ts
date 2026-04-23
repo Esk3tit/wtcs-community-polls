@@ -3,8 +3,17 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 
-export default defineConfig({
+// Sentry plugin MUST be LAST in the plugins array — tree-shaking landmine
+// (05-RESEARCH.md Pattern 6). `SENTRY_AUTH_TOKEN` is intentionally NOT
+// `VITE_*`-prefixed: it is build-time only and must stay server-side (T-05-02).
+//
+// `disable` uses Vite's `mode` parameter (not process.env.NODE_ENV) because the
+// config is loaded before Vite promotes NODE_ENV to 'production', so reading
+// the env var at config-load time silently disables sourcemap upload on hosts
+// like Netlify that don't set NODE_ENV=production in the shell.
+export default defineConfig(({ mode }) => ({
   plugins: [
     tanstackRouter({
       target: 'react',
@@ -12,7 +21,15 @@ export default defineConfig({
     }),
     react(),
     tailwindcss(),
+    sentryVitePlugin({
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      sourcemaps: { filesToDeleteAfterUpload: './dist/**/*.map' },
+      disable: mode !== 'production',
+    }),
   ],
+  build: { sourcemap: 'hidden' },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -24,5 +41,6 @@ export default defineConfig({
     setupFiles: './src/test/setup.ts',
     css: true,
     passWithNoTests: true,
+    exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
   },
-})
+}))
