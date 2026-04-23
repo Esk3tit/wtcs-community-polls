@@ -42,5 +42,13 @@ export default defineConfig(({ mode }) => ({
     css: true,
     passWithNoTests: true,
     exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
+    // Dummy values so src/lib/supabase.ts doesn't throw at module-load
+    // during tests that import hooks transitively touching the client.
+    // Tests never hit Supabase — these are non-secret placeholders, not real creds.
+    // CI (including dependabot) and fresh clones without .env.local rely on these.
+    env: {
+      VITE_SUPABASE_URL: 'http://localhost:54321',
+      VITE_SUPABASE_ANON_KEY: 'test-anon-key',
+    },
   },
 }))
