@@ -26,15 +26,62 @@ INSERT INTO public.categories (id, name, slug, sort_order) VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
--- Seed Data: Profiles (poll creators)
--- Note: These reference auth.users via FK. In local dev with Supabase CLI,
--- you may need to insert matching auth.users rows first or disable FK checks.
--- For seeding purposes these use deterministic UUIDs.
+-- Seed Data: auth.users shim rows for local dev only.
+-- public.profiles.id has FK → auth.users.id, so we must create the auth rows
+-- before inserting profiles. supabase/seed.sql runs ONLY on `supabase start`
+-- and `supabase db reset` against the local Docker stack — never against
+-- hosted Supabase projects — so these fixture auth users are safe here.
+-- Mirrors the pattern used in e2e/fixtures/seed.sql (minus the bcrypt password,
+-- since these accounts never log in — they only exist to satisfy the FK and
+-- act as `created_by` targets for seed polls).
 -- ============================================================
-INSERT INTO public.profiles (id, discord_id, discord_username, avatar_url, is_admin, mfa_verified) VALUES
-  ('00000000-0000-0000-0000-000000000001', '111111111111111111', 'WTCS_Admin', 'https://cdn.discordapp.com/embed/avatars/0.png', true, true),
-  ('00000000-0000-0000-0000-000000000002', '222222222222222222', 'MapCommittee', 'https://cdn.discordapp.com/embed/avatars/1.png', true, true)
+-- Empty strings (not NULL) for confirmation_token / recovery_token /
+-- email_change_token_new / email_change: GoTrue v2.188+ scans these as
+-- Go `string` and errors with "converting NULL to string is unsupported"
+-- if any row in auth.users has NULL in these columns — even for rows
+-- unrelated to the current sign-in, because GoTrue's user-lookup SELECT
+-- scans multiple rows when emails collide. See e2e/fixtures/seed.sql for
+-- the same fix and the full explanation.
+INSERT INTO auth.users (
+  id, instance_id, aud, role, email, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data,
+  confirmation_token, recovery_token, email_change_token_new, email_change,
+  created_at, updated_at
+) VALUES
+  ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+   'seed-admin-1@local', now(), '{"provider":"discord"}', '{"provider_id":"111111111111111111","full_name":"WTCS_Admin","avatar_url":"https://cdn.discordapp.com/embed/avatars/0.png"}',
+   '', '', '', '', now(), now()),
+  ('00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+   'seed-admin-2@local', now(), '{"provider":"discord"}', '{"provider_id":"222222222222222222","full_name":"MapCommittee","avatar_url":"https://cdn.discordapp.com/embed/avatars/1.png"}',
+   '', '', '', '', now(), now())
 ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- Seed Data: Profiles (poll creators)
+-- The auth.users INSERT above triggers handle_new_user (from
+-- migration 00000000000002_triggers.sql), which auto-creates profile
+-- rows with is_admin derived from admin_discord_ids. Since the
+-- admin_discord_ids entries above are placeholder strings (not
+-- matching the seeded provider_ids), the trigger produces profiles
+-- with is_admin=false. We use ON CONFLICT DO UPDATE below to force
+-- the seeded is_admin=true and mfa_verified=true — critical because
+-- the trigger uses GREATEST(existing, new), so true sticks after.
+-- ============================================================
+-- guild_member = true is required: public.is_current_user_admin() checks
+-- is_admin AND mfa_verified AND guild_member (see migration 00000000000009).
+-- Omitting it would leave seeded admins with guild_member=false (the column
+-- default), causing every admin-gated RLS policy and RPC to reject them.
+INSERT INTO public.profiles (id, discord_id, discord_username, avatar_url, is_admin, mfa_verified, guild_member) VALUES
+  ('00000000-0000-0000-0000-000000000001', '111111111111111111', 'WTCS_Admin', 'https://cdn.discordapp.com/embed/avatars/0.png', true, true, true),
+  ('00000000-0000-0000-0000-000000000002', '222222222222222222', 'MapCommittee', 'https://cdn.discordapp.com/embed/avatars/1.png', true, true, true)
+ON CONFLICT (id) DO UPDATE SET
+  discord_id = EXCLUDED.discord_id,
+  discord_username = EXCLUDED.discord_username,
+  avatar_url = EXCLUDED.avatar_url,
+  is_admin = EXCLUDED.is_admin,
+  mfa_verified = EXCLUDED.mfa_verified,
+  guild_member = EXCLUDED.guild_member,
+  updated_at = now();
 
 -- ============================================================
 -- Seed Data: Suggestions (D-33)

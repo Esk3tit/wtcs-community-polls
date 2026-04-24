@@ -60,15 +60,21 @@ jobs:
         run: supabase start
       - name: Wait for stack ready
         run: |
-          for i in {1..30}; do
-            if supabase status 2>/dev/null | grep -q 'API URL'; then
-              echo "Supabase ready after ${i} polls"
+          # Probe the REST endpoint directly rather than grepping `supabase status`.
+          # Older CLI versions printed "API URL"; newer ones print "Project URL"
+          # (seen in 2.92.1), which made the old grep pattern never match and
+          # caused this step to time out even when the stack was healthy.
+          # Hitting /rest/v1/ is the authoritative readiness check regardless
+          # of CLI label drift.
+          for i in {1..60}; do
+            if curl -sfI http://127.0.0.1:54321/rest/v1/ -o /dev/null; then
+              echo "Supabase REST ready after ${i} polls"
               exit 0
             fi
             sleep 2
           done
-          echo "Supabase did not become ready in 60s"
-          supabase status
+          echo "Supabase REST did not become ready in 120s"
+          supabase status || true
           exit 1
       # M5 — derive local keys from `supabase status --output json` instead
       # of storing them as GH secrets. These are deterministic fixed
