@@ -1,5 +1,5 @@
 ---
-status: testing
+status: complete
 phase: 05-launch-hardening
 source:
   - 05-01-SUMMARY.md
@@ -13,19 +13,12 @@ source:
   - 05-09-SUMMARY.md
   - 05-10-SUMMARY.md
 started: 2026-04-21T00:00:00Z
-updated: 2026-04-24T08:00:00Z
+updated: 2026-04-24T08:30:00Z
 ---
 
 ## Current Test
 
-number: 8
-name: README renders with screenshots + badges on GitHub (05-09, 05-10)
-expected: |
-  Visit github.com/Esk3tit/wtcs-community-polls. WTCS logo renders at the top,
-  4 shields.io badges render (build, license, Netlify, Supabase), and 4 screenshots
-  render inline (topics-list, suggestion-with-results, admin-shell, mobile-view).
-  All 13 D-15 sections present.
-awaiting: user response
+[testing complete]
 
 ## Tests
 
@@ -95,15 +88,15 @@ verified_via: |
 
 ### 8. README renders with screenshots + badges on GitHub (05-09, 05-10)
 expected: Visit the repo README at github.com/<owner>/wtcs-community-polls. WTCS logo renders at the top, 4 shields.io badges render (build, license, Netlify, Supabase), and 4 screenshots render inline: topics-list, suggestion-with-results, admin-shell, mobile-view. All 13 D-15 sections present with correct headers.
-result: [pending]
-note: "Previously blocked on PR #4 merge — now merged; repo homepage should now render the new README."
+result: pass
+verified_via: "User confirmed on 2026-04-24 after Phase 5 merge (385ed52) made the new README the default-branch README on github.com."
 
 ## Summary
 
 total: 8
-passed: 6
+passed: 7
 issues: 1
-pending: 1
+pending: 0
 skipped: 0
 blocked: 0
 
