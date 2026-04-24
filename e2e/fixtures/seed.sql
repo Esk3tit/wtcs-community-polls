@@ -71,6 +71,17 @@ ON CONFLICT (id) DO NOTHING;
 --   adminUser     — is_admin + mfa + guild_member    (admin-create spec)
 --   no2faUser     — mfa_verified FALSE               (auth-errors 2fa variant)
 --   notInServer   — guild_member FALSE               (auth-errors not-in-server)
+--
+-- The auth.users INSERT above fired the `handle_new_user` trigger, which
+-- auto-created profile rows with is_admin/mfa_verified/guild_member all
+-- defaulting to FALSE (the trigger doesn't set mfa_verified or guild_member
+-- at all; is_admin is derived from admin_discord_ids which at trigger-time
+-- does not yet contain 100000000000000002). If we used ON CONFLICT DO NOTHING
+-- here, the trigger's FALSE defaults would stick and AdminGuard / mfa flows
+-- would refuse the fixture users. DO UPDATE ensures the seed's intended
+-- flags win — critical for admin-create and browse-respond specs.
+-- Idempotency preserved: re-applying the seed produces the same final row
+-- state regardless of how many times it runs.
 -- ------------------------------------------------------------
 INSERT INTO public.profiles (id, discord_id, discord_username, avatar_url, is_admin, mfa_verified, guild_member) VALUES
   ('11111111-1111-1111-1111-111111111111', '100000000000000001', 'PlaywrightMember',
@@ -81,7 +92,13 @@ INSERT INTO public.profiles (id, discord_id, discord_username, avatar_url, is_ad
    'https://cdn.discordapp.com/embed/avatars/0.png', false, false, true),
   ('44444444-4444-4444-4444-444444444444', '100000000000000004', 'PlaywrightNotMember',
    'https://cdn.discordapp.com/embed/avatars/0.png', false, true,  false)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+  discord_id = EXCLUDED.discord_id,
+  discord_username = EXCLUDED.discord_username,
+  avatar_url = EXCLUDED.avatar_url,
+  is_admin = EXCLUDED.is_admin,
+  mfa_verified = EXCLUDED.mfa_verified,
+  guild_member = EXCLUDED.guild_member;
 
 -- ------------------------------------------------------------
 -- admin_discord_ids — opt the admin fixture Discord ID into auto-admin on
