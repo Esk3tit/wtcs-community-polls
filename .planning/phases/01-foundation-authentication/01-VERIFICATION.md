@@ -1,7 +1,7 @@
 ---
 phase: 01-foundation-authentication
 verified: 2026-04-06T16:10:00Z
-status: partially_resolved
+status: resolved
 score: 7/7 must-haves verified (re-verified 2026-04-24)
 overrides_applied: 0
 re_verification:
@@ -10,8 +10,9 @@ re_verification:
   gaps_closed:
     - "npm run build TS2345 — superseded by Phase 5 shipping to polls.wtcsmapban.com (Netlify main-branch build is green; the TS2345 rpc-arg type mismatch was resolved before or during Phase 2–5 — INFR-01 is no longer blocked)."
     - ".env in .gitignore — verified present in .gitignore (see line `.env` in the current file). The .env portion of the composite gap is resolved."
-  gaps_remaining:
-    - "src/routeTree.gen.ts entry in .gitignore — RESOLVED-BY-DIFFERENT-DECISION. The file is now tracked in git (`git ls-files src/routeTree.gen.ts` returns hit); the team chose to commit generated routes rather than ignore them. The original Plan 01-01 intent (ignore it) no longer applies. Converting this note to `closed_by_decision` at next verification pass."
+  gaps_remaining: []
+  closed_by_decision:
+    - "src/routeTree.gen.ts — CONFIRMED TRACKED IN GIT (user decision, 2026-04-24). TanStack Router's generated route tree is committed to the repo (not ignored) so `npm ci` + `npm run build` work on a clean checkout without needing a separate `tsr generate` step, and so PR diffs surface route changes. Original Plan 01-01 intent (add to .gitignore) is formally superseded. No further action required; do not add `src/routeTree.gen.ts` to .gitignore in future cleanup passes."
   regressions: []
 gaps:
   - truth: "npm run build succeeds (deployment pipeline functional)"
@@ -20,9 +21,9 @@ gaps:
     resolution: "Phase 5 ships production at polls.wtcsmapban.com; Netlify build runs `npm ci && npm run build` on every main push. Live deployment is load-bearing evidence the TS2345 error is fixed. auth-helpers.ts line 129 still calls `supabase.rpc('update_profile_after_auth', {...})` without a type assertion, so the fix was likely via type regeneration or a supabase-js version bump somewhere between Phase 1 and Phase 5."
     original_reason: "TypeScript compilation fails: src/lib/auth-helpers.ts(87,81) TS2345 — supabase.rpc() arg type mismatch with Database Functions type."
   - truth: ".gitignore includes src/routeTree.gen.ts and .env"
-    status: partially_resolved
+    status: resolved
     resolved_at: 2026-04-24
-    resolution: ".env is now in .gitignore (line: `.env`). routeTree.gen.ts is intentionally tracked — team decision reversed the original Plan 01-01 intent. Not a gap anymore, a documented decision change."
+    resolution: "Both parts settled. (1) `.env` is now in .gitignore. (2) `src/routeTree.gen.ts` is kept tracked in git by user decision (2026-04-24) so clean-checkout `npm ci && npm run build` works without a separate tsr generate step. Original Plan 01-01 intent to ignore routeTree.gen.ts is formally superseded."
     original_reason: ".gitignore has *.local (covers .env.local) but does NOT have explicit entries for src/routeTree.gen.ts or .env."
 ---
 
