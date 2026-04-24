@@ -130,6 +130,45 @@ jobs:
         env:
           PGOPTIONS: -c app.e2e_seed_allowed=true
         run: psql "${{ steps.supabase-keys.outputs.db_url }}" -f e2e/fixtures/seed.sql
+      # Diagnostic: verify signInWithPassword works end-to-end against GoTrue
+      # BEFORE Playwright runs, so a GoTrue/auth error surfaces cleanly and
+      # isn't wrapped inside a Playwright failure. Fails the job early if auth
+      # is broken. TODO: remove once e2e is stable.
+      - name: Diagnostic — probe GoTrue signInWithPassword
+        env:
+          ANON_KEY: ${{ steps.supabase-keys.outputs.anon_key }}
+        run: |
+          set -o pipefail
+          echo "--- auth.users row for adminUser ---"
+          psql "${{ steps.supabase-keys.outputs.db_url }}" -c "select id, email, length(encrypted_password) as pw_len, email_confirmed_at, aud, role, raw_app_meta_data, raw_user_meta_data from auth.users where email='playwright-user-admin@test.local';"
+          echo
+          echo "--- auth.users column inventory ---"
+          psql "${{ steps.supabase-keys.outputs.db_url }}" -c "select column_name, data_type, is_nullable, column_default from information_schema.columns where table_schema='auth' and table_name='users' order by ordinal_position;"
+          echo
+          echo "--- curl /auth/v1/token?grant_type=password ---"
+          HTTP_CODE=$(curl -sS -o /tmp/gotrue.json -w '%{http_code}' \
+            -X POST 'http://localhost:54321/auth/v1/token?grant_type=password' \
+            -H "apikey: ${ANON_KEY}" \
+            -H "Authorization: Bearer ${ANON_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{"email":"playwright-user-admin@test.local","password":"playwright-fixture-only-do-not-use-in-prod"}')
+          echo "HTTP status: ${HTTP_CODE}"
+          echo "Response body (redacted tokens):"
+          jq 'del(.access_token, .refresh_token, .provider_token, .provider_refresh_token, .user.confirmation_token, .user.recovery_token)' /tmp/gotrue.json 2>/dev/null || cat /tmp/gotrue.json
+          echo
+          if [ "${HTTP_CODE}" = "200" ]; then
+            echo "OK — auth layer is healthy."
+          else
+            echo "FAIL — dumping GoTrue container logs:"
+            AUTH_CONTAINER=$(docker ps --filter name=supabase_auth --format '{{.Names}}' | head -1)
+            if [ -n "${AUTH_CONTAINER}" ]; then
+              docker logs --tail 200 "${AUTH_CONTAINER}" 2>&1 | tail -200
+            else
+              echo "(no supabase_auth container found)"
+              docker ps
+            fi
+            exit 1
+          fi
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
       - name: Build app
