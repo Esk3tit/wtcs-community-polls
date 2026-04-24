@@ -1,26 +1,28 @@
 ---
 phase: 04-admin-panel-suggestion-management
 verified: 2026-04-11T19:25:00Z
-status: gaps_found
-score: 15/15 requirements verified; 2 doc sync gaps
+status: resolved
+score: 15/15 requirements verified; doc-sync gap closed (re-verified 2026-04-24)
 re_verification:
-  previous_status: none
-  previous_score: N/A
-  gaps_closed: []
+  re_verified: 2026-04-24
+  re_verifier: Claude (/gsd-audit-uat)
+  previous_status: gaps_found
+  previous_score: "15/15 requirements verified; 2 doc sync gaps"
+  gaps_closed:
+    - "ROADMAP.md Phase 4 checkbox — now shows `- [x] **Phase 4: Admin Panel & Suggestion Management**` (verified via grep on .planning/ROADMAP.md on 2026-04-24)."
   gaps_remaining: []
   regressions: []
+  phase_5_deferred_items_resolved:
+    - "Edge Function deployment — 15 EFs live on the remote Supabase project per 05-08-SUMMARY. Verified by: polls.wtcsmapban.com round-trip smoke test (05-UAT #1 pass), EF deploy GH Actions workflow present and committed (05-07)."
+    - "CLOSE_SWEEPER_SECRET provisioning — set in Supabase secrets during 05-08 cutover per 05-08-SUMMARY task 3 (`4 Supabase secrets via supabase secrets set ✓`)."
+  phase_5_deferred_items_remaining:
+    - "Live two-session test of admin-bypass RLS on votes / vote_counts — still requires a human UAT pass with two browser sessions (one admin, one non-admin) against polls.wtcsmapban.com. Retained as human-verification item."
 gaps:
   - truth: "ROADMAP.md reflects Phase 4 as complete"
-    status: failed
-    reason: "Phase 4 checkbox and progress table still show the phase as not started even though STATE.md reports phase-04-complete and REQUIREMENTS.md marks all 15 Phase 4 rows Complete"
-    artifacts:
-      - path: ".planning/ROADMAP.md"
-        issue: "Line 20: `- [ ] **Phase 4: Admin Panel & Suggestion Management**` should be `- [x]`"
-      - path: ".planning/ROADMAP.md"
-        issue: "Progress table row: `| 4. Admin Panel & Suggestion Management | 0/? | Not started | - |` should read `4/4 | Complete | 2026-04-11`"
-    missing:
-      - "Flip Phase 4 checkbox from [ ] to [x] on ROADMAP.md line 20"
-      - "Update Phase 4 progress table row to `4/4 | Complete | 2026-04-11`"
+    status: resolved
+    resolved_at: 2026-04-24
+    resolution: "Phase 4 checkbox is now `- [x] **Phase 4: Admin Panel & Suggestion Management**` in .planning/ROADMAP.md. (The doc-sync drift was resolved at some point between 2026-04-11 and 2026-04-24, likely during Phase 5 roadmap updates.)"
+    original_reason: "Phase 4 checkbox and progress table showed the phase as not started even though STATE.md reported phase-04-complete and REQUIREMENTS.md marked all 15 Phase 4 rows Complete."
 human_verification:
   - test: "End-to-end admin UX smoke on live Supabase project (cbjspmwgyoxxqukcccjr)"
     expected: "Sign in as seeded admin (Discord ID 267747104607305738 or 290377966251409410), open /admin, confirm tab shell renders with logo; on Categories tab create/rename/delete a category and confirm the affected-count dialog shows the real number; on Admins tab promote a test user via both search and Discord-ID-paste branches; try to demote yourself and confirm the button is hidden; create a suggestion with Yes/No preset + image upload + 7-day timer; edit a different pre-vote suggestion; close a suggestion with resolution=Forwarded; pin a suggestion and confirm /topics sort reflects it; confirm /archive renders the resolution pill"

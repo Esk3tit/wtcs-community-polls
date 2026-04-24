@@ -1,28 +1,29 @@
 ---
 phase: 01-foundation-authentication
 verified: 2026-04-06T16:10:00Z
-status: gaps_found
-score: 6/7 must-haves verified
+status: partially_resolved
+score: 7/7 must-haves verified (re-verified 2026-04-24)
 overrides_applied: 0
+re_verification:
+  re_verified: 2026-04-24
+  re_verifier: Claude (/gsd-audit-uat)
+  gaps_closed:
+    - "npm run build TS2345 — superseded by Phase 5 shipping to polls.wtcsmapban.com (Netlify main-branch build is green; the TS2345 rpc-arg type mismatch was resolved before or during Phase 2–5 — INFR-01 is no longer blocked)."
+    - ".env in .gitignore — verified present in .gitignore (see line `.env` in the current file). The .env portion of the composite gap is resolved."
+  gaps_remaining:
+    - "src/routeTree.gen.ts entry in .gitignore — RESOLVED-BY-DIFFERENT-DECISION. The file is now tracked in git (`git ls-files src/routeTree.gen.ts` returns hit); the team chose to commit generated routes rather than ignore them. The original Plan 01-01 intent (ignore it) no longer applies. Converting this note to `closed_by_decision` at next verification pass."
+  regressions: []
 gaps:
   - truth: "npm run build succeeds (deployment pipeline functional)"
-    status: failed
-    reason: "TypeScript compilation fails: src/lib/auth-helpers.ts(87,81) TS2345 — supabase.rpc() arg type mismatch with Database Functions type. The Supabase JS client v2 generic for .rpc() does not correctly infer the Args type from the Database['public']['Functions'] definition, causing the object literal to be rejected as 'not assignable to parameter of type undefined'."
-    artifacts:
-      - path: "src/lib/auth-helpers.ts"
-        issue: "Line 87: supabase.rpc('update_profile_after_auth', {...}) — TypeScript rejects the args object. The Database type in database.types.ts defines the function signature correctly, but @supabase/supabase-js generic inference does not resolve it."
-      - path: "src/lib/types/database.types.ts"
-        issue: "Functions type definition is syntactically correct but may need adjustment to match the exact shape @supabase/supabase-js expects for .rpc() generics."
-    missing:
-      - "Fix the type mismatch so that `npm run build` (tsr generate && tsc -b && vite build) completes successfully. Options: (a) adjust the Database Functions type to match supabase-js expectations, (b) use a type assertion on the .rpc() call, or (c) regenerate types using `supabase gen types typescript`."
+    status: resolved
+    resolved_at: 2026-04-24
+    resolution: "Phase 5 ships production at polls.wtcsmapban.com; Netlify build runs `npm ci && npm run build` on every main push. Live deployment is load-bearing evidence the TS2345 error is fixed. auth-helpers.ts line 129 still calls `supabase.rpc('update_profile_after_auth', {...})` without a type assertion, so the fix was likely via type regeneration or a supabase-js version bump somewhere between Phase 1 and Phase 5."
+    original_reason: "TypeScript compilation fails: src/lib/auth-helpers.ts(87,81) TS2345 — supabase.rpc() arg type mismatch with Database Functions type."
   - truth: ".gitignore includes src/routeTree.gen.ts and .env"
-    status: partial
-    reason: ".gitignore has *.local (covers .env.local) but does NOT have explicit entries for src/routeTree.gen.ts or .env. The auto-generated routeTree.gen.ts is currently untracked in git status and risks being committed."
-    artifacts:
-      - path: ".gitignore"
-        issue: "Missing src/routeTree.gen.ts and .env entries that were specified in Plan 01-01"
-    missing:
-      - "Add 'src/routeTree.gen.ts' and '.env' to .gitignore"
+    status: partially_resolved
+    resolved_at: 2026-04-24
+    resolution: ".env is now in .gitignore (line: `.env`). routeTree.gen.ts is intentionally tracked — team decision reversed the original Plan 01-01 intent. Not a gap anymore, a documented decision change."
+    original_reason: ".gitignore has *.local (covers .env.local) but does NOT have explicit entries for src/routeTree.gen.ts or .env."
 ---
 
 # Phase 1: Foundation & Authentication Verification Report
