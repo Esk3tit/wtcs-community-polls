@@ -32,22 +32,37 @@ END $$;
 -- `crypt()` + `gen_salt('bf')` are provided by pgcrypto, which Supabase
 -- enables by default.
 -- ------------------------------------------------------------
+-- GoTrue v2.188+ (bundled with Supabase CLI 2.92.1) cannot scan NULL values
+-- for confirmation_token, recovery_token, email_change_token_new, email_change
+-- because its User struct declares them as `string` (not `sql.NullString`).
+-- The auth.users schema leaves these columns nullable without a default, so
+-- any row we hand-insert that omits them makes EVERY signInWithPassword call
+-- fail with "error finding user: sql: Scan error ... converting NULL to
+-- string is unsupported" — the SELECT scans ALL rows matching the email,
+-- and any NULL in these columns tanks the whole query.
+-- Empty strings match the semantics GoTrue uses for its own internal inserts.
 INSERT INTO auth.users (
   id, instance_id, aud, role, email, encrypted_password,
-  email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+  email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
+  confirmation_token, recovery_token, email_change_token_new, email_change,
+  created_at, updated_at
 ) VALUES
   ('11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
    'playwright-user-member@test.local', crypt('playwright-fixture-only-do-not-use-in-prod', gen_salt('bf')),
-   now(), '{"provider":"email"}', '{"provider_id":"100000000000000001"}', now(), now()),
+   now(), '{"provider":"email"}', '{"provider_id":"100000000000000001"}',
+   '', '', '', '', now(), now()),
   ('22222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
    'playwright-user-admin@test.local', crypt('playwright-fixture-only-do-not-use-in-prod', gen_salt('bf')),
-   now(), '{"provider":"email"}', '{"provider_id":"100000000000000002"}', now(), now()),
+   now(), '{"provider":"email"}', '{"provider_id":"100000000000000002"}',
+   '', '', '', '', now(), now()),
   ('33333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
    'playwright-user-no2fa@test.local', crypt('playwright-fixture-only-do-not-use-in-prod', gen_salt('bf')),
-   now(), '{"provider":"email"}', '{"provider_id":"100000000000000003"}', now(), now()),
+   now(), '{"provider":"email"}', '{"provider_id":"100000000000000003"}',
+   '', '', '', '', now(), now()),
   ('44444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
    'playwright-user-notmember@test.local', crypt('playwright-fixture-only-do-not-use-in-prod', gen_salt('bf')),
-   now(), '{"provider":"email"}', '{"provider_id":"100000000000000004"}', now(), now())
+   now(), '{"provider":"email"}', '{"provider_id":"100000000000000004"}',
+   '', '', '', '', now(), now())
 ON CONFLICT (id) DO NOTHING;
 
 -- ------------------------------------------------------------

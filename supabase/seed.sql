@@ -35,14 +35,25 @@ ON CONFLICT (id) DO NOTHING;
 -- since these accounts never log in — they only exist to satisfy the FK and
 -- act as `created_by` targets for seed polls).
 -- ============================================================
+-- Empty strings (not NULL) for confirmation_token / recovery_token /
+-- email_change_token_new / email_change: GoTrue v2.188+ scans these as
+-- Go `string` and errors with "converting NULL to string is unsupported"
+-- if any row in auth.users has NULL in these columns — even for rows
+-- unrelated to the current sign-in, because GoTrue's user-lookup SELECT
+-- scans multiple rows when emails collide. See e2e/fixtures/seed.sql for
+-- the same fix and the full explanation.
 INSERT INTO auth.users (
   id, instance_id, aud, role, email,
-  raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+  raw_app_meta_data, raw_user_meta_data,
+  confirmation_token, recovery_token, email_change_token_new, email_change,
+  created_at, updated_at
 ) VALUES
   ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
-   'seed-admin-1@local', '{"provider":"discord"}', '{"provider_id":"111111111111111111","full_name":"WTCS_Admin","avatar_url":"https://cdn.discordapp.com/embed/avatars/0.png"}', now(), now()),
+   'seed-admin-1@local', '{"provider":"discord"}', '{"provider_id":"111111111111111111","full_name":"WTCS_Admin","avatar_url":"https://cdn.discordapp.com/embed/avatars/0.png"}',
+   '', '', '', '', now(), now()),
   ('00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
-   'seed-admin-2@local', '{"provider":"discord"}', '{"provider_id":"222222222222222222","full_name":"MapCommittee","avatar_url":"https://cdn.discordapp.com/embed/avatars/1.png"}', now(), now())
+   'seed-admin-2@local', '{"provider":"discord"}', '{"provider_id":"222222222222222222","full_name":"MapCommittee","avatar_url":"https://cdn.discordapp.com/embed/avatars/1.png"}',
+   '', '', '', '', now(), now())
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
