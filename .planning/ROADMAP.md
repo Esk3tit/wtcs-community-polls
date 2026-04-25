@@ -129,3 +129,13 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 3. Response Integrity | 2/2 | Complete | - |
 | 4. Admin Panel & Suggestion Management | 4/4 | Complete | 2026-04-11 |
 | 5. Launch Hardening | 10/10 | Complete | 2026-04-20 |
+
+### Phase 6: Auth fix, GDPR opt-IN rewire, favicon polish, and launch hardening
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 5
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 6 to break down)
