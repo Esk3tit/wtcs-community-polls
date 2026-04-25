@@ -109,14 +109,17 @@ INSERT INTO public.admin_discord_ids (discord_id) VALUES
 ON CONFLICT (discord_id) DO NOTHING;
 
 -- ------------------------------------------------------------
--- Fixture polls — 3 active + 1 closed. Titles include recognizable tokens
--- for the filter-search spec (e.g. "MiG-29" for a narrow search).
+-- Fixture polls — 3 active + 1 closed. Titles include a unique SMOKE token
+-- for the filter-search spec to narrow uniquely past the base seed.sql polls.
 -- Category IDs reference the existing `supabase/seed.sql` rows.
 -- Created_by points to the fixture admin user so the FK is valid.
+-- NOTE: The "MiG-29" token also appears in supabase/seed.sql's first poll
+-- ("Remove MiG-29 12-3 from 11.3 lineup"), so e2e/tests/filter-search.spec.ts
+-- searches for "SMOKE" — uniquely present in this fixture's titles.
 -- ------------------------------------------------------------
 INSERT INTO public.polls (id, title, description, status, is_pinned, category_id, created_by, closes_at, closed_at, resolution, image_url) VALUES
   ('d0000000-0000-0000-0000-000000000001',
-   '[E2E] Remove MiG-29 12-3 from 11.3 lineup',
+   '[E2E SMOKE] Remove MiG-29 12-3 from 11.3 lineup',
    'Playwright fixture suggestion — lineup change proposal for smoke coverage.',
    'active', false,
    'a0000000-0000-0000-0000-000000000001',
