@@ -3,13 +3,46 @@ import { Ratelimit } from 'https://esm.sh/@upstash/ratelimit@2.0.5'
 import { Redis } from 'https://esm.sh/@upstash/redis@1.34.6'
 import { getCorsHeaders } from '../_shared/cors.ts'
 
-// Rate limiter: 5 requests per 60-second sliding window, per user
-// Instantiated at module level so it's reused across invocations
-const ratelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(5, '60 s'),
-  prefix: 'wtcs:vote',
-})
+// Rate limiter: 5 requests per 60-second sliding window, per user.
+// Instantiated at module level so it's reused across invocations.
+//
+// Local/CI degradation: in the Supabase local Docker stack the EF runtime's
+// SUPABASE_URL is `http://kong:8000` (Kong service alias on the Docker
+// network — see supabase/cli `internal/utils/config.go` KongAliases). CI
+// doesn't provision Upstash creds for the local stack, so Redis.fromEnv()
+// throws at module-load and the function fails to boot. This makes the
+// e2e browse-respond spec impossible to run end-to-end.
+//
+// Fix: catch the construction error. If we're on a local-stack URL,
+// degrade to "no rate limiting" with a loud warn log. If we're on any
+// production-shaped URL (anything that doesn't match the local regex —
+// e.g. https://*.supabase.co or a custom domain), re-throw so the
+// function deploy fails loudly. This preserves fail-closed posture in
+// prod: missing Upstash secrets → no deploy, never silent bypass.
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
+const IS_LOCAL_SUPABASE = /^https?:\/\/(kong|localhost|127\.0\.0\.1|host\.docker\.internal)(:\d+)?(\/|$)/.test(
+  SUPABASE_URL,
+)
+
+let ratelimit: Ratelimit | null = null
+try {
+  ratelimit = new Ratelimit({
+    redis: Redis.fromEnv(),
+    limiter: Ratelimit.slidingWindow(5, '60 s'),
+    prefix: 'wtcs:vote',
+  })
+} catch (e) {
+  if (!IS_LOCAL_SUPABASE) {
+    // Production (or any non-local stack): re-throw so this deploys to a
+    // visible failure rather than silently disabling rate limiting.
+    throw e
+  }
+  console.warn(
+    '[submit-vote] Upstash unconfigured on local stack; rate-limiting DISABLED ' +
+      '(SUPABASE_URL=' + SUPABASE_URL + '). This branch is intentionally only ' +
+      'reachable from local Docker / CI.',
+  )
+}
 
 Deno.serve(async (req) => {
   const corsHeaders = getCorsHeaders(req)
@@ -50,14 +83,21 @@ Deno.serve(async (req) => {
     }
 
     // Rate limit check -- per user ID, counts ALL attempts regardless of validation outcome (D-07, D-08)
-    // Positioned before guild_member check and body parsing so even invalid requests consume quota
-    // If Redis is unavailable, ratelimit.limit() throws and the outer catch returns 500 (fail-closed)
-    const { success: rateLimitOk } = await ratelimit.limit(user.id)
-    if (!rateLimitOk) {
-      return new Response(
-        JSON.stringify({ error: 'Too many responses too quickly. Please wait a moment and try again.' }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '60' } }
-      )
+    // Positioned before guild_member check and body parsing so even invalid requests consume quota.
+    // Runtime failure modes:
+    //  - ratelimit non-null + Redis healthy: normal path.
+    //  - ratelimit non-null + Redis transiently unavailable: ratelimit.limit() throws,
+    //    outer catch returns 500 (fail-closed at runtime).
+    //  - ratelimit null: only possible on local Supabase stack (see module-load
+    //    block above), where rate-limiting is intentionally disabled for CI/dev.
+    if (ratelimit) {
+      const { success: rateLimitOk } = await ratelimit.limit(user.id)
+      if (!rateLimitOk) {
+        return new Response(
+          JSON.stringify({ error: 'Too many responses too quickly. Please wait a moment and try again.' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '60' } }
+        )
+      }
     }
 
     // Use service_role client for writes (bypasses RLS)
