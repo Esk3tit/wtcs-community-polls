@@ -1,19 +1,20 @@
 ---
-status: partially_resolved
-trigger: "PR #10 e2e CI run (run 24901691176, 2026-04-24T17:04Z) surfaced 3 failing @smoke specs after the auth-FK seed fix landed: filter-search (fixed in PR #14), admin-create, and browse-respond. The latter two were previously masked because auth blocking prevented test execution from reaching their assertions; the FK fix unmasked them. User wants both fixed in PR #14 if feasible."
+status: resolved
+trigger: "PR #10 e2e CI run (run 24901691176, 2026-04-24T17:04Z) surfaced 3 failing @smoke specs after the auth-FK seed fix landed: filter-search, admin-create, and browse-respond. The latter two were previously masked because auth blocking prevented test execution from reaching their assertions; the FK fix unmasked them. User wants all three fixed in PR #14 to avoid PR sprawl."
 created: 2026-04-25
 updated: 2026-04-25
 goal: find_and_fix
-resolution_failure_1: "FIXED in PR #14 — admin-create spec updated to click Yes/No preset before submit, populating the empty choices the validator rejected."
-resolution_failure_2: "DEFERRED — submit-vote EF requires Upstash Redis; CI provides no creds; fix needs either production EF graceful-degradation (security review) or CI Redis-compat sidecar (significant infra work). Filed as separate concern."
+resolution_failure_1: "FIXED in PR #14 commit 73ee79d — fixture poll renamed to '[E2E SMOKE] Remove MiG-29 12-3 from 11.3 lineup' and filter-search.spec.ts switched to search for 'SMOKE' (uniquely the fixture across both seed layers)."
+resolution_failure_2: "FIXED in PR #14 commit 7ef6c82 — admin-create spec clicks Yes/No preset before submit, populating the empty choices the validator rejected."
+resolution_failure_3: "FIXED in PR #14 commit f8cbbfa — submit-vote EF wraps Ratelimit construction in try/catch; on construction failure, only degrades to no-rate-limiting if SUPABASE_URL matches the local-stack regex (`/^https?:\\/\\/(kong|localhost|127\\.0\\.0\\.1|host\\.docker\\.internal)(:\\d+)?(\\/|\$)/`). Production fail-closed posture preserved: any *.supabase.co or custom domain re-throws at module-load on missing Upstash. Verified local SUPABASE_URL=`http://kong:8000` via supabase/cli source (internal/utils/config.go KongAliases)."
 ---
 
 ## Current Focus
 
-hypothesis: Both failures diagnosed; only failure 1 was test-only and safe to fix in PR #14
-test: Re-running PR #14 CI after fix push will confirm filter-search + admin-create pass; browse-respond will still fail on Upstash absence
-expecting: e2e job goes from 3 failing → 1 failing (just browse-respond)
-next_action: Push spec fix to PR #14, watch CI, then file separate ticket / debug session for browse-respond Upstash gap
+hypothesis: All three failures diagnosed and fixed within PR #14 scope; user opted to bundle the EF graceful-degradation rather than spawn a separate PR
+test: PR #14 CI run after f8cbbfa push will validate all three fixes end-to-end
+expecting: 5/5 @smoke specs green (auth-errors x2 + admin-create + browse-respond + filter-search)
+next_action: Watch PR #14 CI; resolve any review comments; merge once green
 
 ## Symptoms — Failure 1: admin-create.spec.ts
 
