@@ -49,9 +49,17 @@ if (UPSTASH_URL && UPSTASH_TOKEN) {
       'in non-local environments. Refusing to load to preserve fail-closed posture.',
   )
 } else {
+  // Surface WHICH env var is missing so a partial misconfig (e.g. URL set
+  // but TOKEN forgotten) doesn't hide behind a generic "unconfigured"
+  // message. coderabbit-PR14 originally flagged the prior version's
+  // `catch (e)` for swallowing causes; the current explicit env-var check
+  // can't swallow exceptions, but the same diagnostic principle applies.
+  const upstashStatus =
+    'UPSTASH_REDIS_REST_URL=' + (UPSTASH_URL ? 'set' : 'missing') +
+    ', UPSTASH_REDIS_REST_TOKEN=' + (UPSTASH_TOKEN ? 'set' : 'missing')
   console.warn(
     '[submit-vote] Upstash unconfigured on local stack (SUPABASE_URL=' +
-      SUPABASE_URL +
+      SUPABASE_URL + ', ' + upstashStatus +
       '); rate-limiting DISABLED. This branch is intentionally only reachable from ' +
       'local Docker / CI.',
   )

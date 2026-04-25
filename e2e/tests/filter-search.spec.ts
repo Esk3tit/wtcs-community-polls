@@ -35,11 +35,17 @@ test('[@smoke] user filters by category and searches', async ({ page }) => {
   // Filter by a category tab. Lineup Changes is a fixture category and
   // contains the MiG-29 fixture poll.
   await page.getByRole('tab', { name: /lineup changes/i }).click()
-  // CR-PR4: wait for a deterministic post-filter signal before reading the
-  // count. Use the SMOKE token on the fixture title — uniquely present
-  // (base supabase/seed.sql also has a "MiG-29" poll, so /MiG-29/ would
-  // resolve to 2 cards under Lineup Changes).
-  await expect(page.getByText(/SMOKE/i).first()).toBeVisible({ timeout: 5_000 })
+  // CR-PR4 + gemini-PR14: wait for a deterministic post-filter signal
+  // before reading the count. Asserting that a SMOKE poll becomes visible
+  // is racy because SMOKE polls are also visible in the default "All"
+  // tab — toBeVisible resolves immediately even if the DOM hasn't yet
+  // re-rendered the filtered list. Instead, wait for a NON-Lineup-Changes
+  // poll (Sinai, Map Pool category) to become hidden — that's only true
+  // AFTER the filter has actually applied. `.first()` disambiguates the
+  // multi-element locator (Sinai appears in both the base seed and the
+  // e2e fixture) and toBeHidden passes when the element is either
+  // detached from the DOM or visually hidden.
+  await expect(page.getByText(/Sinai/i).first()).toBeHidden({ timeout: 5_000 })
   const filteredCount = await cards.count()
   expect(filteredCount).toBeGreaterThan(0)
   expect(filteredCount).toBeLessThanOrEqual(initialCount)
