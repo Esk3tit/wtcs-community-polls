@@ -29,10 +29,25 @@ test('[@smoke] admin creates suggestion and it appears for users', async ({ page
   // Use the M7 stable testid for the primary Create trigger.
   await page.getByTestId('admin-create-suggestion').click()
 
-  // SuggestionForm — fill minimum required fields. The title contains a
-  // unique timestamp so the spec is idempotent across re-runs.
+  // SuggestionForm — fill all fields the validator requires. The title
+  // contains a unique timestamp so the spec is idempotent across re-runs.
   const uniqueTitle = `[E2E] Admin-create ${Date.now()}`
   await page.getByLabel(/title/i).fill(uniqueTitle)
+
+  // The form initializes `choices = ['', '']` and the validator rejects
+  // empty strings (each choice must be 1–200 chars per
+  // src/lib/validation/suggestion-form.ts). Without filling choices, the
+  // Submit click sets errors.choices and the form stays on
+  // /admin/suggestions/new — which is what tripped this spec when the
+  // PR #10 auth-FK fix unmasked it.
+  //
+  // Cheapest fix: click the Yes/No preset, which auto-fills both choices
+  // when the existing choices are all empty (no confirmation dialog).
+  // Defaults for the other required fields are already valid:
+  //   - closes_at = now() + 7 days  (passes future-date guard)
+  //   - category_id = null          (validator allows null)
+  //   - image_url = null            (validator allows null)
+  await page.getByRole('button', { name: /^Yes\/No$/ }).click()
 
   // AD-01 (Phase 5 review): tightened from a loose /create|publish|submit/i
   // role matcher to the explicit testid on SuggestionForm's single submit

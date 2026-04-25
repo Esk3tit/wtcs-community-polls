@@ -3,13 +3,72 @@ import { Ratelimit } from 'https://esm.sh/@upstash/ratelimit@2.0.5'
 import { Redis } from 'https://esm.sh/@upstash/redis@1.34.6'
 import { getCorsHeaders } from '../_shared/cors.ts'
 
-// Rate limiter: 5 requests per 60-second sliding window, per user
-// Instantiated at module level so it's reused across invocations
-const ratelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(5, '60 s'),
-  prefix: 'wtcs:vote',
-})
+// Rate limiter: 5 requests per 60-second sliding window, per user.
+// Instantiated at module level so it's reused across invocations.
+//
+// Local/CI degradation: in the Supabase local Docker stack the EF runtime's
+// SUPABASE_URL is `http://kong:8000` (Kong service alias on the Docker
+// network — see supabase/cli `internal/utils/config.go` KongAliases). CI
+// doesn't provision Upstash creds for the local stack.
+//
+// Implementation note: an earlier version of this file relied on
+// `Redis.fromEnv()` throwing when env vars are missing. It does NOT —
+// `@upstash/redis@1.34.6` only `console.warn`s and returns a broken
+// client (verified against npm tarball nodejs.mjs:91-108). Construction
+// "succeeds", and the failure surfaces 4-5 seconds later as a fetch
+// timeout on `ratelimit.limit()`. So we MUST check the env vars
+// explicitly here and bypass `Redis.fromEnv()` entirely.
+//
+// Production fail-closed: if the URL is anything other than the local-
+// stack pattern (e.g. `https://*.supabase.co` or a custom prod domain)
+// AND the Upstash creds are missing, throw at module-load → function
+// fails to deploy → loud failure. Local stack falls through to a no-rate-
+// limit warn-and-continue path, intentionally reachable only from CI/dev.
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
+// Local-stack hosts: kong (Docker network alias), localhost / 127.0.0.1 /
+// 0.0.0.0 (CLI binding to all interfaces), [::1] (IPv6 loopback in URL
+// form), host.docker.internal (Docker → host on macOS/Windows). Production
+// Supabase URLs (`*.supabase.co` or custom domains) cannot match because
+// the regex anchors at `^https?://` and bounds at `(:port)?(/|$)`.
+const IS_LOCAL_SUPABASE = /^https?:\/\/(kong|localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|host\.docker\.internal)(:\d+)?(\/|$)/.test(
+  SUPABASE_URL,
+)
+const UPSTASH_URL = Deno.env.get('UPSTASH_REDIS_REST_URL')
+const UPSTASH_TOKEN = Deno.env.get('UPSTASH_REDIS_REST_TOKEN')
+
+let ratelimit: Ratelimit | null = null
+if (UPSTASH_URL && UPSTASH_TOKEN) {
+  ratelimit = new Ratelimit({
+    redis: new Redis({ url: UPSTASH_URL, token: UPSTASH_TOKEN }),
+    limiter: Ratelimit.slidingWindow(5, '60 s'),
+    prefix: 'wtcs:vote',
+    // Tighten timeout from the 5s default so a flaky/misconfigured Upstash
+    // doesn't add multi-second latency to every vote in production.
+    timeout: 1000,
+  })
+} else if (!IS_LOCAL_SUPABASE) {
+  // Production (or any non-local stack) without Upstash creds is a fatal
+  // misconfig — refuse to load so the deploy fails visibly.
+  throw new Error(
+    'submit-vote: UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are required ' +
+      'in non-local environments. Refusing to load to preserve fail-closed posture.',
+  )
+} else {
+  // Surface WHICH env var is missing so a partial misconfig (e.g. URL set
+  // but TOKEN forgotten) doesn't hide behind a generic "unconfigured"
+  // message. coderabbit-PR14 originally flagged the prior version's
+  // `catch (e)` for swallowing causes; the current explicit env-var check
+  // can't swallow exceptions, but the same diagnostic principle applies.
+  const upstashStatus =
+    'UPSTASH_REDIS_REST_URL=' + (UPSTASH_URL ? 'set' : 'missing') +
+    ', UPSTASH_REDIS_REST_TOKEN=' + (UPSTASH_TOKEN ? 'set' : 'missing')
+  console.warn(
+    '[submit-vote] Upstash unconfigured on local stack (SUPABASE_URL=' +
+      SUPABASE_URL + ', ' + upstashStatus +
+      '); rate-limiting DISABLED. This branch is intentionally only reachable from ' +
+      'local Docker / CI.',
+  )
+}
 
 Deno.serve(async (req) => {
   const corsHeaders = getCorsHeaders(req)
@@ -49,15 +108,39 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Rate limit check -- per user ID, counts ALL attempts regardless of validation outcome (D-07, D-08)
-    // Positioned before guild_member check and body parsing so even invalid requests consume quota
-    // If Redis is unavailable, ratelimit.limit() throws and the outer catch returns 500 (fail-closed)
-    const { success: rateLimitOk } = await ratelimit.limit(user.id)
-    if (!rateLimitOk) {
-      return new Response(
-        JSON.stringify({ error: 'Too many responses too quickly. Please wait a moment and try again.' }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '60' } }
-      )
+    // Rate limit check -- per user ID, counts ALL attempts regardless of validation outcome (D-07, D-08).
+    // Positioned before guild_member check and body parsing so even invalid requests consume quota.
+    //
+    // Runtime failure modes (verified against @upstash/ratelimit@2.0.5 docs):
+    //  - ratelimit non-null + Redis healthy: normal path. success=true allows; success=false → 429.
+    //  - ratelimit non-null + Redis SLOW (>1s timeout): SDK returns
+    //    {success: true, reason: 'timeout'} — i.e. fails OPEN by design, capping vote latency
+    //    at 1s at the cost of allowing the request when Redis is unreachable. Logged below for
+    //    observability so a sustained Upstash outage is visible. This trade-off is acceptable
+    //    because rate-limiting is SECONDARY defense here: the primary anti-abuse vectors are
+    //    (a) Discord OAuth + 2FA gating (only verified guild members reach this EF),
+    //    (b) the DB UNIQUE(poll_id, user_id) constraint, and (c) the guild_member /
+    //    mfa_verified server-side checks below — all of which still hold during a Redis outage.
+    //  - ratelimit non-null + Redis HARD ERROR (auth, connection refused, etc.):
+    //    ratelimit.limit() throws → outer catch returns 500 (fail-closed at runtime).
+    //  - ratelimit null: only possible on the local Supabase stack (see module-load block above),
+    //    where rate-limiting is intentionally disabled for CI/dev.
+    if (ratelimit) {
+      const { success: rateLimitOk, reason: rateLimitReason } = await ratelimit.limit(user.id)
+      if (rateLimitReason === 'timeout') {
+        // Don't block the request (matches Upstash default fail-open semantics on timeout
+        // — see comment block above), but make the bypass observable so an Upstash outage
+        // surfaces in EF logs.
+        console.warn(
+          '[submit-vote] Upstash ratelimit timed out; allowing request (fail-open). user=' + user.id,
+        )
+      }
+      if (!rateLimitOk) {
+        return new Response(
+          JSON.stringify({ error: 'Too many responses too quickly. Please wait a moment and try again.' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '60' } }
+        )
+      }
     }
 
     // Use service_role client for writes (bypasses RLS)
