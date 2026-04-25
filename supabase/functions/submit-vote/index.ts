@@ -9,38 +9,51 @@ import { getCorsHeaders } from '../_shared/cors.ts'
 // Local/CI degradation: in the Supabase local Docker stack the EF runtime's
 // SUPABASE_URL is `http://kong:8000` (Kong service alias on the Docker
 // network — see supabase/cli `internal/utils/config.go` KongAliases). CI
-// doesn't provision Upstash creds for the local stack, so Redis.fromEnv()
-// throws at module-load and the function fails to boot. This makes the
-// e2e browse-respond spec impossible to run end-to-end.
+// doesn't provision Upstash creds for the local stack.
 //
-// Fix: catch the construction error. If we're on a local-stack URL,
-// degrade to "no rate limiting" with a loud warn log. If we're on any
-// production-shaped URL (anything that doesn't match the local regex —
-// e.g. https://*.supabase.co or a custom domain), re-throw so the
-// function deploy fails loudly. This preserves fail-closed posture in
-// prod: missing Upstash secrets → no deploy, never silent bypass.
+// Implementation note: an earlier version of this file relied on
+// `Redis.fromEnv()` throwing when env vars are missing. It does NOT —
+// `@upstash/redis@1.34.6` only `console.warn`s and returns a broken
+// client (verified against npm tarball nodejs.mjs:91-108). Construction
+// "succeeds", and the failure surfaces 4-5 seconds later as a fetch
+// timeout on `ratelimit.limit()`. So we MUST check the env vars
+// explicitly here and bypass `Redis.fromEnv()` entirely.
+//
+// Production fail-closed: if the URL is anything other than the local-
+// stack pattern (e.g. `https://*.supabase.co` or a custom prod domain)
+// AND the Upstash creds are missing, throw at module-load → function
+// fails to deploy → loud failure. Local stack falls through to a no-rate-
+// limit warn-and-continue path, intentionally reachable only from CI/dev.
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
 const IS_LOCAL_SUPABASE = /^https?:\/\/(kong|localhost|127\.0\.0\.1|host\.docker\.internal)(:\d+)?(\/|$)/.test(
   SUPABASE_URL,
 )
+const UPSTASH_URL = Deno.env.get('UPSTASH_REDIS_REST_URL')
+const UPSTASH_TOKEN = Deno.env.get('UPSTASH_REDIS_REST_TOKEN')
 
 let ratelimit: Ratelimit | null = null
-try {
+if (UPSTASH_URL && UPSTASH_TOKEN) {
   ratelimit = new Ratelimit({
-    redis: Redis.fromEnv(),
+    redis: new Redis({ url: UPSTASH_URL, token: UPSTASH_TOKEN }),
     limiter: Ratelimit.slidingWindow(5, '60 s'),
     prefix: 'wtcs:vote',
+    // Tighten timeout from the 5s default so a flaky/misconfigured Upstash
+    // doesn't add multi-second latency to every vote in production.
+    timeout: 1000,
   })
-} catch (e) {
-  if (!IS_LOCAL_SUPABASE) {
-    // Production (or any non-local stack): re-throw so this deploys to a
-    // visible failure rather than silently disabling rate limiting.
-    throw e
-  }
+} else if (!IS_LOCAL_SUPABASE) {
+  // Production (or any non-local stack) without Upstash creds is a fatal
+  // misconfig — refuse to load so the deploy fails visibly.
+  throw new Error(
+    'submit-vote: UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are required ' +
+      'in non-local environments. Refusing to load to preserve fail-closed posture.',
+  )
+} else {
   console.warn(
-    '[submit-vote] Upstash unconfigured on local stack; rate-limiting DISABLED ' +
-      '(SUPABASE_URL=' + SUPABASE_URL + '). This branch is intentionally only ' +
-      'reachable from local Docker / CI.',
+    '[submit-vote] Upstash unconfigured on local stack (SUPABASE_URL=' +
+      SUPABASE_URL +
+      '); rate-limiting DISABLED. This branch is intentionally only reachable from ' +
+      'local Docker / CI.',
   )
 }
 
