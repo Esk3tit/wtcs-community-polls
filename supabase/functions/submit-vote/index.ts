@@ -25,7 +25,12 @@ import { getCorsHeaders } from '../_shared/cors.ts'
 // fails to deploy → loud failure. Local stack falls through to a no-rate-
 // limit warn-and-continue path, intentionally reachable only from CI/dev.
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
-const IS_LOCAL_SUPABASE = /^https?:\/\/(kong|localhost|127\.0\.0\.1|host\.docker\.internal)(:\d+)?(\/|$)/.test(
+// Local-stack hosts: kong (Docker network alias), localhost / 127.0.0.1 /
+// 0.0.0.0 (CLI binding to all interfaces), [::1] (IPv6 loopback in URL
+// form), host.docker.internal (Docker → host on macOS/Windows). Production
+// Supabase URLs (`*.supabase.co` or custom domains) cannot match because
+// the regex anchors at `^https?://` and bounds at `(:port)?(/|$)`.
+const IS_LOCAL_SUPABASE = /^https?:\/\/(kong|localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|host\.docker\.internal)(:\d+)?(\/|$)/.test(
   SUPABASE_URL,
 )
 const UPSTASH_URL = Deno.env.get('UPSTASH_REDIS_REST_URL')
@@ -103,16 +108,33 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Rate limit check -- per user ID, counts ALL attempts regardless of validation outcome (D-07, D-08)
+    // Rate limit check -- per user ID, counts ALL attempts regardless of validation outcome (D-07, D-08).
     // Positioned before guild_member check and body parsing so even invalid requests consume quota.
-    // Runtime failure modes:
-    //  - ratelimit non-null + Redis healthy: normal path.
-    //  - ratelimit non-null + Redis transiently unavailable: ratelimit.limit() throws,
-    //    outer catch returns 500 (fail-closed at runtime).
-    //  - ratelimit null: only possible on local Supabase stack (see module-load
-    //    block above), where rate-limiting is intentionally disabled for CI/dev.
+    //
+    // Runtime failure modes (verified against @upstash/ratelimit@2.0.5 docs):
+    //  - ratelimit non-null + Redis healthy: normal path. success=true allows; success=false → 429.
+    //  - ratelimit non-null + Redis SLOW (>1s timeout): SDK returns
+    //    {success: true, reason: 'timeout'} — i.e. fails OPEN by design, capping vote latency
+    //    at 1s at the cost of allowing the request when Redis is unreachable. Logged below for
+    //    observability so a sustained Upstash outage is visible. This trade-off is acceptable
+    //    because rate-limiting is SECONDARY defense here: the primary anti-abuse vectors are
+    //    (a) Discord OAuth + 2FA gating (only verified guild members reach this EF),
+    //    (b) the DB UNIQUE(poll_id, user_id) constraint, and (c) the guild_member /
+    //    mfa_verified server-side checks below — all of which still hold during a Redis outage.
+    //  - ratelimit non-null + Redis HARD ERROR (auth, connection refused, etc.):
+    //    ratelimit.limit() throws → outer catch returns 500 (fail-closed at runtime).
+    //  - ratelimit null: only possible on the local Supabase stack (see module-load block above),
+    //    where rate-limiting is intentionally disabled for CI/dev.
     if (ratelimit) {
-      const { success: rateLimitOk } = await ratelimit.limit(user.id)
+      const { success: rateLimitOk, reason: rateLimitReason } = await ratelimit.limit(user.id)
+      if (rateLimitReason === 'timeout') {
+        // Don't block the request (matches Upstash default fail-open semantics on timeout
+        // — see comment block above), but make the bypass observable so an Upstash outage
+        // surfaces in EF logs.
+        console.warn(
+          '[submit-vote] Upstash ratelimit timed out; allowing request (fail-open). user=' + user.id,
+        )
+      }
       if (!rateLimitOk) {
         return new Response(
           JSON.stringify({ error: 'Too many responses too quickly. Please wait a moment and try again.' }),

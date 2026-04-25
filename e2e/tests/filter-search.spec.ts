@@ -35,17 +35,21 @@ test('[@smoke] user filters by category and searches', async ({ page }) => {
   // Filter by a category tab. Lineup Changes is a fixture category and
   // contains the MiG-29 fixture poll.
   await page.getByRole('tab', { name: /lineup changes/i }).click()
-  // CR-PR4 + gemini-PR14: wait for a deterministic post-filter signal
-  // before reading the count. Asserting that a SMOKE poll becomes visible
-  // is racy because SMOKE polls are also visible in the default "All"
-  // tab — toBeVisible resolves immediately even if the DOM hasn't yet
-  // re-rendered the filtered list. Instead, wait for a NON-Lineup-Changes
-  // poll (Sinai, Map Pool category) to become hidden — that's only true
-  // AFTER the filter has actually applied. `.first()` disambiguates the
-  // multi-element locator (Sinai appears in both the base seed and the
-  // e2e fixture) and toBeHidden passes when the element is either
-  // detached from the DOM or visually hidden.
-  await expect(page.getByText(/Sinai/i).first()).toBeHidden({ timeout: 5_000 })
+  // CR-PR4 + gemini-PR14 + coderabbit-PR14b: wait for a deterministic
+  // post-filter signal before reading the count. Asserting that a SMOKE
+  // poll becomes visible is racy because SMOKE polls are also visible
+  // in the default "All" tab — toBeVisible resolves immediately even if
+  // the DOM hasn't yet re-rendered the filtered list. Instead, wait for
+  // a NON-Lineup-Changes poll (Sinai, Map Pool category) to become
+  // hidden — that's only true AFTER the filter has actually applied.
+  // Scope the locator to suggestion-card so ambient "Sinai" text outside
+  // the list (e.g., a future footer/help/nav reference) cannot mask a
+  // filter regression. `.first()` disambiguates the multi-card match
+  // (Sinai appears in both the base seed and the e2e fixture) and
+  // toBeHidden passes when the card is either detached or visually hidden.
+  await expect(
+    page.getByTestId('suggestion-card').filter({ hasText: /Sinai/i }).first(),
+  ).toBeHidden({ timeout: 5_000 })
   const filteredCount = await cards.count()
   expect(filteredCount).toBeGreaterThan(0)
   expect(filteredCount).toBeLessThanOrEqual(initialCount)
