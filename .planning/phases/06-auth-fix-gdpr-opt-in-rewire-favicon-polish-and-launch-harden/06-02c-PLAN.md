@@ -21,6 +21,7 @@ must_haves:
     - "Same UX for every visitor — no geo-detection, no country-header branching, no locale-conditional copy (D-06)"
     - "ConsentChip and ConsentBanner are mutually exclusive by render guard: undecided → banner only; allow/decline → chip only"
     - "ConsentChip tests inverted to opt-IN state machine; ConsentBanner test suite added (15 tests total across the two files)"
+    - "ConsentBanner Allow and Decline buttons carry className=\"min-h-11\" to meet the 44px mobile touch-target minimum (P-05 — REVIEWS.md)"
   artifacts:
     - path: "src/components/ConsentBanner.tsx"
       provides: "First-visit non-blocking banner (D-03)"
@@ -67,6 +68,7 @@ Output: Two components, one route mount, two test files (15 tests total — 7 Co
 @.planning/phases/06-auth-fix-gdpr-opt-in-rewire-favicon-polish-and-launch-harden/06-PATTERNS.md
 @.planning/phases/06-auth-fix-gdpr-opt-in-rewire-favicon-polish-and-launch-harden/06-UI-SPEC.md
 @.planning/phases/06-auth-fix-gdpr-opt-in-rewire-favicon-polish-and-launch-harden/06-VALIDATION.md
+@.planning/phases/06-auth-fix-gdpr-opt-in-rewire-favicon-polish-and-launch-harden/06-REVIEWS.md
 @.planning/phases/06-auth-fix-gdpr-opt-in-rewire-favicon-polish-and-launch-harden/06-02-SUMMARY.md
 @.planning/phases/06-auth-fix-gdpr-opt-in-rewire-favicon-polish-and-launch-harden/06-02b-SUMMARY.md
 @src/components/ConsentChip.tsx
@@ -149,8 +151,9 @@ useRouterState({ select: (s) => s.location.pathname })
                 No tracking starts until you choose.
               </p>
               <div className="flex gap-2 mt-3">
-                <Button onClick={allow}>Allow</Button>
-                <Button variant="outline" onClick={decline}>Decline</Button>
+                {/* P-05 (REVIEWS.md): explicit min-h-11 (44px) to meet WCAG 2.5.5 / Apple HIG mobile touch-target minimum on iOS Safari, where shadcn default Button height (~36px) misses the recommended threshold. */}
+                <Button className="min-h-11" onClick={allow}>Allow</Button>
+                <Button variant="outline" className="min-h-11" onClick={decline}>Decline</Button>
               </div>
             </div>
             <Button
@@ -168,7 +171,7 @@ useRouterState({ select: (s) => s.location.pathname })
     }
     ```
 
-    Body lines copied verbatim from UI-SPEC Surface 1. NO exclamation marks. NO emojis. `Allow` is default-variant Button (primary); `Decline` is `variant="outline"` (NOT `variant="destructive"` per UI-SPEC color table).
+    Body lines copied verbatim from UI-SPEC Surface 1. NO exclamation marks. NO emojis. `Allow` is default-variant Button (primary); `Decline` is `variant="outline"` (NOT `variant="destructive"` per UI-SPEC color table). P-05 (REVIEWS.md): both buttons MUST carry `className="min-h-11"` so they meet the 44px mobile touch-target minimum — shadcn default button height is ~36px and falls below the WCAG / Apple HIG threshold on iOS Safari.
 
     B) REFACTOR `src/components/ConsentChip.tsx` to the new state-aware shape (UI-SPEC Surface 2). REPLACE the file's entire body with:
 
@@ -275,6 +278,7 @@ useRouterState({ select: (s) => s.location.pathname })
     - `grep -c "No tracking starts until you choose\." src/components/ConsentBanner.tsx` returns 1.
     - `grep -E ">Allow<" src/components/ConsentBanner.tsx` returns ≥ 1; `grep -E ">Decline<" src/components/ConsentBanner.tsx` returns ≥ 1.
     - `grep -c "variant=\"destructive\"" src/components/ConsentBanner.tsx` returns 0 (Decline is NOT destructive).
+    - `grep -c "min-h-11" src/components/ConsentBanner.tsx` returns ≥ 2 (P-05: both Allow and Decline buttons carry the explicit 44px touch-target class).
     - `grep -c "Anonymous usage analytics are on\." src/components/ConsentChip.tsx` returns 1.
     - `grep -c "Anonymous usage analytics are off\." src/components/ConsentChip.tsx` returns 1.
     - `grep -c "Turn off\|Turn on" src/components/ConsentChip.tsx` returns ≥ 2.
