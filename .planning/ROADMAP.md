@@ -142,10 +142,13 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
   5. `<title>WTCS Community Suggestions</title>` and 153-char meta description live in index.html; favicon set (svg + ico + apple-touch + favicon-32) replaces the Vite scaffold and renders cleanly on light + dark Chrome at 16x16
   6. 05-VERIFICATION.md gains direct symbolicated-stack-trace evidence (deliberate Sentry throw rolled back in same commit; no test artifacts in main); REQUIREMENTS.md status column synced to actual phase artifacts with inline evidence citations
   7. Husky pre-commit + lint-staged stay green; all new + updated tests pass (≥23 new test assertions across ConsentContext + ConsentBanner + ConsentChip)
-**Plans**: 4 plans
+**Plans**: 7 plans (06-02 split into 4 sequenced sub-plans per Phase 6 revision iteration 1; all four sub-plans stay in Wave 2 with internal depends_on chain)
 Plans:
 - [ ] 06-01-PLAN.md -- Auth diagnose-first: manual repro log + Sentry breadcrumbs across auth lifecycle + DEV-only ?debug=auth overlay + targeted fix or environmental finding (D-01, D-02)
-- [ ] 06-02-PLAN.md -- GDPR opt-IN rewire: ConsentContext + useConsent hook + posthog.ts default-OFF + sentry.ts gate flip + ConsentProvider mount + AuthContext.identify gate + ConsentBanner + flipped ConsentChip + 23 new/updated tests + PostHog dashboard smoke (D-03..D-06)
+- [ ] 06-02-PLAN.md -- GDPR opt-IN foundation: ConsentContext + useConsent hook + 8 ConsentContext tests (D-04, D-05, D-06)
+- [ ] 06-02b-PLAN.md -- GDPR opt-IN wiring: posthog.ts default-OFF flags + sentry.ts gate flip + ConsentProvider mount in main.tsx + AuthContext.identify gate (D-04, D-05) — depends_on [06-02]
+- [ ] 06-02c-PLAN.md -- GDPR opt-IN UI: ConsentBanner + flipped ConsentChip + __root.tsx mount + 15 banner/chip tests (D-03, D-06) — depends_on [06-02b]
+- [ ] 06-02d-PLAN.md -- GDPR opt-IN smoke: PostHog dashboard live-events verification (D-04) — depends_on [06-02c]
 - [ ] 06-03-PLAN.md -- Favicon + title polish: realfavicongenerator output set + index.html title/meta/link block + cross-browser visual verification (D-07, D-10)
-- [ ] 06-04-PLAN.md -- Cleanup: Sentry symbolicated-stack-trace verification + 05-VERIFICATION.md update + REQUIREMENTS.md evidence-driven status sync (D-08, D-09)
+- [ ] 06-04-PLAN.md -- Cleanup: Sentry symbolicated-stack-trace verification (gated by AdminGuard via useEffect in AdminTabs.tsx, W-04 fix) + 05-VERIFICATION.md update + REQUIREMENTS.md evidence-driven status sync (D-08, D-09)
 **UI hint**: yes

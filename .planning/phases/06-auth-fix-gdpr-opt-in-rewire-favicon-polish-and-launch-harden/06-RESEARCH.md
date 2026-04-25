@@ -829,28 +829,27 @@ return () => { console.error = original }
 
 **If the planner / discuss-phase wants to convert any of these to verified facts before execution:** A1 is the most consequential (drives diagnose-first scope); A7 is the most easily verified (read the SDK's TypeScript types).
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Does the auth bug reproduce after a fresh PKCE flow with NO extensions?**
+   - **RESOLVED:** D-02's manual repro checklist is the right gate — execute it as plan task #1 before any code change. Question is resolved-by-deferring to D-02's manual reproduction protocol; no further research action required at planning time.
    - What we know: User's incognito works, main-browser fails. Extensions are the leading hypothesis.
    - What's unclear: Whether a clean main-browser profile (extensions disabled, full storage clear) reproduces.
-   - Recommendation: D-02's manual repro checklist is the right gate — execute it as plan task #1 before any code change.
 
 2. **Should consent flip from `allow` → `decline` force a page reload?**
+   - **RESOLVED:** Accept the 1-page-load Sentry Replay leak for v1; document inline (RESEARCH.md Pitfall 7). If users surface the concern post-launch, add a `window.location.reload()` on flip to `decline` (one-line fix, deferred). Acceptance is binding for v1.0.
    - What we know: Sentry Replay continues recording until reload (Pitfall 7). PostHog `opt_out_capturing()` IS effective immediately.
    - What's unclear: Whether the 1-page-load Replay leak is acceptable or surface-blocking for v1.
-   - Recommendation: Accept for v1; document inline. If users surface the concern post-launch, add a `window.location.reload()` on flip to `decline` (one-line fix).
 
 3. **Does Phase 4 UAT 9th test deserve its own GH issue or is it fine living in 04-UAT.md?**
+   - **RESOLVED:** Out of scope for Phase 6 per CONTEXT.md domain section and memory `project_phase_6_planned.md`. Skipped — markdown-only home in 04-UAT.md is acceptable. No tracking-discipline change required this phase.
    - What we know: Out of Phase 6 scope per CONTEXT.md.
    - What's unclear: Whether tracking discipline is happy with the markdown-only home.
-   - Recommendation: Skip — out of scope per memory `project_phase_6_planned.md`.
 
 4. **Is there value in adding a single `data-testid="consent-banner"` for future E2E coverage?**
+   - **RESOLVED:** Unit-test the banner via Vitest + RTL (matches existing ConsentChip test pattern); skip E2E for v1 (banner is non-blocking and doesn't gate any user journey). Plan 06-02 Task 4 ships the Vitest suite; no E2E `@smoke` extension needed.
    - What we know: Phase 5 added `data-testid` hooks for Playwright; banner doesn't have one.
    - What's unclear: Whether the planner wants a unit test, an E2E `@smoke` extension, or no test at all for the new banner.
-   - Recommendation: Unit test the banner via Vitest + RTL (matches existing ConsentChip test pattern); skip E2E for v1 (banner is non-blocking and doesn't gate any user journey).
-
 ## Environment Availability
 
 | Dependency | Required By | Available | Version | Fallback |
