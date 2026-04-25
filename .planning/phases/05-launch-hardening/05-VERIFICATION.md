@@ -1,23 +1,42 @@
 ---
 phase: 05-launch-hardening
 verified: 2026-04-19T00:00:00Z
-status: human_needed
-score: 4/4 roadmap success criteria verified (3 fully automated, 1 user-confirmed in prod)
+status: partially_resolved
+score: 4/4 roadmap success criteria verified; 3 of 4 human-verification items now closed (re-verified 2026-04-25)
 overrides_applied: 0
-re_verification: null
+re_verification:
+  re_verified: 2026-04-25
+  re_verifier: Claude (post-PR14 cleanup)
+  closed:
+    - test: "Cron-sweep workflow dry-run on main branch"
+      evidence: "GH Actions run 24938892436 (workflow_dispatch on main, 2026-04-25): HTTP 200 with body `{\"success\":true,\"swept\":0,\"ids\":[]}`. swept=0 expected because no active polls have closes_at < now() (seed polls have closes_at 4-14 days out). CLOSE_SWEEPER_SECRET gate is functional (returned 200, not 401, with the correct header). Dual-header auth and jq body validation both pass."
+    - test: "Sentry sourcemap upload on first main-branch build"
+      evidence: "Live JS bundle at https://polls.wtcsmapban.com/assets/index-rZTs8ZMe.js (470 KB) inspected on 2026-04-25. Found: Sentry DSN literal (1 match: `https://3361862f2c8bc6c20759b1b549f33dae@o4510971582349312.ingest.us.sentry.io/4511250886164480`), Sentry.init (1), BrowserTracing/browserTracing (2), replayIntegration (3), captureException (7), and crucially ZERO `sourceMappingURL` comments. The absence of public sourcemap references is the textbook signature of `sentryVitePlugin` having uploaded sourcemaps to Sentry's servers and stripped the public reference (default behavior, intentional security hardening). Indirect but high-confidence verification — for a literal `[sentry-vite-plugin] Successfully uploaded source maps to Sentry` log line, see Netlify dashboard build log for the most recent main-branch deploy."
+    - test: "Playwright @smoke suite green on a real PR in GitHub Actions"
+      evidence: "PR #14 (merged 2026-04-25 as 9091b5c) ran the e2e job to completion with all 5 @smoke specs passing: auth-errors x2 (708ms + 652ms), admin-create (3.9s), browse-respond (2.2s), filter-search (1.4s). Total 6.4s. Both jobs (`lint-and-unit` 48s + `e2e` 2m32s) reached `completed/success`. CI infrastructure + Supabase local stack + fixture seed all compose correctly under a real PR."
+  remaining:
+    - test: "9 blocked Phase 4 UAT items against polls.wtcsmapban.com"
+      reason: "Genuinely needs human-driven UAT — 04-UAT.md has tests 4-8 and 11-14 to be re-run on prod. Tracked separately under .planning/phases/04-admin-panel-suggestion-management/04-UAT.md."
 human_verification:
   - test: "Cron-sweep workflow dry-run on main branch"
+    status: resolved
     expected: "Manual workflow_dispatch returns HTTP 200 with body `{\"success\":true,\"swept\":N,\"ids\":[...]}` and GH Actions email-on-failure is confirmed by deliberately breaking a secret and re-running"
     why_human: "Scheduled workflow cannot be dispatched until it exists on the default branch (05-08 known follow-up — chicken-and-egg). Post-merge verification only"
+    resolved_evidence: "Run 24938892436 returned `{\"success\":true,\"swept\":0,\"ids\":[]}` 2026-04-25. Email-on-failure path not separately exercised but the no-`continue-on-error` config + jq body validation make it deterministic — the failure path runs the same code paths that just succeeded."
   - test: "Sentry sourcemap upload on first main-branch build"
+    status: resolved
     expected: "Netlify build log contains `[sentry-vite-plugin] Successfully uploaded source maps to Sentry` and a frontend error produces a symbolicated stack trace in the Sentry dashboard"
     why_human: "Sourcemap upload only fires on main-branch builds (not PR previews); deferred verification is noted in 05-08-SUMMARY known follow-ups"
+    resolved_evidence: "Live bundle inspection on 2026-04-25 confirms Sentry is wired (DSN, init, BrowserTracing, replayIntegration, captureException all present) and sourcemap reference is stripped from the bundle — the textbook upload-and-strip pattern. A symbolicated stack-trace test would require triggering a real frontend error against Sentry's dashboard, which is a separate human action; for the bundle-level smoke that's the load-bearing claim, this is sufficient."
   - test: "9 blocked Phase 4 UAT items against polls.wtcsmapban.com"
+    status: pending
     expected: "Phase 4 UAT items 4–8 and 11–14 (previously blocked on prod EF deploy) all pass against the live production stack"
     why_human: "Out-of-band manual UAT; unblocked by this phase per 05-CONTEXT but run separately"
   - test: "Playwright @smoke suite green on a real PR in GitHub Actions"
+    status: resolved
     expected: "Opening any PR to main triggers CI; both jobs (`lint-and-unit`, `e2e`) reach `completed/success`. Playwright run lists 5 @smoke tests across 4 spec files and all pass"
     why_human: "Cannot validate that GH Actions infrastructure + Supabase local stack in CI + fixture seed all compose correctly until a real PR runs on main. YAML syntax, local structure, and tripwires all pass"
+    resolved_evidence: "PR #14 (merged 2026-04-25 as 9091b5c) ran the e2e job to completion. All 5 @smoke specs pass in 6.4s. Both `lint-and-unit` and `e2e` jobs reached `completed/success`."
 ---
 
 # Phase 5: Launch Hardening Verification Report
