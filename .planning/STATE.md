@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 5 UI-SPEC approved (559bcfd). CONTEXT + UI-SPEC locked. Ready for /gsd-plan-phase 5.
-last_updated: "2026-04-22T05:47:22.566Z"
-last_activity: 2026-04-21
+stopped_at: Phase 6 context gathered (auth fix + GDPR opt-IN rewire + favicon polish + launch hardening)
+last_updated: "2026-04-25T20:20:31.158Z"
+last_activity: "2026-04-22 — Completed quick task 260421-vxb: react-refresh lint fix"
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 5
   total_plans: 25
   completed_plans: 25
@@ -99,6 +99,10 @@ Recent decisions affecting current work:
 
 - pg_cron concern resolved — Phase 5 uses GH Actions cron, not pg_cron (05-CONTEXT.md D-01)
 
+### Roadmap Evolution
+
+- 2026-04-25: Phase 6 added — Auth fix, GDPR opt-IN rewire, favicon polish, and launch hardening. Scope includes auth bug (login fails in user's main browser, works in incognito), GDPR opt-IN rewire (current Phase 5 ships opt-OUT), favicon replacement (default Vite favicon → WTCS-branded), and launch-hardening cleanup. Queued after Phase 4 UAT (8 of 9 tests passing on prod 2026-04-25; 9th deferred — requires second human, non-blocking).
+
 ### Quick Tasks Completed
 
 | # | Description | Date | Commit | Directory |
@@ -107,6 +111,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-19T00:00:00.000Z
-Stopped at: Phase 5 UI-SPEC approved (559bcfd). CONTEXT + UI-SPEC locked. Ready for /gsd-plan-phase 5.
-Resume file: .planning/phases/05-launch-hardening/05-UI-SPEC.md
+Last session: 2026-04-25T20:20:31.158Z
+Stopped at: Phase 6 context gathered (auth fix + GDPR opt-IN rewire + favicon polish + launch hardening)
+Resume file: .planning/phases/06-auth-fix-gdpr-opt-in-rewire-favicon-polish-and-launch-harden/06-CONTEXT.md
