@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/components/theme-provider'
 import { Navbar } from '@/components/layout/Navbar'
 import { Toaster } from '@/components/ui/sonner'
 import { ConsentChip } from '@/components/ConsentChip'
+import { SentrySmokeButton } from '@/components/admin/SentrySmokeButton'
 
 // R-01: lazy-loaded but NOT DEV-gated at the import level — the overlay
 // must be reachable on production for an explicitly-toggled browser
@@ -35,6 +36,12 @@ function RootLayout() {
             would crash on first render (TanStack Router's routerContext is
             only propagated to descendants). */}
         <ConsentChip />
+        {/* Phase 6 D-08 (smoke branch only): mount SentrySmokeButton on the public
+            root route too, so an unauthenticated browser (Playwright) can trigger
+            the render-phase throw without going through AdminGuard. The component's
+            own ?sentry-smoke=1 gate ensures it never throws on regular page loads.
+            This duplicate mount is removed when phase6-d08-smoke branch is deleted. */}
+        <SentrySmokeButton />
         {typeof window !== 'undefined' &&
           (window.localStorage.getItem('wtcs_debug_auth') === '1' ||
             import.meta.env.DEV) &&
