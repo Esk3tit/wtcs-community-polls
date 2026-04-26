@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useRef } from 'react'
 import { handleAuthCallback } from '@/lib/auth-helpers'
 import { LoaderCircle } from 'lucide-react'
+import * as Sentry from '@sentry/react'
 
 export const Route = createFileRoute('/auth/callback')({
   component: AuthCallbackPage,
@@ -13,10 +14,21 @@ function AuthCallbackPage() {
   const processed = useRef(false)
 
   useEffect(() => {
+    Sentry.addBreadcrumb({
+      category: 'auth',
+      message: 'callback route mounted',
+      level: 'info',
+    })
     if (processed.current) return
     processed.current = true
 
     handleAuthCallback().then((result) => {
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: 'callback route resolved',
+        level: result.success ? 'info' : 'warning',
+        data: { success: result.success, reason: result.success ? null : result.reason },
+      })
       if (result.success) {
         navigate({ to: '/' })
       } else {

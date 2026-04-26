@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { handleAuthCallback } from '@/lib/auth-helpers'
 import { posthog } from '@/lib/posthog'
 import type { Profile } from '@/lib/types/suggestions'
+import * as Sentry from '@sentry/react'
 
 interface AuthState {
   session: Session | null
@@ -57,10 +58,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const hashParams = new URLSearchParams(window.location.hash.substring(1))
     const isOAuthRedirect = hashParams.has('access_token') ||
       new URLSearchParams(window.location.search).has('code')
+    Sentry.addBreadcrumb({
+      category: 'auth',
+      message: 'AuthContext mounted',
+      level: 'info',
+      data: { isOAuthRedirect },
+    })
 
     if (!isOAuthRedirect) {
       // Normal page load — use cached session
       supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'getSession() resolved',
+          level: 'info',
+          data: { hasSession: !!initialSession, hasUser: !!initialSession?.user },
+        })
         setSession(initialSession)
         setUser(initialSession?.user ?? null)
         if (initialSession?.user) {
@@ -80,6 +93,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Single auth subscription for the entire app
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: `onAuthStateChange: ${event}`,
+          level: 'info',
+          data: { event, hasSession: !!newSession, hasProviderToken: !!newSession?.provider_token },
+        })
         // On initial sign-in, verify Discord 2FA before allowing access
         if (event === 'SIGNED_IN' && newSession?.provider_token) {
           verifyingRef.current = true
