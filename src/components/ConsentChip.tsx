@@ -10,8 +10,10 @@ import { CONSENT_CARD_MAX_W } from '@/lib/consent-styles'
 // - 'decline'  → "Anonymous usage analytics are off. Turn on"
 // - 'undecided'→ null (banner is in charge)
 //
-// Dismiss X is session-scope (existing posthog_consent_chip_dismissed key
-// carries forward) — does NOT change the consent decision.
+// Dismiss X is session-scope (sessionStorage, matches ConsentBanner's tier so
+// the chip re-appears on a fresh tab/window) — does NOT change the consent
+// decision. Phase 6 WR-05: previously written to localStorage, which made the
+// chip permanently invisible per browser with no in-app re-summon path.
 
 const DISMISS_KEY = 'posthog_consent_chip_dismissed'
 
@@ -20,7 +22,7 @@ export function ConsentChip() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const [dismissed, setDismissed] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true
-    return window.localStorage.getItem(DISMISS_KEY) === 'true'
+    return window.sessionStorage.getItem(DISMISS_KEY) === 'true'
   })
 
   if (state === 'undecided') return null
@@ -28,7 +30,7 @@ export function ConsentChip() {
   if (dismissed) return null
 
   const handleDismiss = () => {
-    window.localStorage.setItem(DISMISS_KEY, 'true')
+    window.sessionStorage.setItem(DISMISS_KEY, 'true')
     setDismissed(true)
   }
 

@@ -35,6 +35,7 @@ describe('ConsentChip (UI-SPEC Surface 2 — flipped opt-IN state machine)', () 
   beforeEach(() => {
     vi.clearAllMocks()
     window.localStorage.clear()
+    window.sessionStorage.clear()
     currentPathname = '/'
   })
 
@@ -79,10 +80,13 @@ describe('ConsentChip (UI-SPEC Surface 2 — flipped opt-IN state machine)', () 
   })
 
   it('Dismiss X click sets posthog_consent_chip_dismissed only (no consent flip)', () => {
+    // WR-05: dismiss writes to sessionStorage (matches banner tier — chip
+    // re-appears on next tab/window) and never touches localStorage.
     window.localStorage.setItem('wtcs_consent', 'allow')
     renderChip()
     fireEvent.click(screen.getByRole('button', { name: /dismiss/i }))
-    expect(window.localStorage.getItem('posthog_consent_chip_dismissed')).toBe('true')
+    expect(window.sessionStorage.getItem('posthog_consent_chip_dismissed')).toBe('true')
+    expect(window.localStorage.getItem('posthog_consent_chip_dismissed')).toBeNull()
     expect(window.localStorage.getItem('wtcs_consent')).toBe('allow')
   })
 })
