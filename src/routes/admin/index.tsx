@@ -2,6 +2,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { AdminGuard } from '@/components/auth/AdminGuard'
 import { AdminTabs } from '@/components/admin/AdminTabs'
+import { SentrySmokeButton } from '@/components/admin/SentrySmokeButton'
 
 const VALID_TABS = ['suggestions', 'categories', 'admins'] as const
 const VALID_FILTERS = ['active', 'closed', 'all'] as const
@@ -24,6 +25,12 @@ export const Route = createFileRoute('/admin/')({
 function AdminPage() {
   return (
     <AdminGuard>
+      {/* Phase 6 D-08 (R-02): smoke component lives behind AdminGuard.
+          Non-admins are redirected by AdminGuard before this component mounts.
+          This whole edit is on the deploy-preview branch phase6-d08-smoke and
+          is removed (entire branch deletion) after Sentry symbolication
+          verification. */}
+      <SentrySmokeButton />
       <div className="max-w-4xl mx-auto px-4 md:px-6 py-6">
         <h1 className="text-2xl font-semibold mb-6">Admin</h1>
         <AdminTabs />
