@@ -5,13 +5,15 @@ status: partially_resolved
 score: 4/4 roadmap success criteria verified; 3 of 4 human-verification items now closed (re-verified 2026-04-25)
 overrides_applied: 0
 re_verification:
-  re_verified: 2026-04-25
-  re_verifier: Claude (post-PR14 cleanup)
+  re_verified: 2026-04-26
+  re_verifier: Claude (Phase 6 D-08 deploy-preview symbolication)
   closed:
     - test: "Cron-sweep workflow dry-run on main branch"
       evidence: "GH Actions run 24938892436 (workflow_dispatch on main, 2026-04-25): HTTP 200 with body `{\"success\":true,\"swept\":0,\"ids\":[]}`. swept=0 expected because no active polls have closes_at < now() (seed polls have closes_at 4-14 days out). CLOSE_SWEEPER_SECRET gate is functional (returned 200, not 401, with the correct header). Dual-header auth and jq body validation both pass."
     - test: "Sentry sourcemap upload on first main-branch build"
       evidence: "Live JS bundle at https://polls.wtcsmapban.com/assets/index-rZTs8ZMe.js (470 KB) inspected on 2026-04-25. Found: Sentry DSN literal (1 match: `https://3361862f2c8bc6c20759b1b549f33dae@o4510971582349312.ingest.us.sentry.io/4511250886164480`), Sentry.init (1), BrowserTracing/browserTracing (2), replayIntegration (3), captureException (7), and crucially ZERO `sourceMappingURL` comments. The absence of public sourcemap references is the textbook signature of `sentryVitePlugin` having uploaded sourcemaps to Sentry's servers and stripped the public reference (default behavior, intentional security hardening). Indirect but high-confidence verification — for a literal `[sentry-vite-plugin] Successfully uploaded source maps to Sentry` log line, see Netlify dashboard build log for the most recent main-branch deploy."
+    - test: "Sentry symbolication via deploy-preview throw (Phase 6 D-08)"
+      evidence: "sentry-symbolication-evidence captured 2026-04-26 against deploy-preview-16 build (commit 9c2b4e3, release tag matches; release: production environment). Throw origin: SentrySmokeButton.tsx onClick handler (named function `fireSentrySmoke`) on the throwaway branch `phase6-d08-smoke` (since deleted). Sentry issue WTCS-COMMUNITY-POLLS-6, event id `e86b675ae98d48c9b854f807a2bab560`, dashboard URL https://khai-phan.sentry.io/issues/WTCS-COMMUNITY-POLLS-6, replay https://khai-phan.sentry.io/explore/replays/7b45d14bf4bd4ebcb91232419919e994/. Stack trace symbolicated: top app frame resolves bundled `/assets/index-CRFxCJ9B.js` -> `../../src/components/admin/SentrySmokeButton.tsx:24:13` with surrounding source context lines (21-27) shown. React-DOM internals also symbolicated (react-dom-client.production.js:15274 etc.). Mechanism `auto.browser.global_handlers.onerror`, handled=no. Note: function name shows minified (`$M`) instead of `fireSentrySmoke` because Vite/Rolldown's sourcemap `names` table omits function identifiers — this is standard Vite production behavior; the source PATH + LINE + CONTEXT are the load-bearing symbolication signals and all three resolve correctly. R-02 prescribed render-phase throw + Sentry.ErrorBoundary capture; empirical pivot to event-handler throw because Sentry React SDK v10 + React 19's ErrorBoundary catches the throw (AppErrorFallback renders) but does not transmit the captured event to Sentry's transport in our config. Event-handler throws bypass ErrorBoundary entirely and are caught by globalHandlersIntegration which reliably ships events. Both render-phase and event-handler approaches commit-trail-documented on the deleted phase6-d08-smoke branch."
     - test: "Playwright @smoke suite green on a real PR in GitHub Actions"
       evidence: "PR #14 (merged 2026-04-25 as 9091b5c) ran the e2e job to completion with all 5 @smoke specs passing: auth-errors x2 (708ms + 652ms), admin-create (3.9s), browse-respond (2.2s), filter-search (1.4s). Total 6.4s. Both jobs (`lint-and-unit` 48s + `e2e` 2m32s) reached `completed/success`. CI infrastructure + Supabase local stack + fixture seed all compose correctly under a real PR."
   remaining:
@@ -27,7 +29,7 @@ human_verification:
     status: resolved
     expected: "Netlify build log contains `[sentry-vite-plugin] Successfully uploaded source maps to Sentry` and a frontend error produces a symbolicated stack trace in the Sentry dashboard"
     why_human: "Sourcemap upload only fires on main-branch builds (not PR previews); deferred verification is noted in 05-08-SUMMARY known follow-ups"
-    resolved_evidence: "Live bundle inspection on 2026-04-25 confirms Sentry is wired (DSN, init, BrowserTracing, replayIntegration, captureException all present) and sourcemap reference is stripped from the bundle — the textbook upload-and-strip pattern. A symbolicated stack-trace test would require triggering a real frontend error against Sentry's dashboard, which is a separate human action; for the bundle-level smoke that's the load-bearing claim, this is sufficient."
+    resolved_evidence: "Live bundle inspection on 2026-04-25 confirms Sentry is wired (DSN, init, BrowserTracing, replayIntegration, captureException all present) and sourcemap reference is stripped from the bundle — the textbook upload-and-strip pattern. Phase 6 D-08 (2026-04-26) closes the second clause of the expected outcome: a real frontend error triggered against the deploy-preview-16 build (commit 9c2b4e3, R-02 deploy-preview path) produced Sentry issue WTCS-COMMUNITY-POLLS-6 with a server-side-symbolicated stack trace resolving the bundled `/assets/index-CRFxCJ9B.js` frame to `src/components/admin/SentrySmokeButton.tsx:24` with surrounding source context. Sourcemap upload on `sentryVitePlugin` works end-to-end: DSN injection at build time + sourcemap upload to Sentry servers + server-side resolution at issue-render time all verified. Issue: https://khai-phan.sentry.io/issues/WTCS-COMMUNITY-POLLS-6 ; event id `e86b675ae98d48c9b854f807a2bab560` ; release tag `9c2b4e3d2bbc8ea0eeb2a8e5dd29558e3762e15b`. The smoke branch was deleted post-verification — `git log main` and `grep -r 'sentry-smoke' src/` both return nothing."
   - test: "9 blocked Phase 4 UAT items against polls.wtcsmapban.com"
     status: pending
     expected: "Phase 4 UAT items 4–8 and 11–14 (previously blocked on prod EF deploy) all pass against the live production stack"
@@ -145,5 +147,47 @@ No blocking gaps. Every roadmap success criterion has verified artifact + wired 
 
 ---
 
+## Phase 6 Update
+
+**Date:** 2026-04-26
+**Driver:** Phase 6 plan 06-04, task 1 (D-08 closure).
+
+The `Sentry sourcemap upload on first main-branch build` row above gained
+direct symbolicated-stack-trace evidence (Phase 6 D-08). A real frontend
+error was triggered against a Netlify deploy-preview build (PR #16 on the
+throwaway `phase6-d08-smoke` branch, since deleted; R-02 deploy-preview
+path so the trigger never lands on main), and the resulting Sentry issue
+shows server-side-resolved source paths and surrounding source-context
+lines. The original 2026-04-25 bundle-inspection evidence stays as the
+indirect signal; the new D-08 evidence promotes the row from
+"indirect/inferred" to "direct/observed".
+
+**Sentry-symbolication-evidence pointer:**
+- Sentry issue: WTCS-COMMUNITY-POLLS-6 — https://khai-phan.sentry.io/issues/WTCS-COMMUNITY-POLLS-6
+- Event id: `e86b675ae98d48c9b854f807a2bab560`
+- Replay: https://khai-phan.sentry.io/explore/replays/7b45d14bf4bd4ebcb91232419919e994/
+- Release: `9c2b4e3d2bbc8ea0eeb2a8e5dd29558e3762e15b` (smoke-branch HEAD)
+- Top app frame: `src/components/admin/SentrySmokeButton.tsx:24:13` (`fireSentrySmoke` → minified `$M`)
+- Mechanism: `auto.browser.global_handlers.onerror` (handled=no)
+
+**R-02 deviation note (deploy-preview-only + render-phase-throw):**
+the plan prescribed render-phase throw caught by `Sentry.ErrorBoundary`.
+Empirical pivot to event-handler throw via a named function: the React
+SDK v10 + React 19 ErrorBoundary path renders `AppErrorFallback` but
+does not transmit captured events through Sentry's transport in our
+config. Event-handler throws bypass ErrorBoundary, route through
+`globalHandlersIntegration`, and ship reliably (verified earlier with
+setTimeout-throw landing in Sentry as WTCS-COMMUNITY-POLLS-2). The
+pivot is documented in 06-04-SUMMARY.md as deviation Rule 1.
+
+**Branch deletion confirmed:** `git ls-remote --heads origin 'phase6-d08-smoke*'`
+returns nothing; local `git branch --list 'phase6-d08-smoke*'` returns
+nothing. The smoke component file `src/components/admin/SentrySmokeButton.tsx`
+never existed on `main` or on the phase-6 PR branch — only on the
+deleted throwaway branch.
+
+---
+
 *Verified: 2026-04-19*
-*Verifier: Claude (gsd-verifier)*
+*Re-verified: 2026-04-25 (post-PR14), 2026-04-26 (Phase 6 D-08 deploy-preview symbolication)*
+*Verifier: Claude (gsd-verifier + Phase 6 D-08)*
