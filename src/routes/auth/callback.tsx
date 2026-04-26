@@ -26,21 +26,38 @@ function AuthCallbackPage() {
     // the user on the loading spinner with no recovery path.
     let cancelled = false
 
-    handleAuthCallback().then((result) => {
-      if (cancelled) return
-      processed.current = true
-      Sentry.addBreadcrumb({
-        category: 'auth',
-        message: 'callback route resolved',
-        level: result.success ? 'info' : 'warning',
-        data: { success: result.success, reason: result.success ? null : result.reason },
+    handleAuthCallback()
+      .then((result) => {
+        if (cancelled) return
+        processed.current = true
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'callback route resolved',
+          level: result.success ? 'info' : 'warning',
+          data: { success: result.success, reason: result.success ? null : result.reason },
+        })
+        if (result.success) {
+          navigate({ to: '/' })
+        } else {
+          navigate({ to: '/auth/error', search: { reason: result.reason } })
+        }
       })
-      if (result.success) {
-        navigate({ to: '/' })
-      } else {
-        navigate({ to: '/auth/error', search: { reason: result.reason } })
-      }
-    })
+      .catch((err) => {
+        // Phase 6 WR-01: handleAuthCallback rejection (vs. resolved {success:false})
+        // previously had no handler — the spinner wedged forever. Capture to
+        // Sentry, log, and route to the error page so the user can recover.
+        if (cancelled) return
+        processed.current = true
+        Sentry.captureException(err, { tags: { area: 'auth-callback-route' } })
+        console.error('handleAuthCallback rejected in /auth/callback:', err)
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'callback route rejected',
+          level: 'error',
+          data: { error: String(err) },
+        })
+        navigate({ to: '/auth/error', search: { reason: 'auth-failed' } })
+      })
 
     return () => {
       cancelled = true
