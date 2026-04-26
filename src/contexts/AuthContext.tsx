@@ -112,7 +112,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               window.location.href = `/auth/error?reason=${result.reason}`
               return
             }
-          } catch {
+          } catch (err) {
+            // Phase 6 WR-02: never swallow verification errors silently — the
+            // bare catch undermined the breadcrumb work in this phase.
+            Sentry.captureException(err, { tags: { area: 'auth-callback' } })
+            console.error('handleAuthCallback threw in onAuthStateChange:', err)
+            Sentry.addBreadcrumb({
+              category: 'auth',
+              message: 'handleAuthCallback threw',
+              level: 'error',
+              data: { error: String(err) },
+            })
             window.location.href = '/auth/error?reason=auth-failed'
             return
           } finally {
