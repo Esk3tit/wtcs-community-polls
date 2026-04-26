@@ -129,21 +129,45 @@ Do NOT delete the sections below — Task 4 will fill them in after the
 
 ## Captured State
 
-_(Filled in by Task 4 after the overlay is captured. Paste the six-section
-overlay output here, with token values already truncated by the overlay.)_
+**Not captured.** Step 0 (Clear site data + reload) restored a working Discord
+login flow before the `?debug=auth` overlay was ever needed. The failing state
+was no longer reproducible on demand, so there was nothing live to surface
+through the overlay. The overlay still ships per Task 3 acceptance criteria
+so any future re-occurrence — in any browser — is observable on production
+for an opted-in operator.
 
-## Root Cause + Fix  /  Root Cause: Environmental
+## Root Cause: Environmental
 
-_(Filled in by Task 4. Either:
-- (a) "Code defect: <description>. Targeted fix landed in commit <hash> touching <files>."
-- (b) "Environmental: <description>. No code-level fix required; instrumentation ships as launch hygiene per D-02.")_
+Stale browser-side storage state (cache + cookies + localStorage + sessionStorage
++ IndexedDB for `polls.wtcsmapban.com`) was the resolving differential. No
+service workers were registered. No code-level defect was reproduced.
+
+The strongest a-priori hypothesis (06-RESEARCH.md Pitfall 4) is an orphaned
+Supabase PKCE artifact (`sb-<project-ref>-code-verifier`) left over from a
+prior aborted or interrupted OAuth attempt — but without overlay capture
+against the failing state we cannot confirm the exact key. The differential
+"works after clear, fails before" matches that pattern and rules out: live
+Supabase backend issue, Discord-side outage, code defect introduced by recent
+deploys.
+
+Disposition: bug closed as environmental, no code-level fix required.
+Tasks 2 and 3 of 06-01 ship anyway as launch hygiene per success_criteria
+("the diagnose-first work still ships ... but code-level investigation can
+be scoped down"). Sentry breadcrumbs and the production-reachable overlay
+mean future re-occurrences in any browser are observable.
+
+If this recurs in a vanilla Chrome / Firefox / Safari profile (i.e. not just
+Perplexity Comet), revisit: at that point we have a second data point that
+distinguishes browser-specific quirk from a broader pattern.
 
 ## Activation Key Cleared
 
-_(Filled in by Task 4 after diagnosis. Required acceptance criterion (T-06-19):
-the user must run `localStorage.removeItem('wtcs_debug_auth')` in DevTools and
-record the timestamp here so the overlay does not persist as an always-on
-backdoor past Phase 6.)_
+The per-browser activation key (`wtcs_debug_auth`) was **never set on any
+browser** during this plan, because Step 0 resolved the symptom before any
+overlay-capture work was needed. T-06-19 is satisfied by absence: there is
+no key to clear.
 
-- Cleared at: _(YYYY-MM-DD HH:MM local time)_
-- Verified via: `localStorage.getItem('wtcs_debug_auth')` returns `null` — _(Y/N)_
+- Set at any point during Phase 6? **No.**
+- Cleared at: N/A — never set.
+- Verified via spot-check on Perplexity Comet:
+  `localStorage.getItem('wtcs_debug_auth')` returns `null` — **Y**
