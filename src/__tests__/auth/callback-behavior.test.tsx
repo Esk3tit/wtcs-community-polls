@@ -30,7 +30,7 @@ vi.mock('@/lib/supabase', () => ({
 }))
 
 // Import the real handleAuthCallback — mocked supabase module above controls its dependencies.
-import { handleAuthCallback } from '@/lib/auth-helpers'
+import { handleAuthCallback, __resetAuthCallbackCacheForTests } from '@/lib/auth-helpers'
 
 const WTCS_GUILD_ID = '123456789'
 
@@ -54,6 +54,8 @@ function createGuildAwareFetchMock(
 describe('Auth Callback: Fail-Closed Behavior (REAL handleAuthCallback)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Phase 6 WR-07: clear the result-memo TTL so prior-test results don't leak
+    __resetAuthCallbackCacheForTests()
     mockSignOut.mockResolvedValue({ error: null })
     mockRpc.mockResolvedValue({ data: null, error: null })
     // Set WTCS guild ID for tests
@@ -255,6 +257,8 @@ describe('Auth Callback: Fail-Closed Behavior (REAL handleAuthCallback)', () => 
 describe('Auth Callback: Guild Membership Check', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Phase 6 WR-07: clear the result-memo TTL so prior-test results don't leak
+    __resetAuthCallbackCacheForTests()
     mockSignOut.mockResolvedValue({ error: null })
     mockRpc.mockResolvedValue({ data: null, error: null })
     import.meta.env.VITE_WTCS_GUILD_ID = WTCS_GUILD_ID

@@ -260,7 +260,12 @@ describe('handleAuthCallback dedup across rapid /auth/callback double-mount (Pha
     const real = await vi.importActual<typeof import('@/lib/auth-helpers')>(
       '@/lib/auth-helpers',
     )
-    const { handleAuthCallback } = real
+    const { handleAuthCallback, __resetAuthCallbackCacheForTests } = real
+
+    // Phase 6 WR-07: clear any cached result from prior tests in this worker
+    // so the in-flight dedup contract (not the post-resolution memo) is what
+    // we're asserting.
+    __resetAuthCallbackCacheForTests()
 
     const first = handleAuthCallback()
     const second = handleAuthCallback()

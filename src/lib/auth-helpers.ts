@@ -14,17 +14,46 @@ export type AuthCallbackResult =
  */
 // Deduplication guard: shared-promise pattern ensures concurrent callers
 // (AuthContext onAuthStateChange + callback route) get the same result
-// without double-executing verification
+// without double-executing verification.
+//
+// Phase 6 WR-07: also memoize the resolved result for a short TTL so a
+// StrictMode dev double-mount (or any rare prod /auth/callback remount)
+// that arrives AFTER the in-flight promise has cleared still short-circuits
+// to the cached result instead of firing a fresh executor — which would
+// otherwise re-call Discord's API + update_profile_after_auth RPC and
+// (on the failure path) re-trigger supabase.auth.signOut().
+//
+// TTL is intentionally short (1500 ms) so a real user-driven retry from the
+// /auth/error page is never blocked. The window only needs to span the
+// React StrictMode unmount→remount gap, which is microseconds in practice.
 let callbackPromise: Promise<AuthCallbackResult> | null = null
+let lastResult: { result: AuthCallbackResult; ts: number } | null = null
+const RESULT_CACHE_MS = 1500
 
 export async function handleAuthCallback(): Promise<AuthCallbackResult> {
   if (callbackPromise) return callbackPromise
+  if (lastResult && Date.now() - lastResult.ts < RESULT_CACHE_MS) {
+    return lastResult.result
+  }
   callbackPromise = executeAuthCallback()
   try {
-    return await callbackPromise
+    const result = await callbackPromise
+    lastResult = { result, ts: Date.now() }
+    return result
   } finally {
     callbackPromise = null
   }
+}
+
+/**
+ * Test-only: reset the dedup + result-memo state between tests.
+ * Production code MUST NOT call this — TTL-based memoization is intentional
+ * (see Phase 6 WR-07). Tests need it because module-level state otherwise
+ * leaks across test cases within the 1500 ms TTL window.
+ */
+export function __resetAuthCallbackCacheForTests(): void {
+  callbackPromise = null
+  lastResult = null
 }
 
 async function executeAuthCallback(): Promise<AuthCallbackResult> {
