@@ -29,7 +29,7 @@ Milestone: v1.0 — READY_TO_COMPLETE (6/6 phases done, 32/32 plans done)
 Latest phase: 06 (auth fix, GDPR opt-IN, favicon, launch hardening) — COMPLETE + VERIFIED
 PR: #15 (draft → ready-for-review 2026-04-26) — 27 commits ahead of origin/main
 Next action: merge PR #15, then `/gsd-complete-milestone`
-Last activity: 2026-04-26 -- Phase 6 verified (06-VERIFICATION.md PASSED 7/7), Husky chmod advisory closed (a177f7c)
+Last activity: 2026-04-26 -- Completed quick task 260426-cty: 3 Phase 6 UI-REVIEW priority fixes (consoleErrors prune, shared max-w token, mutual-exclusion test) — 382 tests green, build clean (6d9db3a)
 
 Progress: [██████████] 100%
 
@@ -110,6 +110,7 @@ Recent decisions affecting current work:
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260421-vxb | Fix 7 react-refresh/only-export-components lint errors blocking Phase 5 CI | 2026-04-22 | 99ec1f8 | [260421-vxb-fix-7-react-refresh-only-export-componen](./quick/260421-vxb-fix-7-react-refresh-only-export-componen/) |
+| 260426-cty | Fix Phase 6 UI-REVIEW priority items: bound DebugAuthOverlay consoleErrors, extract CONSENT_CARD_MAX_W shared token, add mutual-exclusion test | 2026-04-26 | 6d9db3a | [260426-cty-fix-phase-6-ui-review-items-prune-debuga](./quick/260426-cty-fix-phase-6-ui-review-items-prune-debuga/) |
 
 ## Session Continuity
 
