@@ -9,15 +9,15 @@
 
 ### Authentication
 
-- [ ] **AUTH-01**: User can log in via Discord OAuth and is redirected back to the app
-- [ ] **AUTH-02**: User without Discord 2FA enabled is rejected with a clear error message
-- [ ] **AUTH-03**: User who is not a member of the official War Thunder esports Discord server is rejected with a clear error message
-- [ ] **AUTH-04**: User session persists across browser refresh
-- [ ] **AUTH-05**: User can log out from any page
+- [x] **AUTH-01**: User can log in via Discord OAuth and is redirected back to the app <!-- Evidence: .planning/phases/04-admin-panel-suggestion-management/04-UAT.md (2026-04-25 live prod re-run: seeded admin signed in via Discord OAuth and reached /admin; 8 of 9 previously-blocked tests now pass) -->
+- [x] **AUTH-02**: User without Discord 2FA enabled is rejected with a clear error message <!-- Evidence: .planning/phases/01-foundation-authentication/01-04-SUMMARY.md (auth-error-page.test.tsx — 2FA required messaging + link variant) and .planning/phases/01-foundation-authentication/01-04-SUMMARY.md (callback-behavior.test.tsx — REAL handleAuthCallback fail-closed when mfa_enabled=false/null) -->
+- [x] **AUTH-03**: User who is not a member of the official War Thunder esports Discord server is rejected with a clear error message <!-- Evidence: .planning/phases/03-response-integrity/03-01-SUMMARY.md (guild membership check at login via Discord OAuth guilds scope + AuthErrorPage not-in-server variant + 8 guild-callback tests) -->
+- [x] **AUTH-04**: User session persists across browser refresh <!-- Evidence: .planning/phases/01-foundation-authentication/01-04-SUMMARY.md (auth-provider.test.tsx — AuthProvider state: loading, user/profile population, session restore) -->
+- [x] **AUTH-05**: User can log out from any page <!-- Evidence: .planning/phases/01-foundation-authentication/01-04-SUMMARY.md (auth-provider.test.tsx — signOut behavior, all rejection paths verify signOut was called) -->
 
 ### Admin Management
 
-- [ ] **ADMN-01**: Initial admin accounts are seeded by Discord user ID in the database
+- [x] **ADMN-01**: Initial admin accounts are seeded by Discord user ID in the database <!-- Evidence: .planning/phases/01-foundation-authentication/01-02-SUMMARY.md (admin_discord_ids config table; admin status derived at login time, not pre-seeded; R1 FK fix migration eead623) -->
 - [x] **ADMN-02**: Existing admin can promote another Discord user to admin via in-app button
 - [x] **ADMN-03**: Existing admin can demote another admin (except self)
 - [x] **ADMN-04**: Admin status is checked server-side on all admin actions
@@ -40,38 +40,38 @@
 
 ### Responding (internal: "voting")
 
-- [ ] **VOTE-01**: Authenticated user can submit one response per suggestion (enforced by UNIQUE constraint at DB level)
-- [ ] **VOTE-02**: Response submission goes through a Supabase Edge Function with server-side validation
-- [ ] **VOTE-03**: Response cannot be changed or deleted after submission (no UPDATE/DELETE via RLS)
-- [ ] **VOTE-04**: Upstash Redis rate limiting prevents rapid response submissions from a single user
+- [x] **VOTE-01**: Authenticated user can submit one response per suggestion (enforced by UNIQUE constraint at DB level) <!-- Evidence: .planning/phases/02-browsing-responding/02-VERIFICATION.md (Traceability row VOTE-01 SATISFIED — UNIQUE constraint votes_one_per_user_per_poll, Edge Function catches 23505 → 409, duplicate-rejection test) -->
+- [x] **VOTE-02**: Response submission goes through a Supabase Edge Function with server-side validation <!-- Evidence: .planning/phases/02-browsing-responding/02-VERIFICATION.md (Traceability row VOTE-02 SATISFIED — supabase/functions/submit-vote/index.ts with JWT auth, poll-active check, choice-poll validation) -->
+- [x] **VOTE-03**: Response cannot be changed or deleted after submission (no UPDATE/DELETE via RLS) <!-- Evidence: .planning/phases/02-browsing-responding/02-VERIFICATION.md (Traceability row VOTE-03 SATISFIED — RLS prevents UPDATE/DELETE on votes table; no client-side edit capability) -->
+- [x] **VOTE-04**: Upstash Redis rate limiting prevents rapid response submissions from a single user <!-- Evidence: .planning/phases/03-response-integrity/03-02-SUMMARY.md (per-user Upstash sliding-window 5 req/60s on submit-vote EF; rate-limit-edge-function.test.ts + rate-limit-toast.test.tsx) -->
 
 ### Results
 
-- [ ] **RSLT-01**: Results are hidden until the user has responded to that suggestion
-- [ ] **RSLT-02**: After responding, user sees live percentages and raw response counts per choice
-- [ ] **RSLT-03**: Response counts are pre-aggregated via Postgres trigger into a response_counts table
-- [ ] **RSLT-04**: Frontend polls response_counts every 5-10 seconds for live updates
-- [ ] **RSLT-05**: Only users who responded to a suggestion can see its results (even after it closes)
+- [x] **RSLT-01**: Results are hidden until the user has responded to that suggestion <!-- Evidence: .planning/phases/02-browsing-responding/02-VERIFICATION.md (Traceability row RSLT-01 SATISFIED — RLS on vote_counts requires existing vote record; ChoiceButtons pre-vote state tested) -->
+- [x] **RSLT-02**: After responding, user sees live percentages and raw response counts per choice <!-- Evidence: .planning/phases/02-browsing-responding/02-VERIFICATION.md (Traceability row RSLT-02 SATISFIED — ResultBars role="meter", calcPercentage, count display, tested) -->
+- [x] **RSLT-03**: Response counts are pre-aggregated via Postgres trigger into a response_counts table <!-- Evidence: .planning/phases/02-browsing-responding/02-VERIFICATION.md (Traceability row RSLT-03 SATISFIED — vote_counts table with increment trigger, queried by useVoteCounts) -->
+- [x] **RSLT-04**: Frontend polls response_counts every 5-10 seconds for live updates <!-- Evidence: .planning/phases/02-browsing-responding/02-VERIFICATION.md (Traceability row RSLT-04 SATISFIED — usePolling at 8000ms with visibilityState check) -->
+- [x] **RSLT-05**: Only users who responded to a suggestion can see its results (even after it closes) <!-- Evidence: .planning/phases/02-browsing-responding/02-VERIFICATION.md (Phase Goal row 5 VERIFIED — RLS on vote_counts requires existing vote record; ChoiceButtons "This topic is closed. Only respondents can view results." for non-respondents; archive route renders SuggestionList status="closed") -->
 
 ### Categories & Navigation
 
 - [x] **CATG-01**: Admin can create, rename, and delete categories
-- [ ] **CATG-02**: Active suggestions are displayed in a browsable list on the main page
-- [ ] **CATG-03**: Users can filter suggestions by category via tabs/pills
-- [ ] **CATG-04**: Users can search/filter suggestions by text
+- [x] **CATG-02**: Active suggestions are displayed in a browsable list on the main page <!-- Evidence: .planning/phases/02-browsing-responding/02-01-SUMMARY.md (SuggestionList orchestrates data fetching, server-side status filter, collapsible-cards) -->
+- [x] **CATG-03**: Users can filter suggestions by category via tabs/pills <!-- Evidence: .planning/phases/02-browsing-responding/02-03-SUMMARY.md (suggestion-list test "Filters by category when pill is clicked"; CategoryFilter renders role="tab" buttons) -->
+- [x] **CATG-04**: Users can search/filter suggestions by text <!-- Evidence: .planning/phases/02-browsing-responding/02-03-SUMMARY.md (suggestion-list test "Combined category + search filtering works correctly"; debounced search filtering in SuggestionList) -->
 
 ### UI & Design
 
-- [ ] **UIDN-01**: App supports light and dark mode via shadcn theme toggle (system preference by default)
+- [x] **UIDN-01**: App supports light and dark mode via shadcn theme toggle (system preference by default) <!-- Evidence: .planning/phases/01-foundation-authentication/01-04-SUMMARY.md (theme-toggle.test.tsx — 5 tests: ThemeProvider default system, dark class, light class, localStorage persist, localStorage restore) -->
 - [ ] **UIDN-02**: Mobile-first responsive design — layouts, touch targets, and interactions designed for phone screens first, scaled up for desktop
 - [ ] **UIDN-03**: Modern, polished visual design using shadcn/ui Maia style with Neutral preset
 
 ### Testing
 
-- [ ] **TEST-01**: Testing infrastructure set up (Vitest + React Testing Library) with CI-ready scripts
-- [ ] **TEST-02**: Auth flows have unit/integration tests (login, 2FA rejection, session persistence, logout)
-- [ ] **TEST-03**: Response submission and result visibility have unit/integration tests (one-response enforcement, respond-then-reveal, respondents-only results)
-- [ ] **TEST-04**: Response integrity checks have tests (server membership rejection, rate limiting)
+- [x] **TEST-01**: Testing infrastructure set up (Vitest + React Testing Library) with CI-ready scripts <!-- Evidence: .planning/phases/01-foundation-authentication/01-01-SUMMARY.md (Vitest + RTL + jsdom installed and configured; vitest tag in plan provides) -->
+- [x] **TEST-02**: Auth flows have unit/integration tests (login, 2FA rejection, session persistence, logout) <!-- Evidence: .planning/phases/01-foundation-authentication/01-04-SUMMARY.md (auth-provider.test.tsx 5 + callback-behavior.test.tsx 11 + auth-guard.test.tsx 6 + landing-page.test.tsx 4 + auth-error-page.test.tsx 4 — 30 tests covering login, 2FA rejection variants, session, signOut) -->
+- [x] **TEST-03**: Response submission and result visibility have unit/integration tests (one-response enforcement, respond-then-reveal, respondents-only results) <!-- Evidence: .planning/phases/02-browsing-responding/02-03-SUMMARY.md (vote-submission.test.tsx 7 + results-visibility.test.tsx 6 + suggestion-list.test.tsx 6 — 19 tests across 3 files) -->
+- [x] **TEST-04**: Response integrity checks have tests (server membership rejection, rate limiting) <!-- Evidence: .planning/phases/03-response-integrity/03-01-SUMMARY.md (8 guild-callback tests for all failure modes) and .planning/phases/03-response-integrity/03-02-SUMMARY.md (rate-limit-edge-function.test.ts + rate-limit-toast.test.tsx) -->
 - [x] **TEST-05**: Admin actions have tests (suggestion CRUD, admin promotion/demotion, server-side auth checks)
 - [x] **TEST-06**: E2E smoke tests cover the critical path (login → browse → respond → see results)
 
@@ -79,8 +79,8 @@
 
 - [x] **INFR-01**: App is deployed on Netlify at polls.wtcsmapban.com
 - [x] **INFR-02**: Supabase free tier keepalive cron pings the database every 3-4 days
-- [ ] **INFR-03**: All reads go direct from browser via Supabase JS client with RLS policies
-- [ ] **INFR-04**: All response writes go through Supabase Edge Functions
+- [x] **INFR-03**: All reads go direct from browser via Supabase JS client with RLS policies <!-- Evidence: .planning/phases/01-foundation-authentication/01-02-SUMMARY.md (RLS policies SELECT-only on data tables, narrow UPDATE on profiles) — useSuggestions / useVoteCounts / CategoriesList / AdminsList all query supabase.from() directly per CLAUDE.md architecture; INFR-03 invariant grep test (polls-effective-invariant) walks src/routes+hooks+components per 04-04 STATE log -->
+- [x] **INFR-04**: All response writes go through Supabase Edge Functions <!-- Evidence: .planning/phases/02-browsing-responding/02-VERIFICATION.md (Traceability row VOTE-02 SATISFIED — submit-vote EF) and .planning/phases/05-launch-hardening/05-08-SUMMARY.md (15 EFs deployed live per 2026-04-25 verification of 04-UAT prerequisites) -->
 
 ## v2 Requirements
 
@@ -123,12 +123,12 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 1 | Pending |
-| AUTH-02 | Phase 1 | Pending |
-| AUTH-03 | Phase 3 | Pending |
-| AUTH-04 | Phase 1 | Pending |
-| AUTH-05 | Phase 1 | Pending |
-| ADMN-01 | Phase 1 | Pending |
+| AUTH-01 | Phase 1 | Complete |
+| AUTH-02 | Phase 1 | Complete |
+| AUTH-03 | Phase 3 | Complete |
+| AUTH-04 | Phase 1 | Complete |
+| AUTH-05 | Phase 1 | Complete |
+| ADMN-01 | Phase 1 | Complete |
 | ADMN-02 | Phase 4 | Complete |
 | ADMN-03 | Phase 4 | Complete |
 | ADMN-04 | Phase 4 | Complete |
@@ -142,30 +142,30 @@
 | LIFE-01 | Phase 4 | Complete |
 | LIFE-02 | Phase 4 | Complete |
 | LIFE-03 | Phase 4 | Complete |
-| VOTE-01 | Phase 2 | Pending |
-| VOTE-02 | Phase 2 | Pending |
-| VOTE-03 | Phase 2 | Pending |
-| VOTE-04 | Phase 3 | Pending |
-| RSLT-01 | Phase 2 | Pending |
-| RSLT-02 | Phase 2 | Pending |
-| RSLT-03 | Phase 2 | Pending |
-| RSLT-04 | Phase 2 | Pending |
-| RSLT-05 | Phase 2 | Pending |
+| VOTE-01 | Phase 2 | Complete |
+| VOTE-02 | Phase 2 | Complete |
+| VOTE-03 | Phase 2 | Complete |
+| VOTE-04 | Phase 3 | Complete |
+| RSLT-01 | Phase 2 | Complete |
+| RSLT-02 | Phase 2 | Complete |
+| RSLT-03 | Phase 2 | Complete |
+| RSLT-04 | Phase 2 | Complete |
+| RSLT-05 | Phase 2 | Complete |
 | CATG-01 | Phase 4 | Complete |
-| CATG-02 | Phase 2 | Pending |
-| CATG-03 | Phase 2 | Pending |
-| CATG-04 | Phase 2 | Pending |
-| UIDN-01 | Phase 1 | Pending |
+| CATG-02 | Phase 2 | Complete |
+| CATG-03 | Phase 2 | Complete |
+| CATG-04 | Phase 2 | Complete |
+| UIDN-01 | Phase 1 | Complete |
 | UIDN-02 | Phase 1 | Pending |
 | UIDN-03 | Phase 1 | Pending |
 | INFR-01 | Phase 1 | Complete |
 | INFR-02 | Phase 5 | Complete |
-| INFR-03 | Phase 1 | Pending |
-| INFR-04 | Phase 2 | Pending |
-| TEST-01 | Phase 1 | Pending |
-| TEST-02 | Phase 1 | Pending |
-| TEST-03 | Phase 2 | Pending |
-| TEST-04 | Phase 3 | Pending |
+| INFR-03 | Phase 1 | Complete |
+| INFR-04 | Phase 2 | Complete |
+| TEST-01 | Phase 1 | Complete |
+| TEST-02 | Phase 1 | Complete |
+| TEST-03 | Phase 2 | Complete |
+| TEST-04 | Phase 3 | Complete |
 | TEST-05 | Phase 4 | Complete |
 | TEST-06 | Phase 5 | Complete |
 
@@ -176,4 +176,4 @@
 
 ---
 *Requirements defined: 2026-04-06*
-*Last updated: 2026-04-21 — INFR-02 / TEST-06 marked Completed after Phase 5 verification; INFR-01 status synced; previous touch 2026-04-06 added terminology and status label formalization*
+*Last updated: 2026-04-25 — Phase 6 D-09 evidence-driven status sync flipped 25 v1 requirements to Complete with inline evidence citations to Phase 1-5 SUMMARY/VERIFICATION/UAT artifacts. UIDN-02 (mobile-first responsive design) and UIDN-03 (shadcn/ui Maia + Neutral preset polish) intentionally remain Pending — no closure UAT or test evidence beyond architectural defaults; logged in 06-04-SUMMARY.md ## REQ Audit Gaps for follow-up. Previous touch 2026-04-21 — INFR-02 / TEST-06 marked Completed after Phase 5 verification; INFR-01 status synced; previous touch 2026-04-06 added terminology and status label formalization.*
