@@ -108,7 +108,7 @@ export default function DebugAuthOverlay() {
   const [storageKeys] = useState<Array<{ key: string; preview: string }>>(snapshotStorageKeys)
   const [breadcrumbs] = useState<unknown[]>(snapshotBreadcrumbs)
   const [consoleErrors, setConsoleErrors] = useState<ConsoleErrorEntry[]>([])
-  const [now, setNow] = useState<number>(() => Date.now())
+  const [, setNow] = useState<number>(() => Date.now())
 
   useEffect(() => {
     void supabase.auth.getSession().then(({ data: { session: s } }) => {
@@ -123,7 +123,11 @@ export default function DebugAuthOverlay() {
 
     const originalConsoleError = console.error
     console.error = (...args: unknown[]) => {
-      setConsoleErrors((prev) => [...prev, { ts: Date.now(), args }])
+      const ts = Date.now()
+      setConsoleErrors((prev) => [
+        ...prev.filter((e) => ts - e.ts < 30000),
+        { ts, args },
+      ])
       originalConsoleError(...args)
     }
 
@@ -136,8 +140,6 @@ export default function DebugAuthOverlay() {
   }, [])
 
   if (hidden) return null
-
-  const recentConsoleErrors = consoleErrors.filter((e) => now - e.ts < 30000)
 
   return (
     <div className="fixed bottom-4 left-4 z-40 rounded-xl border bg-card shadow-md p-4 max-w-[min(28rem,calc(100vw-2rem))] max-h-[calc(100vh-2rem)] overflow-y-auto">
@@ -260,7 +262,7 @@ export default function DebugAuthOverlay() {
             onClick={() =>
               copySection(
                 'Recent console errors',
-                recentConsoleErrors
+                consoleErrors
                   .map((e) => `[${formatTimestamp(e.ts)}] ${e.args.map(String).join(' ')}`)
                   .join('\n'),
               )
@@ -270,9 +272,9 @@ export default function DebugAuthOverlay() {
           </Button>
         </div>
         <pre className="font-mono text-xs whitespace-pre-wrap break-all">
-          {recentConsoleErrors.length === 0
+          {consoleErrors.length === 0
             ? '(none)'
-            : recentConsoleErrors
+            : consoleErrors
                 .map(
                   (e) => `[${formatTimestamp(e.ts)}] ${e.args.map(String).join(' ')}`,
                 )
