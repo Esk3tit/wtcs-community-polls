@@ -20,9 +20,15 @@ function AuthCallbackPage() {
       level: 'info',
     })
     if (processed.current) return
-    processed.current = true
+    // Phase 6 WR-04: don't latch processed.current until the promise has
+    // actually resolved. Setting it pre-await would short-circuit the next
+    // mount/remount if the promise rejected (or .then body threw), wedging
+    // the user on the loading spinner with no recovery path.
+    let cancelled = false
 
     handleAuthCallback().then((result) => {
+      if (cancelled) return
+      processed.current = true
       Sentry.addBreadcrumb({
         category: 'auth',
         message: 'callback route resolved',
@@ -35,6 +41,10 @@ function AuthCallbackPage() {
         navigate({ to: '/auth/error', search: { reason: result.reason } })
       }
     })
+
+    return () => {
+      cancelled = true
+    }
   }, [navigate])
 
   return (
