@@ -5,6 +5,7 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Navbar } from '@/components/layout/Navbar'
 import { Toaster } from '@/components/ui/sonner'
+import { ConsentBanner } from '@/components/ConsentBanner'
 import { ConsentChip } from '@/components/ConsentChip'
 
 // R-01: lazy-loaded but NOT DEV-gated at the import level — the overlay
@@ -34,6 +35,7 @@ function RootLayout() {
             a sibling of <RouterProvider> in src/main.tsx — that placement
             would crash on first render (TanStack Router's routerContext is
             only propagated to descendants). */}
+        <ConsentBanner />
         <ConsentChip />
         {typeof window !== 'undefined' &&
           (window.localStorage.getItem('wtcs_debug_auth') === '1' ||
