@@ -129,3 +129,26 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 3. Response Integrity | 2/2 | Complete | - |
 | 4. Admin Panel & Suggestion Management | 4/4 | Complete | 2026-04-11 |
 | 5. Launch Hardening | 10/10 | Complete | 2026-04-20 |
+
+### Phase 6: Auth fix, GDPR opt-IN rewire, favicon polish, and launch hardening
+**Goal**: Land four launch-hardening cleanup buckets (auth bug diagnose-first instrumentation, GDPR opt-IN rewire of analytics + Replay, WTCS-branded favicon and polished title/meta, REQUIREMENTS sync + Sentry sourcemap symbolication evidence) WITHOUT introducing new product features, regressions, or new env vars; PostHog event capture and Sentry Replay default OFF until consent is allowed
+**Depends on**: Phase 5
+**Requirements**: None — Phase 6 is a cleanup phase; D-09 itself audits status drift on Phase 1-5 REQ-IDs (no new IDs introduced)
+**Success Criteria** (what must be TRUE):
+  1. Manual auth-bug reproduction (D-02) is logged in 06-AUTH-REPRO-LOG.md before any code change; Sentry breadcrumbs cover AuthContext mount, getSession, onAuthStateChange, handleAuthCallback rejections, callback route, and AuthErrorPage render
+  2. `?debug=auth` overlay surfaces sb-* cookies, sb-* localStorage, current Supabase session shape, last 5 Sentry breadcrumbs, and last-30s console errors in DEV builds; ships zero bytes to production
+  3. PostHog event capture and Sentry Replay default OFF until the user clicks Allow on the new opt-IN banner; Sentry **error** capture remains unconditional
+  4. ConsentBanner (first-visit) and ConsentChip (state-aware footer) render verbatim UI-SPEC copy with no exclamation marks and no destructive coloring on Decline; same UX worldwide (no geo-detection)
+  5. `<title>WTCS Community Suggestions</title>` and 153-char meta description live in index.html; favicon set (svg + ico + apple-touch + favicon-32) replaces the Vite scaffold and renders cleanly on light + dark Chrome at 16x16
+  6. 05-VERIFICATION.md gains direct symbolicated-stack-trace evidence (deliberate Sentry throw rolled back in same commit; no test artifacts in main); REQUIREMENTS.md status column synced to actual phase artifacts with inline evidence citations
+  7. Husky pre-commit + lint-staged stay green; all new + updated tests pass (≥23 new test assertions across ConsentContext + ConsentBanner + ConsentChip)
+**Plans**: 7 plans (06-02 split into 4 sequenced sub-plans per Phase 6 revision iteration 1; all four sub-plans stay in Wave 2 with internal depends_on chain)
+Plans:
+- [ ] 06-01-PLAN.md -- Auth diagnose-first: manual repro log + Sentry breadcrumbs across auth lifecycle + DEV-only ?debug=auth overlay + targeted fix or environmental finding (D-01, D-02)
+- [ ] 06-02-PLAN.md -- GDPR opt-IN foundation: ConsentContext + useConsent hook + 8 ConsentContext tests (D-04, D-05, D-06)
+- [ ] 06-02b-PLAN.md -- GDPR opt-IN wiring: posthog.ts default-OFF flags + sentry.ts gate flip + ConsentProvider mount in main.tsx + AuthContext.identify gate (D-04, D-05) — depends_on [06-02]
+- [ ] 06-02c-PLAN.md -- GDPR opt-IN UI: ConsentBanner + flipped ConsentChip + __root.tsx mount + 15 banner/chip tests (D-03, D-06) — depends_on [06-02b]
+- [ ] 06-02d-PLAN.md -- GDPR opt-IN smoke: PostHog dashboard live-events verification (D-04) — depends_on [06-02c]
+- [ ] 06-03-PLAN.md -- Favicon + title polish: realfavicongenerator output set + index.html title/meta/link block + cross-browser visual verification (D-07, D-10)
+- [ ] 06-04-PLAN.md -- Cleanup: Sentry symbolicated-stack-trace verification (gated by AdminGuard via useEffect in AdminTabs.tsx, W-04 fix) + 05-VERIFICATION.md update + REQUIREMENTS.md evidence-driven status sync (D-08, D-09)
+**UI hint**: yes

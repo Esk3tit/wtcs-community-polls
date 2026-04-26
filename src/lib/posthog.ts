@@ -19,6 +19,12 @@ export function initPostHog() {
     capture_pageview: 'history_change',
     session_recording: { maskAllInputs: true },
     autocapture: false,
+    // Phase 6 D-04: GDPR opt-IN — capture and persistence are OFF by default.
+    // ConsentProvider flips them on after the user clicks Allow via posthog.opt_in_capturing().
+    opt_out_capturing_by_default: true,
+    opt_out_persistence_by_default: true,
+    // Phase 6 D-04: honor browser Do-Not-Track at init time as well.
+    respect_dnt: true,
   })
   // Shared PostHog project with sibling WTCS Map Vote Ban app — tag every event
   // so dashboards can filter per-app without needing a separate project.

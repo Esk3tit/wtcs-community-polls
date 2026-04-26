@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Phase 5 UI-SPEC approved (559bcfd). CONTEXT + UI-SPEC locked. Ready for /gsd-plan-phase 5.
-last_updated: "2026-04-22T05:47:22.566Z"
-last_activity: 2026-04-21
+status: ready_to_complete
+stopped_at: Phase 6 verified, PR #15 ready-for-review (awaiting merge to main)
+last_updated: "2026-04-26T16:00:00.000Z"
+last_activity: 2026-04-26 -- Phase 6 complete + verified (06-VERIFICATION.md PASSED 7/7); milestone v1.0 ready for /gsd-complete-milestone after PR #15 merges
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 25
-  completed_plans: 25
+  total_phases: 6
+  completed_phases: 6
+  total_plans: 32
+  completed_plans: 32
   percent: 100
 ---
 
@@ -21,14 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** Community members can vote on competitive scene proposals with confidence that results are legitimate
-**Current focus:** Phase 05 — launch-hardening
+**Current focus:** Milestone v1.0 — all 6 phases complete; awaiting PR #15 merge then `/gsd-complete-milestone`
 
 ## Current Position
 
-Phase: 05 (launch-hardening) — EXECUTING
-Plan: 1 of 10
-Status: Executing Phase 05
-Last activity: 2026-04-22 — Completed quick task 260421-vxb: react-refresh lint fix
+Milestone: v1.0 — READY_TO_COMPLETE (6/6 phases done, 32/32 plans done)
+Latest phase: 06 (auth fix, GDPR opt-IN, favicon, launch hardening) — COMPLETE + VERIFIED
+PR: #15 (draft → ready-for-review 2026-04-26) — 27 commits ahead of origin/main
+Next action: merge PR #15, then `/gsd-complete-milestone`
+Last activity: 2026-04-26 -- Phase 6 verified (06-VERIFICATION.md PASSED 7/7), Husky chmod advisory closed (a177f7c)
 
 Progress: [██████████] 100%
 
@@ -99,6 +100,11 @@ Recent decisions affecting current work:
 
 - pg_cron concern resolved — Phase 5 uses GH Actions cron, not pg_cron (05-CONTEXT.md D-01)
 
+### Roadmap Evolution
+
+- 2026-04-25: Phase 6 added — Auth fix, GDPR opt-IN rewire, favicon polish, and launch hardening. Scope includes auth bug (login fails in user's main browser, works in incognito), GDPR opt-IN rewire (current Phase 5 ships opt-OUT), favicon replacement (default Vite favicon → WTCS-branded), and launch-hardening cleanup. Queued after Phase 4 UAT (8 of 9 tests passing on prod 2026-04-25; 9th deferred — requires second human, non-blocking).
+- 2026-04-26: Phase 6 executed + verified end-to-end (7/7 plans, 7/7 success criteria, 378/378 tests, 0 new env vars, 1 advisory CLOSED — Husky hooks now executable). Auth bug closed as environmental (Step 0 site-data clear restored login on Comet). 3 follow-up issues opened for v1.1: #17 (Sentry React SDK v10 + React 19 ErrorBoundary capture path silently broken — render-phase throws don't ship; pivoted to event-handler throw for D-08 verification); #18 (UIDN-02/03 evidence-driven closure — needs UI-checker / Lighthouse signal); #19 (Vite/Rolldown sourcemap function-name preservation — Sentry shows minified `$M` instead of `fireSentrySmoke`).
+
 ### Quick Tasks Completed
 
 | # | Description | Date | Commit | Directory |
@@ -107,6 +113,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-19T00:00:00.000Z
-Stopped at: Phase 5 UI-SPEC approved (559bcfd). CONTEXT + UI-SPEC locked. Ready for /gsd-plan-phase 5.
-Resume file: .planning/phases/05-launch-hardening/05-UI-SPEC.md
+Last session: 2026-04-25T20:39:27.739Z
+Stopped at: Phase 6 UI-SPEC approved
+Resume file: .planning/phases/06-auth-fix-gdpr-opt-in-rewire-favicon-polish-and-launch-harden/06-UI-SPEC.md
