@@ -3,6 +3,7 @@ import { X } from 'lucide-react'
 import { useRouterState } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
 import { useConsent } from '@/hooks/useConsent'
+import { CONSENT_CARD_MAX_W } from '@/lib/consent-styles'
 
 // Phase 6 D-04: persistent footer chip with state-aware copy.
 // - 'allow'    → "Anonymous usage analytics are on. Turn off"
@@ -42,7 +43,7 @@ export function ConsentChip() {
   const handleAction = isAllow ? decline : allow
 
   return (
-    <div className="fixed bottom-4 right-4 z-40 rounded-lg border bg-card shadow-md p-3 max-w-[min(20rem,calc(100vw-2rem))] transition-opacity">
+    <div className={`fixed bottom-4 right-4 z-40 rounded-lg border bg-card shadow-md p-3 ${CONSENT_CARD_MAX_W} transition-opacity`}>
       <div className="flex items-start gap-2">
         <p className="text-xs text-muted-foreground leading-relaxed flex-1">
           {body}{' '}
