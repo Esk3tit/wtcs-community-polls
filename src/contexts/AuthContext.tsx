@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useEffect, useState, useCallback, useRef } from 'react'
 import type { ReactNode } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
@@ -27,7 +27,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Phase 6 WR-03: track the most-recently-requested userId so any in-flight
+  // fetch that resolves AFTER a newer fetch started is fully ignored. The
+  // previous guard `if (profileData && profileData.id !== userId)` failed
+  // when the stale fetch resolved with `data: null` (RLS denied / row not
+  // yet inserted) — `setProfile(null)` would clobber the freshly populated
+  // profile of the next signed-in user.
+  const latestUserIdRef = useRef<string | null>(null)
   const fetchProfile = useCallback(async (userId: string) => {
+    latestUserIdRef.current = userId
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -35,19 +43,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq('id', userId)
         .single()
 
+      // Stale-fetch bail: if a newer fetchProfile() has been kicked off in
+      // the meantime, drop this result entirely (covers data=null too).
+      if (latestUserIdRef.current !== userId) return
+
       if (error) {
         console.error('Failed to fetch profile:', error.message)
         setProfile(null)
         return
       }
 
-      // Guard against stale fetches: only set if user ID still matches
       const profileData = data as Profile | null
-      setProfile((prev) => {
-        if (profileData && profileData.id !== userId) return prev
-        return profileData
-      })
+      setProfile(profileData)
     } catch (err) {
+      // Same stale-fetch bail on the error path.
+      if (latestUserIdRef.current !== userId) return
       console.error('Profile fetch error:', err)
       setProfile(null)
     }
