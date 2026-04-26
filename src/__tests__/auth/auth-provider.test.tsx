@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor, act } from '@testing-library/react'
+import type { ReactNode } from 'react'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { ConsentProvider } from '@/contexts/ConsentContext'
 import { useAuth } from '@/hooks/useAuth'
 
 const mockGetSession = vi.fn()
@@ -20,6 +22,26 @@ vi.mock('@/lib/supabase', () => ({
     from: (...args: unknown[]) => mockFrom(...args),
   },
 }))
+
+// Phase 6 R-03: AuthProvider now consumes useConsent(), so it MUST mount inside
+// a ConsentProvider. Mock posthog/sentry so the consent side-effects don't fail
+// in jsdom and so the AuthProvider tests don't accidentally exercise analytics.
+vi.mock('@/lib/posthog', () => ({
+  posthog: {
+    opt_in_capturing: vi.fn(),
+    opt_out_capturing: vi.fn(),
+    identify: vi.fn(),
+    reset: vi.fn(),
+  },
+  initPostHog: vi.fn(),
+}))
+vi.mock('@/lib/sentry', () => ({
+  loadSentryReplayIfConsented: vi.fn(),
+}))
+
+function withProviders(ui: ReactNode) {
+  return <ConsentProvider>{ui}</ConsentProvider>
+}
 
 function AuthConsumer() {
   const { user, profile, loading, isAdmin } = useAuth()
@@ -52,9 +74,11 @@ describe('AuthProvider', () => {
     mockGetSession.mockResolvedValue({ data: { session: null } })
 
     render(
-      <AuthProvider>
-        <AuthConsumer />
-      </AuthProvider>
+      withProviders(
+        <AuthProvider>
+          <AuthConsumer />
+        </AuthProvider>
+      )
     )
 
     await waitFor(() => {
@@ -89,9 +113,11 @@ describe('AuthProvider', () => {
     })
 
     render(
-      <AuthProvider>
-        <AuthConsumer />
-      </AuthProvider>
+      withProviders(
+        <AuthProvider>
+          <AuthConsumer />
+        </AuthProvider>
+      )
     )
 
     await waitFor(() => {
@@ -127,9 +153,11 @@ describe('AuthProvider', () => {
     })
 
     render(
-      <AuthProvider>
-        <AuthConsumer />
-      </AuthProvider>
+      withProviders(
+        <AuthProvider>
+          <AuthConsumer />
+        </AuthProvider>
+      )
     )
 
     await waitFor(() => {
@@ -167,9 +195,11 @@ describe('AuthProvider', () => {
     }
 
     render(
-      <AuthProvider>
-        <SignOutButton />
-      </AuthProvider>
+      withProviders(
+        <AuthProvider>
+          <SignOutButton />
+        </AuthProvider>
+      )
     )
 
     await waitFor(() => {
@@ -194,9 +224,11 @@ describe('AuthProvider', () => {
     }
 
     render(
-      <AuthProvider>
-        <LoginButton />
-      </AuthProvider>
+      withProviders(
+        <AuthProvider>
+          <LoginButton />
+        </AuthProvider>
+      )
     )
 
     await waitFor(() => {

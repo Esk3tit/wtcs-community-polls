@@ -119,4 +119,44 @@ describe('ConsentContext', () => {
     )
     errSpy.mockRestore()
   })
+
+  it('decline() reloads the page when previous state was allow (P-02 — terminates live Replay)', () => {
+    window.localStorage.setItem('wtcs_consent', 'allow')
+    const reloadSpy = vi.fn()
+    const originalLocation = window.location
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...originalLocation, reload: reloadSpy },
+    })
+
+    render(withProvider(<Consumer />))
+    fireEvent.click(screen.getByTestId('decline-btn'))
+
+    expect(reloadSpy).toHaveBeenCalledTimes(1)
+    expect(window.localStorage.getItem('wtcs_consent')).toBe('decline')
+
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: originalLocation,
+    })
+  })
+
+  it('decline() does NOT reload when previous state was undecided', () => {
+    const reloadSpy = vi.fn()
+    const originalLocation = window.location
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...originalLocation, reload: reloadSpy },
+    })
+
+    render(withProvider(<Consumer />))
+    fireEvent.click(screen.getByTestId('decline-btn'))
+
+    expect(reloadSpy).not.toHaveBeenCalled()
+
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: originalLocation,
+    })
+  })
 })

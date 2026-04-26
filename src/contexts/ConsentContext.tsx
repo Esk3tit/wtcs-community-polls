@@ -73,8 +73,17 @@ export function ConsentProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const decline = useCallback(() => {
+    const previous = window.localStorage.getItem(STORAGE_KEY)
     window.localStorage.setItem(STORAGE_KEY, 'decline')
     setState('decline')
+    // Phase 6 P-02 (REVIEWS.md): if the user is flipping FROM allow TO decline,
+    // reload the page to terminate any active Sentry Replay session.
+    // Replay does not support runtime detach (RESEARCH.md Pitfall 7).
+    // We only reload when there is actually a live session to kill — a fresh
+    // decline from 'undecided' or 'decline' does nothing surprising.
+    if (previous === 'allow') {
+      window.location.reload()
+    }
   }, [])
 
   return (

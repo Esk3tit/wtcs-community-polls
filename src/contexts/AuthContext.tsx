@@ -4,6 +4,7 @@ import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { handleAuthCallback } from '@/lib/auth-helpers'
 import { posthog } from '@/lib/posthog'
+import { useConsent } from '@/hooks/useConsent'
 import type { Profile } from '@/lib/types/suggestions'
 import * as Sentry from '@sentry/react'
 
@@ -20,6 +21,7 @@ interface AuthState {
 const AuthContext = createContext<AuthState | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { state: consentState } = useConsent()
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -127,13 +129,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(newSession)
         setUser(newSession?.user ?? null)
         if (newSession?.user) {
-          // PostHog identify — AFTER the auth gate (verification succeeded).
-          // Discord snowflake (provider_id) ONLY — NEVER email/username/discriminator (T-05-05).
-          // Defensive: skip if provider_id is missing (Assumption A5).
-          const providerId = newSession.user.user_metadata?.provider_id
-          if (providerId) {
-            posthog.identify(providerId)
-          }
+          // Phase 6 R-03: PostHog analytics-identify moved to a dedicated effect
+          // below (deps [consentState, user]) so consent flips never re-run this
+          // auth-subscription effect or its onAuthStateChange callback.
           fetchProfile(newSession.user.id).then(() => setLoading(false))
         } else {
           setProfile(null)
@@ -144,6 +142,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => subscription.unsubscribe()
   }, [fetchProfile])
+
+  // Phase 6 R-03 (REVIEWS.md): analytics-identify lives in its OWN effect,
+  // deps [consentState, user]. The auth-subscription effect above intentionally
+  // does NOT depend on consentState — flipping consent must not re-run
+  // supabase.auth.getSession() or re-subscribe onAuthStateChange.
+  // Covers the case "user already signed in, then consent flips to allow":
+  // when consentState becomes 'allow' and user is non-null, identify fires once.
+  // Discord snowflake (provider_id) ONLY — NEVER email/username/discriminator (T-05-05).
+  useEffect(() => {
+    if (consentState !== 'allow') return
+    const providerId = user?.user_metadata?.provider_id as string | undefined
+    if (providerId) {
+      posthog.identify(providerId)
+    }
+  }, [consentState, user])
 
   const signOut = useCallback(() => {
     // Clear state synchronously first so UI responds immediately,

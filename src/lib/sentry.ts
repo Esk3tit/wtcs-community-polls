@@ -15,24 +15,26 @@ import * as Sentry from '@sentry/react'
 let replayLoaded = false
 
 /**
- * Lazily attaches Sentry Replay to the running client when the user has NOT
- * opted out of analytics. Called from ConsentChip's mount effect AFTER the
- * localStorage consent check.
+ * Lazily attaches Sentry Replay to the running client when the user has
+ * explicitly opted IN via the consent flow. Called by ConsentContext's
+ * side-effect bridge when state flips to 'allow'.
  *
  * Idempotent — safe to call more than once. No-op when:
  *  - already loaded (replayLoaded flag),
  *  - running outside a browser (SSR/test),
- *  - `analytics_opted_out` flag is set in localStorage,
+ *  - `wtcs_consent` is not 'allow' in localStorage (Phase 6 D-04 opt-IN gate),
  *  - no Sentry client has been initialized.
+ *
+ * Sentry ERROR capture (Sentry.init in main.tsx) is NEVER gated — only
+ * Replay attach is consent-gated (D-05).
  */
 export async function loadSentryReplayIfConsented(): Promise<void> {
   if (replayLoaded || typeof window === 'undefined') return
-  // Phase 5 semantics (UI-SPEC Contract 3):
-  //  - `posthog_consent_chip_dismissed` = chip is hidden (user has seen it)
-  //  - `analytics_opted_out` = user explicitly chose "Opt out"
-  // Only the explicit opt-out blocks Replay. Plain dismissal via X is accepted.
-  const optedOut = window.localStorage.getItem('analytics_opted_out') === 'true'
-  if (optedOut) return
+  // Phase 6 D-04: GDPR opt-IN. Replay is NEVER attached unless the user has
+  // explicitly clicked Allow. Single source of truth = localStorage['wtcs_consent'].
+  // Sentry ERROR capture remains unconditional (Sentry.init in main.tsx is NOT gated).
+  const consent = window.localStorage.getItem('wtcs_consent')
+  if (consent !== 'allow') return
   const client = Sentry.getClient()
   if (!client) return
   // Set the flag synchronously BEFORE the await so concurrent callers
