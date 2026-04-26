@@ -3,6 +3,7 @@ import { X } from 'lucide-react'
 import { useRouterState } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
 import { useConsent } from '@/hooks/useConsent'
+import { CONSENT_CARD_MAX_W } from '@/lib/consent-styles'
 
 // Phase 6 D-03: First-visit non-blocking GDPR opt-IN banner.
 // Renders ONLY when consent state is 'undecided' AND not on /admin/*.
@@ -28,7 +29,7 @@ export function ConsentBanner() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-40 rounded-lg border bg-card shadow-md p-4 max-w-[min(20rem,calc(100vw-2rem))] transition-opacity">
+    <div className={`fixed bottom-4 right-4 z-40 rounded-lg border bg-card shadow-md p-4 ${CONSENT_CARD_MAX_W} transition-opacity`}>
       <div className="flex items-start gap-2">
         <div className="flex-1">
           <p className="text-sm text-muted-foreground leading-relaxed">
