@@ -99,25 +99,37 @@ blocked: 0
   confidence: high
 
 - truth: "Sentry breadcrumb fires on AuthErrorPage useEffect"
-  status: misobservation
+  status: environmental
   reason: "User reported: sentry doesn't fire for the error page"
   severity: not_a_code_defect
   test: 11
-  root_cause: "Sentry breadcrumbs are buffer-only by design. AuthErrorPage.tsx:52-59 correctly calls Sentry.addBreadcrumb({ category: 'auth', message: 'AuthErrorPage rendered', ... }) on every mount, but breadcrumbs are NOT transmitted until an event (error/transaction) ships that they can attach to. With no captured error during the visit, the breadcrumb sits in the in-memory scope. The user looked for a Sentry issue/network request and saw nothing because nothing was sent."
+  playwright_verified: 2026-04-27
+  root_cause: "Two compounding factors confirmed via Playwright probe of `/auth/error?reason=auth-failed&debug=auth`:
+
+    (1) PRIMARY: VITE_SENTRY_DSN missing in local .env.local. window.__SENTRY__ contains only {version: '10.49.0'} — NO client, NO async-context-strategy. Sentry.init({dsn: undefined}) at main.tsx:24 short-circuits to no-op. Sentry.addBreadcrumb() in AuthErrorPage.tsx:52-59 IS being called on render, but with no client the call is a silent no-op. Breadcrumbs go nowhere.
+
+    (2) SECONDARY: even if a client were present, DebugAuthOverlay.tsx:109 captures `breadcrumbs` via useState(snapshotBreadcrumbs) which runs ONCE at component mount (render-phase, before useEffects commit). When both components mount in the same render, the overlay's snapshot precedes AuthErrorPage's useEffect, so the overlay's 'Recent Sentry breadcrumbs (last 5)' section would show stale data even if the breadcrumb landed. This is a known issue (IN-02 from the original review)."
   artifacts:
     - path: "src/components/auth/AuthErrorPage.tsx:52-59"
-      issue: "Working as designed — breadcrumb call IS firing"
+      issue: "Code is correct — Sentry.addBreadcrumb() is called every mount; just no-ops without a Sentry client"
+    - path: "src/main.tsx:24"
+      issue: "Sentry.init({dsn: import.meta.env.VITE_SENTRY_DSN}) — when DSN is empty, no client is created"
+    - path: "src/components/debug/DebugAuthOverlay.tsx:109"
+      issue: "useState(snapshotBreadcrumbs) — render-phase snapshot, never refreshes (IN-02 from 06-REVIEW.md, deferred)"
   missing:
-    - "To verify: open DevTools console and run Sentry.getCurrentScope().getScopeData().breadcrumbs while on the error page (the DebugAuthOverlay 'Recent Sentry breadcrumbs' section already does exactly this — see Test 12 fix)"
-    - "To verify remote delivery: throw a test error after navigation so Sentry flushes a payload with the breadcrumb attached"
+    - "Add VITE_SENTRY_DSN to local .env.local (same root cause as #4 was for VITE_POSTHOG_KEY) — restart vite dev"
+    - "Optional dev-quality fix: console.warn in main.tsx when VITE_SENTRY_DSN missing in dev (mirrors the posthog warn from 260427-c5d)"
+    - "Optional product fix: refresh DebugAuthOverlay breadcrumbs section live (move from useState init to useEffect or a setInterval/MutationObserver)"
   confidence: high
-  related_issue: "Distinct from issue #17 (ErrorBoundary capture path) — this is the useEffect breadcrumb path, which is working correctly"
+  related_issue: "Distinct from issue #17 (ErrorBoundary capture path). Same shape as gap #4: a missing dev env var producing a silent no-op."
 
 - truth: "DebugAuthOverlay renders when ?auth_debug=1 with analytics consent allowed"
   status: uat_script_error
   reason: "User reported: no diagnostic card appeared with anonymous usage analytics turned on"
   severity: not_a_code_defect
   test: 12
+  playwright_verified: 2026-04-27
+  evidence: "Playwright probe of http://localhost:5173/?debug=auth confirmed overlay renders at bottom-4 left-4 with all six sections (Supabase session, PKCE State, sb-* cookies, sb-* localStorage, Recent Sentry breadcrumbs, Recent console errors). Consent state was null (undecided) and overlay still rendered, confirming consent is NOT part of the gate. Screenshot: phase6-uat-fix-test12-debug-overlay.png."
   root_cause: "UAT instruction was wrong — gate is `?debug=auth`, not `?auth_debug=1`. Activation predicate at src/routes/__root.tsx:40-47 reads: new URLSearchParams(window.location.search).get('debug') === 'auth'. Consent state ('allow') is NOT part of the gate. The recent quick-task commit d694d88 (consoleErrors setState bound) only edited the component body, not the activation predicate."
   artifacts:
     - path: "src/routes/__root.tsx:40-47"
@@ -126,4 +138,4 @@ blocked: 0
     - "Re-run Test 12 with corrected URL: append `?debug=auth` (in dev, that's all you need)"
     - "On production: also set localStorage.wtcs_debug_auth='1' first, then load with ?debug=auth"
     - "Optional code improvement: widen the gate to accept both `?debug=auth` and `?auth_debug=1` aliases for muscle-memory"
-  confidence: high
+  confidence: verified_by_playwright
