@@ -85,43 +85,65 @@ blocked: 0
 ## Gaps
 
 - truth: "PostHog network requests fire after Allow consent + navigation"
-  status: environmental
+  status: misobservation
   reason: "User reported: Allow click + chip appearance both work, but no PostHog network requests visible after accepting and navigating different tabs"
   severity: not_a_code_defect
   test: 4
-  root_cause: "VITE_POSTHOG_KEY missing in local .env.local — initPostHog() short-circuits at src/lib/posthog.ts:14-15 without calling posthog.init(). ConsentContext.opt_in_capturing() then flips an in-memory flag on an uninitialized stub, so capture is a silent no-op. Phase 6-02d previously verified this works on the Netlify deploy-preview where the env var is injected at build time."
+  playwright_verified: 2026-04-27
+  evidence: |
+    Playwright probe with VITE_POSTHOG_KEY set (.env.local already had it) confirmed the full opt-IN flow works:
+    - posthog.has_opted_in_capturing() === true after Allow click
+    - posthog.has_opted_out_capturing() === false
+    - distinct_id and $device_id present in persistence
+    - api_host = https://us.i.posthog.com
+    - 4 successful [200] POSTs to us.i.posthog.com/e/ and /i/v0/e/ after navigating to /topics
+    - The ERR_ABORTED entries seen in the user's DevTools network panel were unload-time beacon requests, which are *expected* and *normal* — beacons that race with page unload abort by design.
+  root_cause: "User read DevTools network panel during/around the unload moment of a navigation and saw the aborted beacons but missed the successful POSTs that landed AFTER the next page mounted. PostHog's `capture_pageview: 'history_change'` config only fires on history changes, so a single Allow click on the home page produces no event until the user navigates. Beacons + successful events look very similar at a glance."
   artifacts:
-    - path: "src/lib/posthog.ts:14-15"
-      issue: "Silent short-circuit when VITE_POSTHOG_KEY missing — no warning logged"
+    - path: "src/lib/posthog.ts"
+      issue: "Working as designed — no code change needed"
   missing:
-    - "Add VITE_POSTHOG_KEY (and VITE_POSTHOG_HOST if used) to local .env.local, then restart vite dev"
-    - "Optional code improvement: console.warn in dev when key missing so this is loud next time"
-  confidence: high
+    - "Re-test Test 4 with the network filter set to `posthog.com` and confirm at least one [200] POST after navigating between routes"
+    - "Optional dev-quality follow-up SHIPPED in 260427-c5d: console.warn when key is missing so the silent-failure case is now loud"
+  confidence: verified_by_playwright
 
 - truth: "Sentry breadcrumb fires on AuthErrorPage useEffect"
-  status: environmental
+  status: real_bug_in_overlay_only
   reason: "User reported: sentry doesn't fire for the error page"
-  severity: not_a_code_defect
+  severity: minor
   test: 11
   playwright_verified: 2026-04-27
-  root_cause: "Two compounding factors confirmed via Playwright probe of `/auth/error?reason=auth-failed&debug=auth`:
+  evidence: |
+    Playwright probe of /auth/error?reason=auth-failed&debug=auth (with VITE_SENTRY_DSN set, BrowserClient initialized, dsn=o4510971582349312.ingest.us.sentry.io) found:
+    - Sentry IS fully initialized (BrowserClient present, DSN configured)
+    - 7 breadcrumbs in __SENTRY__["10.49.0"].defaultIsolationScope._breadcrumbs, including the AuthErrorPage one:
+        {category: "auth", message: "AuthErrorPage rendered"}
+        {category: "auth", message: "AuthContext mounted"}
+        {category: "auth", message: "getSession() resolved"}
+        {category: "auth", message: "onAuthStateChange: INITIAL_SESSION"}
+        ... etc.
+    - 0 breadcrumbs in defaultCurrentScope._breadcrumbs
+    - The DebugAuthOverlay's "Recent Sentry breadcrumbs (last 5)" section shows "(none)" — even after the live-refresh fix from 260427-cdi
+  root_cause: |
+    The breadcrumb code is working perfectly. AuthErrorPage.tsx:52-59 fires Sentry.addBreadcrumb on every mount, the breadcrumb lands in the **isolation scope** (Sentry v10 default behavior — addBreadcrumb writes to isolation scope, not current scope).
 
-    (1) PRIMARY: VITE_SENTRY_DSN missing in local .env.local. window.__SENTRY__ contains only {version: '10.49.0'} — NO client, NO async-context-strategy. Sentry.init({dsn: undefined}) at main.tsx:24 short-circuits to no-op. Sentry.addBreadcrumb() in AuthErrorPage.tsx:52-59 IS being called on render, but with no client the call is a silent no-op. Breadcrumbs go nowhere.
+    But DebugAuthOverlay's snapshotBreadcrumbs() at line 92-93 reads from getCurrentScope() only:
+      const scope = Sentry.getCurrentScope().getScopeData()
+      return (scope.breadcrumbs ?? [])
 
-    (2) SECONDARY: even if a client were present, DebugAuthOverlay.tsx:109 captures `breadcrumbs` via useState(snapshotBreadcrumbs) which runs ONCE at component mount (render-phase, before useEffects commit). When both components mount in the same render, the overlay's snapshot precedes AuthErrorPage's useEffect, so the overlay's 'Recent Sentry breadcrumbs (last 5)' section would show stale data even if the breadcrumb landed. This is a known issue (IN-02 from the original review)."
+    Sentry's getScopeData() on the current scope returns ONLY the current-scope breadcrumbs, not the merged set. The user's report ("doesn't fire") was actually about the OVERLAY display — not about Sentry itself. The breadcrumbs are real and present; the overlay was just looking in the wrong drawer.
   artifacts:
+    - path: "src/components/debug/DebugAuthOverlay.tsx:92-93"
+      issue: "snapshotBreadcrumbs() reads getCurrentScope() but addBreadcrumb writes to isolation scope. Need to read getIsolationScope() (or merge current+isolation+global)."
     - path: "src/components/auth/AuthErrorPage.tsx:52-59"
-      issue: "Code is correct — Sentry.addBreadcrumb() is called every mount; just no-ops without a Sentry client"
+      issue: "Working correctly — breadcrumb fires every mount, lands in isolation scope as expected"
     - path: "src/main.tsx:24"
-      issue: "Sentry.init({dsn: import.meta.env.VITE_SENTRY_DSN}) — when DSN is empty, no client is created"
-    - path: "src/components/debug/DebugAuthOverlay.tsx:109"
-      issue: "useState(snapshotBreadcrumbs) — render-phase snapshot, never refreshes (IN-02 from 06-REVIEW.md, deferred)"
+      issue: "Working correctly — Sentry.init runs with valid DSN; BrowserClient created"
   missing:
-    - "Add VITE_SENTRY_DSN to local .env.local (same root cause as #4 was for VITE_POSTHOG_KEY) — restart vite dev"
-    - "Optional dev-quality fix: console.warn in main.tsx when VITE_SENTRY_DSN missing in dev (mirrors the posthog warn from 260427-c5d)"
-    - "Optional product fix: refresh DebugAuthOverlay breadcrumbs section live (move from useState init to useEffect or a setInterval/MutationObserver)"
-  confidence: high
-  related_issue: "Distinct from issue #17 (ErrorBoundary capture path). Same shape as gap #4: a missing dev env var producing a silent no-op."
+    - "Fix snapshotBreadcrumbs() to merge isolation + current + global scopes, OR switch to Sentry.getIsolationScope().getScopeData().breadcrumbs"
+    - "Optional: add a unit test asserting that breadcrumbs added via Sentry.addBreadcrumb appear in the overlay's snapshot output"
+  confidence: verified_by_playwright
+  related_issue: "Distinct from issue #17 (ErrorBoundary). This is purely a debug-tool display bug; production Sentry capture is unaffected since errors flush their own merged-scope breadcrumb set when shipped."
 
 - truth: "DebugAuthOverlay renders when ?auth_debug=1 with analytics consent allowed"
   status: uat_script_error
