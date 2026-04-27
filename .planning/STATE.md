@@ -29,7 +29,7 @@ Milestone: v1.0 — READY_TO_COMPLETE (6/6 phases done, 32/32 plans done)
 Latest phase: 06 (auth fix, GDPR opt-IN, favicon, launch hardening) — COMPLETE + VERIFIED
 PR: #15 (draft → ready-for-review 2026-04-26) — 27 commits ahead of origin/main
 Next action: merge PR #15, then `/gsd-complete-milestone`
-Last activity: 2026-04-27 -- Completed quick task 260427-cdi: Sentry DSN dev warn in main.tsx + DebugAuthOverlay breadcrumb live-refresh (Phase 6 UAT Playwright follow-up) — 386 tests green, prod bundle unchanged (6552bad)
+Last activity: 2026-04-27 -- Completed quick task 260427-dgh: fix DebugAuthOverlay snapshotBreadcrumbs scope-source bug (merge current+isolation+global) + 3 regression tests; closes Phase 6 UAT Test #11. 389 tests green, prod bundle unchanged. UAT all 12 tests now pass (Apple touch icon also confirmed via macOS Dock add) (fe5603c)
 
 Progress: [██████████] 100%
 
@@ -113,6 +113,7 @@ Recent decisions affecting current work:
 | 260426-cty | Fix Phase 6 UI-REVIEW priority items: bound DebugAuthOverlay consoleErrors, extract CONSENT_CARD_MAX_W shared token, add mutual-exclusion test | 2026-04-26 | 6d9db3a | [260426-cty-fix-phase-6-ui-review-items-prune-debuga](./quick/260426-cty-fix-phase-6-ui-review-items-prune-debuga/) |
 | 260427-c5d | Dev-mode warn in posthog.ts when VITE_POSTHOG_KEY missing — surfaces silent dev short-circuit (Phase 6 UAT follow-up) | 2026-04-27 | 414ffe5 | [260427-c5d-add-console-warn-in-posthog-ts-when-vite](./quick/260427-c5d-add-console-warn-in-posthog-ts-when-vite/) |
 | 260427-cdi | Sentry DSN dev warn in main.tsx + DebugAuthOverlay breadcrumb live-refresh (Phase 6 UAT Playwright follow-up) | 2026-04-27 | 6552bad | [260427-cdi-console-warn-in-main-tsx-when-dsn-missin](./quick/260427-cdi-console-warn-in-main-tsx-when-dsn-missin/) |
+| 260427-dgh | Fix Test #11 — DebugAuthOverlay snapshotBreadcrumbs merges current+isolation+global Sentry scopes (Sentry v10 addBreadcrumb writes to isolation by default); +3 regression tests | 2026-04-27 | fe5603c | [260427-dgh-fix-test-11-debugauthoverlay-snapshotbre](./quick/260427-dgh-fix-test-11-debugauthoverlay-snapshotbre/) |
 
 ## Session Continuity
 

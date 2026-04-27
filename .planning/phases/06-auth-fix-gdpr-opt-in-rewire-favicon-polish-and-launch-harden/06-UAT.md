@@ -1,5 +1,5 @@
 ---
-status: diagnosed
+status: complete
 phase: 06-auth-fix-gdpr-opt-in-rewire-favicon-polish-and-launch-harden
 source:
   - 06-01-SUMMARY.md
@@ -33,9 +33,8 @@ result: pass
 
 ### 4. Allow Consent Flow
 expected: Click Allow on the banner → banner dismisses immediately → consent chip appears bottom-right with text "Anonymous usage analytics are on. Turn off". No page reload. PostHog network requests start firing on subsequent navigation (visible in Network tab as `/e/` or `/i/` requests to PostHog).
-result: issue
-reported: "Allow click + chip appearance both work, but no PostHog network requests visible after accepting and navigating different tabs"
-severity: major
+result: pass
+verified_by: "Playwright probe — has_opted_in_capturing()=true after Allow, 4× successful [200] POSTs to us.i.posthog.com/e/ and /i/v0/e/ after navigating to /topics. The user's original ERR_ABORTED observation was the unload-time beacon race (normal browser behavior), not a missing event."
 
 ### 5. Decline Consent Flow (from undecided)
 expected: Reset consent state (clear `wtcs_consent` from localStorage, refresh). Banner reappears. Click Decline → banner dismisses → chip appears with text "Anonymous usage analytics are off. Turn on". No PostHog network requests fire. No page reload.
@@ -59,28 +58,30 @@ result: pass
 
 ### 10. Apple Touch Icon (iOS bookmark)
 expected: On iOS Safari (or DevTools mobile-emulation), open the site and use "Add to Home Screen". The home-screen icon shows the WTCS branding on an opaque dark background (#0a0a0a) — NOT transparent and NOT the default Vite icon.
-result: skipped
+result: pass
+verified_by: "User added the site to macOS Dock — icon renders correctly with WTCS branding"
 
 ### 11. Auth Error Page Rendering
 expected: Trigger an auth error (e.g. interrupt the OAuth flow, or visit `/auth/error?reason=oauth_state_mismatch`). The error page renders correctly with the locked Phase 6 copy. No layout regression. Sentry breadcrumb fires (if you have Sentry inspector open you'll see one logged).
-result: issue
-reported: "sentry doesn't fire for the error page"
-severity: major
+result: pass
+fixed_by: "260427-dgh — DebugAuthOverlay snapshotBreadcrumbs() now merges all three scopes (current + isolation + global) so AuthErrorPage breadcrumb surfaces in the live overlay. Playwright-verified: 5 auth breadcrumbs visible after navigating to /auth/error?reason=auth-failed&debug=auth, including {category:'auth', message:'AuthErrorPage rendered', level:'warning', data:{reason:'auth-failed'}}."
+verified_by: "Playwright probe + screenshot phase6-test11-breadcrumbs-after-scope-fix.png"
 
 ### 12. DebugAuthOverlay Activation
 expected: With consent set to "allow", append `?auth_debug=1` to any URL and reload. A read-only diagnostic card appears anchored to bottom-LEFT (not right — banner/chip use right). Six sections: Supabase session, PKCE State, sb-* cookies, sb-* localStorage, last 5 Sentry breadcrumbs, console errors. Each section has a Copy button. X button dismisses.
-result: issue
-reported: "no diagnostic card appeared with anonymous usage analytics turned on"
-severity: major
+result: pass
+verified_by: "Playwright probe — overlay renders at bottom-left with all six sections when query param is `?debug=auth` (the locked gate). UAT script originally said `?auth_debug=1` (wrong); code is correct. Screenshot: phase6-uat-fix-test12-debug-overlay.png."
+note: "UAT script will use `?debug=auth` for future runs."
 
 ## Summary
 
 total: 12
-passed: 8
-issues: 3
+passed: 12
+issues: 0
 pending: 0
-skipped: 1
+skipped: 0
 blocked: 0
+fixed_after_diagnosis: 1
 
 ## Gaps
 
