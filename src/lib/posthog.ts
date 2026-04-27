@@ -12,7 +12,14 @@ let initialized = false
 export function initPostHog() {
   if (initialized || typeof window === 'undefined') return posthog
   const key = import.meta.env.VITE_POSTHOG_KEY
-  if (!key) return posthog
+  if (!key) {
+    if (import.meta.env.DEV) {
+      console.warn(
+        '[posthog] VITE_POSTHOG_KEY not set — analytics disabled. Set it in .env.local to enable PostHog in dev.'
+      )
+    }
+    return posthog
+  }
   posthog.init(key, {
     api_host: 'https://us.i.posthog.com',
     person_profiles: 'identified_only',
