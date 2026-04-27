@@ -106,7 +106,7 @@ export default function DebugAuthOverlay() {
   const [pkce] = useState<PkceState>(snapshotPkce)
   const [cookies] = useState<string[]>(snapshotCookies)
   const [storageKeys] = useState<Array<{ key: string; preview: string }>>(snapshotStorageKeys)
-  const [breadcrumbs] = useState<unknown[]>(snapshotBreadcrumbs)
+  const [breadcrumbs, setBreadcrumbs] = useState<unknown[]>(snapshotBreadcrumbs)
   const [consoleErrors, setConsoleErrors] = useState<ConsoleErrorEntry[]>([])
   const [, setNow] = useState<number>(() => Date.now())
 
@@ -131,7 +131,10 @@ export default function DebugAuthOverlay() {
       originalConsoleError(...args)
     }
 
-    const tick = window.setInterval(() => setNow(Date.now()), 1000)
+    const tick = window.setInterval(() => {
+      setNow(Date.now())
+      setBreadcrumbs(snapshotBreadcrumbs())
+    }, 1000)
 
     return () => {
       console.error = originalConsoleError
