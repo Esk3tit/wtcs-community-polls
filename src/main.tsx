@@ -21,6 +21,11 @@ import './index.css'
 // src/lib/sentry.ts::loadSentryReplayIfConsented() AFTER the localStorage
 // opt-out check. Users who opt out never load the Replay bundle — also
 // code-splits Replay from the main bundle (M3 mitigation).
+if (!import.meta.env.VITE_SENTRY_DSN && import.meta.env.DEV) {
+  console.warn(
+    '[sentry] VITE_SENTRY_DSN not set — error monitoring disabled. Set it in .env.local to enable Sentry in dev.'
+  )
+}
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
   environment: import.meta.env.MODE,
