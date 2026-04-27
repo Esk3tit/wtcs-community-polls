@@ -1,5 +1,5 @@
 ---
-status: partial
+status: diagnosed
 phase: 06-auth-fix-gdpr-opt-in-rewire-favicon-polish-and-launch-harden
 source:
   - 06-01-SUMMARY.md
@@ -85,32 +85,45 @@ blocked: 0
 ## Gaps
 
 - truth: "PostHog network requests fire after Allow consent + navigation"
-  status: failed
+  status: environmental
   reason: "User reported: Allow click + chip appearance both work, but no PostHog network requests visible after accepting and navigating different tabs"
-  severity: major
+  severity: not_a_code_defect
   test: 4
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: "VITE_POSTHOG_KEY missing in local .env.local — initPostHog() short-circuits at src/lib/posthog.ts:14-15 without calling posthog.init(). ConsentContext.opt_in_capturing() then flips an in-memory flag on an uninitialized stub, so capture is a silent no-op. Phase 6-02d previously verified this works on the Netlify deploy-preview where the env var is injected at build time."
+  artifacts:
+    - path: "src/lib/posthog.ts:14-15"
+      issue: "Silent short-circuit when VITE_POSTHOG_KEY missing — no warning logged"
+  missing:
+    - "Add VITE_POSTHOG_KEY (and VITE_POSTHOG_HOST if used) to local .env.local, then restart vite dev"
+    - "Optional code improvement: console.warn in dev when key missing so this is loud next time"
+  confidence: high
 
 - truth: "Sentry breadcrumb fires on AuthErrorPage useEffect"
-  status: failed
+  status: misobservation
   reason: "User reported: sentry doesn't fire for the error page"
-  severity: major
+  severity: not_a_code_defect
   test: 11
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
-  related_issue: "Possibly overlaps with known issue #17 (Sentry React SDK v10 + React 19 ErrorBoundary path) — verify whether AuthErrorPage useEffect breadcrumb path is affected by the same root cause"
+  root_cause: "Sentry breadcrumbs are buffer-only by design. AuthErrorPage.tsx:52-59 correctly calls Sentry.addBreadcrumb({ category: 'auth', message: 'AuthErrorPage rendered', ... }) on every mount, but breadcrumbs are NOT transmitted until an event (error/transaction) ships that they can attach to. With no captured error during the visit, the breadcrumb sits in the in-memory scope. The user looked for a Sentry issue/network request and saw nothing because nothing was sent."
+  artifacts:
+    - path: "src/components/auth/AuthErrorPage.tsx:52-59"
+      issue: "Working as designed — breadcrumb call IS firing"
+  missing:
+    - "To verify: open DevTools console and run Sentry.getCurrentScope().getScopeData().breadcrumbs while on the error page (the DebugAuthOverlay 'Recent Sentry breadcrumbs' section already does exactly this — see Test 12 fix)"
+    - "To verify remote delivery: throw a test error after navigation so Sentry flushes a payload with the breadcrumb attached"
+  confidence: high
+  related_issue: "Distinct from issue #17 (ErrorBoundary capture path) — this is the useEffect breadcrumb path, which is working correctly"
 
 - truth: "DebugAuthOverlay renders when ?auth_debug=1 with analytics consent allowed"
-  status: failed
+  status: uat_script_error
   reason: "User reported: no diagnostic card appeared with anonymous usage analytics turned on"
-  severity: major
+  severity: not_a_code_defect
   test: 12
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: "UAT instruction was wrong — gate is `?debug=auth`, not `?auth_debug=1`. Activation predicate at src/routes/__root.tsx:40-47 reads: new URLSearchParams(window.location.search).get('debug') === 'auth'. Consent state ('allow') is NOT part of the gate. The recent quick-task commit d694d88 (consoleErrors setState bound) only edited the component body, not the activation predicate."
+  artifacts:
+    - path: "src/routes/__root.tsx:40-47"
+      issue: "Gate is `?debug=auth` (correct); UAT script said `?auth_debug=1` (wrong)"
+  missing:
+    - "Re-run Test 12 with corrected URL: append `?debug=auth` (in dev, that's all you need)"
+    - "On production: also set localStorage.wtcs_debug_auth='1' first, then load with ?debug=auth"
+    - "Optional code improvement: widen the gate to accept both `?debug=auth` and `?auth_debug=1` aliases for muscle-memory"
+  confidence: high
