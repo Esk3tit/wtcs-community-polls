@@ -82,17 +82,17 @@ describe('ConsentBanner (UI-SPEC Surface 1 — first-visit GDPR opt-IN)', () => 
   })
 
   it('Dismiss X does NOT write wtcs_consent (banner re-shows on next mount)', () => {
-    const { unmount } = renderBanner()
+    const first = renderBanner()
     fireEvent.click(screen.getByRole('button', { name: /dismiss/i }))
     expect(window.localStorage.getItem('wtcs_consent')).toBeNull()
-    unmount()
-    const { container } = renderBanner()
-    expect(container).toBeEmptyDOMElement()
+    first.unmount()
+    const second = renderBanner()
+    expect(second.container).toBeEmptyDOMElement()
     window.sessionStorage.clear()
-    unmount()
-    renderBanner()
+    second.unmount()
+    const third = renderBanner()
     expect(
-      screen.getByText('We can record anonymous usage to help us improve this site.'),
+      third.getByText('We can record anonymous usage to help us improve this site.'),
     ).toBeInTheDocument()
   })
 

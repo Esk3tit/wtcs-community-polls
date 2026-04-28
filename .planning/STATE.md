@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 status: ready_to_complete
 stopped_at: Phase 6 verified, PR #15 ready-for-review (awaiting merge to main)
-last_updated: "2026-04-26T16:00:00.000Z"
-last_activity: 2026-04-26 -- Phase 6 complete + verified (06-VERIFICATION.md PASSED 7/7); milestone v1.0 ready for /gsd-complete-milestone after PR #15 merges
+last_updated: "2026-04-28T00:00:00.000Z"
+last_activity: 2026-04-28 -- Phase 6 SHIPPED — PR #15 CI all-green (lint-and-unit, e2e, CodeRabbit, Netlify deploy-preview); milestone v1.0 awaiting merge
 progress:
   total_phases: 6
   completed_phases: 6

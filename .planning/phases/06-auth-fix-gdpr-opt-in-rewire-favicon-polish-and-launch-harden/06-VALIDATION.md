@@ -1,10 +1,11 @@
 ---
 phase: 6
 slug: auth-fix-gdpr-opt-in-rewire-favicon-polish-and-launch-harden
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: complete
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-04-25
+last_updated: 2026-04-26
 ---
 
 # Phase 6 — Validation Strategy
@@ -40,7 +41,13 @@ created: 2026-04-25
 
 | Task ID | Plan | Wave | Decision | Test Type | Automated Command | Status |
 |---------|------|------|----------|-----------|-------------------|--------|
-| TBD     | TBD  | TBD  | D-01..D-10 | TBD     | TBD               | ⬜ pending |
+| 06-01   | Plan 1 | W1 | D-01, D-02 | manual repro + breadcrumb tests | `npm run test -- --run src/__tests__/lib/sentry-breadcrumbs` | ✅ green |
+| 06-02   | Plan 2 | W1 | D-03, D-04 | unit (consent state machine) | `npm run test -- --run src/__tests__/lib/consent` | ✅ green |
+| 06-02b  | Plan 2b | W1 | D-04, D-05 | unit (banner + chip) | `npm run test -- --run src/__tests__/components/Consent` | ✅ green |
+| 06-02c  | Plan 2c | W1 | D-04 | unit (rewire integration) | `npm run test -- --run` | ✅ green |
+| 06-02d  | Plan 2d | W2 | D-04 | manual smoke (PostHog dashboard) | out-of-repo verification | ✅ green |
+| 06-03   | Plan 3 | W1 | D-06, D-07, D-10 | unit (head meta + favicon refs) | `npm run test -- --run` | ✅ green |
+| 06-04   | Plan 4 | W2 | D-08, D-09 | source-analysis + manual Sentry smoke | `npm run test -- --run && npm run lint && npm run build` | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -70,11 +77,11 @@ created: 2026-04-25
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 60s
-- [ ] `nyquist_compliant: true` set in frontmatter once planner fills the per-task map
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 60s
+- [x] `nyquist_compliant: true` set in frontmatter once planner fills the per-task map
 
-**Approval:** pending
+**Approval:** approved (2026-04-26 — Phase 6 VERIFICATION passed 7/7; see `06-VERIFICATION.md`)

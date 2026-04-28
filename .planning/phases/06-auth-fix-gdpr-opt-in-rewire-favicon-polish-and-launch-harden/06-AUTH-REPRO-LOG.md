@@ -39,6 +39,8 @@
 
 ## Step 1 — Storage hygiene
 
+_Skipped — Step 0 resolved the symptom; see Step 0-4 summary below. Placeholders left intact for future recurrences._
+
 - **1a.** DevTools → Application → Storage. Cleared cookies AND localStorage AND
   sessionStorage for BOTH:
   - `polls.wtcsmapban.com` — done? _(Y/N)_
@@ -58,6 +60,8 @@
 
 ## Step 2 — Browser extensions
 
+_Skipped — Step 0 resolved the symptom; see Step 0-4 summary below. Placeholders left intact for future recurrences._
+
 > Disable extensions ONE AT A TIME, with priority for privacy/cookie blockers.
 > Retry login after each disable. Record outcome per extension.
 
@@ -75,6 +79,8 @@
 
 ## Step 3 — Third-party cookie setting
 
+_Skipped — Step 0 resolved the symptom; see Step 0-4 summary below. Placeholders left intact for future recurrences._
+
 - **3a.** Current third-party cookie setting in the browser under test:
   _(e.g. Safari ITP "on", Firefox ETP "Strict", Chrome "Block third-party cookies", or "Allow all")_
 - **3b.** If blocked: switched to "Allow" / "Block in incognito only" / equivalent
@@ -84,6 +90,8 @@
 ---
 
 ## Step 4 — Second profile
+
+_Skipped — Step 0 resolved the symptom; see Step 0-4 summary below. Placeholders left intact for future recurrences._
 
 - **4a.** Created or used a second main-browser profile:
   _(Chrome profile name / Firefox container / Safari profile)_

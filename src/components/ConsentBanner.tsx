@@ -29,7 +29,11 @@ export function ConsentBanner() {
   }
 
   return (
-    <div className={`fixed bottom-4 right-4 z-40 rounded-lg border bg-card shadow-md p-4 ${CONSENT_CARD_MAX_W} transition-opacity`}>
+    <div
+      role="region"
+      aria-label="Anonymous usage analytics consent"
+      className={`fixed bottom-4 right-4 z-40 rounded-lg border bg-card shadow-md p-4 ${CONSENT_CARD_MAX_W} transition-opacity`}
+    >
       <div className="flex items-start gap-2">
         <div className="flex-1">
           <p className="text-sm text-muted-foreground leading-relaxed">

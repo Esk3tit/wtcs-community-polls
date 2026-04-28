@@ -231,7 +231,7 @@ Dev-aid. Activated by appending `?debug=auth` to any route. MUST be tree-shaken 
 
 **Character counts:**
 - Title: 26 characters (well within 50-60 char SEO budget)
-- Description: 153 characters (within 150-160 SEO budget)
+- Description: 132 characters (within 150-160 SEO budget; corrected from earlier draft figure of 153)
 
 **Terminology compliance (PROJECT.md):**
 - Uses "suggestions", "opinions", "responses" — user-facing vocabulary

@@ -67,7 +67,7 @@ Output: One human-verify checkpoint that records dashboard observations into a S
   <how-to-verify>
     1. Deploy the branch to a Netlify preview (gh PR auto-deploys) or merge to main and wait for the deploy.
     2. Open the deployed URL in a clean browser profile (no prior wtcs_consent localStorage key).
-    3. Open PostHog project dashboard at https://us.posthog.com (or eu.posthog.com depending on org), filter "Live events" to the past 5 minutes for the `community-polls` app tag.
+    3. Open PostHog project dashboard at https://us.posthog.com (US instance — pinned via `api_host` in `src/lib/posthog.ts`), filter "Live events" to the past 5 minutes for the `community-polls` app tag.
     4. In the browser, navigate through 2-3 routes (Topics → Archive → back to Topics). Do NOT click Allow on the banner.
     5. After 60s, confirm PostHog dashboard shows ZERO new events from this session.
     6. Click `Allow` on the consent banner.

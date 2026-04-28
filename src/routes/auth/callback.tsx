@@ -48,14 +48,14 @@ function AuthCallbackPage() {
         // Sentry, log, and route to the error page so the user can recover.
         if (cancelled) return
         processed.current = true
-        Sentry.captureException(err, { tags: { area: 'auth-callback-route' } })
-        console.error('handleAuthCallback rejected in /auth/callback:', err)
         Sentry.addBreadcrumb({
           category: 'auth',
           message: 'callback route rejected',
           level: 'error',
           data: { error: String(err) },
         })
+        Sentry.captureException(err, { tags: { area: 'auth-callback-route' } })
+        console.error('handleAuthCallback rejected in /auth/callback:', err)
         navigate({ to: '/auth/error', search: { reason: 'auth-failed' } })
       })
 

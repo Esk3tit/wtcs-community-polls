@@ -92,37 +92,68 @@ function snapshotStorageKeys(): Array<{ key: string; preview: string }> {
 export default function DebugAuthOverlay() {
   const [hidden, setHidden] = useState<boolean>(false)
   const [session, setSession] = useState<SessionShape | null>(null)
-  const [pkce] = useState<PkceState>(snapshotPkce)
-  const [cookies] = useState<string[]>(snapshotCookies)
-  const [storageKeys] = useState<Array<{ key: string; preview: string }>>(snapshotStorageKeys)
+  const [pkce, setPkce] = useState<PkceState>(snapshotPkce)
+  const [cookies, setCookies] = useState<string[]>(snapshotCookies)
+  const [storageKeys, setStorageKeys] = useState<Array<{ key: string; preview: string }>>(snapshotStorageKeys)
   const [breadcrumbs, setBreadcrumbs] = useState<unknown[]>(snapshotBreadcrumbs)
   const [consoleErrors, setConsoleErrors] = useState<ConsoleErrorEntry[]>([])
   const [, setNow] = useState<number>(() => Date.now())
 
   useEffect(() => {
-    void supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession({
-        user_id: s?.user?.id ?? null,
-        expires_at: s?.expires_at ?? null,
-        provider: s?.user?.app_metadata?.provider ?? null,
-        access_token: s?.access_token ? s.access_token.slice(0, 8) + '…' : null,
-        refresh_token: s?.refresh_token ? s.refresh_token.slice(0, 8) + '…' : null,
-      })
-    })
-
+    // Snapshot console.error before installing the proxy so the .catch handler
+    // below can log via the original (avoids re-entering our own buffer).
     const originalConsoleError = console.error
+
+    supabase.auth
+      .getSession()
+      .then(({ data: { session: s } }) => {
+        setSession({
+          user_id: s?.user?.id ?? null,
+          expires_at: s?.expires_at ?? null,
+          provider: s?.user?.app_metadata?.provider ?? null,
+          access_token: s?.access_token ? s.access_token.slice(0, 8) + '…' : null,
+          refresh_token: s?.refresh_token ? s.refresh_token.slice(0, 8) + '…' : null,
+        })
+      })
+      .catch((err: unknown) => {
+        // Surface getSession failure (the very failure mode this panel exists
+        // to diagnose) instead of leaking an unhandled rejection.
+        originalConsoleError.call(
+          console,
+          'DebugAuthOverlay: getSession rejected',
+          err,
+        )
+      })
+
     console.error = (...args: unknown[]) => {
       const ts = Date.now()
       setConsoleErrors((prev) => [
         ...prev.filter((e) => ts - e.ts < 30000),
         { ts, args },
       ])
-      originalConsoleError(...args)
+      // Preserve `console` as the receiver so devtools wrappers that
+      // depend on `this` continue to work.
+      originalConsoleError.apply(console, args)
     }
 
     const tick = window.setInterval(() => {
-      setNow(Date.now())
+      const ts = Date.now()
+      setNow(ts)
+      // All four diagnostic snapshots refresh on the same tick so the panel
+      // reflects live state during an active auth flow (e.g. a fresh PKCE
+      // verifier appearing after Discord redirect).
       setBreadcrumbs(snapshotBreadcrumbs())
+      setPkce(snapshotPkce())
+      setCookies(snapshotCookies())
+      setStorageKeys(snapshotStorageKeys())
+      // Prune stale console errors so the "last 30s" label stays truthful
+      // even when error traffic stops between ticks.
+      setConsoleErrors((prev) => {
+        const cutoff = ts - 30000
+        return prev.some((e) => e.ts < cutoff)
+          ? prev.filter((e) => e.ts >= cutoff)
+          : prev
+      })
     }, 1000)
 
     return () => {

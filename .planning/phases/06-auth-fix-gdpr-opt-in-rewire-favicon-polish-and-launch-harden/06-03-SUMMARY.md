@@ -37,8 +37,9 @@ preview before merge. D-07 + D-10 closed.
     as deviation below.)
 - **index.html** head locked to UI-SPEC Surfaces 5 + 6:
   - `<title>WTCS Community Suggestions</title>` (replaces lowercase scaffold slug)
-  - `<meta name="description">` 153-char copy with user-facing
+  - `<meta name="description">` 132-char copy with user-facing
     suggestions/opinions/responses vocabulary
+    (UI-SPEC draft cited 153 chars; rendered string measures 132)
   - Four `<link rel="icon">` tags in UI-SPEC order: SVG, 32x32 PNG, ICO, apple-touch-icon
   - No Open Graph or Twitter card tags (out of scope)
   - No `media="(prefers-color-scheme: dark)"` separate icon line — the dark-BG

@@ -15,6 +15,8 @@ status: all_fixed
 **Source review:** .planning/phases/06-auth-fix-gdpr-opt-in-rewire-favicon-polish-and-launch-harden/06-REVIEW.md
 **Iteration:** 1
 
+> Note on dual numbering: the `.iterN.md` filename suffix tracks `--auto` review-loop ticks (this is tick 2), while frontmatter/body `iteration` tracks fix-rounds within a single REVIEW source (this is fix-round 1 against the loop's 2nd review pass). The two counters intentionally differ.
+
 **Summary:**
 - Findings in scope: 6 (0 critical, 6 warning — Info deferred)
 - Fixed: 6

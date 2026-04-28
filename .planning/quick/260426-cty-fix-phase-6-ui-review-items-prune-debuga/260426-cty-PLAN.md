@@ -163,7 +163,9 @@ console.error = (...args: unknown[]) => {
 }
 ```
 
-Then DELETE the now-redundant render-time filter line (`const recentConsoleErrors = consoleErrors.filter((e) => now - e.ts < 30000)`) and rename the variable so the JSX consumes `consoleErrors` directly. The `now` state + interval still drive re-renders so stale entries disappear from the rendered list within 1s of their TTL — keep them.
+Then DELETE the now-redundant render-time filter line (`const recentConsoleErrors = consoleErrors.filter((e) => now - e.ts < 30000)`) and rename the variable so the JSX consumes `consoleErrors` directly.
+
+> **Correction (post-implementation note):** Re-renders driven by the `now` ticker do NOT prune stale entries on their own — if error traffic stops, the JSX would hold stale rows until the next `console.error`. The shipped fix therefore prunes inside the 1 s tick (`setConsoleErrors((prev) => prev.filter((e) => e.ts >= ts - 30000))`) in addition to the on-write filter. See `src/components/debug/DebugAuthOverlay.tsx:139-157`.
 
 Constraints:
 - Do NOT change the `ConsoleErrorEntry` interface.

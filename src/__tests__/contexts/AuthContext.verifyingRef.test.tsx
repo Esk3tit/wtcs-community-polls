@@ -225,6 +225,17 @@ describe('AuthContext verifyingRef gate (Phase 6 WR-06)', () => {
 
     // handleAuthCallback was invoked exactly once for this event.
     expect(mockHandleAuthCallback).toHaveBeenCalledTimes(1)
+
+    // Post-resolution: gate releases (finally { verifyingRef.current = false }),
+    // then setSession/setUser run and fetchProfile().then(setLoading(false))
+    // chain completes. Asserts the full success-path state-update tail, not
+    // just the in-flight suppression.
+    await waitFor(() => {
+      expect(screen.getByTestId('user-id').textContent).toBe('u-verifying')
+    })
+    await waitFor(() => {
+      expect(screen.getByTestId('loading').textContent).toBe('false')
+    })
   })
 })
 
@@ -257,6 +268,14 @@ describe('handleAuthCallback dedup across rapid /auth/callback double-mount (Pha
     )
 
     // Pull the REAL auth-helpers module despite the file-scoped vi.mock above.
+    // Note: this intentionally bypasses the top-level vi.mock('@/lib/auth-helpers',
+    // ...) so AuthProvider (first describe) and this dedup case do NOT share
+    // module-level state (callbackPromise / lastResult). That's safe today
+    // because this describe never renders AuthProvider — but if a future
+    // refactor wires AuthProvider into module-level auth-helpers state, this
+    // dual-instance shape will silently diverge. If that happens, split this
+    // describe into its own file (no top-level vi.mock) or vi.doUnmock here
+    // before importing.
     const real = await vi.importActual<typeof import('@/lib/auth-helpers')>(
       '@/lib/auth-helpers',
     )

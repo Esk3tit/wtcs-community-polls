@@ -163,20 +163,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe()
   }, [fetchProfile])
 
-  // Phase 6 R-03 (REVIEWS.md): analytics-identify lives in its OWN effect,
-  // deps [consentState, user]. The auth-subscription effect above intentionally
-  // does NOT depend on consentState — flipping consent must not re-run
-  // supabase.auth.getSession() or re-subscribe onAuthStateChange.
+  // Phase 6 R-03 (REVIEWS.md): analytics-identify lives in its OWN effect.
+  // The auth-subscription effect above intentionally does NOT depend on
+  // consentState — flipping consent must not re-run supabase.auth.getSession()
+  // or re-subscribe onAuthStateChange.
   // Covers the case "user already signed in, then consent flips to allow":
   // when consentState becomes 'allow' and user is non-null, identify fires once.
   // Discord snowflake (provider_id) ONLY — NEVER email/username/discriminator (T-05-05).
+  // Deps key on stable identifiers (user?.id + provider_id) rather than the
+  // whole `user` object so token refresh / USER_UPDATED events — which produce
+  // a new user reference each time — do NOT trigger redundant identify() calls.
+  const providerId = user?.user_metadata?.provider_id as string | undefined
   useEffect(() => {
     if (consentState !== 'allow') return
-    const providerId = user?.user_metadata?.provider_id as string | undefined
     if (providerId) {
       posthog.identify(providerId)
     }
-  }, [consentState, user])
+  }, [consentState, user?.id, providerId])
 
   const signOut = useCallback(() => {
     // Clear state synchronously first so UI responds immediately,

@@ -42,6 +42,8 @@ status: issues_found
 **Files Reviewed:** 22 (21 source + new verifyingRef test file)
 **Status:** issues_found (1 new warning surfaced by WR-04 reorder; the 6 closed warnings remain closed)
 
+> **Follow-up (closed):** WR-07 was subsequently fixed in commit `833cfea` and is documented as closed in `06-REVIEW-FIX.iter3.md`. The result-cache TTL pattern recommended below at lines 81–98 is the pattern that shipped. This report is preserved as the iteration-2 historical snapshot — the current overall status is reflected by `06-REVIEW.md` + `06-REVIEW-FIX.md`.
+
 ## Summary
 
 Iteration 2 re-reviews the six fix commits (`fbe47ba`, `887a89c`, `36f9420`, `3008697`, `c51aa66`, `a186abd`) that closed iteration 1's warnings WR-01..WR-06. All 386 vitest tests pass (40 files); no regressions to existing behavior were detected.

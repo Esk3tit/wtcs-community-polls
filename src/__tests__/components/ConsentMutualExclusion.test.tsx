@@ -14,10 +14,10 @@ vi.mock('@/lib/sentry', () => ({
   loadSentryReplayIfConsented: vi.fn(),
 }))
 
-let currentPathname = '/'
+const pathRef = vi.hoisted(() => ({ current: '/' }))
 vi.mock('@tanstack/react-router', () => ({
   useRouterState: ({ select }: { select: (state: { location: { pathname: string } }) => unknown }) =>
-    select({ location: { pathname: currentPathname } }),
+    select({ location: { pathname: pathRef.current } }),
 }))
 
 import { ConsentBanner } from '@/components/ConsentBanner'
@@ -42,7 +42,7 @@ describe('ConsentBanner + ConsentChip mutual exclusion (UI-REVIEW Fix #1)', () =
     vi.clearAllMocks()
     window.localStorage.clear()
     window.sessionStorage.clear()
-    currentPathname = '/'
+    pathRef.current = '/'
   })
 
   it('undecided: only the banner renders, chip is suppressed', () => {
@@ -70,7 +70,7 @@ describe('ConsentBanner + ConsentChip mutual exclusion (UI-REVIEW Fix #1)', () =
 
   it('admin route: both surfaces are suppressed regardless of consent state', () => {
     window.localStorage.setItem('wtcs_consent', 'allow')
-    currentPathname = '/admin/categories'
+    pathRef.current = '/admin/categories'
     const { container } = renderBoth()
     expect(container).toBeEmptyDOMElement()
   })

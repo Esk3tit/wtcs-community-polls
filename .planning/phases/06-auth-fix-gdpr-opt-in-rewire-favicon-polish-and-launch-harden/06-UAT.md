@@ -15,7 +15,7 @@ updated: 2026-04-27T00:30:00Z
 
 ## Current Test
 
-[testing paused — 1 skipped item outstanding]
+[testing complete — all 12 planned checks executed; see Summary below]
 
 ## Tests
 
@@ -68,7 +68,7 @@ fixed_by: "260427-dgh — DebugAuthOverlay snapshotBreadcrumbs() now merges all 
 verified_by: "Playwright probe + screenshot phase6-test11-breadcrumbs-after-scope-fix.png"
 
 ### 12. DebugAuthOverlay Activation
-expected: With consent set to "allow", append `?auth_debug=1` to any URL and reload. A read-only diagnostic card appears anchored to bottom-LEFT (not right — banner/chip use right). Six sections: Supabase session, PKCE State, sb-* cookies, sb-* localStorage, last 5 Sentry breadcrumbs, console errors. Each section has a Copy button. X button dismisses.
+expected: Append `?debug=auth` to any URL and reload (production also requires `localStorage.setItem('wtcs_debug_auth', '1')`; in dev mode the localStorage flag is implicit). Consent state is NOT part of the gate. A read-only diagnostic card appears anchored to bottom-LEFT (not right — banner/chip use right). Six sections: Supabase session, PKCE State, sb-* cookies, sb-* localStorage, last 5 Sentry breadcrumbs, console errors. Each section has a Copy button. X button dismisses.
 result: pass
 verified_by: "Playwright probe — overlay renders at bottom-left with all six sections when query param is `?debug=auth` (the locked gate). UAT script originally said `?auth_debug=1` (wrong); code is correct. Screenshot: phase6-uat-fix-test12-debug-overlay.png."
 note: "UAT script will use `?debug=auth` for future runs."
