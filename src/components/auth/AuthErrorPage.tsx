@@ -1,7 +1,9 @@
+import { useEffect } from 'react'
 import { ShieldAlert, Clock, AlertCircle, Users } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/useAuth'
+import * as Sentry from '@sentry/react'
 
 interface AuthErrorPageProps {
   reason: '2fa-required' | 'session-expired' | 'auth-failed' | 'not-in-server'
@@ -46,6 +48,15 @@ export function AuthErrorPage({ reason }: AuthErrorPageProps) {
   const { signInWithDiscord } = useAuth()
   const config = errorConfig[reason] || errorConfig['auth-failed']
   const Icon = config.icon
+
+  useEffect(() => {
+    Sentry.addBreadcrumb({
+      category: 'auth',
+      message: 'AuthErrorPage rendered',
+      level: 'warning',
+      data: { reason },
+    })
+  }, [reason])
 
   return (
     <div className="max-w-md mx-auto py-16 md:py-24">

@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import * as Sentry from '@sentry/react'
 
 export type AuthCallbackResult =
   | { success: true }
@@ -13,17 +14,46 @@ export type AuthCallbackResult =
  */
 // Deduplication guard: shared-promise pattern ensures concurrent callers
 // (AuthContext onAuthStateChange + callback route) get the same result
-// without double-executing verification
+// without double-executing verification.
+//
+// Phase 6 WR-07: also memoize the resolved result for a short TTL so a
+// StrictMode dev double-mount (or any rare prod /auth/callback remount)
+// that arrives AFTER the in-flight promise has cleared still short-circuits
+// to the cached result instead of firing a fresh executor — which would
+// otherwise re-call Discord's API + update_profile_after_auth RPC and
+// (on the failure path) re-trigger supabase.auth.signOut().
+//
+// TTL is intentionally short (1500 ms) so a real user-driven retry from the
+// /auth/error page is never blocked. The window only needs to span the
+// React StrictMode unmount→remount gap, which is microseconds in practice.
 let callbackPromise: Promise<AuthCallbackResult> | null = null
+let lastResult: { result: AuthCallbackResult; ts: number } | null = null
+const RESULT_CACHE_MS = 1500
 
 export async function handleAuthCallback(): Promise<AuthCallbackResult> {
   if (callbackPromise) return callbackPromise
+  if (lastResult && Date.now() - lastResult.ts < RESULT_CACHE_MS) {
+    return lastResult.result
+  }
   callbackPromise = executeAuthCallback()
   try {
-    return await callbackPromise
+    const result = await callbackPromise
+    lastResult = { result, ts: Date.now() }
+    return result
   } finally {
     callbackPromise = null
   }
+}
+
+/**
+ * Test-only: reset the dedup + result-memo state between tests.
+ * Production code MUST NOT call this — TTL-based memoization is intentional
+ * (see Phase 6 WR-07). Tests need it because module-level state otherwise
+ * leaks across test cases within the 1500 ms TTL window.
+ */
+export function __resetAuthCallbackCacheForTests(): void {
+  callbackPromise = null
+  lastResult = null
 }
 
 async function executeAuthCallback(): Promise<AuthCallbackResult> {
@@ -32,6 +62,12 @@ async function executeAuthCallback(): Promise<AuthCallbackResult> {
 
     if (!session) {
       await supabase.auth.signOut()
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: 'handleAuthCallback rejected',
+        level: 'warning',
+        data: { reason: 'auth-failed' },
+      })
       return { success: false, reason: 'auth-failed' }
     }
 
@@ -41,6 +77,12 @@ async function executeAuthCallback(): Promise<AuthCallbackResult> {
     if (!providerToken) {
       console.error('provider_token is null. Cannot verify Discord 2FA. Failing closed.')
       await supabase.auth.signOut()
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: 'handleAuthCallback rejected',
+        level: 'warning',
+        data: { reason: 'auth-failed' },
+      })
       return { success: false, reason: 'auth-failed' }
     }
 
@@ -61,6 +103,12 @@ async function executeAuthCallback(): Promise<AuthCallbackResult> {
       if (!discordResponse.ok) {
         console.error('Discord API error:', discordResponse.status, discordResponse.statusText)
         await supabase.auth.signOut()
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'handleAuthCallback rejected',
+          level: 'warning',
+          data: { reason: 'auth-failed' },
+        })
         return { success: false, reason: 'auth-failed' }
       }
 
@@ -68,12 +116,24 @@ async function executeAuthCallback(): Promise<AuthCallbackResult> {
     } catch (fetchError) {
       console.error('Failed to reach Discord API:', fetchError)
       await supabase.auth.signOut()
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: 'handleAuthCallback rejected',
+        level: 'warning',
+        data: { reason: 'auth-failed' },
+      })
       return { success: false, reason: 'auth-failed' }
     }
 
     // FAIL-CLOSED: mfa_enabled must be true
     if (!discordUser?.mfa_enabled) {
       await supabase.auth.signOut()
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: 'handleAuthCallback rejected',
+        level: 'warning',
+        data: { reason: '2fa-required' },
+      })
       return { success: false, reason: '2fa-required' }
     }
 
@@ -88,6 +148,12 @@ async function executeAuthCallback(): Promise<AuthCallbackResult> {
       if (!guildsResponse.ok) {
         console.error('Discord guilds API error:', guildsResponse.status)
         await supabase.auth.signOut()
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'handleAuthCallback rejected',
+          level: 'warning',
+          data: { reason: 'auth-failed' },
+        })
         return { success: false, reason: 'auth-failed' }
       }
 
@@ -97,6 +163,12 @@ async function executeAuthCallback(): Promise<AuthCallbackResult> {
       if (!Array.isArray(guildsData)) {
         console.error('Discord guilds API returned non-array:', typeof guildsData)
         await supabase.auth.signOut()
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'handleAuthCallback rejected',
+          level: 'warning',
+          data: { reason: 'auth-failed' },
+        })
         return { success: false, reason: 'auth-failed' }
       }
 
@@ -104,6 +176,12 @@ async function executeAuthCallback(): Promise<AuthCallbackResult> {
     } catch (guildsError) {
       console.error('Failed to check Discord guild membership:', guildsError)
       await supabase.auth.signOut()
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: 'handleAuthCallback rejected',
+        level: 'warning',
+        data: { reason: 'auth-failed' },
+      })
       return { success: false, reason: 'auth-failed' }
     }
 
@@ -111,6 +189,12 @@ async function executeAuthCallback(): Promise<AuthCallbackResult> {
     if (!WTCS_GUILD_ID) {
       console.error('VITE_WTCS_GUILD_ID is not configured. All guild membership checks will fail.')
       await supabase.auth.signOut()
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: 'handleAuthCallback rejected',
+        level: 'warning',
+        data: { reason: 'auth-failed' },
+      })
       return { success: false, reason: 'auth-failed' }
     }
 
@@ -118,6 +202,12 @@ async function executeAuthCallback(): Promise<AuthCallbackResult> {
 
     if (!isMember) {
       await supabase.auth.signOut()
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: 'handleAuthCallback rejected',
+        level: 'warning',
+        data: { reason: 'not-in-server' },
+      })
       return { success: false, reason: 'not-in-server' }
     }
 
@@ -136,6 +226,12 @@ async function executeAuthCallback(): Promise<AuthCallbackResult> {
     if (rpcError) {
       console.error('Profile update RPC failed:', rpcError.message)
       await supabase.auth.signOut()
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: 'handleAuthCallback rejected',
+        level: 'warning',
+        data: { reason: 'auth-failed' },
+      })
       return { success: false, reason: 'auth-failed' }
     }
 
@@ -147,6 +243,12 @@ async function executeAuthCallback(): Promise<AuthCallbackResult> {
     } catch {
       // Sign out itself failed
     }
+    Sentry.addBreadcrumb({
+      category: 'auth',
+      message: 'handleAuthCallback rejected',
+      level: 'warning',
+      data: { reason: 'auth-failed' },
+    })
     return { success: false, reason: 'auth-failed' }
   }
 }

@@ -1,10 +1,12 @@
-import { createContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useEffect, useState, useCallback, useRef } from 'react'
 import type { ReactNode } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { handleAuthCallback } from '@/lib/auth-helpers'
 import { posthog } from '@/lib/posthog'
+import { useConsent } from '@/hooks/useConsent'
 import type { Profile } from '@/lib/types/suggestions'
+import * as Sentry from '@sentry/react'
 
 interface AuthState {
   session: Session | null
@@ -19,12 +21,21 @@ interface AuthState {
 const AuthContext = createContext<AuthState | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { state: consentState } = useConsent()
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Phase 6 WR-03: track the most-recently-requested userId so any in-flight
+  // fetch that resolves AFTER a newer fetch started is fully ignored. The
+  // previous guard `if (profileData && profileData.id !== userId)` failed
+  // when the stale fetch resolved with `data: null` (RLS denied / row not
+  // yet inserted) — `setProfile(null)` would clobber the freshly populated
+  // profile of the next signed-in user.
+  const latestUserIdRef = useRef<string | null>(null)
   const fetchProfile = useCallback(async (userId: string) => {
+    latestUserIdRef.current = userId
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -32,19 +43,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq('id', userId)
         .single()
 
+      // Stale-fetch bail: if a newer fetchProfile() has been kicked off in
+      // the meantime, drop this result entirely (covers data=null too).
+      if (latestUserIdRef.current !== userId) return
+
       if (error) {
         console.error('Failed to fetch profile:', error.message)
         setProfile(null)
         return
       }
 
-      // Guard against stale fetches: only set if user ID still matches
       const profileData = data as Profile | null
-      setProfile((prev) => {
-        if (profileData && profileData.id !== userId) return prev
-        return profileData
-      })
+      setProfile(profileData)
     } catch (err) {
+      // Same stale-fetch bail on the error path.
+      if (latestUserIdRef.current !== userId) return
       console.error('Profile fetch error:', err)
       setProfile(null)
     }
@@ -57,10 +70,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const hashParams = new URLSearchParams(window.location.hash.substring(1))
     const isOAuthRedirect = hashParams.has('access_token') ||
       new URLSearchParams(window.location.search).has('code')
+    Sentry.addBreadcrumb({
+      category: 'auth',
+      message: 'AuthContext mounted',
+      level: 'info',
+      data: { isOAuthRedirect },
+    })
 
     if (!isOAuthRedirect) {
       // Normal page load — use cached session
       supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'getSession() resolved',
+          level: 'info',
+          data: { hasSession: !!initialSession, hasUser: !!initialSession?.user },
+        })
         setSession(initialSession)
         setUser(initialSession?.user ?? null)
         if (initialSession?.user) {
@@ -80,6 +105,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Single auth subscription for the entire app
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: `onAuthStateChange: ${event}`,
+          level: 'info',
+          data: { event, hasSession: !!newSession, hasProviderToken: !!newSession?.provider_token },
+        })
         // On initial sign-in, verify Discord 2FA before allowing access
         if (event === 'SIGNED_IN' && newSession?.provider_token) {
           verifyingRef.current = true
@@ -91,7 +122,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               window.location.href = `/auth/error?reason=${result.reason}`
               return
             }
-          } catch {
+          } catch (err) {
+            // Phase 6 WR-02: never swallow verification errors silently — the
+            // bare catch undermined the breadcrumb work in this phase.
+            Sentry.captureException(err, { tags: { area: 'auth-callback' } })
+            console.error('handleAuthCallback threw in onAuthStateChange:', err)
+            Sentry.addBreadcrumb({
+              category: 'auth',
+              message: 'handleAuthCallback threw',
+              level: 'error',
+              data: { error: String(err) },
+            })
             window.location.href = '/auth/error?reason=auth-failed'
             return
           } finally {
@@ -108,13 +149,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(newSession)
         setUser(newSession?.user ?? null)
         if (newSession?.user) {
-          // PostHog identify — AFTER the auth gate (verification succeeded).
-          // Discord snowflake (provider_id) ONLY — NEVER email/username/discriminator (T-05-05).
-          // Defensive: skip if provider_id is missing (Assumption A5).
-          const providerId = newSession.user.user_metadata?.provider_id
-          if (providerId) {
-            posthog.identify(providerId)
-          }
+          // Phase 6 R-03: PostHog analytics-identify moved to a dedicated effect
+          // below (deps [consentState, user]) so consent flips never re-run this
+          // auth-subscription effect or its onAuthStateChange callback.
           fetchProfile(newSession.user.id).then(() => setLoading(false))
         } else {
           setProfile(null)
@@ -125,6 +162,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => subscription.unsubscribe()
   }, [fetchProfile])
+
+  // Phase 6 R-03 (REVIEWS.md): analytics-identify lives in its OWN effect.
+  // The auth-subscription effect above intentionally does NOT depend on
+  // consentState — flipping consent must not re-run supabase.auth.getSession()
+  // or re-subscribe onAuthStateChange.
+  // Covers the case "user already signed in, then consent flips to allow":
+  // when consentState becomes 'allow' and user is non-null, identify fires once.
+  // Discord snowflake (provider_id) ONLY — NEVER email/username/discriminator (T-05-05).
+  // Deps key on stable identifiers (user?.id + provider_id) rather than the
+  // whole `user` object so token refresh / USER_UPDATED events — which produce
+  // a new user reference each time — do NOT trigger redundant identify() calls.
+  const providerId = user?.user_metadata?.provider_id as string | undefined
+  useEffect(() => {
+    if (consentState !== 'allow') return
+    if (providerId) {
+      posthog.identify(providerId)
+    }
+  }, [consentState, user?.id, providerId])
 
   const signOut = useCallback(() => {
     // Clear state synchronously first so UI responds immediately,

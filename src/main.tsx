@@ -4,6 +4,7 @@ import { RouterProvider, createRouter } from '@tanstack/react-router'
 import * as Sentry from '@sentry/react'
 import { PostHogProvider } from 'posthog-js/react'
 import { initPostHog } from '@/lib/posthog'
+import { ConsentProvider } from '@/contexts/ConsentContext'
 import { AppErrorFallback } from '@/components/AppErrorFallback'
 import { routeTree } from './routeTree.gen'
 import './index.css'
@@ -20,6 +21,11 @@ import './index.css'
 // src/lib/sentry.ts::loadSentryReplayIfConsented() AFTER the localStorage
 // opt-out check. Users who opt out never load the Replay bundle — also
 // code-splits Replay from the main bundle (M3 mitigation).
+if (!import.meta.env.VITE_SENTRY_DSN && import.meta.env.DEV) {
+  console.warn(
+    '[sentry] VITE_SENTRY_DSN not set — error monitoring disabled. Set it in .env.local to enable Sentry in dev.'
+  )
+}
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
   environment: import.meta.env.MODE,
@@ -54,7 +60,17 @@ createRoot(document.getElementById('root')!).render(
             sits UNDER the router tree AND keeps access to AuthProvider +
             ThemeProvider, while ErrorBoundary + PostHogProvider still wrap
             everything from the outside. */}
-        <RouterProvider router={router} />
+        {/* Phase 6 D-04: ConsentProvider sits BETWEEN PostHogProvider (outer)
+            and RouterProvider (inner). This positioning means: (a) PostHog is
+            already initialized (via initPostHog() above) when ConsentContext
+            calls posthog.opt_in_capturing() / opt_out_capturing(), and (b)
+            every route under RouterProvider can call useConsent() — including
+            the new ConsentBanner + ConsentChip components mounted inside
+            __root.tsx. Sentry.init in main.tsx is intentionally NOT gated;
+            error capture stays unconditional per D-05. */}
+        <ConsentProvider>
+          <RouterProvider router={router} />
+        </ConsentProvider>
       </PostHogProvider>
     </Sentry.ErrorBoundary>
   </StrictMode>,

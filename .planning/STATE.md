@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Phase 5 UI-SPEC approved (559bcfd). CONTEXT + UI-SPEC locked. Ready for /gsd-plan-phase 5.
-last_updated: "2026-04-22T05:47:22.566Z"
-last_activity: 2026-04-21
+status: ready_to_complete
+stopped_at: Phase 6 verified, PR #15 ready-for-review (awaiting merge to main)
+last_updated: "2026-04-28T00:00:00.000Z"
+last_activity: 2026-04-28 -- Phase 6 SHIPPED — PR #15 CI all-green (lint-and-unit, e2e, CodeRabbit, Netlify deploy-preview); milestone v1.0 awaiting merge
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 25
-  completed_plans: 25
+  total_phases: 6
+  completed_phases: 6
+  total_plans: 32
+  completed_plans: 32
   percent: 100
 ---
 
@@ -21,14 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** Community members can vote on competitive scene proposals with confidence that results are legitimate
-**Current focus:** Phase 05 — launch-hardening
+**Current focus:** Milestone v1.0 — all 6 phases complete; awaiting PR #15 merge then `/gsd-complete-milestone`
 
 ## Current Position
 
-Phase: 05 (launch-hardening) — EXECUTING
-Plan: 1 of 10
-Status: Executing Phase 05
-Last activity: 2026-04-22 — Completed quick task 260421-vxb: react-refresh lint fix
+Milestone: v1.0 — READY_TO_COMPLETE (6/6 phases done, 32/32 plans done)
+Latest phase: 06 (auth fix, GDPR opt-IN, favicon, launch hardening) — COMPLETE + VERIFIED
+PR: #15 (draft → ready-for-review 2026-04-26) — 27 commits ahead of origin/main
+Next action: merge PR #15, then `/gsd-complete-milestone`
+Last activity: 2026-04-28 -- Phase 6 SHIPPED — PR #15 CI all-green (lint-and-unit, e2e, CodeRabbit, Netlify deploy-preview). 60 commits ahead of main, +11,311/-224 across 78 files. UAT 12/12, VERIFICATION passed, REVIEW-FIX all-clean. 25 review threads open (mostly nits + documented deviations) — pending triage or merge decision (4874e51)
 
 Progress: [██████████] 100%
 
@@ -99,14 +100,23 @@ Recent decisions affecting current work:
 
 - pg_cron concern resolved — Phase 5 uses GH Actions cron, not pg_cron (05-CONTEXT.md D-01)
 
+### Roadmap Evolution
+
+- 2026-04-25: Phase 6 added — Auth fix, GDPR opt-IN rewire, favicon polish, and launch hardening. Scope includes auth bug (login fails in user's main browser, works in incognito), GDPR opt-IN rewire (current Phase 5 ships opt-OUT), favicon replacement (default Vite favicon → WTCS-branded), and launch-hardening cleanup. Queued after Phase 4 UAT (8 of 9 tests passing on prod 2026-04-25; 9th deferred — requires second human, non-blocking).
+- 2026-04-26: Phase 6 executed + verified end-to-end (7/7 plans, 7/7 success criteria, 378/378 tests, 0 new env vars, 1 advisory CLOSED — Husky hooks now executable). Auth bug closed as environmental (Step 0 site-data clear restored login on Comet). 3 follow-up issues opened for v1.1: #17 (Sentry React SDK v10 + React 19 ErrorBoundary capture path silently broken — render-phase throws don't ship; pivoted to event-handler throw for D-08 verification); #18 (UIDN-02/03 evidence-driven closure — needs UI-checker / Lighthouse signal); #19 (Vite/Rolldown sourcemap function-name preservation — Sentry shows minified `$M` instead of `fireSentrySmoke`).
+
 ### Quick Tasks Completed
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260421-vxb | Fix 7 react-refresh/only-export-components lint errors blocking Phase 5 CI | 2026-04-22 | 99ec1f8 | [260421-vxb-fix-7-react-refresh-only-export-componen](./quick/260421-vxb-fix-7-react-refresh-only-export-componen/) |
+| 260426-cty | Fix Phase 6 UI-REVIEW priority items: bound DebugAuthOverlay consoleErrors, extract CONSENT_CARD_MAX_W shared token, add mutual-exclusion test | 2026-04-26 | 6d9db3a | [260426-cty-fix-phase-6-ui-review-items-prune-debuga](./quick/260426-cty-fix-phase-6-ui-review-items-prune-debuga/) |
+| 260427-c5d | Dev-mode warn in posthog.ts when VITE_POSTHOG_KEY missing — surfaces silent dev short-circuit (Phase 6 UAT follow-up) | 2026-04-27 | 414ffe5 | [260427-c5d-add-console-warn-in-posthog-ts-when-vite](./quick/260427-c5d-add-console-warn-in-posthog-ts-when-vite/) |
+| 260427-cdi | Sentry DSN dev warn in main.tsx + DebugAuthOverlay breadcrumb live-refresh (Phase 6 UAT Playwright follow-up) | 2026-04-27 | 6552bad | [260427-cdi-console-warn-in-main-tsx-when-dsn-missin](./quick/260427-cdi-console-warn-in-main-tsx-when-dsn-missin/) |
+| 260427-dgh | Fix Test #11 — DebugAuthOverlay snapshotBreadcrumbs merges current+isolation+global Sentry scopes (Sentry v10 addBreadcrumb writes to isolation by default); +3 regression tests | 2026-04-27 | fe5603c | [260427-dgh-fix-test-11-debugauthoverlay-snapshotbre](./quick/260427-dgh-fix-test-11-debugauthoverlay-snapshotbre/) |
 
 ## Session Continuity
 
-Last session: 2026-04-19T00:00:00.000Z
-Stopped at: Phase 5 UI-SPEC approved (559bcfd). CONTEXT + UI-SPEC locked. Ready for /gsd-plan-phase 5.
-Resume file: .planning/phases/05-launch-hardening/05-UI-SPEC.md
+Last session: 2026-04-25T20:39:27.739Z
+Stopped at: Phase 6 UI-SPEC approved
+Resume file: .planning/phases/06-auth-fix-gdpr-opt-in-rewire-favicon-polish-and-launch-harden/06-UI-SPEC.md
