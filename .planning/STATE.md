@@ -29,7 +29,7 @@ Milestone: v1.0 — READY_TO_COMPLETE (6/6 phases done, 32/32 plans done)
 Latest phase: 06 (auth fix, GDPR opt-IN, favicon, launch hardening) — COMPLETE + VERIFIED
 PR: #15 (draft → ready-for-review 2026-04-26) — 27 commits ahead of origin/main
 Next action: merge PR #15, then `/gsd-complete-milestone`
-Last activity: 2026-04-27 -- Completed quick task 260427-dgh: fix DebugAuthOverlay snapshotBreadcrumbs scope-source bug (merge current+isolation+global) + 3 regression tests; closes Phase 6 UAT Test #11. 389 tests green, prod bundle unchanged. UAT all 12 tests now pass (Apple touch icon also confirmed via macOS Dock add) (fe5603c)
+Last activity: 2026-04-28 -- Phase 6 SHIPPED — PR #15 CI all-green (lint-and-unit, e2e, CodeRabbit, Netlify deploy-preview). 60 commits ahead of main, +11,311/-224 across 78 files. UAT 12/12, VERIFICATION passed, REVIEW-FIX all-clean. 25 review threads open (mostly nits + documented deviations) — pending triage or merge decision (4874e51)
 
 Progress: [██████████] 100%
 
