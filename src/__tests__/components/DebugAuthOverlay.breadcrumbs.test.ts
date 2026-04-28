@@ -22,16 +22,7 @@ vi.mock('@sentry/react', () => ({
   getCurrentScope: () => makeScope(currentScopeBreadcrumbs),
 }))
 
-// Stub the rest of the module so importing DebugAuthOverlay (which pulls in
-// supabase + lucide-react + button) does not fail during this targeted test.
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
-    auth: { getSession: vi.fn().mockResolvedValue({ data: { session: null } }) },
-  },
-}))
-vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
-
-import { snapshotBreadcrumbs } from '@/components/debug/DebugAuthOverlay'
+import { snapshotBreadcrumbs } from '@/components/debug/snapshotBreadcrumbs'
 
 beforeEach(() => {
   globalScopeBreadcrumbs.length = 0

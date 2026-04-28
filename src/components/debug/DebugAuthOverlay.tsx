@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
-import * as Sentry from '@sentry/react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'
+import { snapshotBreadcrumbs } from '@/components/debug/snapshotBreadcrumbs'
 
 // UI-SPEC Surface 3 + REVIEWS.md R-01 (PKCE State row).
 // Read-only diagnostic panel. Activation gate lives in src/routes/__root.tsx;
@@ -87,28 +87,6 @@ function snapshotStorageKeys(): Array<{ key: string; preview: string }> {
       key,
       preview: (window.localStorage.getItem(key) ?? '').slice(0, 16) + '…',
     }))
-}
-
-// Exported for direct unit testing; not part of the component's public surface.
-// Sentry v10: Sentry.addBreadcrumb writes to the isolation scope by default,
-// so reading only getCurrentScope() returns an empty list even when
-// breadcrumbs are present. Mirror what the client does on event-send: merge
-// global + isolation + current, sort by timestamp ascending, return the
-// most recent 5.
-export function snapshotBreadcrumbs(): unknown[] {
-  const all = [
-    ...(Sentry.getGlobalScope().getScopeData().breadcrumbs ?? []),
-    ...(Sentry.getIsolationScope().getScopeData().breadcrumbs ?? []),
-    ...(Sentry.getCurrentScope().getScopeData().breadcrumbs ?? []),
-  ]
-  all.sort((a, b) => (a.timestamp ?? 0) - (b.timestamp ?? 0))
-  return all.slice(-5).map((b) => ({
-    category: b.category,
-    message: b.message,
-    level: b.level,
-    timestamp: b.timestamp,
-    data: b.data,
-  }))
 }
 
 export default function DebugAuthOverlay() {
