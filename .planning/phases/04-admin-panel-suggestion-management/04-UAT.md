@@ -1,5 +1,7 @@
 ---
-status: partial
+status: complete
+result: partial
+result_note: "14/15 functional cases pass; test 6a deferred — gated on second admin Discord ID (290377966251409410 / MapCommittee) signing in. Demote click flow source-tested via 13 unit tests in demote-admin.test.ts; live two-admin smoke pending. Accepted under v1.0 milestone audit (tech_debt) 2026-04-26."
 phase: 04-admin-panel-suggestion-management
 source:
   - .planning/phases/04-admin-panel-suggestion-management/04-01-SUMMARY.md

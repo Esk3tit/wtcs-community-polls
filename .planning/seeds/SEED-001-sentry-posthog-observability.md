@@ -1,9 +1,10 @@
 ---
 id: SEED-001
-status: dormant
+status: implemented
 planted: 2026-04-06
 planted_during: Phase 2 (Browsing & Responding)
-trigger_when: Phase 5 Launch Hardening
+triggered_during: Phase 5 Launch Hardening
+implemented_during: Phase 5 (D-13 — Sentry init + sourcemap upload + PostHog identify/reset + AppErrorFallback + ConsentChip) and Phase 6 (GDPR opt-IN rewire of PostHog event capture + Sentry Replay default-OFF gating)
 scope: Medium
 ---
 
