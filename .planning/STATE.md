@@ -1,122 +1,71 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: ready_to_complete
-stopped_at: Phase 6 verified, PR #15 ready-for-review (awaiting merge to main)
-last_updated: "2026-04-28T00:00:00.000Z"
-last_activity: 2026-04-28 -- Phase 6 SHIPPED — PR #15 CI all-green (lint-and-unit, e2e, CodeRabbit, Netlify deploy-preview); milestone v1.0 awaiting merge
+milestone: post-v1.0
+milestone_name: Awaiting v1.1 planning
+status: milestone_complete
+stopped_at: v1.0 milestone shipped 2026-04-28; tag v1.0 created; awaiting `/gsd-new-milestone` to scope v1.1
+last_updated: "2026-04-28T15:25:00.000Z"
+last_activity: 2026-04-28 -- v1.0 Launch-Ready MVP milestone closed. ROADMAP, REQUIREMENTS, audit archived to .planning/milestones/. PROJECT.md evolved with shipped reqs in Validated and v1.1 carry-forward in Active. GitHub milestone v1.1 created with 6 issues (#11, #12, #13, #17, #18, #19).
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 32
-  completed_plans: 32
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-06)
+See: .planning/PROJECT.md (updated 2026-04-28 after v1.0 milestone)
 
-**Core value:** Community members can vote on competitive scene proposals with confidence that results are legitimate
-**Current focus:** Milestone v1.0 — all 6 phases complete; awaiting PR #15 merge then `/gsd-complete-milestone`
+**Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
+**Current focus:** v1.0 shipped at polls.wtcsmapban.com on 2026-04-28; v1.1 (Hygiene & Polish) awaiting `/gsd-new-milestone` planning
 
 ## Current Position
 
-Milestone: v1.0 — READY_TO_COMPLETE (6/6 phases done, 32/32 plans done)
-Latest phase: 06 (auth fix, GDPR opt-IN, favicon, launch hardening) — COMPLETE + VERIFIED
-PR: #15 (draft → ready-for-review 2026-04-26) — 27 commits ahead of origin/main
-Next action: merge PR #15, then `/gsd-complete-milestone`
-Last activity: 2026-04-28 -- Phase 6 SHIPPED — PR #15 CI all-green (lint-and-unit, e2e, CodeRabbit, Netlify deploy-preview). 60 commits ahead of main, +11,311/-224 across 78 files. UAT 12/12, VERIFICATION passed, REVIEW-FIX all-clean. 25 review threads open (mostly nits + documented deviations) — pending triage or merge decision (4874e51)
-
-Progress: [██████████] 100%
-
-## Performance Metrics
-
-**Velocity:**
-
-- Total plans completed: 10
-- Average duration: -
-- Total execution time: 0 hours
-
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 01 | 2 | - | - |
-| 02 | 4 | - | - |
-| 03 | 2 | - | - |
-
-**Recent Trend:**
-
-- Last 5 plans: -
-- Trend: -
-
-*Updated after each plan completion*
-
-**Execution Log:**
-
-| Plan         | Duration | Tasks   | Files   |
-|--------------|----------|---------|---------|
-| Phase 04 P01 | 3min     | 2 tasks | 2 files |
-| Phase 04 P02 | 8min | 2 tasks | 21 files |
-| Phase 04 P03 | 70min | 4 tasks | 23 files |
-| Phase 04 P04 | 35min | 4 tasks | 26 files |
+Milestone: post-v1.0 (v1.0 shipped 2026-04-28; v1.1 not yet scoped)
+Latest milestone: v1.0 — Launch-Ready MVP — 6 phases, 32 plans, 41 tasks, 378/378 unit tests
+Tag: v1.0
+Production: https://polls.wtcsmapban.com
+GitHub v1.1 milestone: https://github.com/Esk3tit/wtcs-community-polls/milestone/1 (6 carry-forward issues)
+Next action: `/gsd-new-milestone` to scope v1.1 phases (questioning → research → requirements → roadmap)
 
 ## Accumulated Context
 
+Decisions and project history are now logged in PROJECT.md Key Decisions and MILESTONES.md.
+v1.0 phase-level context (decisions, gotchas, retrospectives) lives in:
+- `.planning/MILESTONES.md` — shipped accomplishments + key decision outcomes
+- `.planning/milestones/v1.0-ROADMAP.md` — phase-by-phase scope and plans
+- `.planning/milestones/v1.0-REQUIREMENTS.md` — full v1 requirement set with traceability
+- `.planning/milestones/v1.0-MILESTONE-AUDIT.md` — cross-phase integration verification + tech debt log
+- `.planning/RETROSPECTIVE.md` — what worked, what was inefficient, lessons learned
+- `.planning/phases/0[1-6]-*/` — raw execution history (SUMMARY.md, VERIFICATION.md, UAT.md, VALIDATION.md per phase)
+
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
+Recent v1.0 decisions are now in PROJECT.md Key Decisions table with outcomes (✓ Good / ⚠️ Revisit / — Pending).
 
-- [Roadmap]: 5-phase structure following Schema/Auth -> Reads/Voting -> Integrity -> Admin -> Launch
-- [Roadmap]: Phase 2 will use seed data for polls (admin creation comes in Phase 4)
-- [Phase 3]: Guild membership uses OAuth guilds scope (not Bot API) via provider_token
-- [Phase 3]: Edge Function deployed with --no-verify-jwt (ES256 gateway compatibility)
-- [Phase 3]: RPC error handling is fail-closed (sign out on profile update failure)
-- [Phase 04]: update_poll_with_choices RPC wraps UPDATE+DELETE+INSERT in plpgsql for transactional safety (HIGH #1 fix)
-- [Phase 04]: [Phase 04-02]: update-poll EF surfaces 409 via its own EXISTS pre-check before invoking the update_poll_with_choices RPC, so the UI sees a clean status code instead of an opaque RPC exception string
-- [Phase 04]: [Phase 04-02]: close-expired-polls returns 503 'Sweeper not configured' if CLOSE_SWEEPER_SECRET unset, making missing-secret state loud and visible (Phase 5 provisions)
-- [Phase 04]: [Phase 04-02]: Phase 4 admin EFs use source-analysis tests only; live integration tests deferred to Phase 5/6
-- [Phase 04]: [Phase 04-03]: Admin shell uses URL-synced ?tab= via TanStack validateSearch whitelist (mitigates T-04-13 URL injection)
-- [Phase 04]: [Phase 04-03]: CategoriesList delete dialog queries REAL affected-count from polls BEFORE opening (D-21 LOW resolution — no hardcoded 0)
-- [Phase 04]: [Phase 04-03]: Both CategoriesList/AdminsList render shadcn Alert variant=destructive + Retry on fetch failure (MEDIUM #7)
-- [Phase 04]: [Phase 04-03]: Profiles SELECT RLS verified via grep-based preflight test (HIGH #2) — no live-DB dependency in CI
-- [Phase 04]: [Phase 04-03]: Deferred-effect setState pattern (setTimeout+cleanup) adopted to satisfy react-hooks/set-state-in-effect
-- [Phase 04]: [Phase 04-04]: useSuggestions now reads polls_effective (MEDIUM #5 invariant); choices + categories hydrated via separate IN() queries because PostgREST views don't preserve FK relationships
-- [Phase 04]: [Phase 04-04]: polls-effective-invariant grep test walks src/routes+hooks+components, allowlists only CategoriesList.tsx (admin-only category_id count)
-- [Phase 04]: [Phase 04-04]: SuggestionForm edit-mode fetch-failure + AdminSuggestionsTab fetch-failure both render destructive Alert + Retry (MEDIUM #7 complete across Plans 3+4)
-- [Phase 04]: [Phase 04-04]: lint-staged eslint now uses --no-warn-ignored so generated routeTree.gen.ts can be staged alongside source without tripping --max-warnings 0
+### Pending v1.1 Work
 
-### Pending Todos
+GitHub milestone v1.1 (https://github.com/Esk3tit/wtcs-community-polls/milestone/1) tracks 6 issues:
+- Bugs: #11, #12, #13 (Playwright E2E spec hygiene), #17 (Sentry React 19 ErrorBoundary)
+- Enhancement: #19 (Vite/Rolldown sourcemap function names)
+- Documentation: #18 (UIDN-02/03 closure evidence)
 
-- (folded) Phase 5 loading-skeletons/prefetch todo absorbed into 05-CONTEXT.md D-14
-- (folded) SEED-001 Sentry+PostHog absorbed into 05-CONTEXT.md D-13
+Planning hygiene (no GitHub issue):
+- VALIDATION.md frontmatter backfill on phases 01–04
+- Phase 03 VERIFICATION.md retrospective
+- 17 SUMMARY frontmatter `requirements-completed` declarations
+- Phase 03 UAT tests 2 + 3 with second human; Phase 04 UAT test 6a once second admin signs in
 
 ### Blockers/Concerns
 
-- pg_cron concern resolved — Phase 5 uses GH Actions cron, not pg_cron (05-CONTEXT.md D-01)
-
-### Roadmap Evolution
-
-- 2026-04-25: Phase 6 added — Auth fix, GDPR opt-IN rewire, favicon polish, and launch hardening. Scope includes auth bug (login fails in user's main browser, works in incognito), GDPR opt-IN rewire (current Phase 5 ships opt-OUT), favicon replacement (default Vite favicon → WTCS-branded), and launch-hardening cleanup. Queued after Phase 4 UAT (8 of 9 tests passing on prod 2026-04-25; 9th deferred — requires second human, non-blocking).
-- 2026-04-26: Phase 6 executed + verified end-to-end (7/7 plans, 7/7 success criteria, 378/378 tests, 0 new env vars, 1 advisory CLOSED — Husky hooks now executable). Auth bug closed as environmental (Step 0 site-data clear restored login on Comet). 3 follow-up issues opened for v1.1: #17 (Sentry React SDK v10 + React 19 ErrorBoundary capture path silently broken — render-phase throws don't ship; pivoted to event-handler throw for D-08 verification); #18 (UIDN-02/03 evidence-driven closure — needs UI-checker / Lighthouse signal); #19 (Vite/Rolldown sourcemap function-name preservation — Sentry shows minified `$M` instead of `fireSentrySmoke`).
-
-### Quick Tasks Completed
-
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 260421-vxb | Fix 7 react-refresh/only-export-components lint errors blocking Phase 5 CI | 2026-04-22 | 99ec1f8 | [260421-vxb-fix-7-react-refresh-only-export-componen](./quick/260421-vxb-fix-7-react-refresh-only-export-componen/) |
-| 260426-cty | Fix Phase 6 UI-REVIEW priority items: bound DebugAuthOverlay consoleErrors, extract CONSENT_CARD_MAX_W shared token, add mutual-exclusion test | 2026-04-26 | 6d9db3a | [260426-cty-fix-phase-6-ui-review-items-prune-debuga](./quick/260426-cty-fix-phase-6-ui-review-items-prune-debuga/) |
-| 260427-c5d | Dev-mode warn in posthog.ts when VITE_POSTHOG_KEY missing — surfaces silent dev short-circuit (Phase 6 UAT follow-up) | 2026-04-27 | 414ffe5 | [260427-c5d-add-console-warn-in-posthog-ts-when-vite](./quick/260427-c5d-add-console-warn-in-posthog-ts-when-vite/) |
-| 260427-cdi | Sentry DSN dev warn in main.tsx + DebugAuthOverlay breadcrumb live-refresh (Phase 6 UAT Playwright follow-up) | 2026-04-27 | 6552bad | [260427-cdi-console-warn-in-main-tsx-when-dsn-missin](./quick/260427-cdi-console-warn-in-main-tsx-when-dsn-missin/) |
-| 260427-dgh | Fix Test #11 — DebugAuthOverlay snapshotBreadcrumbs merges current+isolation+global Sentry scopes (Sentry v10 addBreadcrumb writes to isolation by default); +3 regression tests | 2026-04-27 | fe5603c | [260427-dgh-fix-test-11-debugauthoverlay-snapshotbre](./quick/260427-dgh-fix-test-11-debugauthoverlay-snapshotbre/) |
+None for v1.0 close. v1.1 scope and phasing TBD via `/gsd-new-milestone`.
 
 ## Session Continuity
 
-Last session: 2026-04-25T20:39:27.739Z
-Stopped at: Phase 6 UI-SPEC approved
-Resume file: .planning/phases/06-auth-fix-gdpr-opt-in-rewire-favicon-polish-and-launch-harden/06-UI-SPEC.md
+Last session: 2026-04-28T15:25:00Z
+Stopped at: v1.0 milestone close (`/gsd-complete-milestone v1.0`)
+Resume action: `/gsd-new-milestone` to scope v1.1
