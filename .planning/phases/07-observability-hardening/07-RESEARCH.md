@@ -743,22 +743,25 @@ function SmokePage() {
 | A3 | Rolldown's `__name` helper gets gzip-deduped to ~0.5–1.5% total bundle delta | Bundle-size impact in v1.1-VITE-SOURCEMAPS.md (re-stated here) | If the actual delta is much higher (e.g., 5%), CONTEXT.md D-14 already authorises "ship anyway with documented overage". So this is not blocking — it just affects the closure doc rationale line. |
 | A4 | Adding a flat-file route `src/routes/__smoke.tsx` with the double-underscore prefix does not collide with TanStack Router's reserved `__root` convention | Pattern 3 | If TanStack interprets `__smoke` as a layout/utility route, the build would fail. Easy to verify by running `npm run generate` once after creating the file — failure would surface immediately. Confidence is HIGH that it works (the convention is "leading underscore indicates non-routable layout file"; `__root` is a documented exception, not a generic prefix), but I did not run the codegen in this research session. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Confirm `mechanism.type` on actual Sentry event from `reactErrorHandler`.**
    - What we know: Should be `react.errorboundary` (preferred) or `generic`. v1.1-SENTRY-ERRORBOUNDARY.md flags this as unresolved.
    - What's unclear: Which one Sentry currently emits as of `@sentry/react` 10.49.0.
    - Recommendation: First Phase 7 deploy-preview smoke run records the actual value into VERIFICATION.md as the screenshot caption. No action required pre-implementation.
+   - RESOLVED: accept either `react.errorboundary` OR `generic` per CONTEXT `<specifics>`. Plan 03 Task 1 already encodes both as pass values; reject only if `auto.browser.global_handlers.onerror`.
 
 2. **Behavior of `keepNames` on arrow-function-assigned-to-const.**
    - What we know: Rolldown docs explicitly cover `function` and `class` declarations. Arrow functions (`const handler = () => {…}`) get their `.name` from the enclosing variable name via a JS engine inference rule.
    - What's unclear: Whether Oxc preserves the `const handler` identifier (so the inferred name persists) or mangles it (so `.name` becomes `xR`).
    - Recommendation: The verification script in v1.1-VITE-SOURCEMAPS.md should spot-check at least one arrow-function name in the `names[]` excerpt. Fallback (only if the spot-check fails): add `output.minify.mangle.keep_fnames: true` (research-flagged escape hatch).
+   - RESOLVED: spot-check during Plan 03 Task 3 closure-doc capture (`grep '__name(' dist/assets/*.js | head` will surface coverage). Fallback path documented (Terser `mangle.keep_fnames` in MIGRATION-LOG.md).
 
 3. **Permanent smoke route discoverability concern.**
    - What we know: D-04 + D-06 lock that live prod returns 404. URL appears to not exist.
    - What's unclear: Whether the smoke chunk is preloaded by TanStack Router on hover/intent for non-prod deploys (there's no `<Link>` to it, so probably not).
    - Recommendation: No action — `autoCodeSplitting: true` only emits a chunk; without a link to `/__smoke`, no preload triggers. The chunk only downloads on direct navigation.
+   - RESOLVED: no action required. TanStack `autoCodeSplitting: true` + zero `<Link>` references to `/__smoke` ensure the chunk is never preloaded; D-03 lazy-load assumption holds.
 
 ## Environment Availability
 
