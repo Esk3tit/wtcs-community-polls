@@ -1,280 +1,202 @@
 ---
 phase: 7
 reviewers: [gemini, codex, cursor]
-reviewed_at: 2026-04-29T15:47:44Z
+reviewed_at: 2026-04-29T17:24:52Z
 plans_reviewed: [07-01-PLAN.md, 07-02-PLAN.md, 07-03-PLAN.md]
-skipped_reviewers: [claude (running inside Claude Code), opencode (not installed), qwen (not installed), coderabbit (working-tree diff reviewer, not applicable to plan-only review)]
+round: 2
+prior_review: 07-REVIEWS-v1.md
 ---
 
-# Cross-AI Plan Review — Phase 7 (Observability Hardening)
+# Cross-AI Plan Review — Phase 7 (Round 2, post-replan)
+
+This is a re-review of the post-replan Phase 7 plans. Round 1 reviews live in `07-REVIEWS-v1.md` and were incorporated into the replan committed in `ea40bea`.
 
 ## Gemini Review
 
-# Phase 7: Observability Hardening — Plan Review
-
-The implementation plans for Phase 7 are technically exhaustive and align perfectly with the React 19 and Vite 8/Rolldown architectural shifts. The strategy correctly prioritizes empirical verification over speculative configuration, using a permanent but env-gated smoke route to ensure the observability chain remains intact across future releases.
+The implementation plans for **Phase 7: Observability Hardening** are exceptionally well-structured, technically precise, and rigorously aligned with the project's "Hygiene & Polish" goal. The strategy of combining mechanical config changes with a permanent, env-gated verification surface ensures that observability wins are not only achieved but also defensible and re-testable.
 
 ### Strengths
-*   **Architectural Precision:** Correctly identifies that React 19 render-phase errors must be caught via the new `createRoot` hooks (`onCaughtError`, etc.) and that Sentry's `reactErrorHandler` is the canonical wrapper for these.
-*   **Vite 8 / Rolldown Mastery:** Specifically targets `rolldownOptions.output.keepNames` to solve the Oxc-mangled stack trace issue, which is the correct "Vite 8 way" compared to legacy Terser or esbuild flags.
-*   **Verification Rigor:** The inclusion of a permanent `RenderThrowSmoke` component is excellent for long-term health. It ensures that observability isn't just "fixed once" but remains verifiable via a single deploy-preview click.
-*   **Baseline Drift Mitigation:** Plan 03, Task 3 explicitly mandates measuring the bundle-size delta in a single session by checking out `main`. This prevents unrelated feature additions on the base branch from skewing the `keepNames` cost analysis.
-*   **Convention Adherence:** Strict adherence to project-specific patterns like the `/* eslint-disable react-refresh/only-export-components */` pragma, the `type` keyword for imports under `verbatimModuleSyntax`, and the dense, plan-cited comment style.
+- **Rigorous Verification Logic:** The use of `mechanism.type` in Sentry as the ultimate "truth" for OBSV-01 shows a deep understanding of how React 19's error routing differs from previous versions.
+- **Professional Measurement Technique:** Utilizing `git worktree` in Plan 03-T3 to capture the bundle-size baseline without mutating the branch or relying on network state is an excellent mitigation against baseline drift (Pitfall 6).
+- **Surgical Integration:** The wiring in `src/main.tsx` (Plan 01-T1) correctly balances the new React 19 hooks with the existing `Sentry.ErrorBoundary` and `ConsentProvider` positioning, maintaining the complex wrapping order established in earlier phases.
+- **Technical Accuracy:** Correctly identifying that `ErrorInfo` must be imported from `react` (not `react-dom/client`) and using the `[__smoke].tsx` bracket-escaping for TanStack Router demonstrates high technical competence with the specific stack.
+- **Defense-in-Depth:** The combination of `reactErrorHandler` hooks, the `ErrorBoundary` `onError` belt, and the `beforeCapture` scope tagging ensures that even if one path is deduped, the resulting Sentry event will be enriched with the necessary context.
 
 ### Concerns
-*   **Sentry Event Duplication (LOW):** As noted in the research, wiring both the React 19 hooks *and* a manual `onError` belt in `Sentry.ErrorBoundary` might produce duplicate events if Sentry's `Dedupe` integration doesn't match the stack traces perfectly.
-    *   *Mitigation:* Plan 03's manual verification specifically checks for this. The plan allows for dropping the belt if duplication is observed.
-*   **Netlify Context Reliability (LOW):** Relying on `$CONTEXT` in the build command is correct, but locally `VITE_NETLIFY_CONTEXT` will be `undefined`.
-    *   *Mitigation:* The route logic `if (VITE_NETLIFY_CONTEXT === 'production')` correctly handles `undefined` as "not production," allowing the smoke route to work in local dev as intended.
-*   **Git State for Benchmarking (LOW):** Plan 03 Task 3 involves checking out `main` to measure the baseline.
-    *   *Mitigation:* The plan includes `rm -rf dist node_modules/.vite && npm ci` to ensure a clean slate, which is essential for accurate byte-count comparisons.
+- **None (LOW):** There are no high or medium severity concerns. The plans address every pitfall identified in research (StrictMode masking, Oxc mangling, codegen requirements) with specific tasks.
 
 ### Suggestions
-*   **Evidence Naming:** When capturing the Sentry `mechanism.type`, consider also noting the `handled: false` state in the JSON, as this confirms the error wasn't just caught and silenced, but properly reported as a crash.
-*   **Chunk Inspection:** In the `OBSV-02-bundle-delta.md` per-chunk table, specifically highlight the `vendor` or `react` chunks, as `keepNames` can have a disproportionate effect on libraries that export many small functions.
+- **Sentry Event Grouping:** While a deterministic message string is used, you might consider ensuring the `RenderThrowSmoke` error is tagged as a "test" or "smoke" event in the `beforeCapture` hook or via a tag in the component, making it easier to filter out of real production alerts (though the env-gate already protects live production).
+- **TanStack Codegen:** Ensure that the `npm run build` command in Plan 02-T2 actually updates the *committed* `routeTree.gen.ts`. Since the file is currently tracked in the repo, CI will fail if the local developer forgets to commit the regenerated version.
 
 ### Risk Assessment: LOW
-The risk is low because the changes are localized to configuration and the addition of a single, unauthenticated debug route that is explicitly 404-gated on production. The "fail-safe" for this phase is that even if the configuration is slightly off, the application functionality remains untouched; only the quality of error reporting in Sentry would be affected. The verification strategy is robust enough to catch configuration errors before they reach `main`.
+The risk is low because:
+1. **Isolation:** The changes are confined to app bootstrap, build config, and a new, lazy-loaded debug route.
+2. **Env-Gating:** The `VITE_NETLIFY_CONTEXT` gate prevents the smoke component from ever being reachable or throwing on live production.
+3. **No New Deps:** The phase uses only existing, pinned dependencies.
+4. **Audit Trail:** The inclusion of the `OBSV-02-bundle-delta.md` and the detailed `07-VERIFICATION.md` ensures that the "cost" of observability is fully transparent to the project maintainers.
+
+The plans are ready for execution.
 
 ---
 
 ## Codex Review
 
-## Summary
+### Summary
 
-The plans are unusually thorough and mostly aligned with the Phase 7 goal: they keep scope tight, preserve the existing Sentry/sourcemap pipeline, add a reusable smoke surface, and require real deploy-preview evidence. As written, though, they are not execution-ready. I found several concrete blockers in local repo/types: a missing `typecheck` script, an incorrect `ErrorInfo` import that will fail TypeScript, a likely-invalid TanStack route filename for `/__smoke`, and Sentry mechanism assumptions that do not match the installed SDK.
+The replanned Phase 7 is directionally strong: the implementation sequence is coherent, scope is mostly controlled, and the core OBSV-01/OBSV-02 approach should work. The remaining risk is less in the code wiring and more in verification correctness. Two validation assumptions need fixing before execution: deploy-preview Sentry events will likely still have `environment: production` because [src/main.tsx](src/main.tsx:29) uses `import.meta.env.MODE`, and `SENTRY_AUTH_TOKEN= npx vite build` will not reliably preserve `.js.map` files because the Sentry plugin deletion hook can still run.
 
-## Strengths
+### Strengths
 
-- Clear phase boundary: OBSV-01/02 only, no product-feature creep.
-- Good dependency order: bootstrap/config first, smoke route second, deploy-preview evidence last.
-- Strong evidence model: deploy preview, Sentry permalink, release SHA, stack-frame screenshots, sourcemap/chunk proof.
-- Good preservation of locked surfaces: `Sentry.init`, `sentryVitePlugin`, `sourcemap: 'hidden'`, and Netlify headers stay untouched.
-- Security posture is reasonable: production smoke path is gated, no auth/data access is added, and function-name disclosure is explicitly accepted.
+- Dependency order is sensible: Plan 07-01 wires capture and build config, Plan 07-02 adds the canary surface, Plan 07-03 verifies on deploy preview.
+- The React 19 Sentry wiring is well scoped and uses the right local package API: `Sentry.reactErrorHandler()` and `Sentry.ErrorBoundary` support the proposed hooks/props.
+- Good correction to use `ErrorInfo` from `react`, not `react-dom/client`, for the Sentry callback type.
+- `src/routes/[__smoke].tsx` is the right TanStack filename choice. I verified locally that `[__smoke].tsx` resolves to static `/__smoke`, while unescaped `__smoke.tsx` is treated as pathless layout.
+- Production smoke gating through Netlify `CONTEXT` is pragmatic and avoids adding auth or a URL secret.
+- Permanent canary is a good fit for observability regression checks.
+- Manual deploy-preview evidence is appropriate for OBSV-01; dev/Vitest would not prove minified production behavior.
 
-## Concerns
+### Concerns
 
-- **HIGH:** `npm run typecheck` does not exist in [package.json](/Users/khaiphan/code/wtcs-community-polls/package.json:6). Multiple tasks and validation rows will fail before implementation is tested. Use `tsc -b --noEmit`, `npx tsc -b --noEmit`, or add a `typecheck` script.
+- **HIGH:** Plan 07-03 expects Sentry event environment to be non-production, but current `Sentry.init` uses `environment: import.meta.env.MODE`. A Netlify deploy preview running `vite build` will probably report `production`, not `deploy-preview`. Either change Sentry environment to use `VITE_NETLIFY_CONTEXT` or remove that verification requirement.
+- **HIGH:** The sourcemap inspection command is mechanically unsound. `SENTRY_AUTH_TOKEN= npx vite build` skips upload, but the plugin's delete-artifacts hook can still delete maps because `filesToDeleteAfterUpload` remains configured in [vite.config.ts](vite.config.ts:24). Use a plugin-disabled build mode instead.
+- **MEDIUM:** Bundle delta attribution is muddied. Comparing `main` to the Phase 7 branch includes the new smoke route/chunk, not just `keepNames`. That does not strictly document the bundle-size delta from enabling `keepNames`.
+- **MEDIUM:** Grepping the whole `.js.map` for `"RenderThrowSmoke"` can false-positive from `sourcesContent`. It does not prove the identifier is in `names[]`.
+- **MEDIUM:** The `boundary='app-root'` evidence may be flaky with Sentry dedupe. If the `reactErrorHandler` event survives and the ErrorBoundary/manual event is deduped, the surviving event may lack the boundary tag.
+- **MEDIUM:** Accepting `mechanism.type === generic` as a full pass weakens proof that the React 19 root hooks captured the error. It proves the manual belt, not necessarily `reactErrorHandler`.
+- **MEDIUM:** Plan 07-03's template mentions `auto.browser.*` as a failure mode, but its acceptance check requires `grep -c 'auto\.browser\.'` to return 0. That will fail against the provided template.
+- **LOW:** Several automated verify commands use semicolon chains and pipelines without `set -euo pipefail`, so a failed build can be masked by later successful greps.
+- **LOW:** Roadmap SC #1 asks for `error.value` present, but the manual evidence steps do not explicitly verify `exception.values[0].value`.
 
-- **HIGH:** Plan 07-01 imports `type ErrorInfo` from `react-dom/client`, but `Sentry.reactErrorHandler` expects `React.ErrorInfo`. The local types are incompatible because React permits `componentStack?: string | null`, while `react-dom/client` has `componentStack?: string`. Import from `react` instead, or omit the annotation.
+### Suggestions
 
-- **HIGH:** `src/routes/__smoke.tsx` is likely the wrong filename for a literal `/__smoke` route. TanStack treats unescaped leading underscores as pathless/layout segments. Use an escaped filename such as `src/routes/[__smoke].tsx` while keeping `createFileRoute('/__smoke')`.
+- Change Plan 07-03 environment evidence to one of:
+  - Update `Sentry.init` to `environment: import.meta.env.VITE_NETLIFY_CONTEXT ?? import.meta.env.MODE`, and mark that as an intentional scope addition.
+  - Or keep `Sentry.init` untouched and verify deploy-preview provenance by URL, release SHA, event timestamp, and smoke message, not Sentry environment.
+- Replace sourcemap inspection with a plugin-disabled production build, for example: `npm run generate && npx tsc -b --noEmit && npx vite build --mode development`, since `disable: mode !== 'production'` disables the Sentry plugin while still running a Vite build.
+- Parse source maps as JSON and inspect `map.names`, not raw grep over the whole file.
+- Measure `keepNames` delta on the same Phase 7 code with only the flag toggled, then optionally document total shipping delta separately.
+- Strengthen mechanism evidence: require at least one event with `auto.function.react.error_handler` or `auto.function.react.error_boundary`; treat `generic` as belt evidence only.
+- Fix the 07-03 grep checks so failure-mode documentation can mention `auto.browser.*` without failing acceptance.
+- Add an explicit check for `exception.values[0].value` matching the deterministic smoke error message.
+- Add a production-context local smoke gate check: build with `VITE_NETLIFY_CONTEXT=production`, preview locally, and confirm `/__smoke?render=1` returns the TanStack 404.
 
-- **HIGH:** Plan 07-03's accepted Sentry mechanism values are probably wrong for the installed SDK. Local `@sentry/react` emits `auto.function.react.error_handler` from `reactErrorHandler` and `auto.function.react.error_boundary` from `ErrorBoundary`; the plan only accepts `react.errorboundary` or `generic`. Reject `auto.browser.global_handlers.onerror`, but accept and document the actual SDK mechanism strings.
+### Risk Assessment
 
-- **MEDIUM:** The `onError` belt may not produce the stored event with `tags.boundary='app-root'` if Sentry's Dedupe suppresses the manual `captureException` after the built-in ErrorBoundary capture. Add `beforeCapture` to tag/context the SDK's own ErrorBoundary event, then keep `onError` as the belt.
+Overall risk: **MEDIUM**.
 
-- **MEDIUM:** Grepping for `"App"` in sourcemaps is brittle; this repo has no `App` component. Use identifiers that actually exist: `RootLayout`, `RenderThrowSmoke`, `SmokePage`, or `AppErrorFallback`.
-
-- **MEDIUM:** `.js.map` inspection may fail in production-mode builds when `filesToDeleteAfterUpload` runs successfully. Add an explicit local inspection build mode/command where Sentry upload deletion is disabled, or capture the map excerpt before deletion.
-
-- **MEDIUM:** Plan 07-03 templates use `___` frontmatter delimiters. Existing planning docs use YAML `---`; using underscores risks breaking traceability tooling.
-
-- **LOW:** Plan 01/02 summaries marking `requirements-completed` before deploy-preview verification may overstate completion. Better to mark them addressed/implemented and reserve completed for Plan 03.
-
-## Suggestions
-
-- Replace Plan 07-01 import with:
-  ```ts
-  import { type ErrorInfo } from 'react'
-  import { createRoot } from 'react-dom/client'
-  ```
-
-- Add or use a real typecheck command:
-  ```json
-  "typecheck": "tsc -b --noEmit"
-  ```
-
-- Rename the smoke route file to an escaped literal route filename, then strengthen acceptance:
-  ```bash
-  grep -c "fullPath: '/__smoke'" src/routeTree.gen.ts
-  ```
-
-- Add `beforeCapture` on `Sentry.ErrorBoundary` to guarantee `boundary='app-root'` lands on the SDK-captured event.
-
-- Update mechanism verification to: pass if mechanism is `auto.function.react.error_handler`, `auto.function.react.error_boundary`, or a documented manual-capture generic; fail if it is `auto.browser.global_handlers.onerror`.
-
-- Replace all `"App"` evidence checks with real project symbols.
-
-- Use `---` frontmatter in `07-VERIFICATION.md` and `OBSV-02-bundle-delta.md`.
-
-- Make bundle evidence reproducible without network or branch mutation: compare against a recorded base SHA or merge base, and avoid mandatory `git pull --ff-only`.
-
-## Risk Assessment
-
-**Overall risk: MEDIUM-HIGH as written.** The architecture is sound, but several plan instructions are likely to fail mechanically or reject valid evidence. After fixing the type import, route filename, mechanism allowlist, missing script, and sourcemap evidence path, the phase risk drops to **LOW-MEDIUM**: the remaining uncertainty is mostly Sentry's live event behavior and the real gzip delta from `keepNames`.
+The implementation plan is likely to achieve OBSV-01 and OBSV-02 after minor corrections. The main risk is audit quality: as written, Plan 07-03 can either fail on a false assumption (`environment !== production`) or produce weak mechanical evidence (`grep` over `.map`, non-isolated bundle delta). Fixing those before execution should reduce the phase to low implementation risk.
 
 ---
 
 ## Cursor Review
 
-## 07-01-PLAN Review
+### Summary
 
-### 1) Summary
-This is a strong, implementation-ready plan with clear boundaries and excellent traceability to requirements (OBSV-01/02), and it correctly prioritizes low-risk wiring changes in `src/main.tsx`, `vite.config.ts`, and `netlify.toml`. It is rigorous and testable, but a few checks are brittle (tooling assumptions around grep/globs and `.map` matching) and the `onError` belt introduces potential duplicate-event behavior that should be explicitly accepted as a tradeoff in the plan output.
+The post-replan Phase 7 plans are strong overall: they are traceable to requirements (`OBSV-01`, `OBSV-02`), preserve scope discipline, and include a clear wave dependency chain (`07-01` wiring/config → `07-02` smoke surface → `07-03` manual evidence + closure docs). The verification intent is especially good, with explicit deploy-preview-only validation and concrete artifact expectations. The main residual risk is not conceptual but execution fragility: a few implementation details (notably route filename semantics and mechanism-type assumptions) could cause false negatives or unnecessary churn if the framework/tool behavior differs from assumptions.
 
-### 2) Strengths
-- Clear requirement linkage to OBSV-01/02 and decision IDs (D-05, etc.).
-- Strong "do not touch" guardrails reduce accidental scope creep.
-- Good sequencing: root hooks + keepNames + env exposure before smoke route.
-- Validation includes both typecheck and production build, aligned with phase intent.
-- Security posture is appropriately minimal and scoped for a hygiene phase.
+### Strengths
 
-### 3) Concerns
-- **MEDIUM:** Acceptance criteria rely on grep patterns over `dist/assets/*.js.map` that may be brittle if sourcemap shape or filenames vary.
-- **MEDIUM:** `onError` + `onCaughtError` duplicate risk is acknowledged, but no explicit remediation trigger is encoded in this plan's done/fail logic.
-- **LOW:** Criteria mention route tree regeneration as a pitfall in this plan even though route work is in Plan 02; this can confuse pass/fail ownership.
-- **LOW:** Very dense plan may increase execution error rate for humans despite strong detail.
+- Clear requirement mapping: each plan explicitly ties tasks to `OBSV-01`/`OBSV-02` and success criteria.
+- Good dependency ordering: Wave 1 unblocks Wave 2/3 correctly; Wave 3 is appropriately human-gated.
+- Strong anti-regression design: permanent smoke canary route enables repeatable checks for future releases.
+- Verification rigor is high: deploy-preview requirement is correctly enforced (avoids dev/StrictMode false confidence).
+- Mechanical evidence for `keepNames` is well thought out (`__name(` + sourcemap `names[]` + Sentry frame readability).
+- Closure documentation quality is excellent: dedicated bundle-delta doc + structured verification report supports audits.
 
-### 4) Suggestions
-- Add an explicit contingency in Plan 01: "If duplicate events observed in Plan 03, remove belt or document accepted dedupe behavior."
-- Move routeTree-related acceptance checks fully to Plan 02 to keep ownership clean.
-- Replace brittle map-string checks with one stable script/check command reused in Plan 03 documentation.
-- Add a short "minimum pass gate" subsection (must-pass vs nice-to-have checks).
+### Concerns
 
-### 5) Risk Assessment
-**Overall risk: LOW-MEDIUM.**
-Technically sound and tightly scoped; main residual risk is verification brittleness and duplicate-event ambiguity, not architecture.
+- **HIGH**: Route filename convention risk (`src/routes/[__smoke].tsx`) may be incorrect for TanStack file routing and could generate an unexpected route or fail registration.
+- **MEDIUM**: Mechanism-type acceptance is still assumption-heavy (`auto.function.react.*` vs `generic`); if SDK emits a different valid type, plan may fail on rubric mismatch rather than real behavior.
+- **MEDIUM**: Dual-capture design (`beforeCapture` + `onError` + root hooks) is robust but complex; duplicate-event behavior depends on dedupe internals that are assumed rather than asserted from current SDK behavior.
+- **LOW**: Plan is somewhat over-specified with many grep-based acceptance checks; this can increase friction without improving confidence proportionally.
+- **LOW**: Bundle comparison method is sound, but reproducibility could still drift if dependency resolution or environment differs between baseline worktree and phase tree (despite same-session mitigation).
 
----
+### Suggestions
 
-## 07-02-PLAN Review
+- Validate TanStack route naming before implementation freeze: add a short pre-check in plan text confirming exact file-path semantics for literal `__smoke` route.
+- Relax mechanism-type pass criteria to prioritize outcome signals first (`componentStack`, boundary tag, unmangled frames), and treat mechanism string as secondary diagnostic evidence.
+- Simplify duplicate-event strategy: keep either root hooks + boundary `beforeCapture`, and only retain manual `onError` capture if required after first evidence run.
+- Add one explicit rollback path in Plan 03 for "event captured but frames still mangled" (e.g., verify uploaded sourcemap/debug ID linkage before code changes).
+- Keep the excellent evidence discipline, but trim non-critical grep checks to reduce execution noise.
 
-### 1) Summary
-This is a clean plan that directly implements the canary verification surface with good separation of concerns and proper env gating. It aligns well with D-02..D-06 and avoids over-engineering. The biggest risk is reliance on generated route artifacts and environment assumptions that could fail silently on deploy if not explicitly verified against the deployed preview behavior.
+### Risk Assessment
 
-### 2) Strengths
-- Correctly uses a dedicated `/__smoke` route and render-phase throw semantics.
-- Good non-prod gating model with `beforeLoad` + `notFound()` for prod.
-- Lazy loading is appropriate and consistent with `autoCodeSplitting`.
-- Explicit prohibition of direct `Sentry.captureException` in smoke path preserves test integrity.
-- Strong anti-scope controls (no auth wrapper, no custom 404 UX, no unrelated route edits).
+**Overall risk: MEDIUM**
 
-### 3) Concerns
-- **MEDIUM:** Dependency on `VITE_NETLIFY_CONTEXT` assumes Plan 01 landed and deploy env substitution works exactly as expected.
-- **MEDIUM:** Accepting "RenderThrowSmoke identifier in dist chunk" as proof of lazy split may be non-deterministic depending on bundler output details.
-- **LOW:** Potential ambiguity around whether `/__smoke` should exist in local dev when env var is undefined (current plan says yes; that's fine but should be explicitly intentional in final docs).
-- **LOW:** Very strict literal-content instructions may reduce adaptability if route conventions change slightly.
-
-### 4) Suggestions
-- Add a single deploy-preview smoke sanity check in this plan's output criteria: "`/__smoke` reachable on preview, not on prod."
-- Add fallback behavior if `VITE_NETLIFY_CONTEXT` is unexpectedly missing in preview (log + fail verification).
-- Replace identifier-based chunk proof with route-level behavior proof plus routeTree inclusion check.
-- Add one short note in summary file clarifying local-dev behavior is expected and intentional.
-
-### 5) Risk Assessment
-**Overall risk: LOW.**
-Well-scoped and likely to succeed; main risk is environment/config coupling, not code complexity.
-
----
-
-## 07-03-PLAN Review
-
-### 1) Summary
-This plan is comprehensive and audit-friendly, and it does what a closure plan should do: convert technical intent into evidence. It strongly enforces D-07/D-08/D-11..D-14. The main risk is operational complexity: it's documentation-heavy with many manual placeholders and strict formatting requirements, making execution error (stale placeholders, incomplete artifacts, inconsistent measurements) more likely than technical failure.
-
-### 2) Strengths
-- Excellent evidence model: mechanism type, component stack, un-mangled frames, permalink, release SHA.
-- Correctly mandates deploy-preview verification (not dev/Vitest), matching core risk from prior phase.
-- Strong bundle-delta methodology with same-session baseline control.
-- Good use of explicit pass/fail sentinel (`auto.browser.global_handlers.onerror` as failure).
-- Traceability and audit structure are extremely strong.
-
-### 3) Concerns
-- **HIGH:** Manual checkpoint introduces significant risk of incomplete/incorrect evidence capture (placeholder leakage, wrong event, wrong release SHA).
-- **MEDIUM:** Baseline comparison process (`git checkout main`, pull, rebuild, return) is fragile in active repos and can produce drift despite guidance.
-- **MEDIUM:** Screenshot artifact policy (<1MB commit else ignore) could create inconsistent historical evidence quality.
-- **LOW:** Creating first `.planning/closure/` convention during this plan can cause minor process friction or naming inconsistency.
-
-### 4) Suggestions
-- Add a short "evidence checklist script" to fail fast on placeholder tokens and missing required fields before completion.
-- Require explicit event timestamp + environment tag in the verification doc to avoid wrong-event capture.
-- Standardize screenshot policy (always keep local + always include permalink + textual extraction in git) rather than size-based branching.
-- For bundle delta, record exact `main` commit hash used as baseline in both docs and summary to reduce audit ambiguity.
-
-### 5) Risk Assessment
-**Overall risk: MEDIUM.**
-Technical risk is low; execution/process risk is moderate due to high manual/documentation load and many required evidence artifacts.
-
----
-
-## Cross-Plan Overall Assessment (Cursor)
-
-### 1) Summary
-The three plans are well-designed, coherent, and correctly staged: Plan 01 wires capture/symbolication prerequisites, Plan 02 adds a stable verification surface, and Plan 03 captures authoritative evidence. Together they should achieve the Phase 7 goals with minimal product risk and no scope creep into v1.2 features. The main systemic risk is not architecture—it is verification ergonomics and manual evidence handling in Plan 03.
-
-### 2) Strengths
-- Clear dependency ordering and phase decomposition.
-- Strong requirement-to-artifact traceability.
-- Explicit anti-scope controls prevent over-engineering.
-- Security/performance tradeoffs are acknowledged and bounded.
-- Verification strategy aligns with the known React 19/Sentry caveats.
-
-### 3) Concerns
-- **MEDIUM:** Some checks are implementation-fragile (grep-based artifact assertions).
-- **MEDIUM:** Duplicate-event behavior is acknowledged but not fully operationalized as a deterministic branch in outcomes.
-- **LOW:** Plan verbosity may reduce executor throughput and increase clerical mistakes.
-
-### 4) Suggestions
-- Introduce a minimal shared verification helper for stable checks used by all plans.
-- Add a single explicit "if duplicate/noise exceeds threshold then do X" decision.
-- Add a final cross-plan "ready-to-close gate" checklist to prevent Plan 03 paperwork drift.
-
-### 5) Risk Assessment
-**Overall phase-plan risk: LOW-MEDIUM.**
-High-quality planning with strong technical correctness; residual risk is primarily operational/manual verification error rather than design flaws.
+Justification: the architecture and verification strategy are solid and likely to achieve both observability goals, but there are a few high-impact implementation-assumption points (especially route file semantics and event-mechanism strictness) that could derail execution even when underlying fixes are correct. With small guardrail adjustments, this can drop to **LOW** quickly.
 
 ---
 
 ## Consensus Summary
 
-### Agreed Strengths (2+ reviewers)
-- **Tight scope discipline / clear phase boundary** — All three: zero product-feature creep into OBSV-01/02 only.
-- **Correct dependency ordering** — All three: bootstrap/config (01) → smoke surface (02) → evidence capture (03).
-- **Strong evidence model** — All three: deploy-preview, Sentry permalink, release SHA, mechanism type, un-mangled frames.
-- **Architectural correctness on React 19 + Vite 8/Rolldown** — Gemini and Codex explicitly: `createRoot` hooks via `Sentry.reactErrorHandler` + `rolldownOptions.output.keepNames`.
-- **Traceability and "do-not-touch" guardrails** — All three: requirement IDs, decision IDs, locked surfaces preserved.
+Three external reviewers (Gemini, Codex, Cursor) examined the replanned Phase 7. Risk verdicts: **Gemini LOW, Codex MEDIUM, Cursor MEDIUM**. All three agree the architecture and dependency ordering are sound; the residual concerns cluster on **verification rigor** and **acceptance-criterion brittleness** in Plan 07-03, not on the wiring itself.
 
-### Agreed Concerns (2+ reviewers — highest priority)
-- **`onError` belt + duplicate-event risk** — Gemini (LOW), Codex (MEDIUM), Cursor (MEDIUM). All three flag that the manual `onError` belt may collide with Sentry's `Dedupe` and either drop the desired tagged event or produce duplicates. Codex's fix (`beforeCapture` on `Sentry.ErrorBoundary` instead of/in addition to `onError`) is the most actionable.
-- **Brittle grep-based sourcemap/chunk verification** — Codex (MEDIUM) and Cursor (MEDIUM). The `dist/assets/*.js.map` literal-string assertions are fragile; Codex additionally identifies the specific bug — grepping for `"App"` when no `App` component exists in this codebase.
-- **Bundle-baseline `git checkout main` fragility** — Gemini (LOW, mitigated), Cursor (MEDIUM), Codex (suggests recording base SHA instead). Active-repo state and required `git pull` make the same-session baseline non-reproducible in audit.
-- **Manual evidence-capture risk in Plan 03** — Cursor (HIGH for Plan 03), Codex (MEDIUM via placeholder/template concerns including `___` vs `---` frontmatter). High clerical surface area = real risk of placeholder leakage, wrong event, wrong release SHA.
+### Agreed Strengths
 
-### High-severity items unique to a single reviewer (still actionable)
-**Codex flagged four mechanical blockers no other reviewer caught:**
-1. **`npm run typecheck` script does not exist** in `package.json` — multiple plans assume it. Add `"typecheck": "tsc -b --noEmit"` or update plan commands.
-2. **`type ErrorInfo` import source mismatch** — Plan 07-01 imports from `react-dom/client`; Sentry's `reactErrorHandler` expects `React.ErrorInfo`. Import from `react` or drop the annotation.
-3. **TanStack route filename `src/routes/__smoke.tsx`** — leading underscore is treated as pathless/layout. Use escaped filename `src/routes/[__smoke].tsx`.
-4. **Sentry mechanism allowlist is wrong for installed SDK** — accept `auto.function.react.error_handler` and `auto.function.react.error_boundary`, not just `react.errorboundary`/`generic`.
+- **Dependency ordering is sound** (Gemini, Codex, Cursor): Plan 01 wiring → Plan 02 smoke surface → Plan 03 deploy-preview verification.
+- **Manual deploy-preview verification is the right call** (Codex, Cursor, Gemini implicit): dev/StrictMode would mask the real capture path; this avoids false confidence.
+- **Permanent env-gated smoke canary is well-designed** (Gemini, Cursor): repeatable for future releases, env-gating prevents prod exposure.
+- **`ErrorInfo` import correction from `react` not `react-dom/client`** (Gemini, Codex): correctly catches a React 19 type subtlety.
+- **`git worktree` baseline measurement** (Gemini, Codex implicit, Cursor implicit): clean way to isolate the keepNames bundle delta.
+- **Closure documentation discipline** (Gemini, Cursor): `OBSV-02-bundle-delta.md` + `07-VERIFICATION.md` produces an auditable trail.
 
-These four items would cause execution-time failures regardless of architectural correctness — they belong in the next plan revision before `/gsd-execute-phase`.
+### Agreed Concerns (highest priority — raised by 2+ reviewers)
+
+1. **Mechanism-type acceptance is over-strict / brittle** (Codex MEDIUM + Cursor MEDIUM)
+   - Plan 07-03 accepts `{auto.function.react.error_handler, auto.function.react.error_boundary, generic}` as the allow-list. Both reviewers worry this can fail on rubric mismatch even when the underlying capture is correct, OR (Codex) accepting `generic` weakens proof that the React 19 root hooks did the capture (vs the manual belt).
+   - **Suggestion convergence:** prioritize outcome signals (componentStack populated, un-mangled frames, boundary tag) as primary evidence; treat mechanism.type as secondary diagnostic. If keeping the strict allowlist, require *at least one* event with `auto.function.react.*` — don't pass on `generic` alone.
+
+2. **Dual-capture / Sentry dedupe assumption is unverified** (Codex MEDIUM + Cursor MEDIUM)
+   - The `reactErrorHandler` hooks + `ErrorBoundary.beforeCapture` + `onError` belt produces multiple capture paths. Dedupe behavior is assumed, not asserted from SDK source. Codex specifically flags that if the hook's event survives and the boundary's event is deduped, the surviving event may lack `tags.boundary='app-root'`.
+   - **Suggestion convergence:** Cursor proposes simplifying to root hooks + `beforeCapture` only, dropping the `onError` belt unless first-run evidence demands it. Codex proposes hardening: ensure the boundary tag lands on whichever event survives.
+
+3. **Bundle-delta attribution is muddied / reproducibility risk** (Codex MEDIUM + Cursor LOW)
+   - Comparing `main` to Phase 7 branch includes the new smoke route chunk, not just `keepNames`. Codex flags this as MEDIUM; Cursor flags reproducibility drift as LOW.
+   - **Suggestion convergence:** measure the `keepNames` delta on the same Phase 7 code with only the flag toggled, then document total shipping delta separately. Pinning `base_sha` in the closure doc helps but doesn't isolate the flag's effect.
+
+### Round-2 New HIGH Concerns (single-reviewer, but worth flagging)
+
+4. **Sentry environment is `import.meta.env.MODE`, not `VITE_NETLIFY_CONTEXT`** (Codex HIGH — Gemini/Cursor did not flag)
+   - `src/main.tsx:29` `Sentry.init({ environment: import.meta.env.MODE })` will report `production` on a deploy-preview build. If Plan 07-03 verification asks the auditor to confirm "environment !== production" in the Sentry event, that verification will fail even when everything else works.
+   - **Recommended fix:** Either (a) extend `Sentry.init` to `environment: import.meta.env.VITE_NETLIFY_CONTEXT ?? import.meta.env.MODE` (intentional scope addition, since D-05 already makes the variable available), OR (b) verify deploy-preview provenance by URL/release-SHA/timestamp/smoke-message rather than Sentry's environment tag.
+   - **Action required:** confirm Plan 07-03 evidence template doesn't depend on Sentry environment tag; if it does, pick (a) or (b) before execution.
+
+5. **`SENTRY_AUTH_TOKEN= npx vite build` does NOT preserve sourcemaps** (Codex HIGH — Gemini/Cursor did not flag)
+   - The Sentry Vite plugin's `filesToDeleteAfterUpload` hook still runs even when the auth token is empty, deleting `.js.map` files before the proposed `names[]` inspection can run.
+   - **Recommended fix:** Use plugin-disabled build instead — `npx vite build --mode development` — since the plugin is wired with `disable: mode !== 'production'`, this disables the plugin (and its delete hook) while still producing a real Vite build. Document this in Plan 07-03 Task 3 explicitly.
 
 ### Divergent Views (worth investigating)
-- **Overall risk verdict spans LOW → MEDIUM-HIGH:**
-  - Gemini: **LOW** (architecture sound, fail-safe is benign).
-  - Cursor: **LOW-MEDIUM** (process risk in Plan 03 manual evidence).
-  - Codex: **MEDIUM-HIGH as written** → **LOW-MEDIUM after fixes** (mechanical blockers).
-  - Reconciliation: Gemini reviewed at architecture level; Codex went deepest into the local repo and found execution-blockers; Cursor focused on operational ergonomics. The MEDIUM-HIGH rating is the most conservative and most actionable — adopting Codex's four HIGH fixes would converge all three to LOW-MEDIUM.
 
-- **Smoke route file name:**
-  - Gemini and Cursor accepted `src/routes/__smoke.tsx` as-is.
-  - Codex flagged it as wrong for TanStack file-based routing semantics.
-  - **Action:** verify against TanStack Router docs / generated `routeTree.gen.ts` before execution; this is empirically testable in <60s.
+- **Cursor flagged route filename `src/routes/[__smoke].tsx` as HIGH risk** ("may be incorrect for TanStack file routing"). **Codex explicitly verified locally** that `[__smoke].tsx` resolves to static `/__smoke` while unescaped `__smoke.tsx` is treated as a pathless layout. **Gemini independently confirmed** the bracket-escape is correct. **Verdict:** Cursor's HIGH concern is OBE — the bracket convention is correct per two independent confirmations. Plan stays as-is.
 
-- **Belt-vs-replace strategy on `onError`:**
-  - Gemini accepts the current "drop belt if duplicate observed" approach.
-  - Codex recommends keeping the belt but adding `beforeCapture` on `Sentry.ErrorBoundary`.
-  - Cursor wants explicit deterministic remediation criteria.
-  - **Action:** decide between (a) dual-capture with `beforeCapture` to guarantee the tag, or (b) `beforeCapture` only and remove the manual belt entirely. Document the chosen strategy in 07-01-PLAN.
+- **Gemini saw zero non-LOW concerns**, while Codex and Cursor both rated MEDIUM. The gap is not architectural — Gemini reviewed the wiring/structure (which is solid) while Codex and Cursor went deeper into Plan 07-03's evidence-template mechanics. The MEDIUM rating reflects audit fragility, not implementation risk.
+
+### Other Worthwhile Suggestions (non-consensus, single-reviewer)
+
+- **Codex MEDIUM:** `grep "RenderThrowSmoke" .js.map` can false-positive on `sourcesContent`. Recommendation: parse the map JSON and inspect `map.names` directly rather than greppping the full file.
+- **Codex MEDIUM:** Plan 07-03 documents `auto.browser.*` as a failure mode but its acceptance grep requires `grep -c 'auto\.browser\.'` to return 0 — these contradict each other in a template that mentions the failure mode.
+- **Codex LOW:** Several verify-block command chains use `;` without `set -euo pipefail`; a failed build can be masked by later successful greps.
+- **Codex LOW:** Roadmap SC #1 ("`error.value` present") is not verified by any explicit check on `exception.values[0].value`.
+- **Codex Suggestion:** Add a local smoke-gate check — build with `VITE_NETLIFY_CONTEXT=production`, preview locally, confirm `/__smoke?render=1` returns the TanStack 404. This proves the gate before deploy-preview.
+- **Cursor Suggestion:** Add a rollback path for "event captured but frames still mangled" — verify sourcemap/debug-ID linkage before assuming `keepNames` is broken.
+- **Cursor Suggestion:** Trim non-critical grep checks to reduce execution noise.
+- **Gemini Suggestion:** Tag `RenderThrowSmoke` events as "smoke" via `beforeCapture` for filterability (env-gate already protects prod, so low priority).
+- **Gemini Suggestion:** Confirm `routeTree.gen.ts` is committed after `npm run build` in Plan 02-T2 (else CI fails).
 
 ---
 
-## Recommended Next Steps
+## Disposition Recommendation
 
-1. **Apply Codex's four HIGH fixes** to the plans before executing — these are mechanical blockers, not subjective taste calls.
-2. **Decide the `onError` strategy** explicitly (with `beforeCapture`) and update Plan 01 + Plan 03 verification logic.
-3. **Replace `"App"` symbol checks** with real identifiers (`RootLayout`, `RenderThrowSmoke`, `AppErrorFallback`) across Plan 01 and Plan 03 acceptance criteria.
-4. **Stabilize Plan 03 evidence capture** with a placeholder-detection script + recorded base-SHA for bundle delta (no `git checkout main` requirement).
-5. **Fix `___` → `---` frontmatter** in Plan 03 templates.
-6. Run `/gsd-plan-phase 7 --reviews` to fold this REVIEWS.md back into a revised plan revision.
+This is a Round-2 review of plans that already incorporated Round-1 feedback. **Two new HIGH concerns** surfaced from Codex that were not visible in Round 1:
+
+1. Sentry environment tag mismatch (`MODE` vs `VITE_NETLIFY_CONTEXT`) — needs a Plan 07-03 evidence-template adjustment OR a `Sentry.init` patch in Plan 07-01.
+2. `filesToDeleteAfterUpload` deletes sourcemaps even with empty `SENTRY_AUTH_TOKEN` — needs Plan 07-03 Task 3 to switch to `vite build --mode development`.
+
+Both fixes are local to Plan 07-03 (and possibly a one-line add to Plan 07-01 for option 1a). They do not require restructuring waves.
+
+**Recommended action:** apply the two HIGH fixes via `/gsd-plan-phase 7 --reviews` (a third replan loop), then proceed to execute. The MEDIUM concerns about mechanism-type strictness and dual-capture dedupe should be addressed in the same revision pass:
+- Tighten mechanism evidence (require ≥1 `auto.function.react.*` event; `generic` alone insufficient).
+- Document the dedupe assumption explicitly OR simplify per Cursor's recommendation.
+
+Cursor's HIGH on route filename is OBE (verified by Codex + Gemini); ignore.
