@@ -68,20 +68,18 @@
 
 ## Traceability
 
-_Populated by roadmapper after ROADMAP.md is approved._
-
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| OBSV-01 | TBD | Pending |
-| OBSV-02 | TBD | Pending |
-| TEST-07 | TBD | Pending |
-| TEST-08 | TBD | Pending |
-| TEST-09 | TBD | Pending |
-| TEST-10 | TBD | Pending |
-| UIDN-02 | TBD | Pending |
-| UIDN-03 | TBD | Pending (blocked on UIDN-04) |
-| UIDN-04 | TBD | Pending (blocks UIDN-03) |
-| DOCS-01 | TBD | Pending |
-| DOCS-02 | TBD | Pending |
-| DOCS-03 | TBD | Pending |
-| DOCS-04 | TBD | Pending |
+| OBSV-01 | Phase 7 | Pending |
+| OBSV-02 | Phase 7 | Pending |
+| TEST-07 | Phase 8 | Pending |
+| TEST-08 | Phase 8 | Pending |
+| TEST-09 | Phase 8 | Pending |
+| TEST-10 | Phase 8 | Pending |
+| UIDN-04 | Phase 9 | Pending (blocks UIDN-03) |
+| UIDN-02 | Phase 9 | Pending |
+| UIDN-03 | Phase 9 | Pending (blocked on UIDN-04) |
+| DOCS-01 | Phase 10 | Pending |
+| DOCS-02 | Phase 10 | Pending |
+| DOCS-03 | Phase 10 | Pending |
+| DOCS-04 | Phase 10 | Pending |
