@@ -26,14 +26,18 @@ This platform gathers community **opinions**, not binding votes. Nothing on the 
 **Production:** https://polls.wtcsmapban.com
 **Code:** 13,602 LOC across 141 .ts/.tsx files, 41 test files, 16 Edge Functions, 10 DB migrations, 378/378 unit tests, 47/50 UAT cases (3 second-human-gated)
 
-## Next Milestone Goals
+## Current Milestone: v1.1 Hygiene & Polish
 
-**v1.1 — Hygiene & Polish** (planning via `/gsd-new-milestone`):
+**Goal:** Close v1.0 carry-forward debt — UI polish closure evidence, observability robustness, E2E test hygiene, and planning artifact backfill — so the platform is audit-clean before v1.2 (Admin Visibility Controls — SEED-002) feature work begins.
+
+**Target features:**
 - E2E test fixture/seed cleanup (3 Playwright spec bugs filed under #11, #12, #13)
 - Observability robustness — Sentry React 19 ErrorBoundary capture path (#17), Vite/Rolldown sourcemap function-name preservation (#19)
 - UI design polish closure — UIDN-02 mobile-first responsive evidence + UIDN-03 shadcn Maia/Neutral polish (#18)
-- Planning hygiene backfill — VALIDATION.md frontmatter on phases 01–04, Phase 03 VERIFICATION.md retrospective, 17 SUMMARY frontmatter `requirements-completed` declarations
-- 2 deferred UAT items (Phase 03 tests 2+3 — non-member rejection + invite link; Phase 04 test 6a — demote click flow)
+- Planning hygiene backfill — VALIDATION.md frontmatter on phases 01–04, Phase 03 VERIFICATION.md retrospective, 17 SUMMARY frontmatter `requirements-completed` declarations + retroactive Phase 04 UAT 6a evidence (passed off-record on second admin)
+- 1 deferred UAT item (Phase 03 tests 2+3 — non-member rejection + invite link, second human required)
+
+**Key context:** Phase numbering continues from v1.0 (last phase 6) → v1.1 starts at Phase 7. Tim's ask for admin-controlled per-suggestion results visibility is captured in `.planning/seeds/SEED-002-admin-controlled-results-visibility.md` and scheduled for v1.2 — kept out of v1.1 to preserve the hygiene-only framing.
 
 GitHub milestone: https://github.com/Esk3tit/wtcs-community-polls/milestone/1
 
@@ -112,8 +116,12 @@ GitHub milestone: https://github.com/Esk3tit/wtcs-community-polls/milestone/1
 - [ ] VALIDATION.md frontmatter backfill on phases 01–04
 - [ ] Phase 03 VERIFICATION.md retrospective
 - [ ] 17 SUMMARY frontmatter `requirements-completed` declarations
+- [ ] Backfill Phase 04 UAT test 6a evidence (demote click flow — passed off-record on second admin, needs 04-UAT.md update)
 - [ ] Phase 03 UAT tests 2 + 3 with second human (no 2FA)
-- [ ] Phase 04 UAT test 6a once second admin signs in
+
+### Planned for v1.2 (Admin Visibility Controls)
+
+- **SEED-002**: Admin-controlled per-suggestion results visibility — set at creation (`respondents_only` default / `public_during` / `public_after_close`) + ad-hoc one-way reveal on live suggestions. Touches schema, RLS on `vote_counts`, new admin EF, admin + user UI. Tim's ask, captured 2026-04-28. Will reframe RSLT-05 from absolute rule to default behavior. See `.planning/seeds/SEED-002-admin-controlled-results-visibility.md`.
 
 ### Deferred to v2 (or later)
 
@@ -205,4 +213,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-28 after v1.0 milestone (Launch-Ready MVP) shipped*
+*Last updated: 2026-04-28 — v1.1 Hygiene & Polish milestone opened (continues from Phase 7); Tim's admin-visibility ask captured as SEED-002 for v1.2*
