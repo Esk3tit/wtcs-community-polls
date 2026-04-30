@@ -33,9 +33,13 @@ export default defineConfig(({ mode }) => ({
     sourcemap: 'hidden',
     // Phase 7 OBSV-02: preserve original function/class .name so Sentry
     // stack frames show source identifiers (e.g. handleResponseSubmit)
-    // instead of mangled `xR`/`$M`. Rolldown injects a __name(fn,'orig')
-    // helper; Function.prototype.name then survives Oxc's mangler (Vite 8
-    // default minifier). Bundle-size cost: ~0.5–1.5% gzip — measured in
+    // instead of mangled `xR`/`$M`. Rolldown's Oxc minifier preserves
+    // names by leaving literal `function Name(...)` declarations in the
+    // output (NOT by emitting esbuild's `__name(fn,'orig')` helper —
+    // amended 2026-04-30 from PR #21 deploy-preview verification; see
+    // .planning/phases/07-observability-hardening/artifacts/__name-grep.txt).
+    // Function.prototype.name then survives Oxc's mangler (Vite 8 default
+    // minifier). Bundle-size cost: ~0.5–1.5% gzip — measured in
     // .planning/closure/OBSV-02-bundle-delta.md.
     // Research: .planning/research/v1.1-VITE-SOURCEMAPS.md
     rolldownOptions: {

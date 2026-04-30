@@ -1,0 +1,150 @@
+{
+  "_capture_meta": {
+    "captured_at": "2026-04-30T09:20:52.792Z",
+    "capture_method": "Playwright MCP — intercepted Sentry envelope POST on deploy preview before transmission to Sentry SaaS",
+    "deploy_preview_url": "https://deploy-preview-21--wtcs-community-polls.netlify.app/__smoke?render=%221%22",
+    "trigger_url_workaround": "render=%221%22 (URL-encoded \"1\") — bare ?render=1 hits SmokePage's inert hint because TanStack Router's default search parser JSON-parses 1 as a number, then validateSearch's strict ===' 1' string compare fails. See KNOWN-BUG block below.",
+    "envelope_endpoint": "https://o4510971582349312.ingest.us.sentry.io/api/4511250886164480/envelope/",
+    "http_status": 200,
+    "release_sha": "72481f065dbaa08edd4c74a51953765923b31262",
+    "release_short_sha": "72481f0",
+    "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
+    "sentry_permalink": "https://khai-phan.sentry.io/issues/7451487881/events/5100cc65e9b94bc5b5906ab11ab79d3b/",
+    "sentry_org_slug": "khai-phan",
+    "sentry_issue_id": "7451487881",
+    "sentry_event_search_term": "RenderThrowSmoke: deliberate render-phase throw for Sentry verification"
+  },
+  "_known_bug": {
+    "summary": "/__smoke?render=1 (bare) renders the inert hint instead of triggering the throw",
+    "root_cause": "src/routes/[__smoke].tsx validateSearch uses strict ===' 1' (string). TanStack Router's default parseSearchWith(JSON.parse) coerces the URL value `1` to the JS number 1. Therefore `search.render === '1'` (number === string) is always false, so validateSearch returns {} and SmokePage renders the inert hint paragraph.",
+    "current_workarounds": [
+      "/__smoke?render=%221%22 (URL-encoded JSON string) — works",
+      "/__smoke?render=true — would require validateSearch update"
+    ],
+    "proposed_fix": "Change validateSearch to compare loosely: `String(search.render) === '1'` (or accept render: 1 number too). Affects: src/routes/[__smoke].tsx, ROADMAP.md SC #1 example, 07-CONTEXT.md D-05, plan docs that show ?render=1.",
+    "blast_radius": "low — purely the smoke route. The Sentry capture path itself works correctly (verified by this very capture)."
+  },
+  "_evidence_summary": {
+    "OBSV-01 PRIMARY pass (Round-2 MEDIUM-1)": "exception.values[0].mechanism.type === 'auto.function.react.error_handler' — proves the React 19 createRoot hook caught the render-phase throw",
+    "OBSV-01 SECONDARY (expected companion)": "exception.values[1].mechanism.type === 'generic' — the manual onError belt fired alongside (defense-in-depth, plan-documented)",
+    "OBSV-02 symbolication pass": "Top stack frames in BOTH exception entries show un-mangled identifiers: RenderThrowSmoke, SmokePage, RootLayout, AuthProvider, ThemeProvider, ErrorBoundary, PostHogProvider, ConsentProvider, RouterProvider — proves Rolldown keepNames preserved Function.prototype.name end-to-end through Oxc minify",
+    "Round-2 HIGH-1 pass (environment coalesce)": "environment === 'deploy-preview' (NOT 'production') — Sentry.init's VITE_NETLIFY_CONTEXT ?? MODE coalesce works",
+    "Round-2 MEDIUM-5 pass (boundary tag survives dedupe)": "tags.boundary === 'app-root' — set by the taggedHandler factory before Sentry.reactErrorHandler ran, AND by Sentry.ErrorBoundary beforeCapture. Tag is on the kept event regardless of which path Sentry.Dedupe collapses.",
+    "Round-2 LOW-2 pass (error.value verification)": "exception.values[0].value === 'RenderThrowSmoke: deliberate render-phase throw for Sentry verification' — exact match with the deterministic smoke message string",
+    "ROADMAP SC #1 pass": "componentStack populated (see contexts.react.componentStack — 30+ frames starting with RenderThrowSmoke and ending with ErrorBoundary)",
+    "ROADMAP SC #5 pass": "Verification performed on a Netlify deploy preview (release 72481f0, deploy-preview environment), NOT vite dev / NOT Vitest"
+  },
+  "envelope_body": {
+    "event_id": "5100cc65e9b94bc5b5906ab11ab79d3b",
+    "sent_at": "2026-04-30T09:20:52.794Z",
+    "sdk": {
+      "name": "sentry.javascript.react",
+      "version": "10.49.0",
+      "integrations": ["InboundFilters", "FunctionToString", "ConversationId", "BrowserApiErrors", "Breadcrumbs", "GlobalHandlers", "LinkedErrors", "Dedupe", "HttpContext", "CultureContext", "BrowserSession", "BrowserTracing"],
+      "packages": [{"name": "npm:@sentry/react", "version": "10.49.0"}],
+      "settings": {"infer_ip": "never"}
+    },
+    "trace": {
+      "environment": "deploy-preview",
+      "release": "72481f065dbaa08edd4c74a51953765923b31262",
+      "public_key": "3361862f2c8bc6c20759b1b549f33dae",
+      "trace_id": "64c243b7cf0f44bf8556e1867e261ee5",
+      "org_id": "4510971582349312",
+      "sampled": "false",
+      "sample_rand": "0.5302404569762256",
+      "sample_rate": "0.1"
+    },
+    "timestamp": 1777540852.792,
+    "environment": "deploy-preview",
+    "release": "72481f065dbaa08edd4c74a51953765923b31262",
+    "level": "error",
+    "platform": "javascript",
+    "transaction": "/__smoke",
+    "tags": {
+      "boundary": "app-root",
+      "react.errorHandlerKind": "caught"
+    },
+    "request": {
+      "url": "https://deploy-preview-21--wtcs-community-polls.netlify.app/__smoke?render=%221%22",
+      "headers": {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+      }
+    },
+    "exception": {
+      "values": [
+        {
+          "_index_note": "exception_id 1 (parent_id 0) — FIRST exception logged but the OUTER one in the cause chain (parent_id 0 means it has child exception 0). This is the React 19 createRoot hook's capture via Sentry.reactErrorHandler — the PRIMARY OBSV-01 path.",
+          "type": "React ErrorBoundary Error",
+          "value": "RenderThrowSmoke: deliberate render-phase throw for Sentry verification",
+          "mechanism": {
+            "type": "auto.function.react.error_handler",
+            "handled": true,
+            "source": "cause",
+            "exception_id": 1,
+            "parent_id": 0
+          },
+          "stacktrace": {
+            "frames_unmangled_identifiers": [
+              "ErrorBoundary", "PostHogProvider", "ConsentProvider", "RouterProvider",
+              "RouterContextProvider", "Matches", "Suspense", "MatchesInner",
+              "CatchBoundary", "CatchBoundaryImpl", "MatchImpl", "MatchView",
+              "SafeFragment", "SafeFragment", "SafeFragment", "SafeFragment",
+              "MatchInnerImpl", "RootLayout", "AuthProvider", "ThemeProvider",
+              "div", "main", "OutletImpl", "Suspense", "MatchImpl", "MatchView",
+              "SafeFragment", "SafeFragment", "SafeFragment", "SafeFragment",
+              "MatchInnerImpl", "Lazy", "SmokePage", "Suspense", "RenderThrowSmoke"
+            ],
+            "_note": "All identifiers above are project component names — NOT mangled (xR / $M). Proves OBSV-02 keepNames symbolication works end-to-end."
+          }
+        },
+        {
+          "_index_note": "exception_id 0 — the BELT path. Manual Sentry.captureException from the onError handler in src/main.tsx. mechanism.type === 'generic' is the EXPECTED companion per Round-2 MEDIUM-1.",
+          "type": "Error",
+          "value": "RenderThrowSmoke: deliberate render-phase throw for Sentry verification",
+          "mechanism": {
+            "type": "generic",
+            "handled": true,
+            "exception_id": 0
+          },
+          "stacktrace": {
+            "frames_unmangled_identifiers": [
+              "MessagePort.performWorkUntilDeadline",
+              "performWorkOnRootViaSchedulerTask",
+              "performWorkOnRoot",
+              "renderRootSync",
+              "workLoopSync",
+              "performUnitOfWork",
+              "beginWork",
+              "updateFunctionComponent",
+              "renderWithHooks",
+              "RenderThrowSmoke"
+            ],
+            "_note": "React internals (workLoopSync, beginWork, etc.) un-mangled too — that's the React DOM bundle's own __name annotations from keepNames. Top app frame is RenderThrowSmoke (the throw site). Bottom is the React scheduler entry point."
+          }
+        }
+      ]
+    },
+    "contexts": {
+      "trace": {
+        "span_id": "90b4026c412069fc",
+        "trace_id": "64c243b7cf0f44bf8556e1867e261ee5"
+      },
+      "react": {
+        "componentStack": "\n    at RenderThrowSmoke (https://deploy-preview-21--wtcs-community-polls.netlify.app/assets/RenderThrowSmoke-mdJn2e0C.js:1:478)\n    at Suspense (<anonymous>)\n    at SmokePage (https://deploy-preview-21--wtcs-community-polls.netlify.app/assets/___smoke_-C2yg90F-.js:2:783)\n    at Lazy (<anonymous>)\n    at MatchInnerImpl (https://deploy-preview-21--wtcs-community-polls.netlify.app/assets/index-BPtydFx8.js:10:101455)\n    at SafeFragment (...) [4x]\n    at MatchView (...)\n    at MatchImpl (...)\n    at Suspense (<anonymous>)\n    at OutletImpl (...)\n    at main (<anonymous>)\n    at div (<anonymous>)\n    at ThemeProvider (...)\n    at AuthProvider (...)\n    at RootLayout (<anonymous>)\n    at MatchInnerImpl (...)\n    at SafeFragment (...) [4x]\n    at MatchView (...)\n    at MatchImpl (...)\n    at CatchBoundaryImpl (...)\n    at CatchBoundary (...)\n    at MatchesInner (...)\n    at Suspense (<anonymous>)\n    at Matches (...)\n    at RouterContextProvider (...)\n    at RouterProvider (...)\n    at ConsentProvider (...)\n    at PostHogProvider (...)\n    at ErrorBoundary (...)"
+      },
+      "culture": {"locale": "en-US", "timezone": "America/Los_Angeles", "calendar": "gregory"}
+    },
+    "breadcrumbs": [
+      {"timestamp": 1777540852.466, "category": "auth", "message": "AuthContext mounted", "level": "info", "data": {"isOAuthRedirect": false}},
+      {"timestamp": 1777540852.468, "category": "auth", "message": "getSession() resolved", "level": "info", "data": {"hasSession": false, "hasUser": false}},
+      {"timestamp": 1777540852.469, "category": "auth", "message": "onAuthStateChange: INITIAL_SESSION", "level": "info", "data": {"event": "INITIAL_SESSION", "hasSession": false, "hasProviderToken": false}}
+    ],
+    "debug_meta": {
+      "images": [
+        {"type": "sourcemap", "code_file": "https://deploy-preview-21--wtcs-community-polls.netlify.app/assets/index-BPtydFx8.js", "debug_id": "c40135c9-e00b-4402-99b8-22f1bc1e7046"},
+        {"type": "sourcemap", "code_file": "https://deploy-preview-21--wtcs-community-polls.netlify.app/assets/___smoke_-C2yg90F-.js", "debug_id": "207f2b5f-2c1d-4119-83fa-a56deb003b55"},
+        {"type": "sourcemap", "code_file": "https://deploy-preview-21--wtcs-community-polls.netlify.app/assets/RenderThrowSmoke-mdJn2e0C.js", "debug_id": "850fc168-c23d-4387-a5bd-cb1541a6171d"}
+      ]
+    }
+  }
+}

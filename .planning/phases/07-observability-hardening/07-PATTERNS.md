@@ -263,14 +263,14 @@ overrides_applied: 0
 4. `## Goal Achievement — Roadmap Success Criteria` — markdown table with columns `# | Success Criterion | Status | Evidence`. One row per ROADMAP.md Phase 7 success criterion (CONTEXT.md `<canonical_refs>` cites `ROADMAP.md § Phase 7 — five Success Criteria`).
 5. `## Required Artifacts` — table with columns `Artifact | Expected | Status | Details`. One row per file in `<canonical_refs>` "Files to modify/create".
 6. `## Key Link Verification` — table with columns `From | To | Via | Status | Details`. Pin: `main.tsx` → `@sentry/react` (3 hooks); `main.tsx` → `Sentry.ErrorBoundary onError`; `__smoke.tsx` → `RenderThrowSmoke` (lazy import); `vite.config.ts` → `rolldownOptions.output.keepNames`; `netlify.toml` → `VITE_NETLIFY_CONTEXT`.
-7. `## Behavioral Spot-Checks` — table with columns `Behavior | Command | Result | Status`. Phase 7 examples: `npm run build` succeeds; `grep '__name(' dist/assets/*.js | head` non-empty; built `dist/assets/*.js.map` `names[]` contains `RenderThrowSmoke`.
+7. `## Behavioral Spot-Checks` — table with columns `Behavior | Command | Result | Status`. Phase 7 examples: `npm run build` succeeds; `grep -lE 'function (RootLayout|AppErrorFallback|RenderThrowSmoke)\b' dist/assets/*.js | wc -l` >= 1 (literal-function-declaration evidence — Rolldown's keepNames mechanism, **amended 2026-04-30** from the original `__name(` esbuild-idiom check); built `dist/assets/*.js.map` `names[]` contains `RenderThrowSmoke`.
 8. `## Anti-Patterns Found` — table; expected to be empty for Phase 7 (config-only changes).
 9. `## Requirements Coverage` — REQUIREMENTS.md OBSV-01 + OBSV-02 status flips, with inline evidence citations.
 10. `## Human Verification Required` — list of any open human gates. Phase 7: closes on D-09 solo sign-off; the **four mandatory evidence items from D-08** belong here as PASS rows:
     1. Sentry event screenshot — `componentStack` populated + `tags.boundary === 'app-root'`.
     2. Sentry event screenshot — top stack frames un-mangled (`App`, `RenderThrowSmoke`, route components).
     3. Sentry event permalink + release SHA pinned in this doc.
-    4. Built `dist/assets/*.js.map` `names[]` excerpt + `grep '__name(' dist/assets/*.js | head` output.
+    4. Built `dist/assets/*.js.map` `names[]` excerpt (via `jq -r '.names[]'`) + literal-function-declaration grep output (`grep -lE 'function (RootLayout|AppErrorFallback|RenderThrowSmoke)\b' dist/assets/*.js` — **amended 2026-04-30** from the original `grep '__name('` esbuild-idiom check; Rolldown preserves names literally instead of emitting helper calls).
 11. `## Gaps Summary` — disposition prose; closes with "Disposition: PASSED" line.
 12. Footer trailer (italicised): `_Verified: <ISO-timestamp>_` + `_Verifier: <name>_`.
 

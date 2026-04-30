@@ -22,8 +22,15 @@ const RenderThrowSmoke = lazy(() =>
 )
 
 export const Route = createFileRoute('/__smoke')({
+  // Phase 7 hotfix (PR #21 deploy-preview verification): TanStack Router's
+  // default search parser uses parseSearchWith(JSON.parse), which coerces
+  // the URL value `1` to the JS number 1 — strict `=== '1'` (string) is
+  // therefore always false and ?render=1 silently falls through to the
+  // inert hint paragraph. String() coerce accepts both 1 (number) and '1'
+  // (URL-encoded JSON string) — matches the URL the docs (ROADMAP SC #1,
+  // 07-CONTEXT D-05) tell users to visit.
   validateSearch: (search: Record<string, unknown>): SmokeSearch =>
-    search.render === '1' ? { render: '1' } : {},
+    String(search.render) === '1' ? { render: '1' } : {},
   // Phase 7 D-04 + D-06: live prod returns a standard 404 — the route
   // appears not to exist. VITE_NETLIFY_CONTEXT is populated from Netlify's
   // built-in $CONTEXT in netlify.toml's build command (Plan 01 Task 2).

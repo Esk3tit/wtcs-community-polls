@@ -1,5 +1,8 @@
 # Phase 7: Observability Hardening - Research
 
+> **AMENDED 2026-04-30 — empirical correction from PR #21 deploy-preview verification:**
+> This research repeatedly states that Rolldown's `keepNames: true` "injects a `__name(fn, 'orig')` helper" (modeled on esbuild's keepNames idiom). **Empirically this is wrong for Rolldown's Oxc minifier** — `grep -c '__name(' dist/assets/*.js` returns `0` even when keepNames works correctly. Rolldown preserves names by leaving literal `function Name(...)` declarations in the output (verified at release SHA `72481f0`: 48 unique `function PascalCase(` declarations in the main bundle, including `function RootLayout`, `function AppErrorFallback`, `function RenderThrowSmoke`, etc.). Sourcemap `names[]` arrays still work (the smoke chunk's `.js.map` `names[]` contains `RenderThrowSmoke` and `SmokePage`). The Sentry deploy-preview event captured at `2026-04-30T09:20:52Z` confirms keepNames works end-to-end (un-mangled stack frames). All `__name(` references below are superseded by the Rolldown-correct literal-function-declaration assertion documented in `.planning/phases/07-observability-hardening/artifacts/__name-grep.txt`. The historical analysis below is preserved for context.
+
 **Researched:** 2026-04-29
 **Domain:** React 19 error capture path + Vite 8 / Rolldown sourcemap symbolication for Sentry
 **Confidence:** HIGH (canonical research already locked in v1.1-SENTRY-ERRORBOUNDARY.md and v1.1-VITE-SOURCEMAPS.md; this phase research validates project-local conventions and answers the 10 unlocked questions in the spawn brief)
