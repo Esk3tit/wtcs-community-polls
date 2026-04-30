@@ -13,6 +13,11 @@
 // Named export, NOT default — src/routes/[__smoke].tsx lazy-imports it via
 // `.then(m => ({ default: m.RenderThrowSmoke }))` per RESEARCH Pattern 5.
 
+// IN-04 (Phase 7 review-fix iteration 2 — info-level): the `: never` return
+// type is technically correct because the throw makes the downstream
+// expression unreachable, AND `never` is a subtype of `ReactNode`, so
+// using this in JSX position (e.g., `<RenderThrowSmoke />`) typechecks
+// cleanly. Annotated explicitly so readers don't expect a JSX return.
 export function RenderThrowSmoke(): never {
   throw new Error(
     'RenderThrowSmoke: deliberate render-phase throw for Sentry verification'
