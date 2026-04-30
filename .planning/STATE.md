@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Hygiene & Polish
-status: executing
-stopped_at: Phase 7 context gathered
-last_updated: "2026-04-30T07:12:51.090Z"
-last_activity: 2026-04-30 -- Phase 07 execution started
+status: paused
+stopped_at: Phase 7 wave 2 done; wave 3 (07-03) awaiting user deploy-preview + Sentry capture
+last_updated: "2026-04-30T07:35:00.000Z"
+last_activity: 2026-04-30 -- Phase 07 paused after wave 2 (07-01 + 07-02 complete; 07-03 needs manual checkpoint)
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 3
-  completed_plans: 0
-  percent: 0
+  completed_plans: 2
+  percent: 66
 ---
 
 # Project State
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-04-28 after v1.0 milestone)
 
 ## Current Position
 
-Phase: 07 (observability-hardening) — EXECUTING
-Plan: 1 of 3
-Status: Executing Phase 07
-Last activity: 2026-04-30 -- Phase 07 execution started
+Phase: 07 (observability-hardening) — PAUSED at wave 3
+Plan: 2 of 3 complete (07-01 + 07-02 shipped; 07-03 awaiting deploy-preview manual checkpoint)
+Status: Paused — Plan 07-03 Task 1 is `checkpoint:human-action` requiring Netlify deploy preview + Sentry UI inspection (D-08 evidence: componentStack screenshot, un-mangled frames screenshot, permalink + release SHA + event timestamp + environment, jq names[] excerpt)
+Last activity: 2026-04-30 -- Phase 07 paused after wave 2 cleanly; resume by pushing branch, opening PR, capturing Sentry evidence, then running /gsd-execute-phase 7 (orchestrator skips 07-01/07-02 and picks up 07-03)
 
 ## Accumulated Context
 
