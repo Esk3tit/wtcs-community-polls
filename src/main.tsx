@@ -32,7 +32,13 @@ Sentry.init({
   // VITE_NETLIFY_CONTEXT comes from netlify.toml [build].command shell substitution of $CONTEXT
   // (Plan 01 Task 2). On local `npm run dev` and `vitest`, the variable is undefined → falls back
   // to import.meta.env.MODE so the dev/test experience is unchanged.
-  environment: import.meta.env.VITE_NETLIFY_CONTEXT ?? import.meta.env.MODE,
+  // WR-03 (Phase 7 review-fix iteration 1): use `||` (truthy fallback), not `??`.
+  // Shell substitution of an unset $CONTEXT yields the literal empty string
+  // (`VITE_NETLIFY_CONTEXT=`), which `??` treats as defined and forwards to
+  // Sentry as `environment: ""`. `||` falls through empty strings to MODE,
+  // which gives Sentry a sane environment label even on a misconfigured
+  // branch deploy or a non-Netlify CI accidentally re-using netlify.toml.
+  environment: import.meta.env.VITE_NETLIFY_CONTEXT || import.meta.env.MODE,
   release: import.meta.env.VITE_COMMIT_SHA,
   // WR-02 (Phase 7 review-fix iteration 1): dedupeIntegration is normally
   // included in Sentry's defaultIntegrations, but adding it explicitly here
