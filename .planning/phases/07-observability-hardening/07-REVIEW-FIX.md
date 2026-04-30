@@ -1,111 +1,72 @@
 ---
 phase: 07-observability-hardening
-fixed_at: 2026-04-30T21:40:01Z
+fixed_at: 2026-04-30T00:00:00Z
 review_path: .planning/phases/07-observability-hardening/07-REVIEW.md
-iteration: 1
+iteration: 2
 findings_in_scope: 4
-fixed: 4
-skipped: 0
+fixed: 3
+skipped: 1
 status: all_fixed
 ---
 
-# Phase 7: Code Review Fix Report
+# Phase 7: Code Review Fix Report (Iteration 2 — Info Sweep)
 
-**Fixed at:** 2026-04-30T21:40:01Z
-**Source review:** .planning/phases/07-observability-hardening/07-REVIEW.md
-**Iteration:** 1
+**Fixed at:** 2026-04-30
+**Source review:** `.planning/phases/07-observability-hardening/07-REVIEW.md` (iteration 2, status `clean`)
+**Iteration:** 2
+**Scope:** `--all` (Critical + Warning + Info; review had zero CR/WR remaining, so only Info findings actioned)
 
 **Summary:**
-- Findings in scope: 4 (Critical 0, Warning 4)
-- Fixed: 4
-- Skipped: 0
 
-All four warnings (WR-01 .. WR-04) applied surgically. Each fix passes
-`tsc -b --noEmit` + `eslint --max-warnings 0` (enforced by lint-staged
-pre-commit hook). End-to-end `npm run build` succeeds.
+- Findings in scope: 4 (IN-01, IN-02, IN-04, IN-05)
+- Fixed: 3 (IN-01, IN-02, IN-04)
+- Skipped: 1 (IN-05 — non-actionable observation about an auto-generated file)
+- Status: `all_fixed` — every actionable Info finding addressed; the lone skip is pure documentation with no mechanical fix to apply
 
-Info findings (IN-01 .. IN-05) are out of scope (`fix_scope:
-critical_warning`) and remain documented in 07-REVIEW.md for follow-up.
+Info findings were treated as suggestions, not bugs. Each fix is mechanical and minimal: a positive DEV-confirmation log, a tag→context shift to protect Sentry tag-key indexing, and a clarifying inline comment. No behavior changes affect production capture paths.
 
 ## Fixed Issues
 
-### WR-01: `mechanism.handled` mis-tagged for uncaught React errors
+### IN-01: Sentry-DSN missing-warning runs at module load only — no positive confirmation when DSN IS set
 
 **Files modified:** `src/main.tsx`
-**Commit:** 5960565
-**Applied fix:** Pass `undefined` callback to `Sentry.reactErrorHandler`
-for the `uncaught` kind so `mechanism.handled = !!callback` resolves to
-`false`. `caught` and `recoverable` keep an additive no-op callback so
-they continue to flag `handled=true`. The dev-warn moved outside
-`reactErrorHandler` so logging still fires for uncaught errors.
+**Commit:** `cd5b7f4`
+**Applied fix:** Wrapped the existing missing-DSN warn inside an outer `if (import.meta.env.DEV)` guard and added an `else` branch that emits `console.info('[sentry] active', { env })` when the DSN is present. The env value reuses the same `VITE_NETLIFY_CONTEXT || MODE` resolution already passed to `Sentry.init`, so the dev log mirrors the actual environment label Sentry receives. No-op in production builds because the entire block is DEV-gated.
 
-This unblocks Sentry's release-health crash-free-sessions metric (uncaught
-events now correctly count against the metric) and corrects the
-handled/unhandled UI badge per Sentry's mechanism semantics.
-
-The ESLint rule `@typescript-eslint/no-unused-vars` does not honor `_`
-prefix in this project's config — the no-op callback was simplified from
-`(_err, _errInfo) => {}` to `() => {}` to satisfy the linter. Same
-runtime behavior; Sentry's reactErrorHandler will pass three arguments
-that we ignore.
-
-### WR-02: Triple-capture for one render-phase throw — Dedupe is the only line of defense
+### IN-02: `eventId` as Sentry tag is non-idiomatic
 
 **Files modified:** `src/main.tsx`
-**Commit:** f80336e
-**Applied fix:** Explicitly add `Sentry.dedupeIntegration()` to the
-`integrations` array. Sentry's `defaultIntegrations` includes Dedupe
-implicitly, but pinning it makes the contract auditable and protects
-against silent removal in a future SDK upgrade.
+**Commit:** `c2e5277`
+**Applied fix:** Inside `Sentry.ErrorBoundary`'s `onError` belt, moved `eventId` out of `tags` (where it would consume Sentry's bounded tag-key indexing budget on the free tier) into `contexts.linked_event = { eventId }`. The boundary tag stays where it belongs (`tags: { boundary: 'app-root' }`). Cross-event linking via the SDK ErrorBoundary `eventId` is preserved through the contexts dimension, which has no cardinality penalty. Verified `tsc --noEmit` clean — Sentry's `CaptureContext.contexts` accepts arbitrary string-keyed shapes.
 
-Chose the lower-risk option from REVIEW.md (option 2: pin Dedupe). Option 1
-(drop the `onError` belt) was rejected as more behaviorally invasive — the
-existing belt comment in `src/main.tsx:104-111` documents it as
-defense-in-depth fallback "in case dedup removes the SDK event instead",
-so removing it would discard explicit defense-in-depth without empirical
-data on which path Dedupe actually keeps.
+### IN-04: `RenderThrowSmoke`'s `: never` return type is correct but visually surprising in JSX position
 
-This fix is structural (registers the integration) and does not alter the
-capture flow itself. Combined with the WR-01 fix, the deduped event will
-now report the correct `mechanism.handled` value.
+**Files modified:** `src/components/debug/RenderThrowSmoke.tsx`
+**Commit:** `6ead026`
+**Applied fix:** Added an inline comment immediately above `export function RenderThrowSmoke(): never` documenting why `: never` typechecks in JSX position (`never <: ReactNode`). Pure documentation; no code changes. Eliminates the "why doesn't this return JSX?" reaction during future reviews.
 
-**Note:** Logic correctness here depends on Sentry SDK behavior, but the
-change itself is mechanical (adding a documented public API integration).
-No human verification needed beyond the build pass.
+## Skipped Issues
 
-### WR-03: Empty-string `VITE_NETLIFY_CONTEXT` defeats the nullish-coalesce fallback
+### IN-05: `routeTree.gen.ts` is auto-generated — confirmed no manual edits
 
-**Files modified:** `src/main.tsx`
-**Commit:** c9475b8
-**Applied fix:** Switched `environment: VITE_NETLIFY_CONTEXT ?? MODE` to
-`environment: VITE_NETLIFY_CONTEXT || MODE`. Empty strings (produced by
-`VITE_NETLIFY_CONTEXT=$CONTEXT` when `$CONTEXT` is unset on misconfigured
-deploys or non-Netlify CI re-using netlify.toml) now fall through to
-`import.meta.env.MODE` instead of being forwarded to Sentry as
-`environment: ""`.
+**File:** `src/routeTree.gen.ts:1-9`
+**Reason:** Non-actionable observation. The reviewer explicitly notes "Fix: None — auto-generated." The finding exists only to confirm cross-file wiring of `[__smoke].tsx` into the route tree — it is a deep-mode review checkpoint, not a code defect. Editing the file would violate TanStack Router's codegen contract. No fix possible.
+**Original issue:** Auto-generated file with `@ts-nocheck` header. `Char91__smokeChar93Route` symbol confirms the bracketed `[__smoke].tsx` filename was processed correctly.
 
-`netlify.toml` was intentionally NOT edited. REVIEW.md offered hardening
-the build command with `[ -n "$CONTEXT" ] &&` as an alternative, but the
-minimal mechanical fix lives in `src/main.tsx` and avoids touching the
-deploy flow — fail-fast on missing `$CONTEXT` would block legitimate
-local `netlify deploy --build` runs without Netlify env wiring.
+## Verification
 
-### WR-04: `validateSearch` uses lossy `String()` coerce — accepts non-string `render` values
+- `npx tsc --noEmit -p tsconfig.app.json` clean after each individual fix
+- Pre-commit hooks (lint-staged → eslint + tsc -b) passed for every commit
+- Three atomic commits, one per actionable finding, all using `chore(07): IN-NN <summary>` (info-level findings are not bugs)
 
-**Files modified:** `src/routes/[__smoke].tsx`
-**Commit:** 840f0ac
-**Applied fix:** Replaced `String(search.render) === '1'` with explicit
-equality `r === '1' || r === 1`. Covers both forms TanStack Router's
-`parseSearchWith(JSON.parse)` produces (string `'1'` for raw URL value,
-number `1` for JSON-parsed URL value) and rejects coercion edge cases
-(`[1]`, `{ toString: () => '1' }`).
+## Behavior Impact
 
-Validator now matches the declared `SmokeSearch` type narrowly; debug-only
-prod-gated route, so security impact remains negligible, but the
-validator is no longer laxer than its declared type.
+- **Production:** zero impact. IN-01 is DEV-gated, IN-04 is comment-only, and IN-02 is a metadata reshuffle within a single `captureException` call (same event reaches Sentry, same triage cross-references work, just under `contexts.linked_event` instead of a tag).
+- **Sentry indexing:** IN-02 reduces tag-key cardinality growth — long-term protection of free-tier limits.
+- **Developer experience:** IN-01 removes the "is Sentry on?" Network-tab inspection step; IN-04 reduces review friction on the `: never` annotation.
 
 ---
 
-_Fixed: 2026-04-30T21:40:01Z_
+_Fixed: 2026-04-30_
 _Fixer: Claude (gsd-code-fixer)_
-_Iteration: 1_
+_Iteration: 2 (info-only sweep; iteration 1 closed all WR findings)_
