@@ -77,17 +77,37 @@ if (!container) throw new Error('Root container missing')
 // lines 90-105 + JSDoc in error.d.ts). The empty inner callback for
 // caught/recoverable paths therefore does NOT silence default capture.
 //
+// Round-4 review WR-01 fix (Phase 7 review-fix iteration 1):
+// reactErrorHandler(callback) sets `mechanism.handled = !!callback`
+// (see node_modules/@sentry/react/build/esm/error.js:96-100). Passing a
+// non-null callback for the `uncaught` kind would mis-flag uncaught
+// errors as handled, polluting Sentry's release-health crash-free-sessions
+// metric and the handled/unhandled UI badge. Fix: pass `undefined` for
+// uncaught (mechanism.handled=false), keep the callback for caught/
+// recoverable (mechanism.handled=true). The dev-warn for uncaught moves
+// outside reactErrorHandler so the log still fires.
+//
 // Research: .planning/research/v1.1-SENTRY-ERRORBOUNDARY.md
 const taggedHandler = (kind: 'uncaught' | 'caught' | 'recoverable') =>
   (error: unknown, info: ErrorInfo) => {
     Sentry.withScope((scope) => {
       scope.setTag('boundary', 'app-root')
       scope.setTag('react.errorHandlerKind', kind)
-      Sentry.reactErrorHandler((err, errInfo: ErrorInfo) => {
-        if (import.meta.env.DEV && kind === 'uncaught') {
-          console.warn('[sentry] uncaught', err, errInfo.componentStack)
-        }
-      })(error, info)
+      if (import.meta.env.DEV && kind === 'uncaught') {
+        console.warn('[sentry] uncaught', error, info.componentStack)
+      }
+      // WR-01: only the caught/recoverable paths pass a callback so that
+      // mechanism.handled mirrors React's own classification. Uncaught
+      // errors must report mechanism.handled=false. The callback's actual
+      // signature is (err, errInfo, eventId) but we ignore all three —
+      // it's a no-op that exists solely to flip mechanism.handled to true.
+      const cb =
+        kind === 'uncaught'
+          ? undefined
+          : () => {
+              /* additive no-op — keeps mechanism.handled=true */
+            }
+      Sentry.reactErrorHandler(cb)(error, info)
     })
   }
 
