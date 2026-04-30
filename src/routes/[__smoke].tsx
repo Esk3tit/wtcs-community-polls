@@ -26,11 +26,21 @@ export const Route = createFileRoute('/__smoke')({
   // default search parser uses parseSearchWith(JSON.parse), which coerces
   // the URL value `1` to the JS number 1 — strict `=== '1'` (string) is
   // therefore always false and ?render=1 silently falls through to the
-  // inert hint paragraph. String() coerce accepts both 1 (number) and '1'
-  // (URL-encoded JSON string) — matches the URL the docs (ROADMAP SC #1,
-  // 07-CONTEXT D-05) tell users to visit.
-  validateSearch: (search: Record<string, unknown>): SmokeSearch =>
-    String(search.render) === '1' ? { render: '1' } : {},
+  // inert hint paragraph. The validator accepts both number 1 and string
+  // '1' (URL-encoded JSON string) — matches the URL the docs (ROADMAP SC
+  // #1, 07-CONTEXT D-05) tell users to visit.
+  //
+  // WR-04 (Phase 7 review-fix iteration 1): replaced
+  // `String(search.render) === '1'` with explicit equality. The String()
+  // coerce was too loose — it also matched [1] (Array.toString joins) and
+  // { toString: () => '1' }, neither of which the SmokeSearch interface
+  // implies. Tightening to `=== '1' || === 1` lines the validator up with
+  // the declared type.
+  validateSearch: (search: Record<string, unknown>): SmokeSearch => {
+    const r = search.render
+    if (r === '1' || r === 1) return { render: '1' }
+    return {}
+  },
   // Phase 7 D-04 + D-06: live prod returns a standard 404 — the route
   // appears not to exist. VITE_NETLIFY_CONTEXT is populated from Netlify's
   // built-in $CONTEXT in netlify.toml's build command (Plan 01 Task 2).
