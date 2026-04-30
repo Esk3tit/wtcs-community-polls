@@ -58,7 +58,7 @@ Full v1.0 phase details (goals, plans, success criteria) preserved in [milestone
 **Plans**: 3 plans
 - [x] 07-01-PLAN.md — Wire React 19 createRoot error hooks + Rolldown keepNames + Netlify VITE_NETLIFY_CONTEXT (Wave 1, autonomous)
 - [x] 07-02-PLAN.md — Create env-gated /__smoke route + RenderThrowSmoke render-phase canary (Wave 2, autonomous, depends on 07-01)
-- [ ] 07-03-PLAN.md — Capture D-08 manual deploy-preview evidence + write 07-VERIFICATION.md + .planning/closure/OBSV-02-bundle-delta.md (Wave 3, has human-action checkpoint, depends on 07-01 + 07-02)
+- [x] 07-03-PLAN.md — Capture D-08 manual deploy-preview evidence + write 07-VERIFICATION.md + .planning/closure/OBSV-02-bundle-delta.md (Wave 3, has human-action checkpoint, depends on 07-01 + 07-02)
 **Branch**: `gsd/phase-07-observability-hardening`
 
 ### Phase 8: E2E Test Hygiene

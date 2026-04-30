@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Hygiene & Polish
-status: paused
-stopped_at: Phase 7 wave 2 done; wave 3 (07-03) awaiting user deploy-preview + Sentry capture
-last_updated: "2026-04-30T07:35:00.000Z"
-last_activity: 2026-04-30 -- Phase 07 paused after wave 2 (07-01 + 07-02 complete; 07-03 needs manual checkpoint)
+status: executing
+stopped_at: Phase 7 wave 3 — 07-03 Task 1 captured, writing Task 2 (07-VERIFICATION.md) + Task 3 (OBSV-02-bundle-delta.md)
+last_updated: "2026-04-30T09:43:00.000Z"
+last_activity: 2026-04-30 -- Phase 07 resumed after D-08 evidence captured on PR #21 deploy-preview b9afb99 + Round-4 hotfixes landed (validateSearch + Rolldown keepNames doc amendment)
 progress:
   total_phases: 4
   completed_phases: 0
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-04-28 after v1.0 milestone)
 
 ## Current Position
 
-Phase: 07 (observability-hardening) — PAUSED at wave 3
-Plan: 2 of 3 complete (07-01 + 07-02 shipped; 07-03 awaiting deploy-preview manual checkpoint)
-Status: Paused — Plan 07-03 Task 1 is `checkpoint:human-action` requiring Netlify deploy preview + Sentry UI inspection (D-08 evidence: componentStack screenshot, un-mangled frames screenshot, permalink + release SHA + event timestamp + environment, jq names[] excerpt)
-Last activity: 2026-04-30 -- Phase 07 paused after wave 2 cleanly; resume by pushing branch, opening PR, capturing Sentry evidence, then running /gsd-execute-phase 7 (orchestrator skips 07-01/07-02 and picks up 07-03)
+Phase: 07 (observability-hardening) — EXECUTING wave 3
+Plan: 2 of 3 complete (07-01 + 07-02 shipped); Plan 07-03 Task 1 captured via Playwright MCP on PR #21 deploy-preview b9afb99; Tasks 2+3 in progress
+Status: Writing 07-VERIFICATION.md (Task 2) + OBSV-02-bundle-delta.md (Task 3) inline; verifier subagent runs after both
+Last activity: 2026-04-30 -- Phase 07 resumed after D-08 evidence captured + Round-4 hotfixes landed (validateSearch + Rolldown keepNames doc amendment)
 
 ## Accumulated Context
 
