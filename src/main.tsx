@@ -21,10 +21,20 @@ import './index.css'
 // src/lib/sentry.ts::loadSentryReplayIfConsented() AFTER the localStorage
 // opt-out check. Users who opt out never load the Replay bundle — also
 // code-splits Replay from the main bundle (M3 mitigation).
-if (!import.meta.env.VITE_SENTRY_DSN && import.meta.env.DEV) {
-  console.warn(
-    '[sentry] VITE_SENTRY_DSN not set — error monitoring disabled. Set it in .env.local to enable Sentry in dev.'
-  )
+// IN-01 (Phase 7 review-fix iteration 2 — info-level): emit a positive
+// confirmation in DEV when the DSN IS set, so a developer wondering "is
+// Sentry on?" doesn't have to inspect the Network tab. The negative warn
+// already existed; this is its symmetric counterpart.
+if (import.meta.env.DEV) {
+  if (!import.meta.env.VITE_SENTRY_DSN) {
+    console.warn(
+      '[sentry] VITE_SENTRY_DSN not set — error monitoring disabled. Set it in .env.local to enable Sentry in dev.'
+    )
+  } else {
+    console.info('[sentry] active', {
+      env: import.meta.env.VITE_NETLIFY_CONTEXT || import.meta.env.MODE,
+    })
+  }
 }
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
