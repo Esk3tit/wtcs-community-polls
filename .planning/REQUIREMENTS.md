@@ -14,9 +14,9 @@
 
 ### Observability
 
-- [ ] **OBSV-01**: Sentry captures render-phase errors via the Sentry transport — wire `Sentry.reactErrorHandler()` into React 19's `createRoot({ onCaughtError, onUncaughtError, onRecoverableError })`; keep `Sentry.ErrorBoundary` for fallback UI; add belt-and-suspenders manual `Sentry.captureException` in `onError`. Verified by a render-throw smoke component on a Netlify deploy preview (NOT dev — StrictMode masks).<br>_GitHub: #17 — research: `.planning/research/v1.1-SENTRY-ERRORBOUNDARY.md`_
+- [x] **OBSV-01**: Sentry captures render-phase errors via the Sentry transport — wire `Sentry.reactErrorHandler()` into React 19's `createRoot({ onCaughtError, onUncaughtError, onRecoverableError })`; keep `Sentry.ErrorBoundary` for fallback UI; add belt-and-suspenders manual `Sentry.captureException` in `onError`. Verified by a render-throw smoke component on a Netlify deploy preview (NOT dev — StrictMode masks). **Completed Phase 7 (PR #21).** Live deploy-preview Sentry event at `https://khai-phan.sentry.io/issues/7451487881/events/5100cc65e9b94bc5b5906ab11ab79d3b/` confirms `mechanism.type === 'auto.function.react.error_handler'` (PRIMARY pass) + `generic` belt companion + `tags.boundary === 'app-root'`.<br>_GitHub: #17 — research: `.planning/research/v1.1-SENTRY-ERRORBOUNDARY.md`_
 
-- [ ] **OBSV-02**: Production Sentry stack frames show original function names (not `xR`-style mangled identifiers) — set `build.rolldownOptions.output.keepNames: true` in `vite.config.ts`. Verified by inspecting a built `.map`'s `names[]` array and confirming `__name(…)` calls in chunks. Bundle-size delta (~0.5–1.5% gzip) documented.<br>_GitHub: #19 — research: `.planning/research/v1.1-VITE-SOURCEMAPS.md`_
+- [x] **OBSV-02**: Production Sentry stack frames show original function names (not `xR`-style mangled identifiers) — set `build.rolldownOptions.output.keepNames: true` in `vite.config.ts`. Verified by inspecting a built `.map`'s `names[]` array AND confirming literal `function Name(...)` declarations in chunks (Round-4 amendment 2026-04-30: original verbatim said `__name(…)` calls per esbuild's keepNames idiom — Rolldown's Oxc minifier preserves names by leaving literal function declarations instead of emitting that helper, see `.planning/phases/07-observability-hardening/artifacts/__name-grep.txt`). Bundle-size delta documented at `.planning/closure/OBSV-02-bundle-delta.md` — measured +6.24% gzip (over the 1.5% target; D-14 ship-anyway policy applied; observability gain accepted on $0/mo Netlify free-tier deploy). **Completed Phase 7 (PR #21).**<br>_GitHub: #19 — research: `.planning/research/v1.1-VITE-SOURCEMAPS.md`_
 
 ### Testing
 
@@ -70,8 +70,8 @@
 
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| OBSV-01 | Phase 7 | Pending |
-| OBSV-02 | Phase 7 | Pending |
+| OBSV-01 | Phase 7 | Completed (Phase 7 — PR #21) |
+| OBSV-02 | Phase 7 | Completed (Phase 7 — PR #21; +6.24% gzip vs 1.5% target — D-14 ship-anyway applied) |
 | TEST-07 | Phase 8 | Pending |
 | TEST-08 | Phase 8 | Pending |
 | TEST-09 | Phase 8 | Pending |
