@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Hygiene & Polish
-status: executing
-stopped_at: Phase 7 wave 3 — 07-03 Task 1 captured, writing Task 2 (07-VERIFICATION.md) + Task 3 (OBSV-02-bundle-delta.md)
-last_updated: "2026-04-30T09:43:00.000Z"
-last_activity: 2026-04-30 -- Phase 07 resumed after D-08 evidence captured on PR #21 deploy-preview b9afb99 + Round-4 hotfixes landed (validateSearch + Rolldown keepNames doc amendment)
+status: ready-to-merge
+stopped_at: Phase 7 complete — verifier PASSED (5/5 SC, OBSV-01+02 closed); PR #21 ready to merge after user accepts +6.24% keepNames-isolated bundle delta per D-14 ship-anyway disposition
+last_updated: "2026-04-30T10:10:00.000Z"
+last_activity: 2026-04-30 -- Phase 07 verifier PASSED with 0 gaps; STATE/REQUIREMENTS reconciled; awaiting PR #21 merge
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
-  percent: 66
+  completed_plans: 3
+  percent: 100
 ---
 
 # Project State
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-04-28 after v1.0 milestone)
 
 ## Current Position
 
-Phase: 07 (observability-hardening) — EXECUTING wave 3
-Plan: 2 of 3 complete (07-01 + 07-02 shipped); Plan 07-03 Task 1 captured via Playwright MCP on PR #21 deploy-preview b9afb99; Tasks 2+3 in progress
-Status: Writing 07-VERIFICATION.md (Task 2) + OBSV-02-bundle-delta.md (Task 3) inline; verifier subagent runs after both
-Last activity: 2026-04-30 -- Phase 07 resumed after D-08 evidence captured + Round-4 hotfixes landed (validateSearch + Rolldown keepNames doc amendment)
+Phase: 07 (observability-hardening) — COMPLETE (verifier PASSED, 0 gaps)
+Plan: 3 of 3 complete (07-01 wired createRoot + keepNames + VITE_NETLIFY_CONTEXT; 07-02 env-gated /__smoke route + RenderThrowSmoke; 07-03 D-08 evidence + 07-VERIFICATION.md + OBSV-02-bundle-delta.md). Both REQ-IDs (OBSV-01, OBSV-02) closed.
+Status: PR #21 (`gsd/phase-07-observability-hardening` @ 82bb086) ready to merge. D-14 ship-anyway accepted on +6.24% keepNames-isolated bundle delta. Phase 8 (E2E Test Hygiene) starts next.
+Last activity: 2026-04-30 -- Phase 07 verifier PASSED with 0 gaps; STATE/REQUIREMENTS reconciled per verifier hygiene warnings
 
 ## Accumulated Context
 
