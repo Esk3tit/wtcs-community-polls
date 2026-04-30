@@ -160,9 +160,17 @@ createRoot(container, {
         scope.setTag('boundary', 'app-root')
       }}
       onError={(error: unknown, componentStack: string, eventId: string): void => {
+        // IN-02 (Phase 7 review-fix iteration 2 — info-level): eventId is
+        // high-cardinality and does not belong on Sentry's tag dimension
+        // (free-tier tag-key indexing is bounded). Moved to contexts as
+        // `linked_event` so triage can still cross-reference the SDK's
+        // own ErrorBoundary event without polluting the tag namespace.
         Sentry.captureException(error, {
-          tags: { boundary: 'app-root', eventId },
-          contexts: { react: { componentStack } },
+          tags: { boundary: 'app-root' },
+          contexts: {
+            react: { componentStack },
+            linked_event: { eventId },
+          },
         })
       }}
     >
