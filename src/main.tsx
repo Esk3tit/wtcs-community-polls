@@ -1,4 +1,4 @@
-import { StrictMode } from 'react'
+import { StrictMode, type ErrorInfo } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import * as Sentry from '@sentry/react'
@@ -28,7 +28,11 @@ if (!import.meta.env.VITE_SENTRY_DSN && import.meta.env.DEV) {
 }
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
-  environment: import.meta.env.MODE,
+  // Phase 7 OBSV-01: distinguish deploy-preview from production for D-08 evidence (review round-2 HIGH-1 fix).
+  // VITE_NETLIFY_CONTEXT comes from netlify.toml [build].command shell substitution of $CONTEXT
+  // (Plan 01 Task 2). On local `npm run dev` and `vitest`, the variable is undefined → falls back
+  // to import.meta.env.MODE so the dev/test experience is unchanged.
+  environment: import.meta.env.VITE_NETLIFY_CONTEXT ?? import.meta.env.MODE,
   release: import.meta.env.VITE_COMMIT_SHA,
   integrations: [Sentry.browserTracingIntegration()],
   tracesSampleRate: 0.1,
@@ -48,9 +52,76 @@ declare module '@tanstack/react-router' {
   }
 }
 
-createRoot(document.getElementById('root')!).render(
+const container = document.getElementById('root')
+if (!container) throw new Error('Root container missing')
+
+// Phase 7 OBSV-01: React 19 createRoot error hooks. Without these,
+// render-phase errors caught by React's reconciler hit React's default
+// handler (console-only) and never reach Sentry's transport. Phase 6
+// confirmed this empirically — only setTimeout/onerror mechanism types
+// ever landed on production Sentry events.
+//
+// Round-2 review MEDIUM-5 (Cursor): each hook is wrapped in a
+// tagged-handler factory that sets `boundary='app-root'` on the active
+// scope BEFORE delegating to Sentry.reactErrorHandler(). This guarantees
+// the boundary tag is on the SDK event from the hook path, so when
+// Sentry.Dedupe collapses near-duplicates between this path and the
+// ErrorBoundary path, the surviving event always carries the boundary
+// tag — regardless of which path's event is kept. Without this wrapping,
+// dedupe could keep the hook event (no boundary tag) and drop the
+// ErrorBoundary event (which has the tag via beforeCapture).
+//
+// Round-3 review (Cursor): confirmed reactErrorHandler(callback) is
+// ADDITIVE — it always runs captureReactException first then invokes
+// the callback after (see node_modules/@sentry/react/build/esm/error.js
+// lines 90-105 + JSDoc in error.d.ts). The empty inner callback for
+// caught/recoverable paths therefore does NOT silence default capture.
+//
+// Research: .planning/research/v1.1-SENTRY-ERRORBOUNDARY.md
+const taggedHandler = (kind: 'uncaught' | 'caught' | 'recoverable') =>
+  (error: unknown, info: ErrorInfo) => {
+    Sentry.withScope((scope) => {
+      scope.setTag('boundary', 'app-root')
+      scope.setTag('react.errorHandlerKind', kind)
+      Sentry.reactErrorHandler((err, errInfo: ErrorInfo) => {
+        if (import.meta.env.DEV && kind === 'uncaught') {
+          console.warn('[sentry] uncaught', err, errInfo.componentStack)
+        }
+      })(error, info)
+    })
+  }
+
+createRoot(container, {
+  onUncaughtError: taggedHandler('uncaught'),
+  onCaughtError: taggedHandler('caught'),
+  onRecoverableError: taggedHandler('recoverable'),
+}).render(
   <StrictMode>
-    <Sentry.ErrorBoundary fallback={<AppErrorFallback />} showDialog={false}>
+    {/* Phase 7 OBSV-01: onError belt is defense-in-depth — explicitly
+        tags the event with boundary='app-root' and
+        contexts.react.componentStack so Sentry triage can distinguish
+        app-root catches from any future per-route boundaries. beforeCapture
+        ensures the boundary='app-root' tag lands on the SDK's own
+        ErrorBoundary event (which Sentry.Dedupe deduplicates with the
+        onCaughtError event — the tagged-handler factory above guarantees
+        the tag is on the hook path's event too, so the surviving deduped
+        event always carries the tag regardless of which path deduped).
+        The manual onError belt (captureException) is kept as
+        defense-in-depth fallback in case dedup removes the SDK event
+        instead (Pitfall 5). */}
+    <Sentry.ErrorBoundary
+      fallback={<AppErrorFallback />}
+      showDialog={false}
+      beforeCapture={(scope) => {
+        scope.setTag('boundary', 'app-root')
+      }}
+      onError={(error: unknown, componentStack: string, eventId: string): void => {
+        Sentry.captureException(error, {
+          tags: { boundary: 'app-root', eventId },
+          contexts: { react: { componentStack } },
+        })
+      }}
+    >
       <PostHogProvider client={posthog}>
         {/* HI-01 (Phase 5 review): ConsentChip was previously rendered here as
             a SIBLING of RouterProvider. That meant ConsentChip's
