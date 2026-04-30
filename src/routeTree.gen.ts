@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TopicsRouteImport } from './routes/topics'
 import { Route as ArchiveRouteImport } from './routes/archive'
+import { Route as Char91__smokeChar93RouteImport } from './routes/[__smoke]'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AuthErrorRouteImport } from './routes/auth/error'
@@ -26,6 +27,11 @@ const TopicsRoute = TopicsRouteImport.update({
 const ArchiveRoute = ArchiveRouteImport.update({
   id: '/archive',
   path: '/archive',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Char91__smokeChar93Route = Char91__smokeChar93RouteImport.update({
+  id: '/__smoke',
+  path: '/__smoke',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -61,6 +67,7 @@ const AdminSuggestionsIdEditRoute = AdminSuggestionsIdEditRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/__smoke': typeof Char91__smokeChar93Route
   '/archive': typeof ArchiveRoute
   '/topics': typeof TopicsRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -71,6 +78,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/__smoke': typeof Char91__smokeChar93Route
   '/archive': typeof ArchiveRoute
   '/topics': typeof TopicsRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -82,6 +90,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/__smoke': typeof Char91__smokeChar93Route
   '/archive': typeof ArchiveRoute
   '/topics': typeof TopicsRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -94,6 +103,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/__smoke'
     | '/archive'
     | '/topics'
     | '/auth/callback'
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/__smoke'
     | '/archive'
     | '/topics'
     | '/auth/callback'
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/__smoke'
     | '/archive'
     | '/topics'
     | '/auth/callback'
@@ -125,6 +137,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  Char91__smokeChar93Route: typeof Char91__smokeChar93Route
   ArchiveRoute: typeof ArchiveRoute
   TopicsRoute: typeof TopicsRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
@@ -148,6 +161,13 @@ declare module '@tanstack/react-router' {
       path: '/archive'
       fullPath: '/archive'
       preLoaderRoute: typeof ArchiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/__smoke': {
+      id: '/__smoke'
+      path: '/__smoke'
+      fullPath: '/__smoke'
+      preLoaderRoute: typeof Char91__smokeChar93RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -197,6 +217,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  Char91__smokeChar93Route: Char91__smokeChar93Route,
   ArchiveRoute: ArchiveRoute,
   TopicsRoute: TopicsRoute,
   AuthCallbackRoute: AuthCallbackRoute,
