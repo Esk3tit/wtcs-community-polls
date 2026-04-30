@@ -4,9 +4,17 @@
 [build]
   # VITE_COMMIT_SHA is re-exported from Netlify's built-in $COMMIT_REF so Sentry
   # error reports tag the exact deploy commit (src/main.tsx reads it at build time).
-  # Keep this in the build command — Netlify UI env vars are literal strings and
-  # don't expand $COMMIT_REF.
-  command = "npm ci && VITE_COMMIT_SHA=$COMMIT_REF npm run build"
+  # VITE_NETLIFY_CONTEXT is re-exported from Netlify's built-in $CONTEXT
+  # ('production' / 'deploy-preview' / 'branch-deploy' / 'dev'). It feeds two
+  # consumers: (a) the smoke route at src/routes/[__smoke].tsx env-gates the
+  # render-phase throw to non-prod only (Phase 7 D-05); (b) src/main.tsx
+  # Sentry.init coalesces it into the `environment` field so deploy-preview
+  # events report environment='deploy-preview' instead of the misleading
+  # 'production' that import.meta.env.MODE would give (Round-2 HIGH-1).
+  # Both vars rely on shell substitution; a static build-environment block
+  # would set the literal string '$CONTEXT'.
+  # Keep this in the build command — Netlify UI env vars are literal strings.
+  command = "npm ci && VITE_COMMIT_SHA=$COMMIT_REF VITE_NETLIFY_CONTEXT=$CONTEXT npm run build"
   publish = "dist"
 
 [build.environment]
