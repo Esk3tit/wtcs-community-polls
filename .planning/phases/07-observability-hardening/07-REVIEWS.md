@@ -138,7 +138,7 @@ Round-3 fixes are applied correctly across `07-01-PLAN.md`, `07-02-PLAN.md`, `07
 | Plan 03 Node fallback uses `JSON.parse(fs.readFileSync())` | **RESOLVED** | `07-03-PLAN.md` Round-3 LOW-1 section and command snippet use JSON parse fallback; old `require('./$f')` called out as removed. |
 | Plan 03 release-sha inspection uses `git worktree`, not `git checkout` | **RESOLVED** | `07-03-PLAN.md` explicitly instructs temporary worktree for release SHA inspection and cleanup. |
 | Plan 01 prose says `ErrorInfo` exported from both `react` and `react-dom/client` | **RESOLVED** | `07-01-PLAN.md` Round-3 LOW-3 language states both exports exist; canonical import remains from `react`. |
-| Plan 03 Task 3 uses only Vite printed gzip column | **RESOLVED** | `07-03-PLAN.md` marks Vite gzip column as SINGLE source-of-truth and states `find|xargs|gzip` method removed. |
+| Plan 03 Task 3 uses only Vite printed gzip column | **RESOLVED** | `07-03-PLAN.md` marks Vite gzip column as SINGLE source-of-truth and states the legacy `find` → `xargs` → `gzip` pipeline was removed. |
 | Plan 03 includes Sentry string rename escalation rule | **RESOLVED** | `07-03-PLAN.md` includes explicit LOW-5 override/escalation policy with required recording in `07-VERIFICATION.md`. |
 
 ### NEW Concerns

@@ -43,7 +43,8 @@ patterns-established:
   - "Permanent observability canary in repo (D-01): debug component stays checked in so future regressions are re-detectable with a single deploy-preview click."
   - "Env-gated route via beforeLoad notFound() — production-only short-circuit before component instantiation, lazy chunk never fetched."
 
-requirements-completed: [OBSV-01]
+requirements-completed: []  # Closed by Plan 03 deploy-preview evidence (D-08)
+requirements-addressed: [OBSV-01]
 
 # Metrics
 duration: 14min
@@ -151,7 +152,7 @@ None. The smoke route works against the existing `VITE_NETLIFY_CONTEXT` build va
 | All acceptance criteria evidenced (see table above) | ✓ |
 | Working tree clean after Task 3 cleanup | ✓ (canonical `npm run build` re-run, no stray dist artifacts) |
 | Plan body's `<verification>` block: tsc + build pass, route registered, dist contains RenderThrowSmoke chunk, no AuthGuard/notFoundComponent/captureException/setTag/useEffect in smoke route, Round-3 manual browser checkpoint completed | ✓ |
-| `requirements-completed: [OBSV-01]` declared in frontmatter | ✓ |
+| `requirements-completed: []` (Plan 03 closure) + `requirements-addressed: [OBSV-01]` declared in frontmatter | ✓ |
 
 OBSV-02 is NOT claimed by this plan — it's the Rolldown `keepNames` symbolication contract from Plan 01, verified end-to-end by Plan 03's deploy-preview evidence capture.
 

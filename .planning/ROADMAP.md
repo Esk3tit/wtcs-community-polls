@@ -50,7 +50,7 @@ Full v1.0 phase details (goals, plans, success criteria) preserved in [milestone
 **Depends on**: Nothing (config/wiring localized to `src/main.tsx` + `vite.config.ts`)
 **Requirements**: OBSV-01, OBSV-02
 **Success Criteria** (what must be TRUE):
-  1. A render-phase throw triggered on a Netlify deploy preview (e.g. `?sentry-render-smoke=1`) produces a Sentry event with both the React `componentStack` populated and `error.value` present (proves OBSV-01 capture path).
+  1. A render-phase throw triggered on a Netlify deploy preview (`/__smoke?render=1` — the env-gated smoke route shipped in Plan 02) produces a Sentry event with both the React `componentStack` populated and `error.value` present (proves OBSV-01 capture path).
   2. The same deploy-preview Sentry event's top stack frames show original function/component names (e.g. `App`, `MyButton`) rather than `xR`/`$M`-style mangled identifiers (proves OBSV-02 symbolication).
   3. The built `dist/assets/*.js.map` contains entries in `names[]` for kept identifiers and the corresponding chunks contain `__name(…)` annotation calls (mechanical evidence that `keepNames: true` took effect).
   4. Bundle-size delta from enabling `keepNames` is documented (≤1.5% gzip target) so the cost is recorded against the observability gain.

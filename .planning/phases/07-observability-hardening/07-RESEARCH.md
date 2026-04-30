@@ -36,7 +36,7 @@
 - **D-14:** Overage policy: if total gzip delta exceeds the ≤1.5% target, document actual number + ship anyway. Closure doc records target, actual delta, and one-line rationale.
 
 ### Claude's Discretion
-- File names/paths inside `src/` (e.g., `src/routes/__smoke.tsx` vs `src/routes/__smoke/index.tsx`; `src/components/debug/RenderThrowSmoke.tsx`). Researcher/planner pick what fits existing route-tree convention.
+- File names/paths inside `src/` (e.g., `src/routes/[__smoke].tsx` vs `src/routes/__smoke/index.tsx`; `src/components/debug/RenderThrowSmoke.tsx`). Researcher/planner pick what fits existing route-tree convention.
 - Exact wording / structure of the dev-only `console.warn` inside `onUncaughtError`.
 - How to expose `CONTEXT` from Netlify into Vite at build time (`netlify.toml` `[build.environment]` block vs Netlify dashboard env vars vs Vite `define`).
 - Whether to add a small `tags: { smoke: true }` to smoke-triggered Sentry events for filtering. Optional, planner's call.
@@ -63,7 +63,7 @@
 - **Budget** — $0/month. No new paid services. No new CI minutes (LHCI/bundle-gate deferred to v1.2 explicitly).
 - **GSD workflow enforcement** — direct file edits outside a GSD command are forbidden unless user explicitly bypasses. Phase 7 work is under `/gsd-execute-phase`.
 - **TypeScript strict** — `noUnusedLocals`, `noUnusedParameters`, `verbatimModuleSyntax: true`, `erasableSyntaxOnly: true` (per tsconfig.app.json). New code (smoke route, smoke component, main.tsx edits) must compile cleanly under these flags. In particular, `verbatimModuleSyntax: true` requires explicit `type` keyword on type-only imports (e.g., `import { type ErrorInfo } from 'react-dom/client'`).
-- **ESLint flat config** — `eslint.config.js` already in place; existing routes use `/* eslint-disable react-refresh/only-export-components */` at the top of each route file (TanStack file-route pattern). New `__smoke.tsx` follows the same convention.
+- **ESLint flat config** — `eslint.config.js` already in place; existing routes use `/* eslint-disable react-refresh/only-export-components */` at the top of each route file (TanStack file-route pattern). New `[__smoke].tsx` follows the same convention.
 - **Naming patterns** — kebab-case for kebab-cased filenames, PascalCase components. The smoke file naming aligns with the `__root.tsx` precedent (double-underscore prefix for non-user-facing routes).
 
 ## Summary
@@ -191,10 +191,10 @@ Phase 7 is two **localised, low-risk** config/wiring fixes plus a permanent cana
 | `src/main.tsx` | App bootstrap; Sentry.init; createRoot; ErrorBoundary | **Modify** — add `createRoot` options + `onError` belt. DO NOT touch `Sentry.init` block. |
 | `vite.config.ts` | Build config | **Modify** — add `rolldownOptions.output.keepNames: true` under existing `build:` block. DO NOT touch `sentryVitePlugin` config or `build.sourcemap: 'hidden'`. |
 | `netlify.toml` | Netlify build env | **Modify** — re-export `CONTEXT` as `VITE_NETLIFY_CONTEXT` in the `[build] command` (mirrors existing `VITE_COMMIT_SHA=$COMMIT_REF` pattern). |
-| `src/routes/__smoke.tsx` | Env-gated smoke route | **Create** — flat-file convention (matches `topics.tsx`, `archive.tsx`); declares `Route` via `createFileRoute('/__smoke')`. |
+| `src/routes/[__smoke].tsx` | Env-gated smoke route | **Create** — flat-file convention (matches `topics.tsx`, `archive.tsx`); declares `Route` via `createFileRoute('/__smoke')`. |
 | `src/components/debug/RenderThrowSmoke.tsx` | Render-phase throw | **Create** — colocated with existing `src/components/debug/DebugAuthOverlay.tsx`. |
 | `src/components/AppErrorFallback.tsx` | Fallback UI | **Untouched** — already wired. |
-| `src/routeTree.gen.ts` | Auto-generated route tree | **Auto-regenerated** — `npm run build` runs `tsr generate` first, so adding `src/routes/__smoke.tsx` auto-updates this file. Reviewer should expect a diff here too; commit it (file is currently committed, not gitignored). |
+| `src/routeTree.gen.ts` | Auto-generated route tree | **Auto-regenerated** — `npm run build` runs `tsr generate` first, so adding `src/routes/[__smoke].tsx` auto-updates this file. Reviewer should expect a diff here too; commit it (file is currently committed, not gitignored). |
 | `.planning/phases/07-observability-hardening/07-VERIFICATION.md` | Phase closure evidence | **Create** — Sentry screenshots + permalink + .map excerpt. |
 | `.planning/closure/OBSV-02-bundle-delta.md` | Bundle-size closure | **Create** — total + per-chunk gzip table. |
 
@@ -205,7 +205,7 @@ src/
 ├── main.tsx                            # MODIFIED: createRoot options + onError belt
 ├── routes/
 │   ├── __root.tsx                      # untouched
-│   ├── __smoke.tsx                     # NEW (flat-file convention)
+│   ├── [__smoke].tsx                   # NEW (flat-file convention; bracket-escaped per D-02 to keep the literal /__smoke segment)
 │   ├── index.tsx                       # untouched
 │   ├── topics.tsx                      # untouched
 │   └── archive.tsx                     # untouched
@@ -325,7 +325,7 @@ src/routes/admin/index.tsx  (/admin/)
 src/routes/auth/callback.tsx (/auth/callback)
 ```
 
-So the smoke route is `src/routes/__smoke.tsx` (flat-file), not `src/routes/__smoke/index.tsx` (directory). The `__` prefix mirrors `__root.tsx` — signals "non-user-facing".
+So the smoke route is `src/routes/[__smoke].tsx` (flat-file), not `src/routes/__smoke/index.tsx` (directory). The `__` prefix mirrors `__root.tsx` — signals "non-user-facing".
 
 **Example:**
 
@@ -451,7 +451,7 @@ For local dev (`npm run dev`), `VITE_NETLIFY_CONTEXT` is `undefined`. The route 
 - **Touching `Sentry.init` to add `mechanism` filtering.** Out of scope. Phase 6 already shipped the correct `Sentry.init` block.
 - **Using `[build.environment]` static block for `VITE_NETLIFY_CONTEXT = "$CONTEXT"`.** Netlify will literal-string-set the value to `"$CONTEXT"`, not the expansion. The build command shell is the only correct place.
 - **Verifying in `vite dev` or Vitest.** StrictMode in dev rethrows caught errors → `globalHandlersIntegration` catches them and `react.errorboundary` mechanism never appears. The minifier doesn't even run. Roadmap criterion #5 is explicit on this.
-- **Skipping `tsr generate` after adding `__smoke.tsx`.** `npm run build` runs it first, but iterating with `tsc -b` alone will fail until `routeTree.gen.ts` includes the new route.
+- **Skipping `tsr generate` after adding `[__smoke].tsx`.** `npm run build` runs it first, but iterating with `tsc -b` alone will fail until `routeTree.gen.ts` includes the new route.
 
 ## Don't Hand-Roll
 
@@ -500,7 +500,7 @@ For local dev (`npm run dev`), `VITE_NETLIFY_CONTEXT` is `undefined`. The route 
 
 ### Pitfall 4: `routeTree.gen.ts` not regenerated → smoke route 404s on deploy
 
-**What goes wrong:** Developer creates `src/routes/__smoke.tsx`, commits, opens PR. CI builds, but the smoke route returns 404 even on the deploy preview because `routeTree.gen.ts` was not committed (or did not include the new route).
+**What goes wrong:** Developer creates `src/routes/[__smoke].tsx`, commits, opens PR. CI builds, but the smoke route returns 404 even on the deploy preview because `routeTree.gen.ts` was not committed (or did not include the new route).
 
 **Why it happens:** TanStack file-routes are NOT magic — they require codegen. Two paths regenerate the file:
 1. The Vite plugin (`tanstackRouter({ ... })`) regenerates on file change during `vite dev` and `vite build`.
@@ -667,7 +667,7 @@ export function RenderThrowSmoke(): never {
 }
 ```
 
-### E. `src/routes/__smoke.tsx` (full file)
+### E. `src/routes/[__smoke].tsx` (full file)
 
 ```tsx
 // Source: structural analog src/routes/topics.tsx (validateSearch shape)
@@ -741,7 +741,7 @@ function SmokePage() {
 | A1 | Sentry's `Dedupe` integration is enabled by default in `@sentry/react` 10.49.0 (without explicit `integrations` array entry) | Pitfall 5 | Two Sentry events appear for each smoke run. Mitigation: drop the `onError` belt; the React 19 hooks alone fire `onCaughtError` and capture the error correctly. |
 | A2 | `mechanism.type` for events from `reactErrorHandler` will be `react.errorboundary` OR `generic` | Common Pitfall 1 + Validation Architecture | If the actual mechanism is something else (e.g., `instrument`), the verification rubric needs a one-line update to accept whatever Sentry actually emits. The v1.1-SENTRY-ERRORBOUNDARY.md research file explicitly flags this as an open question to confirm on a deploy preview. Low risk — verification is the entire point of Phase 7. |
 | A3 | Rolldown's `__name` helper gets gzip-deduped to ~0.5–1.5% total bundle delta | Bundle-size impact in v1.1-VITE-SOURCEMAPS.md (re-stated here) | If the actual delta is much higher (e.g., 5%), CONTEXT.md D-14 already authorises "ship anyway with documented overage". So this is not blocking — it just affects the closure doc rationale line. |
-| A4 | Adding a flat-file route `src/routes/__smoke.tsx` with the double-underscore prefix does not collide with TanStack Router's reserved `__root` convention | Pattern 3 | If TanStack interprets `__smoke` as a layout/utility route, the build would fail. Easy to verify by running `npm run generate` once after creating the file — failure would surface immediately. Confidence is HIGH that it works (the convention is "leading underscore indicates non-routable layout file"; `__root` is a documented exception, not a generic prefix), but I did not run the codegen in this research session. |
+| A4 | Adding a flat-file route `src/routes/[__smoke].tsx` with the double-underscore prefix does not collide with TanStack Router's reserved `__root` convention | Pattern 3 | If TanStack interprets `__smoke` as a layout/utility route, the build would fail. Easy to verify by running `npm run generate` once after creating the file — failure would surface immediately. Confidence is HIGH that it works (the convention is "leading underscore indicates non-routable layout file"; `__root` is a documented exception, not a generic prefix), but I did not run the codegen in this research session. |
 
 ## Open Questions (RESOLVED)
 

@@ -46,7 +46,7 @@ patterns-established:
   - "Sentry.init environment coalesce honors deploy context (VITE_NETLIFY_CONTEXT ?? MODE) so triage can filter by environment=deploy-preview separately from environment=production"
   - "Inspection build via `npx vite build --mode development` for sourcemap symbol verification when the production build's sentryVitePlugin would delete maps post-upload"
 
-requirements-completed: [OBSV-01, OBSV-02]
+requirements-completed: []  # Closed by Plan 03 deploy-preview evidence (D-08)
 requirements-addressed: [OBSV-01, OBSV-02]
 
 # Metrics

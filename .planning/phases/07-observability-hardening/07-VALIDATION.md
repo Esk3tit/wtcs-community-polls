@@ -99,4 +99,4 @@ If a Phase 8 Playwright fixture organically covers the smoke flow later, it land
 
 **Approval:** approved 2026-04-29
 
-**Round-3 alignment:** 2026-04-30 — re-aligned per-task map and Manual-Only table to match plans 07-01-PLAN, 07-02-PLAN, 07-03-PLAN as revised in commits ea40bea (Round 1), 7e76b13 (Round 2), and 31c7d66 (Round 3). No strategy changes; documentation alignment only. Original 2026-04-29 sign-off remains valid because Round-2 and Round-3 changes are within-strategy. Cross-reference: `07-REVIEWS-v3.md` consensus MEDIUM ("07-VALIDATION.md drift relative to revised plans").
+**Round-3 alignment:** 2026-04-30 — re-aligned per-task map and Manual-Only table to match plans 07-01-PLAN, 07-02-PLAN, 07-03-PLAN as revised in commits ea40bea (Round 1), 7e76b13 (Round 2), and 31c7d66 (Round 3). No strategy changes; documentation alignment only. Original 2026-04-29 sign-off remains valid because Round-2 and Round-3 changes are within-strategy. Cross-reference: `07-REVIEWS.md` consensus MEDIUM ("07-VALIDATION.md drift relative to revised plans"). (`07-REVIEWS-v3.md` is the archived round-3 transcript; `07-REVIEWS.md` is the active synthesis.)
