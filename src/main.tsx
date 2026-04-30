@@ -34,7 +34,15 @@ Sentry.init({
   // to import.meta.env.MODE so the dev/test experience is unchanged.
   environment: import.meta.env.VITE_NETLIFY_CONTEXT ?? import.meta.env.MODE,
   release: import.meta.env.VITE_COMMIT_SHA,
-  integrations: [Sentry.browserTracingIntegration()],
+  // WR-02 (Phase 7 review-fix iteration 1): dedupeIntegration is normally
+  // included in Sentry's defaultIntegrations, but adding it explicitly here
+  // makes the contract auditable. The OBSV-01 capture path fires up to three
+  // events for one render-phase throw (ErrorBoundary auto-capture +
+  // ErrorBoundary onError belt + createRoot.onCaughtError → reactErrorHandler);
+  // Dedupe collapses near-duplicates between paths that share stack/message.
+  // Pinning the integration here protects the contract from silent removal
+  // in a future SDK upgrade.
+  integrations: [Sentry.browserTracingIntegration(), Sentry.dedupeIntegration()],
   tracesSampleRate: 0.1,
   // Replay sample rates stay set so that when Replay is later attached via
   // addIntegration(), it honors these values:
