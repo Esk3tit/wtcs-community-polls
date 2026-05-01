@@ -52,6 +52,7 @@ The following Info items were noted in iteration 1 but were not in scope for the
 **File:** `src/main.tsx:24-28`
 **Issue:** Unchanged — the `console.warn` for missing `VITE_SENTRY_DSN` fires once at module import, but there's no positive confirmation that Sentry IS active when the DSN is set. Triage cost: a developer wondering "is Sentry on?" has to inspect the Network tab.
 **Fix:** Add a counterpart `console.info` when DSN is present in DEV:
+
 ```ts
 if (import.meta.env.DEV) {
   if (!import.meta.env.VITE_SENTRY_DSN) console.warn('[sentry] disabled (no DSN)')
@@ -64,6 +65,7 @@ if (import.meta.env.DEV) {
 **File:** `src/main.tsx:154` (was `:120` pre-fix; line shifted because WR-02 added one comment block)
 **Issue:** Unchanged — `tags: { boundary: 'app-root', eventId }` places an event ID (high-cardinality) into Sentry's tag dimension. Sentry tag indexing is bounded; high-cardinality values can blow past free-tier limits over time. Move to `contexts.linked_event = { eventId }`.
 **Fix:**
+
 ```ts
 Sentry.captureException(error, {
   tags: { boundary: 'app-root' },
@@ -79,6 +81,7 @@ Sentry.captureException(error, {
 **File:** `src/components/debug/RenderThrowSmoke.tsx:16`
 **Issue:** Unchanged — `: never` is technically correct (`never <: ReactNode`) but readers expect components to return JSX. A one-line note clarifying the JSX-position rationale would help.
 **Fix:** Inline comment:
+
 ```ts
 // Returns `never` — the throw is unreachable downstream. JSX-position usage
 // is fine because `never` is a subtype of ReactNode.

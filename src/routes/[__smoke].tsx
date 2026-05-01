@@ -38,7 +38,7 @@ function SmokePage() {
     )
   }
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<p className="text-sm text-muted-foreground">Loading smoke component…</p>}>
       <RenderThrowSmoke />
     </Suspense>
   )

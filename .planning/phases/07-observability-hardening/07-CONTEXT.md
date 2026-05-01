@@ -20,7 +20,7 @@ Production Sentry receives every render-phase React error with un-mangled, human
 **Out of scope:**
 - New Sentry features beyond capture-path correctness (PII scrubbing, alert rules, dashboards).
 - Replacing `Sentry.ErrorBoundary` with anything else; it stays as fallback UI.
-- Changes to `Sentry.init` config, `sentryVitePlugin` config, sourcemap upload pipeline, or release-SHA wiring — all already correct from Phase 6. **AMENDED 2026-04-29 (Round-2 HIGH-1):** the `Sentry.init` `environment` field is the one allowed exception — it is amended to `VITE_NETLIFY_CONTEXT ?? import.meta.env.MODE` so deploy-preview events report `environment: 'deploy-preview'` instead of `'production'`. All other `Sentry.init` settings (DSN, release SHA, integrations, tracesSampleRate, replaysSessionSampleRate) remain untouched from Phase 6.
+- Changes to `Sentry.init` config, `sentryVitePlugin` config, sourcemap upload pipeline, or release-SHA wiring — all already correct from Phase 6. **AMENDED 2026-04-29 (Round-2 HIGH-1); further hardened in WR-03 to use `||` so empty-string shell substitution falls through to `MODE`:** the `Sentry.init` `environment` field is the one allowed exception — it is amended to `VITE_NETLIFY_CONTEXT || import.meta.env.MODE` so deploy-preview events report `environment: 'deploy-preview'` instead of `'production'`. All other `Sentry.init` settings (DSN, release SHA, integrations, tracesSampleRate, replaysSessionSampleRate) remain untouched from Phase 6.
 - Playwright automation of the smoke (deferred to Phase 8 only if it organically fits the fixture work).
 - LHCI / bundle-size CI gates (deferred to v1.2 per milestone scope guard).
 - Any product feature work (SEED-002 admin visibility belongs in v1.2).
@@ -84,7 +84,7 @@ Production Sentry receives every render-phase React error with un-mangled, human
 
 ### Files to modify
 
-- `src/main.tsx` — wire React 19 root error hooks; add `onError` belt to `Sentry.ErrorBoundary`. (Sentry.init block stays untouched **except for the `environment` field** — Round-2 HIGH-1 amends it to `VITE_NETLIFY_CONTEXT ?? MODE`; all other Sentry.init settings remain as Phase 6 left them.)
+- `src/main.tsx` — wire React 19 root error hooks; add `onError` belt to `Sentry.ErrorBoundary`. (Sentry.init block stays untouched **except for the `environment` field** — Round-2 HIGH-1 amends it to `VITE_NETLIFY_CONTEXT || MODE` (WR-03 hardened from `??` to `||` to handle empty-string shell substitution); all other Sentry.init settings remain as Phase 6 left them.)
 - `vite.config.ts` — add `build.rolldownOptions.output.keepNames: true`. (`build.sourcemap: 'hidden'` and `sentryVitePlugin` block stay untouched.)
 - `netlify.toml` (or equivalent Vite `define`) — expose `CONTEXT` to Vite as `VITE_NETLIFY_CONTEXT` so the smoke gate can read it.
 
@@ -117,7 +117,7 @@ Production Sentry receives every render-phase React error with un-mangled, human
 ### Reusable Assets
 
 - `src/components/AppErrorFallback.tsx` — already wired as `Sentry.ErrorBoundary` `fallback`. Reused as-is; no changes needed.
-- `src/main.tsx` `Sentry.init({...})` block — already correct (DSN, release SHA, browserTracingIntegration, traces/replays sample rates). DO NOT touch — **except for the `environment` field**, which Round-2 HIGH-1 amends to `VITE_NETLIFY_CONTEXT ?? import.meta.env.MODE` so deploy-preview events do not report `environment: 'production'`.
+- `src/main.tsx` `Sentry.init({...})` block — already correct (DSN, release SHA, browserTracingIntegration, traces/replays sample rates). DO NOT touch — **except for the `environment` field**, which Round-2 HIGH-1 amends to `VITE_NETLIFY_CONTEXT || import.meta.env.MODE` (WR-03 hardened from `??` to `||` so empty-string `VITE_NETLIFY_CONTEXT=` shell substitution still falls through to `MODE`) so deploy-preview events do not report `environment: 'production'`.
 - `vite.config.ts` `sentryVitePlugin({...})` block — already correct (auth token, `disable: mode !== 'production'`, sourcemap upload + delete-after-upload contract). DO NOT touch.
 - `vite.config.ts` `build.sourcemap: 'hidden'` — already correct per Sentry contract. DO NOT touch.
 - TanStack Router `autoCodeSplitting: true` — already enabled, gives lazy-loading of `/__smoke` for free.

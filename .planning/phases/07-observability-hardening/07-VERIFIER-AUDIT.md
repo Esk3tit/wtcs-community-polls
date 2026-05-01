@@ -6,7 +6,7 @@ status: passed
 score: 5/5 ROADMAP success criteria + 3/3 plan must-have sets independently verified
 gaps: 0
 overrides_recommended: 0
-warnings: 2  # planning-hygiene only — REQUIREMENTS.md traceability table + STATE.md staleness; neither blocks PR #21 merge
+warnings: 2  # planning-hygiene only — Warning #1 RESOLVED post-audit (REQUIREMENTS.md flipped in e7738fa + 57de6e2); Warning #2 STATE.md staleness; neither blocks PR #21 merge
 ---
 
 # Phase 7 — Independent Verifier Audit
@@ -65,7 +65,7 @@ Each plan's frontmatter `must_haves.truths` independently re-verified against th
 | 2 | src/routes/[__smoke].tsx bracket-escaped flat-file route | ✅ | File exists; createFileRoute('/__smoke') at line 24 |
 | 3 | beforeLoad throws notFound() when VITE_NETLIFY_CONTEXT === 'production' | ✅ | [__smoke].tsx:40-44 |
 | 4 | Lazy-imports RenderThrowSmoke inside Suspense (D-03) | ✅ | [__smoke].tsx:18-22 (lazy import) + 57-60 (Suspense JSX) |
-| 5 | Renders throw only when search.render === '1' validated through validateSearch (Round-4: String coerce) | ✅ | [__smoke].tsx:32-33 — `String(search.render) === '1'` per Round-4 hotfix |
+| 5 | Renders throw only when search.render === '1' validated through validateSearch (Round-4 + WR-04 tightening) | ✅ | [__smoke].tsx:18-22 — strict `r === '1' || r === 1` accepts only the literal string `'1'` or number `1` per WR-04 hotfix in `840f0ac` (tightened from the broader Round-4 `String(search.render) === '1'` coerce) |
 | 6 | routeTree.gen.ts regenerated with fullPath: '/__smoke' | ✅ | `grep -c "fullPath.*'/__smoke'" src/routeTree.gen.ts` = 1 |
 | 7 | npm run build succeeds | ✅ | I ran it — exit 0 |
 | 8 | Local production-context smoke gate verified by manual browser checkpoint (Round-3 fix) | ✅ | 07-02-SUMMARY.md acceptance-criteria table confirms all four assertions passed via Playwright MCP |
@@ -99,12 +99,12 @@ Each plan's frontmatter `must_haves.truths` independently re-verified against th
 
 Two amendments shipped within Plan 03 commit `b9afb99`. Both independently verified.
 
-### Amendment (a) — validateSearch String coerce
+### Amendment (a) — validateSearch String coerce (later tightened by WR-04)
 
 | Item | Status | Evidence |
 |------|--------|----------|
-| Code change in `src/routes/[__smoke].tsx` | ✅ PRESENT | Line 33: `String(search.render) === '1' ? { render: '1' } : {}` |
-| Comment block explains why | ✅ PRESENT | Lines 25-31 explain TanStack's default search parser uses `parseSearchWith(JSON.parse)`, coerces URL `1` to JS number, strict `=== '1'` (string) is therefore always false |
+| Code change in `src/routes/[__smoke].tsx` | ✅ PRESENT | Lines 18-22: strict `if (r === '1' || r === 1) return { render: '1' }` — final shipped form per WR-04 hotfix (`840f0ac`) tightening the broader Round-4 `String(search.render) === '1'` coerce to accept only the literal string `'1'` or number `1` |
+| Comment block explains why | ✅ PRESENT | Lines 16-17 explain TanStack's default search parser uses `parseSearchWith(JSON.parse)`, coerces URL `1` to JS number, so the validator must accept both `'1'` and `1` |
 | End-to-end verified on deploy preview | ✅ | 07-VERIFICATION.md row 9 of Behavioral Spot-Checks confirms bare `?render=1` triggers throw on deploy-preview-21 (release `b9afb99`); fresh envelope POST 200 with event ids `47c70019d804491a9bbae46514faf4f2` + `b0b2a882f1344f139ab8ad88222c93d8` |
 
 **Verdict: SOUND.** Code change is minimal, correctness rationale documented, end-to-end re-verification recorded.
@@ -149,18 +149,13 @@ Two amendments shipped within Plan 03 commit `b9afb99`. Both independently verif
 
 ### Two non-blocking planning-hygiene warnings (PR #21 can ship without these)
 
-**Warning #1 — REQUIREMENTS.md Traceability table not flipped.**
+**Warning #1 — REQUIREMENTS.md Traceability table not flipped. ✅ RESOLVED post-audit.**
 
-`.planning/REQUIREMENTS.md` lines 73-74 still list:
+At audit time, `.planning/REQUIREMENTS.md` listed OBSV-01 and OBSV-02 as `Pending` despite 07-03-SUMMARY.md frontmatter declaring `requirements-completed: [OBSV-01, OBSV-02]` and 07-VERIFICATION.md Requirements Coverage table flipping both rows to ✅ pass.
 
-```
-| OBSV-01 | Phase 7 | Pending |
-| OBSV-02 | Phase 7 | Pending |
-```
+**Resolution:** the gap was closed in commit `e7738fa` ("docs(07): close OBSV-01 + OBSV-02 in REQUIREMENTS.md, finalize STATE — verifier PASSED") and backfilled in commit `57de6e2` ("docs(req): close OBSV-01 + OBSV-02 in REQUIREMENTS.md (verifier W1 follow-up)"). Both rows now read `Completed (Phase 7 — PR #21)` (OBSV-02 also carries the +6.24% / D-14 ship-anyway annotation).
 
-despite 07-03-SUMMARY.md frontmatter declaring `requirements-completed: [OBSV-01, OBSV-02]` and 07-VERIFICATION.md Requirements Coverage table flipping both rows to ✅ pass. This is the same kind of REQUIREMENTS.md sync drift that v1.0's milestone audit caught. **Suggested follow-up:** flip both rows to `Completed (Phase 7)` in a small docs commit before merging PR #21, OR queue as a Phase 10 item (Phase 10 is "Planning Hygiene Backfill" per ROADMAP). Phase 10 already covers v1.0 SUMMARY frontmatter `requirements-completed` declarations; extending its scope to also reconcile REQUIREMENTS.md Traceability rows for OBSV-01/02 would be consistent.
-
-REQUIREMENTS.md OBSV-02 verbatim description text (line 19) also still says "confirming `__name(…)` calls in chunks" — the original esbuild-idiom claim. Round-4 amended this in 8 other places but not in REQUIREMENTS.md itself. Either bundle a one-line REQUIREMENTS.md amendment with the row-flip, or accept it as a known doc-drift item.
+REQUIREMENTS.md OBSV-02 verbatim description text (line 19) may still reference `__name(…)` calls — the original esbuild-idiom claim — if not also amended in those commits. Round-4 amended this in 8 other places; if the REQUIREMENTS.md description was not bundled into the row-flip commits, accept it as a known doc-drift item or queue under Phase 10 hygiene scope.
 
 **Warning #2 — STATE.md `stopped_at` is stale.**
 

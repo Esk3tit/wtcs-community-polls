@@ -477,7 +477,7 @@ For local dev (`npm run dev`), `VITE_NETLIFY_CONTEXT` is `undefined`. The route 
 
 **Why it happens:** In dev/StrictMode, React rethrows caught render errors to the global handler so the original throw site shows up in browser devtools. Production does NOT rethrow. So dev "passes" by accident.
 
-**How to avoid:** Verify on a Netlify deploy preview only (production build). Roadmap success criterion #5 is explicit. Inspect `mechanism.type` in the Sentry event's "Additional Data" / "Mechanism" panel — it MUST be `react.errorboundary` (preferred — Sentry's `ErrorBoundary` reported the event) or `generic` (`reactErrorHandler` reported the event). Anything else is a bug.
+**How to avoid:** Verify on a Netlify deploy preview only (production build). Roadmap success criterion #5 is explicit. Inspect `mechanism.type` in the Sentry event's "Additional Data" / "Mechanism" panel — at least one event MUST match the canonical PRIMARY allowlist defined in `07-VALIDATION.md` (`mechanism.type ∈ {auto.function.react.error_handler, auto.function.react.error_boundary}`); a companion `'generic'` event from the manual `onError` belt is the EXPECTED defense-in-depth fallback, not a standalone pass. Any `auto.browser.*` event is a FAILURE — see PARTIAL/FAILURE rules in `07-VALIDATION.md`.
 
 **Warning signs:** Sentry event mechanism type contains `auto.browser` or `onerror`. Phase 6 SUMMARY.md "Deviation Rule 1" already documented this exact failure mode for the OBSV-01 baseline.
 
@@ -799,7 +799,7 @@ All toolchain pre-requisites are satisfied by the existing project setup. Phase 
 
 | Req ID | Behavior | Test Type | Automated Command | File Exists? |
 |--------|----------|-----------|-------------------|--------------|
-| OBSV-01 | Sentry receives an event with `mechanism.type === 'react.errorboundary'` OR `'generic'` (NOT `auto.browser.global_handlers.onerror`) when `RenderThrowSmoke` mounts on a deploy preview | manual | navigate deploy-preview-url`/__smoke?render=1` → inspect Sentry event mechanism panel | N/A (manual) |
+| OBSV-01 | At least one Sentry event matches the canonical PRIMARY allowlist (`mechanism.type ∈ {auto.function.react.error_handler, auto.function.react.error_boundary}` per `07-VALIDATION.md`) when `RenderThrowSmoke` mounts on a deploy preview; companion `'generic'` events from the manual onError belt are EXPECTED, not standalone passes; any `auto.browser.*` is a FAILURE | manual | navigate deploy-preview-url`/__smoke?render=1` → inspect Sentry event mechanism panel | N/A (manual) |
 | OBSV-01 | Sentry event `tags.boundary === 'app-root'` is populated | manual | inspect Sentry event tags panel | N/A (manual) |
 | OBSV-01 | Sentry event `contexts.react.componentStack` is populated and non-empty | manual | inspect Sentry event contexts panel | N/A (manual) |
 | OBSV-01 | `AppErrorFallback` renders in the browser when smoke fires (proves boundary still functions as fallback UI) | manual | visual on deploy preview | N/A (manual) |

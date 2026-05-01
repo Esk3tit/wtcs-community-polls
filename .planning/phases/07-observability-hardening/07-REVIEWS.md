@@ -20,7 +20,7 @@ This is the fourth cross-AI review. Round-1, Round-2, and Round-3 reviews live i
 | Codex | **MEDIUM** (LOW after 2 patches) | 9 RESOLVED, 1 PARTIALLY-RESOLVED (gzip self-contradiction) | 2 MEDIUM (clerical) | Apply 2 patches, then ship |
 | Cursor | **LOW** | All 10 RESOLVED | 1 LOW (commit-SHA placeholder) | **SHIP as-is** |
 
-**Disposition:** SHIP. Codex's 2 clerical defects (Plan 03 gzip-template self-contradiction and missing 07-REVIEWS.md alias) **applied inline in commit `<round-4-commit>`**, plus the round-3 SHA placeholder `31c7d66` filled. NO further replan loop required.
+**Disposition:** SHIP. Codex's 2 clerical defects (Plan 03 gzip-template self-contradiction and missing 07-REVIEWS.md alias) **applied inline in commit `b9afb99`**, plus the round-3 SHA placeholder `31c7d66` filled. NO further replan loop required.
 
 ---
 
