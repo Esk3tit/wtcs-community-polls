@@ -7,12 +7,11 @@ import type {
   ChoiceSummary,
 } from '@/lib/types/suggestions'
 
-// Phase 4 Plan 04 Task 4 + cross-AI MEDIUM #5: public reads MUST go through
-// the polls_effective view so lazy-closed polls show as 'closed' without
-// waiting for the scheduled sweep. The view is a 1:1 projection over polls
-// with a derived status column, so we hydrate categories and choices with
-// separate queries (views don't preserve FK relationships for PostgREST
-// embedded selects).
+// Public reads MUST go through the polls_effective view so lazy-closed polls
+// show as 'closed' without waiting for the scheduled sweep. The view is a 1:1
+// projection over polls with a derived status column, so we hydrate categories
+// and choices with separate queries (views don't preserve FK relationships for
+// PostgREST embedded selects).
 
 export function useSuggestions(status: 'active' | 'closed') {
   const { user } = useAuth()
@@ -29,7 +28,7 @@ export function useSuggestions(status: 'active' | 'closed') {
 
     async function fetchData() {
       // 1. Read from polls_effective (invariant: public reads never touch
-      //    the base polls table; cross-AI MEDIUM #5).
+      //    the base polls table).
       const { data: polls, error: pollsError } = await supabase
         .from('polls_effective')
         .select('*')
@@ -40,9 +39,8 @@ export function useSuggestions(status: 'active' | 'closed') {
       if (cancelled) return
 
       if (pollsError) {
-        // NIT-v2-02: stage suffix in console.error distinguishes which fetch
-        // phase failed when reading bug reports, without churning the
-        // user-visible copy across four sites.
+        // Stage suffix in console.error distinguishes which fetch step failed
+        // when reading bug reports, without churning the user-visible copy.
         console.error('[useSuggestions:polls] Failed to fetch suggestions:', pollsError)
         setError('Failed to load topics. Try refreshing the page.')
         setLoading(false)
@@ -96,7 +94,7 @@ export function useSuggestions(status: 'active' | 'closed') {
       }
 
       // 4. User votes — scope to the polls actually in view so the payload
-      //    stays bounded and the map only contains relevant keys (HI-01).
+      //    stays bounded and the map only contains relevant keys.
       let votesMap = new Map<string, string>()
       if (user && pollIds.length > 0) {
         const { data: votes, error: votesError } = await supabase
@@ -119,9 +117,9 @@ export function useSuggestions(status: 'active' | 'closed') {
         }
       }
 
-      // Guard against stale fetches (HI-01: make authoritative — the
-      // cancelled closure flag handles cleanup ordering, this guards
-      // against a race where a new fetch was started via refetch()).
+      // Guard against stale fetches: the `cancelled` closure flag handles
+      // unmount cleanup, this guards against a race where refetch() kicked
+      // off a newer fetch while this one was still resolving.
       if (fetchRef.current !== fetchId) return
 
       const merged: SuggestionWithChoices[] = pollRows.map((p) => ({

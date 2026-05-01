@@ -1,36 +1,21 @@
-# Build config — keeps deploy behavior deterministic across reviewers.
-# SPA fallback stays in public/_redirects (already correct); no redirects block here.
+# SPA fallback lives in public/_redirects.
 
 [build]
-  # VITE_COMMIT_SHA is re-exported from Netlify's built-in $COMMIT_REF so Sentry
-  # error reports tag the exact deploy commit (src/main.tsx reads it at build time).
-  # VITE_NETLIFY_CONTEXT is re-exported from Netlify's built-in $CONTEXT
-  # ('production' / 'deploy-preview' / 'branch-deploy' / 'dev'). It feeds two
-  # consumers: (a) the smoke route at src/routes/[__smoke].tsx env-gates the
-  # render-phase throw to non-prod only (Phase 7 D-05); (b) src/main.tsx
-  # Sentry.init coalesces it into the `environment` field so deploy-preview
-  # events report environment='deploy-preview' instead of the misleading
-  # 'production' that import.meta.env.MODE would give (Round-2 HIGH-1).
-  # Both vars rely on shell substitution; a static build-environment block
-  # would set the literal string '$CONTEXT'.
-  # Keep this in the build command — Netlify UI env vars are literal strings.
+  # Re-export Netlify's built-in $COMMIT_REF and $CONTEXT as VITE_*-prefixed
+  # vars so Vite ships them to the browser bundle. Done here (not in
+  # [build.environment]) because that block sets literal strings, not shell
+  # substitutions. VITE_COMMIT_SHA → Sentry release; VITE_NETLIFY_CONTEXT →
+  # both Sentry's environment field and the /__smoke route's prod gate.
   command = "npm ci && VITE_COMMIT_SHA=$COMMIT_REF VITE_NETLIFY_CONTEXT=$CONTEXT npm run build"
   publish = "dist"
 
 [build.environment]
   NODE_VERSION = "22"
-  # NPM_FLAGS intentionally unset — `npm ci` already enforces lockfile strictness.
 
-# Production-only headers: forbid framing + enforce MIME sniffing discipline.
-#
-# Content-Security-Policy is intentionally NOT set here. A correct CSP must
-# enumerate connect-src for Sentry ingest (*.ingest.sentry.io), PostHog
-# (us.i.posthog.com), Supabase (https://*.supabase.co), Discord avatar CDN
-# (cdn.discordapp.com), plus img-src/font-src for shadcn assets. Getting any
-# of those wrong silently bricks observability or live data fetches in
-# production. CSP rollout belongs in a follow-up task with Report-Only mode
-# first to surface violations before enforcement (greptile-apps PR #4 review,
-# 2026-04-22 — they qualified CSP as "worth a follow-up").
+# CSP is intentionally NOT set here. A correct policy must enumerate
+# connect-src for Sentry ingest, PostHog, Supabase, and the Discord avatar CDN
+# plus img-src/font-src for shadcn assets — any miss silently bricks
+# observability or live data. Roll out via Report-Only first.
 [[headers]]
   for = "/*"
   [headers.values]
@@ -38,9 +23,4 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "geolocation=(), microphone=(), camera=()"
-    # Strict-Transport-Security: 2-year max-age + includeSubDomains + preload
-    # eligibility. Netlify's "Force HTTPS" toggle adds a basic HSTS header
-    # automatically, but declaring it here makes the intent auditable and
-    # locks the policy in version control. Safe to enable now: the site is
-    # already HTTPS-only with a Let's Encrypt cert.
     Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"

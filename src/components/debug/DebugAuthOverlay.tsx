@@ -5,11 +5,10 @@ import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'
 import { snapshotBreadcrumbs } from '@/components/debug/snapshotBreadcrumbs'
 
-// UI-SPEC Surface 3 + REVIEWS.md R-01 (PKCE State row).
-// Read-only diagnostic panel. Activation gate lives in src/routes/__root.tsx;
-// the component itself MUST NOT be the gate. On production the gate is
-// satisfied only by an explicit `localStorage.setItem('wtcs_debug_auth','1')`
-// per-browser opt-in, set in DevTools and cleared in Task 4 disposition.
+// Read-only diagnostic panel. The activation gate lives in src/routes/__root.tsx;
+// this component MUST NOT be the gate. In production the gate is satisfied only
+// by an explicit `localStorage.setItem('wtcs_debug_auth','1')` per-browser
+// opt-in, set in DevTools.
 
 interface SessionShape {
   user_id: string | null
@@ -211,7 +210,7 @@ export default function DebugAuthOverlay() {
         <p className="font-mono text-xs whitespace-pre-wrap break-all">
           {pkce.found
             ? `Found: ${pkce.key} = ${pkce.preview}… (length=${pkce.length})`
-            : 'MISSING — no sb-*-code-verifier key in localStorage. PKCE state lost (RESEARCH.md Pitfall 4 strongest hypothesis).'}
+            : 'MISSING — no sb-*-code-verifier key in localStorage. PKCE state lost.'}
         </p>
       </section>
 

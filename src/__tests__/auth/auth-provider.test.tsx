@@ -23,9 +23,9 @@ vi.mock('@/lib/supabase', () => ({
   },
 }))
 
-// Phase 6 R-03: AuthProvider now consumes useConsent(), so it MUST mount inside
-// a ConsentProvider. Mock posthog/sentry so the consent side-effects don't fail
-// in jsdom and so the AuthProvider tests don't accidentally exercise analytics.
+// AuthProvider consumes useConsent(), so it MUST mount inside a
+// ConsentProvider. Mock posthog/sentry so the consent side-effects don't fail
+// in jsdom and so these tests don't accidentally exercise analytics.
 vi.mock('@/lib/posthog', () => ({
   posthog: {
     opt_in_capturing: vi.fn(),

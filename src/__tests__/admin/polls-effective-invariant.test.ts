@@ -2,11 +2,10 @@ import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { resolve, relative } from 'node:path'
 import { describe, it, expect } from 'vitest'
 
-// Cross-AI review MEDIUM #5: After Phase 4, ALL public reads of poll
-// active/closed status MUST go through the `polls_effective` view, never
-// the base `polls` table. This test scans every *.ts and *.tsx file under
-// src/routes, src/hooks, and src/components for direct `from('polls')`
-// accesses and fails if it finds any outside the allowlist.
+// All public reads of poll active/closed status MUST go through the
+// `polls_effective` view, never the base `polls` table. Scans every
+// *.ts/*.tsx under src/routes, src/hooks, and src/components for direct
+// `from('polls')` accesses and fails if any are found outside the allowlist.
 
 const root = resolve(__dirname, '../../../')
 const SCAN_DIRS = ['src/routes', 'src/hooks', 'src/components']
@@ -16,7 +15,7 @@ const SCAN_DIRS = ['src/routes', 'src/hooks', 'src/components']
 // must be an ADMIN-ONLY code path that does NOT filter by polls.status.
 const ALLOWLIST = new Set<string>([
   // Admin-only: counts suggestions by category_id for the delete-category
-  // confirmation dialog (D-21 LOW fix). Reads no status column.
+  // confirmation dialog. Reads no status column.
   'src/components/admin/CategoriesList.tsx',
 ])
 
@@ -37,7 +36,7 @@ function walk(dir: string): string[] {
   return out
 }
 
-describe('polls_effective invariant (Phase 4 cross-AI MEDIUM #5)', () => {
+describe('polls_effective invariant', () => {
   it('no public code path reads from base polls table via from("polls")', () => {
     const offenders: string[] = []
     for (const d of SCAN_DIRS) {
@@ -58,7 +57,7 @@ describe('polls_effective invariant (Phase 4 cross-AI MEDIUM #5)', () => {
     if (offenders.length > 0) {
       throw new Error(
         `polls_effective invariant violated — the following files read the base polls table directly.\n` +
-          `Public reads MUST go through polls_effective (cross-AI review MEDIUM #5):\n` +
+          `Public reads MUST go through polls_effective:\n` +
           offenders.map((o) => `  - ${o}`).join('\n') +
           `\nFix: replace supabase.from('polls') with supabase.from('polls_effective').`,
       )
@@ -85,7 +84,7 @@ describe('polls_effective invariant (Phase 4 cross-AI MEDIUM #5)', () => {
     }
     if (offenders.length > 0) {
       throw new Error(
-        `polls.status filter in non-admin code path (cross-AI MEDIUM #5):\n` +
+        `polls.status filter in non-admin code path:\n` +
           offenders.map((o) => `  - ${o}`).join('\n') +
           `\nFix: read from polls_effective which already carries the effective status column.`,
       )

@@ -5,15 +5,13 @@ import { Button } from '@/components/ui/button'
 import { useConsent } from '@/hooks/useConsent'
 import { CONSENT_CARD_MAX_W } from '@/lib/consent-styles'
 
-// Phase 6 D-04: persistent footer chip with state-aware copy.
-// - 'allow'    → "Anonymous usage analytics are on. Turn off"
-// - 'decline'  → "Anonymous usage analytics are off. Turn on"
-// - 'undecided'→ null (banner is in charge)
-//
-// Dismiss X is session-scope (sessionStorage, matches ConsentBanner's tier so
-// the chip re-appears on a fresh tab/window) — does NOT change the consent
-// decision. Phase 6 WR-05: previously written to localStorage, which made the
-// chip permanently invisible per browser with no in-app re-summon path.
+// Persistent footer chip with state-aware copy:
+//   'allow'    → "Anonymous usage analytics are on. Turn off"
+//   'decline'  → "Anonymous usage analytics are off. Turn on"
+//   'undecided'→ null (banner is in charge)
+// Dismiss X uses sessionStorage (not localStorage) so the chip re-appears on
+// a fresh tab/window — otherwise users have no in-app path to re-summon it.
+// Dismiss does NOT change the consent decision.
 
 const DISMISS_KEY = 'posthog_consent_chip_dismissed'
 

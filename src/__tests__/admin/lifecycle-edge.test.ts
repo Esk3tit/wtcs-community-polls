@@ -12,7 +12,7 @@ const SWEEP_PATH = resolve(
   '../../../supabase/functions/close-expired-polls/index.ts',
 )
 
-describe('Phase 4 close-expired-polls Edge Function (HIGH #4 — cron-secret gate)', () => {
+describe('close-expired-polls Edge Function cron-secret gate', () => {
   it('exists', () => {
     expect(existsSync(SWEEP_PATH)).toBe(true)
   })
@@ -23,15 +23,15 @@ describe('Phase 4 close-expired-polls Edge Function (HIGH #4 — cron-secret gat
     expect(src).not.toMatch(/requireAdmin/)
   })
 
-  it("reads Deno.env.get('CLOSE_SWEEPER_SECRET') (HIGH #4)", () => {
+  it("reads Deno.env.get('CLOSE_SWEEPER_SECRET')", () => {
     expect(src).toMatch(/Deno\.env\.get\(\s*['"]CLOSE_SWEEPER_SECRET['"]\s*\)/)
   })
 
-  it('checks the X-Cron-Secret request header (HIGH #4)', () => {
+  it('checks the X-Cron-Secret request header', () => {
     expect(src).toMatch(/X-Cron-Secret/i)
   })
 
-  it('returns 401 on missing/mismatched secret (HIGH #4)', () => {
+  it('returns 401 on missing/mismatched secret', () => {
     expect(src).toMatch(
       /Unauthorized[\s\S]{0,300}401|401[\s\S]{0,300}Unauthorized/,
     )

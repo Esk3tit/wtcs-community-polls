@@ -37,7 +37,7 @@ export function AdminSuggestionRow({
 }: Props) {
   const s = suggestion
   const isClosed = s.status === 'closed'
-  // D-15: amber flag for closed-with-null-resolution (any path, not just auto).
+  // Amber flag for closed-with-null-resolution (any close path, not just auto-close).
   const needsResolution = isClosed && s.resolution === null
 
   return (

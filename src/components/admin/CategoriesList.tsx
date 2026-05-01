@@ -49,7 +49,7 @@ export function CategoriesList() {
     if (newRowActive) newInputRef.current?.focus()
   }, [newRowActive])
 
-  // MEDIUM #7: fetch-failure error state (NOT a silent empty list)
+  // Surface fetch failures explicitly — never collapse to a silent empty list.
   if (error) {
     return (
       <Alert variant="destructive" role="alert">
@@ -108,7 +108,8 @@ export function CategoriesList() {
   }
 
   const handleAskDelete = async (cat: { id: string; name: string }) => {
-    // LOW fix (D-21): query the REAL affected count BEFORE showing the dialog.
+    // Query the real affected count before showing the confirm dialog so the
+    // copy isn't a lie ("N suggestions will become uncategorized").
     try {
       const { count, error: countError } = await supabase
         .from('polls')

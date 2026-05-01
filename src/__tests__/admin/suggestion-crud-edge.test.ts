@@ -12,7 +12,7 @@ function efSrc(name: string): string {
   return existsSync(p) ? readFileSync(p, 'utf-8') : ''
 }
 
-describe('Phase 4 suggestion CRUD Edge Functions (source analysis)', () => {
+describe('suggestion CRUD Edge Functions source analysis', () => {
   describe('create-poll', () => {
     const src = efSrc('create-poll')
 
@@ -44,7 +44,7 @@ describe('Phase 4 suggestion CRUD Edge Functions (source analysis)', () => {
     })
   })
 
-  describe('update-poll (HIGH #1: transactional RPC path)', () => {
+  describe('update-poll transactional RPC path', () => {
     const src = efSrc('update-poll')
 
     it('exists and is non-empty', () => {
@@ -65,15 +65,15 @@ describe('Phase 4 suggestion CRUD Edge Functions (source analysis)', () => {
       expect(src).toMatch(/409/)
     })
 
-    it('calls update_poll_with_choices RPC (HIGH #1: transactional)', () => {
+    it('calls update_poll_with_choices RPC transactionally', () => {
       expect(src).toMatch(/rpc\(\s*['"]update_poll_with_choices['"]/)
     })
 
-    it('does NOT contain a raw choices.delete() chain (HIGH #1)', () => {
+    it('does NOT contain a raw choices.delete() chain', () => {
       expect(src).not.toMatch(/from\(\s*['"]choices['"]\s*\)\s*\.\s*delete/)
     })
 
-    it('does NOT contain a raw choices.insert() chain (HIGH #1)', () => {
+    it('does NOT contain a raw choices.insert() chain', () => {
       expect(src).not.toMatch(/from\(\s*['"]choices['"]\s*\)\s*\.\s*insert/)
     })
 
@@ -85,13 +85,13 @@ describe('Phase 4 suggestion CRUD Edge Functions (source analysis)', () => {
       expect(votesIdx).toBeLessThan(rpcIdx)
     })
 
-    it('ME-01: maps RPC errors via stable SQLSTATE code (P0003 edit lock)', () => {
+    it('maps RPC edit-lock error via stable SQLSTATE code P0003', () => {
       // The EF must match rpcError.code, not just regex the message.
       expect(src).toMatch(/rpcError\s*\)?\s*\.code|\(\s*rpcError[^)]*\)\.code|rpcCode/)
       expect(src).toMatch(/P0003/)
     })
 
-    it('ME-01: maps RPC errors via stable SQLSTATE code (P0002 not found)', () => {
+    it('maps RPC not-found error via stable SQLSTATE code P0002', () => {
       expect(src).toMatch(/P0002/)
     })
   })
@@ -145,7 +145,7 @@ describe('Phase 4 suggestion CRUD Edge Functions (source analysis)', () => {
     })
   })
 
-  describe('delete-poll (D-18 server-side delete lock)', () => {
+  describe('delete-poll server-side delete lock', () => {
     const src = efSrc('delete-poll')
 
     it('exists and is non-empty', () => {

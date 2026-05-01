@@ -91,7 +91,7 @@ describe('AdminsList', () => {
     expect(screen.getByText('Other')).toBeInTheDocument()
   })
 
-  it('shows "You" badge on self row and hides Demote button (D-06)', async () => {
+  it('shows "You" badge on self row and hides Demote button', async () => {
     render(<AdminsList />)
     await waitFor(() => expect(screen.getByText('You')).toBeInTheDocument())
     const demoteButtons = screen.queryAllByRole('button', {

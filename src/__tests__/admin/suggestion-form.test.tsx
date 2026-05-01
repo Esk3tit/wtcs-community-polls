@@ -160,7 +160,7 @@ describe('SuggestionForm (edit mode, locked by votes)', () => {
     })
   })
 
-  it('Editing is locked banner renders when vote_count > 0; all inputs disabled (D-17)', async () => {
+  it('Editing is locked banner renders when vote_count > 0; all inputs disabled', async () => {
     render(<SuggestionForm mode="edit" pollId="p1" />)
     await screen.findByText(/editing is locked/i)
     expect(screen.getByLabelText('Title')).toBeDisabled()

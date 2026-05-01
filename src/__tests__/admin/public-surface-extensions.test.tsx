@@ -7,8 +7,8 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 const root = resolve(__dirname, '../../../')
 
-describe('Public surface extensions (Phase 4 Plan 04 Task 4)', () => {
-  it('useSuggestions reads from polls_effective view (MEDIUM #5)', () => {
+describe('Public surface extensions', () => {
+  it('useSuggestions reads from polls_effective view', () => {
     const src = readFileSync(resolve(root, 'src/hooks/useSuggestions.ts'), 'utf-8')
     expect(src).toMatch(/from\(['"]polls_effective['"]\)/)
     expect(src).not.toMatch(/from\(['"]polls['"]\)/)

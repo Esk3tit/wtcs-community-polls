@@ -68,7 +68,7 @@ describe('submit-vote rate limiting behavior (source analysis)', () => {
       expect(submitVoteSource).toContain('status: 429')
     })
 
-    it('rate limited response body contains D-09 message', () => {
+    it('rate limited response body contains the user-facing rate-limit message', () => {
       expect(submitVoteSource).toContain(
         'Too many responses too quickly. Please wait a moment and try again.'
       )

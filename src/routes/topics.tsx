@@ -3,8 +3,8 @@ import { createFileRoute } from '@tanstack/react-router'
 import { AuthGuard } from '@/components/auth/AuthGuard'
 import { SuggestionList } from '@/components/suggestions/SuggestionList'
 
-// MR-06: `?focus=<pollId>` lets the admin "View results" kebab item
-// deep-link back into this list and expand/scroll to a specific row.
+// `?focus=<pollId>` lets the admin "View results" kebab item deep-link
+// back into this list and expand/scroll to a specific row.
 interface TopicsSearch {
   focus?: string
 }

@@ -12,7 +12,7 @@ const MIGRATION_PATH = resolve(
   '../../../supabase/migrations/00000000000005_admin_phase4.sql',
 )
 
-describe('Phase 4 admin migration (00000000000005_admin_phase4.sql)', () => {
+describe('admin migration 00000000000005', () => {
   it('exists', () => {
     expect(existsSync(MIGRATION_PATH)).toBe(true)
   })
@@ -82,7 +82,7 @@ describe('Phase 4 admin migration (00000000000005_admin_phase4.sql)', () => {
     )
   })
 
-  it('defines update_poll_with_choices RPC transactionally (HIGH concern #1)', () => {
+  it('defines update_poll_with_choices RPC transactionally', () => {
     expect(sql).toMatch(
       /CREATE OR REPLACE FUNCTION\s+public\.update_poll_with_choices/i,
     )
@@ -137,15 +137,15 @@ describe('Phase 4 admin migration (00000000000005_admin_phase4.sql)', () => {
   })
 })
 
-// ME-01: migration 6 replaces update_poll_with_choices to raise stable
-// SQLSTATE codes instead of free-form strings. The Edge Function matches
-// on these codes; both sides must stay in sync.
+// Migration 6 replaces update_poll_with_choices to raise stable SQLSTATE
+// codes instead of free-form strings. The Edge Function matches on these
+// codes; both sides must stay in sync.
 const MIGRATION6_PATH = resolve(
   __dirname,
   '../../../supabase/migrations/00000000000006_update_poll_rpc_error_codes.sql',
 )
 
-describe('Phase 4 ME-01 migration (00000000000006_update_poll_rpc_error_codes.sql)', () => {
+describe('update_poll_with_choices error-code migration', () => {
   it('exists', () => {
     expect(existsSync(MIGRATION6_PATH)).toBe(true)
   })
@@ -183,14 +183,14 @@ describe('Phase 4 ME-01 migration (00000000000006_update_poll_rpc_error_codes.sq
   })
 })
 
-// ME-02: migration 7 applies cardinality(), service-role-only EXECUTE,
+// Migration 7 applies cardinality(), service-role-only EXECUTE,
 // FOR UPDATE serialization lock, and bucket ON CONFLICT DO UPDATE.
 const MIGRATION7_PATH = resolve(
   __dirname,
   '../../../supabase/migrations/00000000000007_fix_pr_review.sql',
 )
 
-describe('Phase 4 review-fix migration (00000000000007_fix_pr_review.sql)', () => {
+describe('admin migration 00000000000007 hardening', () => {
   it('exists', () => {
     expect(existsSync(MIGRATION7_PATH)).toBe(true)
   })

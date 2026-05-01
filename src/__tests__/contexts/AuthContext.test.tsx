@@ -65,7 +65,7 @@ function harness(children: ReactNode) {
   )
 }
 
-describe('AuthContext — R-03 retroactive identify on consent flip', () => {
+describe('AuthContext — retroactive identify on consent flip', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     window.localStorage.clear()
@@ -89,7 +89,7 @@ describe('AuthContext — R-03 retroactive identify on consent flip', () => {
     })
   })
 
-  it('user already signed in, consent flips undecided → allow, identify fires exactly once with the correct providerId (R-03 / P-06)', async () => {
+  it('user already signed in, consent flips undecided → allow, identify fires exactly once with the correct providerId', async () => {
     render(harness(
       <>
         <ConsentTrigger />

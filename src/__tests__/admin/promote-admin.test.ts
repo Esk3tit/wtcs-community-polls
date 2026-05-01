@@ -17,7 +17,7 @@ const SEARCH_PATH = resolve(
   '../../../supabase/functions/search-admin-targets/index.ts',
 )
 
-describe('Phase 4 promote-admin Edge Function (source analysis)', () => {
+describe('promote-admin Edge Function source analysis', () => {
   it('exists', () => {
     expect(existsSync(PROMOTE_PATH)).toBe(true)
   })
@@ -63,7 +63,7 @@ describe('Phase 4 promote-admin Edge Function (source analysis)', () => {
   })
 })
 
-describe('Phase 4 search-admin-targets Edge Function (source analysis)', () => {
+describe('search-admin-targets Edge Function source analysis', () => {
   it('exists', () => {
     expect(existsSync(SEARCH_PATH)).toBe(true)
   })
