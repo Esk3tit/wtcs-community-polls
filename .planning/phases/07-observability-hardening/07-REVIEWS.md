@@ -197,7 +197,7 @@ The plans have now survived four rounds of independent cross-AI peer review. Rou
 
 Further review rounds are unlikely to add proportional value for OBSV-01 / OBSV-02 outcomes. Ship to execution.
 
-```
+```text
 /clear
 /gsd-execute-phase 7
 ```

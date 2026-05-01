@@ -152,7 +152,7 @@ None — no external service configuration required. Plan 03 will require manual
 
 ## Next Plan Readiness
 
-- Plan 02 (smoke route + RenderThrowSmoke component): all prerequisites in place. `VITE_NETLIFY_CONTEXT` is available at build time (netlify.toml shell substitution); Sentry capture path is wired so a render-phase throw from `<RenderThrowSmoke />` will land in Sentry with `mechanism.type` of `react.errorboundary` (preferred) or `generic` (from `reactErrorHandler`), tagged `boundary='app-root'`.
+- Plan 02 (smoke route + RenderThrowSmoke component): all prerequisites in place. `VITE_NETLIFY_CONTEXT` is available at build time (netlify.toml shell substitution); Sentry capture path is wired so a render-phase throw from `<RenderThrowSmoke />` will land in Sentry tagged `boundary='app-root'` with at least one event matching the canonical PRIMARY allowlist defined in `07-VALIDATION.md` (`mechanism.type ∈ {auto.function.react.error_handler, auto.function.react.error_boundary}`), plus an EXPECTED companion event with `mechanism.type === 'generic'` from the manual `onError` belt. PARTIAL/FAILURE rules and override policy are governed by `07-VALIDATION.md`; observed values are recorded in `07-VERIFICATION.md` ## Goal Achievement row 5 + ## Behavioral Spot-Checks "Sentry mechanism.type primary path".
 - Plan 03 (deploy-preview evidence capture): Sentry.init environment will report `environment='deploy-preview'` on the Phase 7 PR's preview build, allowing D-08 evidence to be filtered cleanly without polluting the production environment view.
 
 ## TDD Gate Compliance

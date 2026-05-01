@@ -28,7 +28,7 @@
   1. Sentry event screenshot showing populated `componentStack` and `tags.boundary === 'app-root'` (proves OBSV-01 capture path).
   2. Sentry event screenshot showing top stack frames with un-mangled names (proves OBSV-02 symbolication).
   3. Sentry event permalink + the release SHA the event was captured under, both pinned in VERIFICATION.md.
-  4. Built `dist/assets/*.js.map` `names[]` excerpt + `grep '__name(' dist/assets/*.js | head` output, proving `keepNames: true` mechanically took effect.
+  4. Built `dist/assets/*.js.map` `names[]` excerpt (via `jq -r '.names[]'`) + literal-function-declaration grep output (`grep -lE 'function (RootLayout|AppErrorFallback|RenderThrowSmoke|SmokePage)\b' dist/assets/*.js`) proving `keepNames: true` mechanically took effect — Rolldown's Oxc minifier preserves names via literal `function Name(...)` declarations (NOT esbuild's `__name(fn,'orig')` helper; see amendment banner above).
 - **D-09:** Solo sign-off (Khai).
 - **D-10:** Screenshots/binary artifacts archive to `.planning/phases/07-observability-hardening/artifacts/`. Large blobs (>1MB) may be `.gitignore`-d; permalink + `.map`/grep text excerpts must be committed.
 
@@ -57,7 +57,7 @@
 | ID | Description | Research Support |
 |----|-------------|------------------|
 | OBSV-01 | Sentry captures render-phase errors via the Sentry transport — wire `Sentry.reactErrorHandler()` into React 19's `createRoot({ onCaughtError, onUncaughtError, onRecoverableError })`; keep `Sentry.ErrorBoundary` for fallback UI; add belt-and-suspenders manual `Sentry.captureException` in `onError`. Verified by a render-throw smoke component on a Netlify deploy preview (NOT dev — StrictMode masks). | Standard Stack §1; Architecture Pattern 1 (createRoot wiring); Code Example §A; Common Pitfall 1 (StrictMode masking); Validation Architecture row REQ-OBSV-01. |
-| OBSV-02 | Production Sentry stack frames show original function names — set `build.rolldownOptions.output.keepNames: true` in `vite.config.ts`. Verified by inspecting a built `.map`'s `names[]` array and confirming `__name(…)` calls in chunks. Bundle-size delta (~0.5–1.5% gzip) documented. | Standard Stack §2; Architecture Pattern 2 (rolldownOptions escape hatch); Code Example §B; Common Pitfall 2 (Oxc default minifier); Validation Architecture row REQ-OBSV-02. |
+| OBSV-02 | Production Sentry stack frames show original function names — set `build.rolldownOptions.output.keepNames: true` in `vite.config.ts`. Verified by inspecting a built `.map`'s `names[]` array (via `jq -r '.names[]'`) AND confirming literal preserved `function Name(...)` declarations in chunks (`grep -lE 'function (RootLayout|AppErrorFallback|RenderThrowSmoke)\b' dist/assets/*.js`) — Rolldown's Oxc minifier preserves names via literal declarations, NOT via esbuild's `__name(fn,'orig')` helper (see amendment banner). Bundle-size delta documented. | Standard Stack §2; Architecture Pattern 2 (rolldownOptions escape hatch); Code Example §B; Common Pitfall 2 (Oxc default minifier); Validation Architecture row REQ-OBSV-02. |
 </phase_requirements>
 
 ## Project Constraints (from CLAUDE.md)
@@ -805,7 +805,7 @@ All toolchain pre-requisites are satisfied by the existing project setup. Phase 
 | OBSV-01 | `AppErrorFallback` renders in the browser when smoke fires (proves boundary still functions as fallback UI) | manual | visual on deploy preview | N/A (manual) |
 | OBSV-02 | Sentry event top stack frames show un-mangled identifiers (e.g. `RenderThrowSmoke`, `App`, route components — not `xR`/`$M`) | manual | inspect Sentry event stacktrace panel on the SAME event | N/A (manual) |
 | OBSV-02 | Built `dist/assets/*.js.map` `names[]` array contains kept identifiers (e.g. `RenderThrowSmoke`, `handleResponseSubmit`, route component names) | semi-automated | `node scripts/verify-sourcemap-names.mjs` (script template in v1.1-VITE-SOURCEMAPS.md) — emits the `names[]` excerpt for the closure doc | ❌ Wave 0 — script body lives in research; planner adds it as a one-shot under `scripts/` (or inline in 07-VERIFICATION.md, no need for a runnable file if the verifier copy-pastes the inspection into a Node REPL) |
-| OBSV-02 | Built `dist/assets/*.js` chunks contain `__name(` helper calls | automated grep | `grep -l '__name(' dist/assets/*.js \| wc -l` (>0) | N/A (one-liner) |
+| OBSV-02 | Built `dist/assets/*.js` chunks contain literal preserved `function Name(...)` declarations (Rolldown-correct equivalent of esbuild's `__name(...)` helper — see amendment banner) | automated grep | `grep -lE 'function (RootLayout\|AppErrorFallback\|RenderThrowSmoke)\b' dist/assets/*.js \| wc -l` (≥1) | N/A (one-liner) |
 | OBSV-02 | Total gzip bundle delta from baseline-without-keepNames is ≤1.5% (or documented overage per D-14) | semi-automated | two `npm run build` runs (main vs phase-7), capture Vite output table from each, diff in `OBSV-02-bundle-delta.md` | N/A (manual capture into closure doc) |
 | OBSV-01 + OBSV-02 | Sentry event permalink + release SHA | manual | copy from Sentry UI into `07-VERIFICATION.md` | N/A (manual) |
 
