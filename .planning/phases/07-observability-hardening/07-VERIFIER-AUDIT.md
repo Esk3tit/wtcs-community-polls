@@ -65,7 +65,7 @@ Each plan's frontmatter `must_haves.truths` independently re-verified against th
 | 2 | src/routes/[__smoke].tsx bracket-escaped flat-file route | ✅ | File exists; createFileRoute('/__smoke') at line 24 |
 | 3 | beforeLoad throws notFound() when VITE_NETLIFY_CONTEXT === 'production' | ✅ | [__smoke].tsx:40-44 |
 | 4 | Lazy-imports RenderThrowSmoke inside Suspense (D-03) | ✅ | [__smoke].tsx:18-22 (lazy import) + 57-60 (Suspense JSX) |
-| 5 | Renders throw only when search.render === '1' validated through validateSearch (Round-4 + WR-04 tightening) | ✅ | [__smoke].tsx:18-22 — strict `r === '1' || r === 1` accepts only the literal string `'1'` or number `1` per WR-04 hotfix in `840f0ac` (tightened from the broader Round-4 `String(search.render) === '1'` coerce) |
+| 5 | Renders throw only when search.render === '1' validated through validateSearch (Round-4 + WR-04 tightening) | ✅ | [__smoke].tsx:18-22 — strict `r === '1' \|\| r === 1` accepts only the literal string `'1'` or number `1` per WR-04 hotfix in `840f0ac` (tightened from the broader Round-4 `String(search.render) === '1'` coerce). |
 | 6 | routeTree.gen.ts regenerated with fullPath: '/__smoke' | ✅ | `grep -c "fullPath.*'/__smoke'" src/routeTree.gen.ts` = 1 |
 | 7 | npm run build succeeds | ✅ | I ran it — exit 0 |
 | 8 | Local production-context smoke gate verified by manual browser checkpoint (Round-3 fix) | ✅ | 07-02-SUMMARY.md acceptance-criteria table confirms all four assertions passed via Playwright MCP |
@@ -103,7 +103,7 @@ Two amendments shipped within Plan 03 commit `b9afb99`. Both independently verif
 
 | Item | Status | Evidence |
 |------|--------|----------|
-| Code change in `src/routes/[__smoke].tsx` | ✅ PRESENT | Lines 18-22: strict `if (r === '1' || r === 1) return { render: '1' }` — final shipped form per WR-04 hotfix (`840f0ac`) tightening the broader Round-4 `String(search.render) === '1'` coerce to accept only the literal string `'1'` or number `1` |
+| Code change in `src/routes/[__smoke].tsx` | ✅ PRESENT | Lines 18-22: strict `if (r === '1' \|\| r === 1) return { render: '1' }` — final shipped form per WR-04 hotfix (`840f0ac`) tightening the broader Round-4 `String(search.render) === '1'` coerce to accept only the literal string `'1'` or number `1`. |
 | Comment block explains why | ✅ PRESENT | Lines 16-17 explain TanStack's default search parser uses `parseSearchWith(JSON.parse)`, coerces URL `1` to JS number, so the validator must accept both `'1'` and `1` |
 | End-to-end verified on deploy preview | ✅ | 07-VERIFICATION.md row 9 of Behavioral Spot-Checks confirms bare `?render=1` triggers throw on deploy-preview-21 (release `b9afb99`); fresh envelope POST 200 with event ids `47c70019d804491a9bbae46514faf4f2` + `b0b2a882f1344f139ab8ad88222c93d8` |
 
@@ -161,7 +161,7 @@ REQUIREMENTS.md OBSV-02 verbatim description text (line 19) may still reference 
 
 `.planning/STATE.md` line 6 still says:
 
-```
+```text
 stopped_at: Phase 7 wave 3 — 07-03 Task 1 captured, writing Task 2 (07-VERIFICATION.md) + Task 3 (OBSV-02-bundle-delta.md)
 ```
 
