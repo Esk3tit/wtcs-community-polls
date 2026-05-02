@@ -11,7 +11,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 const RLS_PATH = resolve(__dirname, '../../../supabase/migrations/00000000000001_rls.sql')
 
-describe('Profiles SELECT RLS preflight (Plan 04-03 Task 1, cross-AI HIGH #2)', () => {
+describe('Profiles SELECT RLS preflight', () => {
   it('00000000000001_rls.sql exists', () => {
     expect(existsSync(RLS_PATH)).toBe(true)
   })
@@ -24,7 +24,7 @@ describe('Profiles SELECT RLS preflight (Plan 04-03 Task 1, cross-AI HIGH #2)', 
     expect(sql).toMatch(/TO authenticated/i)
   })
 
-  it('USING clause is USING (true) — broad read for AdminsList (HIGH #2)', () => {
+  it('USING clause is USING (true) — broad read for AdminsList', () => {
     expect(sql).toMatch(
       /ON\s+public\.profiles[\s\S]*FOR\s+SELECT[\s\S]*TO\s+authenticated[\s\S]*USING\s*\(\s*true\s*\)/i,
     )

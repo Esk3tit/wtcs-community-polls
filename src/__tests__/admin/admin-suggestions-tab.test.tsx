@@ -120,7 +120,7 @@ describe('AdminSuggestionsTab', () => {
 
   it('renders filter chips and Create suggestion button', () => {
     render(<AdminSuggestionsTab />)
-    // LR-04: filter chips now expose role="tab" inside a role="tablist"
+    // Filter chips expose role="tab" inside a role="tablist"
     expect(screen.getByRole('tablist', { name: /filter suggestions/i })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Active' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Closed' })).toBeInTheDocument()
@@ -154,9 +154,9 @@ describe('AdminSuggestionsTab error state (MEDIUM #7)', () => {
   })
 
   it('renders Alert + Retry on vote_counts fetch failure', async () => {
-    // ME-05: vote_counts query is now scoped to visible pollIds via .in(),
-    // so the failing query only fires when polls_effective returned
-    // at least one row. Seed one poll so the vote_counts call happens.
+    // The vote_counts query is scoped to visible pollIds via .in(), so
+    // the failing query only fires when polls_effective returned at least
+    // one row. Seed one poll so the vote_counts call happens.
     pollsResolver.mockReset().mockResolvedValue({
       data: [
         {

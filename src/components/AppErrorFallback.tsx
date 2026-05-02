@@ -1,12 +1,7 @@
 import { AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-// UI-SPEC Contract 2 — Error Boundary Fallback.
-// Rendered by Sentry.ErrorBoundary in src/main.tsx. Copy is verbatim;
-// no props.error.* is surfaced to the DOM (T-05-07, ASVS V7).
-//
-// "Report issue" links to the GitHub Issues tracker. Per UI-SPEC this is at
-// the executor's discretion; the repo URL is derived from the project name.
+// Rendered by Sentry.ErrorBoundary in src/main.tsx. Never surface props.error.* to the DOM (info leak).
 const REPORT_ISSUE_URL = 'https://github.com/wtcs-community/wtcs-community-polls/issues'
 
 export function AppErrorFallback() {

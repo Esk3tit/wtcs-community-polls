@@ -27,8 +27,8 @@ vi.mock('@/hooks/useCategoryMutations', () => ({
   }),
 }))
 
-// D-21 LOW fix: supabase.from('polls') count query returns 5 by default.
-// Individual tests override this mock when needed.
+// supabase.from('polls') count query returns 5 by default. Individual
+// tests override this mock when needed.
 vi.mock('@/lib/supabase', () => ({
   supabase: {
     from: () => ({
@@ -72,7 +72,7 @@ describe('CategoriesList', () => {
     expect(screen.getByText('Bugs')).toBeInTheDocument()
   })
 
-  it('opens delete dialog with the REAL affected count (D-21 LOW fix)', async () => {
+  it('opens delete dialog with the REAL affected count', async () => {
     render(<CategoriesList />)
     const trashButtons = screen.getAllByLabelText(/delete category/i)
     fireEvent.click(trashButtons[0])

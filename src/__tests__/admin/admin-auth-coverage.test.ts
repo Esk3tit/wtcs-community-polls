@@ -7,9 +7,9 @@ import { fileURLToPath } from 'node:url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-// Every admin Edge Function under Phase 4 must import requireAdmin and gate
-// the request before any DB write. close-expired-polls is the documented
-// carve-out: it is gated by a shared cron secret instead.
+// Every admin Edge Function must import requireAdmin and gate the request
+// before any DB write. close-expired-polls is the documented carve-out:
+// it is gated by a shared cron secret instead.
 const GATED_EF_PATHS = [
   'create-poll',
   'update-poll',
@@ -32,7 +32,7 @@ function efPath(name: string) {
   return resolve(__dirname, `../../../supabase/functions/${name}/index.ts`)
 }
 
-describe('Phase 4 admin-auth coverage (source analysis)', () => {
+describe('admin-auth coverage source analysis', () => {
   it('shared admin-auth.ts helper exists and exports requireAdmin', () => {
     const helperPath = resolve(
       __dirname,
@@ -94,9 +94,9 @@ describe('Phase 4 admin-auth coverage (source analysis)', () => {
     })
   }
 
-  // HIGH #4: close-expired-polls is the documented carve-out.
-  // It is gated by an X-Cron-Secret header verified against
-  // CLOSE_SWEEPER_SECRET, NOT by a user session.
+  // close-expired-polls is the documented carve-out. It is gated by an
+  // X-Cron-Secret header verified against CLOSE_SWEEPER_SECRET, not by a
+  // user session.
   for (const name of UNGATED_EF_PATHS) {
     describe(`Edge Function: ${name} (cron-secret carve-out)`, () => {
       const filePath = efPath(name)
@@ -111,11 +111,11 @@ describe('Phase 4 admin-auth coverage (source analysis)', () => {
         expect(src).not.toMatch(/requireAdmin/)
       })
 
-      it('reads CLOSE_SWEEPER_SECRET env var (HIGH #4)', () => {
+      it('reads CLOSE_SWEEPER_SECRET env var', () => {
         expect(src).toMatch(/Deno\.env\.get\(\s*['"]CLOSE_SWEEPER_SECRET['"]\s*\)/)
       })
 
-      it('checks X-Cron-Secret header and returns 401 on mismatch (HIGH #4)', () => {
+      it('checks X-Cron-Secret header and returns 401 on mismatch', () => {
         expect(src).toMatch(/X-Cron-Secret/i)
         expect(src).toMatch(/401/)
       })

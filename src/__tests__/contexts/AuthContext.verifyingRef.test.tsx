@@ -1,24 +1,7 @@
-/**
- * Phase 6 WR-06: integration tests for the AuthContext verifyingRef gate.
- *
- * The gate is the entire reason for the OAuth-redirect special-case in
- * AuthContext.tsx (lines 60-93, 105-127). Phase 6's review flagged that
- * none of the verifyingRef behaviors had dedicated coverage. These tests
- * close that gap.
- *
- * Coverage targets:
- *   1. isOAuthRedirect=true (URL hash contains access_token) → getSession
- *      shortcut is skipped; loading stays true until verification resolves.
- *   2. SIGNED_IN with provider_token while verifyingRef.current=true →
- *      handleAuthCallback is invoked and state updates are suppressed
- *      until it resolves.
- *   3. SIGNED_IN without provider_token while verifyingRef.current=true →
- *      the gate releases (line 121-124 of AuthContext.tsx).
- *   4. /auth/callback route mounts twice in rapid succession (StrictMode
- *      double-mount or remount during async) → the auth-helpers dedup
- *      ensures executeAuthCallback (and therefore supabase.auth.getSession)
- *      is invoked only once across both mounts.
- */
+// Integration tests for the AuthContext verifyingRef gate — the gate
+// gives the OAuth redirect path exclusive control of session state until
+// the provider_token has been verified, preventing transient state from
+// being committed before verification finishes.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor, act } from '@testing-library/react'
@@ -96,7 +79,7 @@ function AuthDebug() {
   )
 }
 
-describe('AuthContext verifyingRef gate (Phase 6 WR-06)', () => {
+describe('AuthContext verifyingRef gate', () => {
   let originalHash: string
   let lastAuthCallback: AuthCallback | null = null
 
@@ -140,16 +123,15 @@ describe('AuthContext verifyingRef gate (Phase 6 WR-06)', () => {
     expect(screen.getByTestId('user-id').textContent).toBe('null')
   })
 
-  it('SIGNED_IN without provider_token while verifyingRef=true releases the gate (line 121-124 path)', async () => {
+  it('SIGNED_IN without provider_token while verifyingRef=true releases the gate', async () => {
     window.location.hash = '#access_token=fake-token&token_type=bearer'
 
     render(harness(<AuthDebug />))
     await waitFor(() => expect(mockOnAuthStateChange).toHaveBeenCalledTimes(1))
     expect(mockHandleAuthCallback).not.toHaveBeenCalled()
 
-    // Drive a SIGNED_IN event with no provider_token. Per AuthContext.tsx
-    // lines 121-124 the gate must release and the session/user must be
-    // populated normally on the next pass.
+    // SIGNED_IN with no provider_token must release the gate so the
+    // session/user populate normally on the next pass.
     const sessionWithoutProviderToken = {
       access_token: 'sb-token',
       refresh_token: 'sb-refresh',
@@ -239,16 +221,13 @@ describe('AuthContext verifyingRef gate (Phase 6 WR-06)', () => {
   })
 })
 
-describe('handleAuthCallback dedup across rapid /auth/callback double-mount (Phase 6 WR-06)', () => {
-  // This test exercises the auth-helpers shared-promise dedup directly.
-  // We import the REAL handleAuthCallback (not the @/lib/auth-helpers mock
-  // installed at the top of this file — vitest module mocks are scoped to
-  // the file, but `vi.importActual` bypasses them) and drive the supabase
-  // boundary mock so we can assert the underlying getSession is invoked
-  // exactly once even when handleAuthCallback() is called twice in rapid
-  // succession (the exact pattern produced by a StrictMode double-mount
-  // of the /auth/callback route after the WR-04 latch-reorder fix made
-  // re-entry possible).
+describe('handleAuthCallback dedup across rapid /auth/callback double-mount', () => {
+  // Exercises the auth-helpers shared-promise dedup directly. We import
+  // the REAL handleAuthCallback (vi.importActual bypasses the file-scoped
+  // mock above) and drive the supabase boundary mock so we can assert
+  // getSession is invoked exactly once even when handleAuthCallback() is
+  // called twice in rapid succession — the pattern produced by a
+  // StrictMode double-mount of /auth/callback.
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -268,21 +247,18 @@ describe('handleAuthCallback dedup across rapid /auth/callback double-mount (Pha
     )
 
     // Pull the REAL auth-helpers module despite the file-scoped vi.mock above.
-    // Note: this intentionally bypasses the top-level vi.mock('@/lib/auth-helpers',
-    // ...) so AuthProvider (first describe) and this dedup case do NOT share
-    // module-level state (callbackPromise / lastResult). That's safe today
-    // because this describe never renders AuthProvider — but if a future
-    // refactor wires AuthProvider into module-level auth-helpers state, this
-    // dual-instance shape will silently diverge. If that happens, split this
-    // describe into its own file (no top-level vi.mock) or vi.doUnmock here
-    // before importing.
+    // This intentionally bypasses the top-level mock so AuthProvider and the
+    // dedup case do NOT share module-level state. Safe today because this
+    // describe never renders AuthProvider — if a refactor wires AuthProvider
+    // into module-level auth-helpers state, split this describe into its own
+    // file (no top-level vi.mock) or vi.doUnmock here before importing.
     const real = await vi.importActual<typeof import('@/lib/auth-helpers')>(
       '@/lib/auth-helpers',
     )
     const { handleAuthCallback, __resetAuthCallbackCacheForTests } = real
 
-    // Phase 6 WR-07: clear any cached result from prior tests in this worker
-    // so the in-flight dedup contract (not the post-resolution memo) is what
+    // Clear any cached result from prior tests in this worker so the
+    // in-flight dedup contract (not the post-resolution memo) is what
     // we're asserting.
     __resetAuthCallbackCacheForTests()
 

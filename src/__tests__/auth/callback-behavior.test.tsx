@@ -54,7 +54,7 @@ function createGuildAwareFetchMock(
 describe('Auth Callback: Fail-Closed Behavior (REAL handleAuthCallback)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    // Phase 6 WR-07: clear the result-memo TTL so prior-test results don't leak
+    // Clear the result-memo TTL so prior-test results don't leak
     __resetAuthCallbackCacheForTests()
     mockSignOut.mockResolvedValue({ error: null })
     mockRpc.mockResolvedValue({ data: null, error: null })
@@ -257,7 +257,7 @@ describe('Auth Callback: Fail-Closed Behavior (REAL handleAuthCallback)', () => 
 describe('Auth Callback: Guild Membership Check', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    // Phase 6 WR-07: clear the result-memo TTL so prior-test results don't leak
+    // Clear the result-memo TTL so prior-test results don't leak
     __resetAuthCallbackCacheForTests()
     mockSignOut.mockResolvedValue({ error: null })
     mockRpc.mockResolvedValue({ data: null, error: null })

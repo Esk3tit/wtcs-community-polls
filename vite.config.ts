@@ -5,14 +5,11 @@ import tailwindcss from '@tailwindcss/vite'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import { sentryVitePlugin } from '@sentry/vite-plugin'
 
-// Sentry plugin MUST be LAST in the plugins array — tree-shaking landmine
-// (05-RESEARCH.md Pattern 6). `SENTRY_AUTH_TOKEN` is intentionally NOT
-// `VITE_*`-prefixed: it is build-time only and must stay server-side (T-05-02).
-//
-// `disable` uses Vite's `mode` parameter (not process.env.NODE_ENV) because the
-// config is loaded before Vite promotes NODE_ENV to 'production', so reading
-// the env var at config-load time silently disables sourcemap upload on hosts
-// like Netlify that don't set NODE_ENV=production in the shell.
+// Sentry plugin must be LAST — tree-shaking landmine.
+// SENTRY_AUTH_TOKEN is intentionally not VITE_*-prefixed (build-time, server-side only).
+// `disable` reads Vite's `mode`, not process.env.NODE_ENV: this config loads
+// before Vite promotes NODE_ENV, so process.env.NODE_ENV would silently disable
+// sourcemap upload on hosts like Netlify that don't pre-set it in the shell.
 export default defineConfig(({ mode }) => ({
   plugins: [
     tanstackRouter({
@@ -29,7 +26,14 @@ export default defineConfig(({ mode }) => ({
       disable: mode !== 'production',
     }),
   ],
-  build: { sourcemap: 'hidden' },
+  build: {
+    sourcemap: 'hidden',
+    // Preserve original function/class .name through Oxc minifier so Sentry
+    // stack frames show source identifiers instead of mangled glyphs.
+    rolldownOptions: {
+      output: { keepNames: true },
+    },
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -42,10 +46,9 @@ export default defineConfig(({ mode }) => ({
     css: true,
     passWithNoTests: true,
     exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
-    // Dummy values so src/lib/supabase.ts doesn't throw at module-load
-    // during tests that import hooks transitively touching the client.
-    // Tests never hit Supabase — these are non-secret placeholders, not real creds.
-    // CI (including dependabot) and fresh clones without .env.local rely on these.
+    // Non-secret placeholders so src/lib/supabase.ts doesn't throw at
+    // module-load during tests that transitively import the client. Tests
+    // never hit Supabase. CI and fresh clones without .env.local rely on these.
     env: {
       VITE_SUPABASE_URL: 'http://localhost:54321',
       VITE_SUPABASE_ANON_KEY: 'test-anon-key',

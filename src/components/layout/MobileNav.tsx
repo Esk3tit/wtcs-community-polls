@@ -52,7 +52,7 @@ export function MobileNav() {
             </Link>
           </SheetClose>
           {isAdmin && (
-            // No preload — AdminGuard beforeLoad would redirect non-admins on hover (RESEARCH Pitfall 6). Per-link opt-in only; no app-wide default set.
+            // No preload — AdminGuard beforeLoad would redirect non-admins on hover. Per-link opt-in only.
             <SheetClose asChild>
               <Link
                 to="/admin"

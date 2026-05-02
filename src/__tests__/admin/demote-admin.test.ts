@@ -12,7 +12,7 @@ const DEMOTE_PATH = resolve(
   '../../../supabase/functions/demote-admin/index.ts',
 )
 
-describe('Phase 4 demote-admin Edge Function (source analysis)', () => {
+describe('demote-admin Edge Function source analysis', () => {
   it('exists', () => {
     expect(existsSync(DEMOTE_PATH)).toBe(true)
   })
@@ -24,7 +24,7 @@ describe('Phase 4 demote-admin Edge Function (source analysis)', () => {
     expect(src).toMatch(/requireAdmin\s*\(/)
   })
 
-  it('contains literal target_user_id === user.id self-demote guard (D-06)', () => {
+  it('contains literal target_user_id === user.id self-demote guard', () => {
     expect(src).toMatch(/target_user_id\s*===\s*user\.id/)
   })
 

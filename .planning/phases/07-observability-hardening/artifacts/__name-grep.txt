@@ -1,0 +1,59 @@
+# keepNames mechanical evidence — release SHA 72481f065dbaa08edd4c74a51953765923b31262
+# Generated 2026-04-30 via plugin-disabled inspection build (npx vite build --mode development)
+#
+# IMPORTANT — plan amendment proposed:
+# The plan's ROADMAP SC #3 + Plan 03 acceptance criterion 'grep -c __name( >= 1' was based
+# on esbuild's keepNames helper convention. Rolldown's Oxc minifier preserves names by leaving
+# literal function declarations in the output instead of emitting a helper call. The Rolldown-
+# correct mechanical assertion is: 'grep -c "function RootLayout\b" dist/assets/*.js >= 1' etc.
+#
+# Original (esbuild-style) check — kept for plan-traceability:
+  grep -o '__name(' dist/assets/*.js | wc -l  →  0  (Rolldown does NOT emit this helper)
+
+# Rolldown-correct mechanical evidence — literal function declarations preserved:
+  function RenderThrowSmoke           → present in 1 chunk(s)  (e.g., RenderThrowSmoke-XCbSANRV.js)
+  function SmokePage                  → present in 1 chunk(s)  (e.g., ___smoke_-DYnw_MRs.js)
+  function RootLayout                 → present in 1 chunk(s)  (e.g., index-B_e1sr_E.js)
+  function AppErrorFallback           → present in 1 chunk(s)  (e.g., index-B_e1sr_E.js)
+  function ConsentChip                → present in 1 chunk(s)  (e.g., index-B_e1sr_E.js)
+  function ConsentBanner              → present in 1 chunk(s)  (e.g., index-B_e1sr_E.js)
+  function LandingPage                → present in 1 chunk(s)  (e.g., LandingPage-Bym6UGzO.js)
+  function AdminPage                  → present in 1 chunk(s)  (e.g., admin-BUzFcT9l.js)
+  function AuthProvider               → present in 1 chunk(s)  (e.g., index-B_e1sr_E.js)
+  function ThemeProvider              → present in 1 chunk(s)  (e.g., index-B_e1sr_E.js)
+
+# Sample of all top-level un-mangled function declarations in main bundle (proves at-scale preservation):
+  source chunk: index-B_e1sr_E.js
+  total unique 'function PascalCase(' declarations: 48
+
+  first 30 alphabetically:
+    function AppErrorFallback
+    function AuthProvider
+    function CatchBoundary
+    function CatchNotFound
+    function ConsentBanner
+    function ConsentChip
+    function ConsentProvider
+    function DefaultGlobalNotFound
+    function DropdownMenu
+    function DropdownMenuContent
+    function DropdownMenuItem
+    function DropdownMenuSeparator
+    function DropdownMenuTrigger
+    function ErrorComponent
+    function FiberNode
+    function FiberRootNode
+    function ItoI
+    function Matches
+    function MatchesInner
+    function MatchImpl
+    function MatchInnerImpl
+    function MatchView
+    function MobileNav
+    function Navbar
+    function OnRendered
+    function OutletImpl
+    function PostHogErrorBoundary
+    function PostHogProvider
+    function ReactDOMHydrationRoot
+    function ReactDOMRoot

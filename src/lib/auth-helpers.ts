@@ -12,20 +12,11 @@ export type AuthCallbackResult =
  * FAIL-CLOSED: If provider_token is missing, Discord API fails, or
  * mfa_enabled is false/missing, the user is signed out immediately.
  */
-// Deduplication guard: shared-promise pattern ensures concurrent callers
-// (AuthContext onAuthStateChange + callback route) get the same result
-// without double-executing verification.
-//
-// Phase 6 WR-07: also memoize the resolved result for a short TTL so a
-// StrictMode dev double-mount (or any rare prod /auth/callback remount)
-// that arrives AFTER the in-flight promise has cleared still short-circuits
-// to the cached result instead of firing a fresh executor — which would
-// otherwise re-call Discord's API + update_profile_after_auth RPC and
-// (on the failure path) re-trigger supabase.auth.signOut().
-//
-// TTL is intentionally short (1500 ms) so a real user-driven retry from the
-// /auth/error page is never blocked. The window only needs to span the
-// React StrictMode unmount→remount gap, which is microseconds in practice.
+// Concurrent callers (AuthContext + callback route) share the same in-flight
+// promise. The TTL'd result memo also catches a StrictMode unmount→remount
+// that arrives after the promise has cleared — without it, the second mount
+// re-runs Discord API + the RPC + (on failure) signOut(). 1500ms is short
+// enough to never block a real user retry from /auth/error.
 let callbackPromise: Promise<AuthCallbackResult> | null = null
 let lastResult: { result: AuthCallbackResult; ts: number } | null = null
 const RESULT_CACHE_MS = 1500
@@ -46,10 +37,9 @@ export async function handleAuthCallback(): Promise<AuthCallbackResult> {
 }
 
 /**
- * Test-only: reset the dedup + result-memo state between tests.
- * Production code MUST NOT call this — TTL-based memoization is intentional
- * (see Phase 6 WR-07). Tests need it because module-level state otherwise
- * leaks across test cases within the 1500 ms TTL window.
+ * Test-only: reset the dedup + result-memo state. Production must not call
+ * this — the TTL is intentional. Tests need it because module-level state
+ * leaks across test cases inside the TTL window.
  */
 export function __resetAuthCallbackCacheForTests(): void {
   callbackPromise = null

@@ -120,7 +120,7 @@ describe('ConsentContext', () => {
     errSpy.mockRestore()
   })
 
-  it('decline() reloads the page when previous state was allow (P-02 — terminates live Replay)', () => {
+  it('decline() reloads the page when previous state was allow — terminates live Replay', () => {
     window.localStorage.setItem('wtcs_consent', 'allow')
     const reloadSpy = vi.fn()
     const originalLocation = window.location

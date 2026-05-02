@@ -61,7 +61,7 @@ export function AdminsList() {
     return handle.cancel
   }, [refetch])
 
-  // MEDIUM #7: fetch-failure error state (NOT a silent empty list)
+  // Surface fetch failures explicitly — never collapse to a silent empty list.
   if (error) {
     return (
       <Alert variant="destructive" role="alert">
@@ -111,7 +111,7 @@ export function AdminsList() {
             </div>
           ) : (
             admins.map((a) => {
-              // D-06 UI guard: hide Demote button on acting admin's own row.
+              // Hide Demote on the acting admin's own row (UI guard against self-demotion).
               const isSelf = user?.id === a.id
               return (
                 <div

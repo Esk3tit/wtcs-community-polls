@@ -80,7 +80,7 @@ describe('ConsentChip (UI-SPEC Surface 2 — flipped opt-IN state machine)', () 
   })
 
   it('Dismiss X click sets posthog_consent_chip_dismissed only (no consent flip)', () => {
-    // WR-05: dismiss writes to sessionStorage (matches banner tier — chip
+    // Dismiss writes to sessionStorage (matches banner tier — chip
     // re-appears on next tab/window) and never touches localStorage.
     window.localStorage.setItem('wtcs_consent', 'allow')
     renderChip()

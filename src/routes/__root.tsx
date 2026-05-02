@@ -8,11 +8,11 @@ import { Toaster } from '@/components/ui/sonner'
 import { ConsentBanner } from '@/components/ConsentBanner'
 import { ConsentChip } from '@/components/ConsentChip'
 
-// R-01: lazy-loaded but NOT DEV-gated at the import level — the overlay
-// must be reachable on production for an explicitly-toggled browser
-// (the auth bug only reproduces against polls.wtcsmapban.com, not local
-// dev or incognito). Render gating happens below via the activation
-// predicate that combines DEV flag OR localStorage opt-in.
+// Lazy-loaded but NOT DEV-gated at the import level — the overlay must be
+// reachable on production for an explicitly-toggled browser (the auth bug
+// only reproduces against the live site, not local dev or incognito).
+// Render gating happens below via the activation predicate combining the
+// DEV flag with a localStorage opt-in.
 const DebugAuthOverlay = lazy(() => import('@/components/debug/DebugAuthOverlay'))
 
 export const Route = createRootRoute({
@@ -30,11 +30,10 @@ function RootLayout() {
           </main>
         </div>
         <Toaster />
-        {/* HI-01 (Phase 5 review): ConsentChip MUST live inside the router
-            tree because it calls `useRouterState()`. Previously rendered as
-            a sibling of <RouterProvider> in src/main.tsx — that placement
-            would crash on first render (TanStack Router's routerContext is
-            only propagated to descendants). */}
+        {/* ConsentChip MUST live inside the router tree because it calls
+            `useRouterState()`. Rendering it as a sibling of <RouterProvider>
+            crashes on first render — TanStack Router's routerContext is only
+            propagated to descendants. */}
         <ConsentBanner />
         <ConsentChip />
         {typeof window !== 'undefined' &&

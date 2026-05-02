@@ -9,11 +9,10 @@ import { AdminSuggestionRow, type AdminSuggestion } from './AdminSuggestionRow'
 
 type Filter = 'active' | 'closed' | 'all'
 
-// NIT-02: the visible list ordering must mirror the server ORDER BY:
-//   is_pinned DESC, created_at DESC
-// When we optimistically flip is_pinned we also re-sort locally so the row
-// visually jumps into the pinned section immediately. The subsequent
-// refetch is the reconciliation step and authoritative.
+// Visible list ordering must mirror the server ORDER BY (is_pinned DESC,
+// created_at DESC) so optimistic pin-flips re-sort locally and the row jumps
+// to the pinned section immediately. The post-mutation refetch is the
+// authoritative reconciliation step.
 function sortAdminSuggestions(rows: AdminSuggestion[]): AdminSuggestion[] {
   return [...rows].sort((a, b) => {
     if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1
@@ -56,10 +55,8 @@ export function AdminSuggestionsTab() {
       const rows = ((data ?? []) as unknown) as AdminSuggestion[]
       setItems(rows)
 
-      // ME-05: scope the vote_counts query to only the poll IDs currently
-      // in view. Previously the query pulled the full vote_counts table on
-      // every filter change, which was O(all-polls-ever) — same class of
-      // issue as HI-01 but admin-side.
+      // Scope vote_counts to only the poll IDs currently in view; otherwise
+      // every filter change pulls the full vote_counts table (O(all-polls-ever)).
       const pollIds = rows.map((r) => r.id)
       const counts: Record<string, number> = {}
       if (pollIds.length > 0) {
@@ -90,10 +87,9 @@ export function AdminSuggestionsTab() {
   const setFilter = (f: Filter) =>
     navigate({ to: '/admin', search: { tab: 'suggestions', filter: f } })
 
-  // NIT-02: optimistic pin. Flip the row's is_pinned locally and re-sort
-  // before firing the mutation. If the mutation fails we revert. The
-  // post-mutation refetch is the reconciliation step so server state
-  // always wins.
+  // Optimistic pin: flip is_pinned locally and re-sort before firing the
+  // mutation. Revert on failure. Post-mutation refetch reconciles so server
+  // state always wins.
   const handleTogglePin = useCallback(
     async (pollId: string, nextPinned: boolean) => {
       const prev = items
@@ -150,7 +146,6 @@ export function AdminSuggestionsTab() {
         </Button>
       </div>
 
-      {/* MEDIUM #7: fetch-failure error state */}
       {loadError && (
         <Alert variant="destructive" role="alert">
           <AlertCircle className="h-4 w-4" />

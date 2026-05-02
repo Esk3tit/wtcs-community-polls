@@ -4,17 +4,10 @@ import type { ReactNode } from 'react'
 import { posthog } from '@/lib/posthog'
 import { loadSentryReplayIfConsented } from '@/lib/sentry'
 
-// Phase 6 D-04 — GDPR opt-IN consent state, single source of truth.
-//
-// Storage contract (UI-SPEC Storage table):
-// - `wtcs_consent` (this file's STORAGE_KEY) — values: 'allow' | 'decline'.
-//   Absent key means 'undecided' (default-OFF state).
-// - `analytics_opted_out` (LEGACY_OPT_OUT_KEY) — Phase 5's opt-OUT flag.
-//   We migrate it once on first read: if `analytics_opted_out === 'true'`
-//   AND `wtcs_consent` absent, we set `wtcs_consent='decline'` (the safe
-//   opt-OUT-equivalent under opt-IN semantics) AND remove the legacy key.
-//   This is one-shot — subsequent reads see only `wtcs_consent`.
-
+// GDPR opt-IN consent state — single source of truth.
+// `wtcs_consent` ('allow' | 'decline'; absent = undecided/default-OFF).
+// `analytics_opted_out` is the legacy opt-OUT flag from before the rewire;
+// migrated once on first read into `wtcs_consent='decline'`.
 export type ConsentState = 'undecided' | 'allow' | 'decline'
 const STORAGE_KEY = 'wtcs_consent'
 const LEGACY_OPT_OUT_KEY = 'analytics_opted_out'
@@ -29,7 +22,7 @@ function readConsent(): ConsentState {
   if (typeof window === 'undefined') return 'undecided'
   const v = window.localStorage.getItem(STORAGE_KEY)
   if (v === 'allow' || v === 'decline') return v
-  // One-shot migration: Phase 5 opt-OUT users → 'decline' (safe default under opt-IN).
+  // One-shot migration of legacy opt-OUT users to opt-IN-equivalent decline.
   if (window.localStorage.getItem(LEGACY_OPT_OUT_KEY) === 'true') {
     window.localStorage.setItem(STORAGE_KEY, 'decline')
     window.localStorage.removeItem(LEGACY_OPT_OUT_KEY)
@@ -55,9 +48,8 @@ export function ConsentProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('storage', onStorage)
   }, [])
 
-  // Side-effect bridge: on 'allow' enable analytics + lazy-attach Replay.
-  // On 'decline' disable analytics. (Replay does not detach mid-session;
-  // RESEARCH.md Pitfall 7 documents the leak — accepted for v1.0.)
+  // Replay does not support runtime detach — see decline() below for the
+  // allow→decline transition that reloads the page to terminate the session.
   useEffect(() => {
     if (state === 'allow') {
       posthog.opt_in_capturing()
@@ -76,11 +68,8 @@ export function ConsentProvider({ children }: { children: ReactNode }) {
     const previous = window.localStorage.getItem(STORAGE_KEY)
     window.localStorage.setItem(STORAGE_KEY, 'decline')
     setState('decline')
-    // Phase 6 P-02 (REVIEWS.md): if the user is flipping FROM allow TO decline,
-    // reload the page to terminate any active Sentry Replay session.
-    // Replay does not support runtime detach (RESEARCH.md Pitfall 7).
-    // We only reload when there is actually a live session to kill — a fresh
-    // decline from 'undecided' or 'decline' does nothing surprising.
+    // Reload only on allow→decline so an active Replay session is actually
+    // terminated; declines from 'undecided' or 'decline' don't need it.
     if (previous === 'allow') {
       window.location.reload()
     }

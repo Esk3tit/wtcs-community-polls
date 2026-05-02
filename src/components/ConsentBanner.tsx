@@ -5,9 +5,9 @@ import { Button } from '@/components/ui/button'
 import { useConsent } from '@/hooks/useConsent'
 import { CONSENT_CARD_MAX_W } from '@/lib/consent-styles'
 
-// Phase 6 D-03: First-visit non-blocking GDPR opt-IN banner.
-// Renders ONLY when consent state is 'undecided' AND not on /admin/*.
-// Dismiss X = session-only hide; banner re-shows on next page load.
+// First-visit non-blocking GDPR opt-IN banner. Renders only when consent is
+// 'undecided' and not on /admin/*. Dismiss X is session-scoped so the banner
+// re-shows on next page load.
 
 const SESSION_DISMISS_KEY = 'wtcs_consent_banner_dismissed_session'
 
@@ -43,7 +43,7 @@ export function ConsentBanner() {
             No tracking starts until you choose.
           </p>
           <div className="flex gap-2 mt-3">
-            {/* P-05 (REVIEWS.md): explicit min-h-11 (44px) to meet WCAG 2.5.5 / Apple HIG mobile touch-target minimum on iOS Safari, where shadcn default Button height (~36px) misses the recommended threshold. */}
+            {/* min-h-11 (44px) meets WCAG 2.5.5 / Apple HIG mobile touch-target minimum; shadcn default Button (~36px) misses it on iOS. */}
             <Button className="min-h-11" onClick={allow}>Allow</Button>
             <Button variant="outline" className="min-h-11" onClick={decline}>Decline</Button>
           </div>

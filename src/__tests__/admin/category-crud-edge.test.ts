@@ -12,7 +12,7 @@ function efSrc(name: string): string {
   return existsSync(p) ? readFileSync(p, 'utf-8') : ''
 }
 
-describe('Phase 4 category CRUD Edge Functions (source analysis)', () => {
+describe('category CRUD Edge Functions source analysis', () => {
   describe('create-category', () => {
     const src = efSrc('create-category')
 

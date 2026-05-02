@@ -19,11 +19,10 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 bg-card border-b">
       <div className="flex items-center justify-between py-3 px-4 md:px-6 mx-auto max-w-2xl">
-        {/* Left: WTCS logo (D-03 — app-wide leftmost element). preload="intent"
-            so tapping the logo from Archive/Admin is not a cold navigation
-            (UI-SPEC Contract 4). Root route redirects to /topics, which is
-            already warm via the Topics link's preload — this just extends the
-            warm-path coverage to the logo entrypoint. */}
+        {/* preload="intent" so tapping the logo from Archive/Admin is not a
+            cold navigation. Root route redirects to /topics, which is already
+            warm via the Topics link's preload — this extends warm-path
+            coverage to the logo entrypoint. */}
         <Link
           to="/"
           preload="intent"
@@ -57,7 +56,7 @@ export function Navbar() {
               Archive
             </Link>
             {isAdmin && (
-              // No preload — AdminGuard beforeLoad would redirect non-admins on hover (RESEARCH Pitfall 6). Per-link opt-in only; no app-wide default set.
+              // No preload — AdminGuard beforeLoad would redirect non-admins on hover. Per-link opt-in only.
               <Link
                 to="/admin"
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"

@@ -35,7 +35,7 @@ function buildDataTransfer(files: File[]): DataTransfer {
   } as unknown as DataTransfer
 }
 
-describe('ImageInput (LR-07 drag-and-drop dropzone)', () => {
+describe('ImageInput drag-and-drop dropzone', () => {
   beforeEach(() => {
     uploadImageMock.mockReset().mockResolvedValue('https://example.com/ok.jpg')
   })

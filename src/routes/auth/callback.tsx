@@ -20,10 +20,10 @@ function AuthCallbackPage() {
       level: 'info',
     })
     if (processed.current) return
-    // Phase 6 WR-04: don't latch processed.current until the promise has
-    // actually resolved. Setting it pre-await would short-circuit the next
-    // mount/remount if the promise rejected (or .then body threw), wedging
-    // the user on the loading spinner with no recovery path.
+    // Don't latch processed.current until the promise actually resolves.
+    // Setting it pre-await would short-circuit the next mount/remount if
+    // the promise rejected (or .then body threw), wedging the user on the
+    // loading spinner with no recovery path.
     let cancelled = false
 
     handleAuthCallback()
@@ -43,9 +43,9 @@ function AuthCallbackPage() {
         }
       })
       .catch((err) => {
-        // Phase 6 WR-01: handleAuthCallback rejection (vs. resolved {success:false})
-        // previously had no handler — the spinner wedged forever. Capture to
-        // Sentry, log, and route to the error page so the user can recover.
+        // handleAuthCallback rejection (vs. resolved {success:false}) needs
+        // its own handler — without one the spinner wedges forever. Capture
+        // to Sentry, log, and route to the error page so the user can recover.
         if (cancelled) return
         processed.current = true
         Sentry.addBreadcrumb({

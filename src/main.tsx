@@ -1,4 +1,4 @@
-import { StrictMode } from 'react'
+import { StrictMode, type ErrorInfo } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import * as Sentry from '@sentry/react'
@@ -9,31 +9,30 @@ import { AppErrorFallback } from '@/components/AppErrorFallback'
 import { routeTree } from './routeTree.gen'
 import './index.css'
 
-// HIGH #1 (codex review): NO app-wide preload default on the router
-// (intentionally omitted from createRouter call below). Per-link opt-in only
-// happens in Plan 05-04 on Topics/Archive links. Rationale: the admin route's
-// beforeLoad redirects non-admins on hover, which would fire on intent-preload.
-// Explicit preload="intent" on user-facing links only is safer
-// (05-RESEARCH.md Pitfall 6).
-//
-// M1 (codex review): Sentry.init does NOT include the Replay integration here.
-// Replay is lazily attached by ConsentChip's mount effect via
-// src/lib/sentry.ts::loadSentryReplayIfConsented() AFTER the localStorage
-// opt-out check. Users who opt out never load the Replay bundle — also
-// code-splits Replay from the main bundle (M3 mitigation).
-if (!import.meta.env.VITE_SENTRY_DSN && import.meta.env.DEV) {
-  console.warn(
-    '[sentry] VITE_SENTRY_DSN not set — error monitoring disabled. Set it in .env.local to enable Sentry in dev.'
-  )
+if (import.meta.env.DEV) {
+  if (!import.meta.env.VITE_SENTRY_DSN) {
+    console.warn('[sentry] VITE_SENTRY_DSN not set — error monitoring disabled. Set it in .env.local to enable Sentry in dev.')
+  } else {
+    console.info('[sentry] active', {
+      env: import.meta.env.VITE_NETLIFY_CONTEXT || import.meta.env.MODE,
+    })
+  }
 }
+
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
-  environment: import.meta.env.MODE,
+  // Use `||` not `??`: an unset Netlify $CONTEXT shell-substitutes to the empty
+  // string, which `??` would forward verbatim as `environment: ""`.
+  environment: import.meta.env.VITE_NETLIFY_CONTEXT || import.meta.env.MODE,
   release: import.meta.env.VITE_COMMIT_SHA,
-  integrations: [Sentry.browserTracingIntegration()],
+  // Replay is intentionally absent — attached lazily after consent opt-in via
+  // `loadSentryReplayIfConsented()` so opted-out users never load the bundle.
+  // dedupeIntegration is pinned explicitly: the OBSV-01 capture path emits up
+  // to three events per render-phase throw (ErrorBoundary auto-capture +
+  // onError belt + onCaughtError → reactErrorHandler), and we rely on Dedupe
+  // to collapse them. Pinning protects the contract from silent removal.
+  integrations: [Sentry.browserTracingIntegration(), Sentry.dedupeIntegration()],
   tracesSampleRate: 0.1,
-  // Replay sample rates stay set so that when Replay is later attached via
-  // addIntegration(), it honors these values:
   replaysSessionSampleRate: 0.1,
   replaysOnErrorSampleRate: 1.0,
 })
@@ -48,26 +47,52 @@ declare module '@tanstack/react-router' {
   }
 }
 
-createRoot(document.getElementById('root')!).render(
+const container = document.getElementById('root')
+if (!container) throw new Error('Root container missing')
+
+// Tag the active scope BEFORE delegating so the boundary tag survives
+// Sentry.Dedupe regardless of which path's event is kept (without this, the
+// hook event has no boundary tag and dedupe may drop the tagged ErrorBoundary
+// event). Pass `undefined` for uncaught so reactErrorHandler reports
+// mechanism.handled=false, matching React's own classification.
+const taggedHandler = (kind: 'uncaught' | 'caught' | 'recoverable') =>
+  (error: unknown, info: ErrorInfo) => {
+    Sentry.withScope((scope) => {
+      scope.setTag('boundary', 'app-root')
+      scope.setTag('react.errorHandlerKind', kind)
+      if (import.meta.env.DEV && kind === 'uncaught') {
+        console.warn('[sentry] uncaught', error, info.componentStack)
+      }
+      const cb = kind === 'uncaught' ? undefined : () => {}
+      Sentry.reactErrorHandler(cb)(error, info)
+    })
+  }
+
+createRoot(container, {
+  onUncaughtError: taggedHandler('uncaught'),
+  onCaughtError: taggedHandler('caught'),
+  onRecoverableError: taggedHandler('recoverable'),
+}).render(
   <StrictMode>
-    <Sentry.ErrorBoundary fallback={<AppErrorFallback />} showDialog={false}>
+    <Sentry.ErrorBoundary
+      fallback={<AppErrorFallback />}
+      showDialog={false}
+      beforeCapture={(scope) => {
+        scope.setTag('boundary', 'app-root')
+      }}
+      onError={(error: unknown, componentStack: string, eventId: string): void => {
+        // eventId goes in `contexts`, not `tags` — high cardinality would
+        // blow Sentry's free-tier tag-key index.
+        Sentry.captureException(error, {
+          tags: { boundary: 'app-root' },
+          contexts: {
+            react: { componentStack },
+            linked_event: { eventId },
+          },
+        })
+      }}
+    >
       <PostHogProvider client={posthog}>
-        {/* HI-01 (Phase 5 review): ConsentChip was previously rendered here as
-            a SIBLING of RouterProvider. That meant ConsentChip's
-            `useRouterState()` call had no router context (TanStack Router's
-            context is propagated only to descendants of RouterProvider). The
-            chip now lives inside src/routes/__root.tsx's RootLayout so it
-            sits UNDER the router tree AND keeps access to AuthProvider +
-            ThemeProvider, while ErrorBoundary + PostHogProvider still wrap
-            everything from the outside. */}
-        {/* Phase 6 D-04: ConsentProvider sits BETWEEN PostHogProvider (outer)
-            and RouterProvider (inner). This positioning means: (a) PostHog is
-            already initialized (via initPostHog() above) when ConsentContext
-            calls posthog.opt_in_capturing() / opt_out_capturing(), and (b)
-            every route under RouterProvider can call useConsent() — including
-            the new ConsentBanner + ConsentChip components mounted inside
-            __root.tsx. Sentry.init in main.tsx is intentionally NOT gated;
-            error capture stays unconditional per D-05. */}
         <ConsentProvider>
           <RouterProvider router={router} />
         </ConsentProvider>

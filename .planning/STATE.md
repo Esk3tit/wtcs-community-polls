@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: post-v1.0
-milestone_name: Awaiting v1.1 planning
-status: milestone_complete
-stopped_at: v1.0 milestone shipped 2026-04-28; tag v1.0 created; awaiting `/gsd-new-milestone` to scope v1.1
-last_updated: "2026-04-28T15:25:00.000Z"
-last_activity: 2026-04-28 -- v1.0 Launch-Ready MVP milestone closed. ROADMAP, REQUIREMENTS, audit archived to .planning/milestones/. PROJECT.md evolved with shipped reqs in Validated and v1.1 carry-forward in Active. GitHub milestone v1.1 created with 6 issues (#11, #12, #13, #17, #18, #19).
+milestone: v1.1
+milestone_name: Hygiene & Polish
+status: ready-to-merge
+stopped_at: Phase 7 complete — verifier PASSED (5/5 SC, OBSV-01+02 closed); PR #21 ready to merge after user accepts +6.24% keepNames-isolated bundle delta per D-14 ship-anyway disposition
+last_updated: "2026-04-30T10:10:00.000Z"
+last_activity: 2026-04-30 -- Phase 07 verifier PASSED with 0 gaps; STATE/REQUIREMENTS reconciled; awaiting PR #21 merge
 progress:
-  total_phases: 0
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_phases: 4
+  completed_phases: 1
+  total_plans: 3
+  completed_plans: 3
+  percent: 100
 ---
 
 # Project State
@@ -21,21 +21,20 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-28 after v1.0 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** v1.0 shipped at polls.wtcsmapban.com on 2026-04-28; v1.1 (Hygiene & Polish) awaiting `/gsd-new-milestone` planning
+**Current focus:** Phase 07 — observability-hardening
 
 ## Current Position
 
-Milestone: post-v1.0 (v1.0 shipped 2026-04-28; v1.1 not yet scoped)
-Latest milestone: v1.0 — Launch-Ready MVP — 6 phases, 32 plans, 41 tasks, 378/378 unit tests
-Tag: v1.0
-Production: https://polls.wtcsmapban.com
-GitHub v1.1 milestone: https://github.com/Esk3tit/wtcs-community-polls/milestone/1 (6 carry-forward issues)
-Next action: `/gsd-new-milestone` to scope v1.1 phases (questioning → research → requirements → roadmap)
+Phase: 07 (observability-hardening) — COMPLETE (verifier PASSED, 0 gaps)
+Plan: 3 of 3 complete (07-01 wired createRoot + keepNames + VITE_NETLIFY_CONTEXT; 07-02 env-gated /__smoke route + RenderThrowSmoke; 07-03 D-08 evidence + 07-VERIFICATION.md + OBSV-02-bundle-delta.md). Both REQ-IDs (OBSV-01, OBSV-02) closed.
+Status: PR #21 (`gsd/phase-07-observability-hardening` @ 82bb086) ready to merge. D-14 ship-anyway accepted on +6.24% keepNames-isolated bundle delta. Phase 8 (E2E Test Hygiene) starts next.
+Last activity: 2026-04-30 -- Phase 07 verifier PASSED with 0 gaps; STATE/REQUIREMENTS reconciled per verifier hygiene warnings
 
 ## Accumulated Context
 
 Decisions and project history are now logged in PROJECT.md Key Decisions and MILESTONES.md.
 v1.0 phase-level context (decisions, gotchas, retrospectives) lives in:
+
 - `.planning/MILESTONES.md` — shipped accomplishments + key decision outcomes
 - `.planning/milestones/v1.0-ROADMAP.md` — phase-by-phase scope and plans
 - `.planning/milestones/v1.0-REQUIREMENTS.md` — full v1 requirement set with traceability
@@ -50,11 +49,13 @@ Recent v1.0 decisions are now in PROJECT.md Key Decisions table with outcomes (�
 ### Pending v1.1 Work
 
 GitHub milestone v1.1 (https://github.com/Esk3tit/wtcs-community-polls/milestone/1) tracks 6 issues:
+
 - Bugs: #11, #12, #13 (Playwright E2E spec hygiene), #17 (Sentry React 19 ErrorBoundary)
 - Enhancement: #19 (Vite/Rolldown sourcemap function names)
 - Documentation: #18 (UIDN-02/03 closure evidence)
 
 Planning hygiene (no GitHub issue):
+
 - VALIDATION.md frontmatter backfill on phases 01–04
 - Phase 03 VERIFICATION.md retrospective
 - 17 SUMMARY frontmatter `requirements-completed` declarations
@@ -66,6 +67,6 @@ None for v1.0 close. v1.1 scope and phasing TBD via `/gsd-new-milestone`.
 
 ## Session Continuity
 
-Last session: 2026-04-28T15:25:00Z
-Stopped at: v1.0 milestone close (`/gsd-complete-milestone v1.0`)
+Last session: 2026-04-29T06:41:19.286Z
+Stopped at: Phase 7 context gathered
 Resume action: `/gsd-new-milestone` to scope v1.1

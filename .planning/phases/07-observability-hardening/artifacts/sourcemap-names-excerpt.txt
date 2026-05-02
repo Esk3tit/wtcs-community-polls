@@ -1,0 +1,78 @@
+# Sourcemap names[] excerpt — release SHA 72481f065dbaa08edd4c74a51953765923b31262
+# Generated 2026-04-30 via Round-2 HIGH-2 plugin-disabled inspection build:
+#   rm -rf dist && npx vite build --mode development
+# Round-2 MEDIUM-4 + Round-3 LOW-1 — JSON-aware names[] extraction via jq.
+# Round-3 LOW-2 note: worktree isolation skipped because main worktree IS at
+# the release SHA with a clean tree (no WIP); canonical dist/ restored after.
+#
+# IMPORTANT — Rolldown vs esbuild keepNames mechanism (plan amendment proposed):
+# The plan's RESEARCH assumed esbuild's __name(fn, 'orig') helper pattern. Rolldown's Oxc
+# minifier does NOT emit __name() calls; instead, it preserves the literal function declaration
+# (e.g., 'function RootLayout(...)' stays in the bundle as-is). This is mechanically verified by
+# the 'Literal function declarations preserved' section below — those grep counts are the
+# Rolldown-correct equivalent of the plan's __name( assertion. The Sentry deploy-preview event
+# captured at 2026-04-30T09:20:52Z further confirms keepNames works end-to-end (un-mangled
+# stack frames in the live event).
+#
+# Strict allowlist hits (RenderThrowSmoke|RootLayout|AppErrorFallback|SmokePage):
+  ___smoke_-DYnw_MRs.js.map                           → RenderThrowSmoke,SmokePage
+
+# Note on missing RootLayout/AppErrorFallback in names[]:
+# Sourcemap names[] is the list of original identifiers that needed a mapping back from
+# a different minified token. When keepNames preserves the literal name (no rename), the
+# identifier may not be added to names[] — there's nothing to map from a different shape.
+# The ground truth for Rolldown is the literal function declarations in the JS chunks.
+
+# Wider sample of un-mangled identifiers in names[] across all maps (count, then top 50 sorted):
+  total unique 5+-char PascalCase identifiers in names[]: 59
+
+  AdminFilter
+  AdminGuard
+  AdminPage
+  AdminSearch
+  AdminTab
+  AdminTabs
+  ArchivePage
+  ArchiveSearch
+  Arrow
+  AuthCallbackPage
+  AuthErrorPage
+  AuthErrorRoute
+  AuthGuard
+  Collapsible
+  CollapsibleContent
+  Collection
+  Content
+  DropdownMenu
+  DropdownMenuContent
+  DropdownMenuItem
+  DropdownMenuSeparator
+  DropdownMenuTrigger
+  EditSuggestionPage
+  ErrorReason
+  Fragment
+  IndexPage
+  Label
+  LandingPage
+  LoaderCircle
+  Navigate
+  NewSuggestionPage
+  Portal
+  PortalPrimitive
+  PortalProvider
+  React
+  RemoveScroll
+  RenderThrowSmoke
+  Route
+  Select
+  SelectContent
+  SelectItem
+  SelectScrollDownButton
+  SelectScrollUpButton
+  SelectTrigger
+  SelectValue
+  Sentry
+  SideCar
+  SmokePage
+  String
+  SuggestionForm

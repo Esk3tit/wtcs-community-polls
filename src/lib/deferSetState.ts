@@ -1,15 +1,10 @@
-// NIT-v2-03: shared helper consolidating the setTimeout(..., 0) pattern
-// used inside useEffect bodies to satisfy react-hooks/set-state-in-effect.
-//
-// Calling setState directly inside an effect body is flagged because it
-// can kick off an extra render before the first paint. Deferring to the
-// next macrotask (setTimeout 0) lets React flush the current render and
-// runs the callback after the browser settles, avoiding the lint rule
-// without fighting it.
-//
-// Returns a cleanup tuple: pass the `cancel` function to the effect's
-// cleanup return. `isCancelled()` lets the deferred callback bail out if
-// the effect re-ran or unmounted before the timer fired.
+// Shared helper for the setTimeout(..., 0) pattern used inside useEffect
+// bodies to satisfy react-hooks/set-state-in-effect. Calling setState
+// directly in an effect body kicks off an extra render before first paint;
+// deferring to the next macrotask lets React flush the current render
+// first. The returned `cancel` is meant for the effect's cleanup return,
+// and `isCancelled()` lets the deferred callback bail if the effect re-ran
+// or unmounted before the timer fired.
 
 export interface DeferredHandle {
   cancel: () => void
