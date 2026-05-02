@@ -54,16 +54,38 @@ Cross-reference: `07-REVIEWS.md` Round-3 consensus MEDIUM ("07-VALIDATION.md dri
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
 | 07-01-T1 | 01 | 1 | OBSV-01 | T-07-02, T-07-03 | React 19 createRoot routes render-phase errors via the `taggedHandler` factory wrapping Sentry.reactErrorHandler + ErrorBoundary beforeCapture/onError belt with boundary='app-root' (Round-2 MEDIUM-5; Round-3 confirmed reactErrorHandler is ADDITIVE per node_modules/@sentry/react/build/esm/error.js:90-105) | typecheck + grep | `npx tsc -b --noEmit; grep -c "scope.setTag('boundary', 'app-root')" src/main.tsx` (>= 2 — factory body + ErrorBoundary beforeCapture; this replaces the prior "Sentry.reactErrorHandler count >= 3" assertion which no longer holds with the factory pattern) | ✅ existing | ⬜ pending |
-| 07-01-T2 | 01 | 1 | OBSV-02 | T-07-01, T-07-04 | Rolldown preserves literal `function Name(...)` declarations + sourcemap `names[]` includes real identifiers (`RenderThrowSmoke`, `SmokePage`, plus 50+ kept names like `RootLayout`/`AppErrorFallback` directly observable in the JS chunks); `VITE_NETLIFY_CONTEXT=$CONTEXT` shell-substituted in netlify.toml | build + grep | `npx vite build --mode development && grep -lE 'function (RootLayout\|AppErrorFallback\|RenderThrowSmoke)\b' dist/assets/*.js \| wc -l` (>= 1) — the `--mode development` flag triggers `disable: mode !== 'production'` at vite.config.ts:30, deterministically skipping the Sentry plugin's upload AND its `filesToDeleteAfterUpload` hook (Round-2 HIGH-2 fix; replaces the prior `SENTRY_AUTH_TOKEN= npx vite build` Round-1 pattern). **Amended 2026-04-30:** original assertion was `grep -l '__name(' dist/assets/*.js \| wc -l (>= 1)` per esbuild's keepNames idiom; Rolldown does not emit that helper — see `.planning/phases/07-observability-hardening/artifacts/__name-grep.txt` for the empirical Rolldown evidence. | ✅ existing | ⬜ pending |
+| 07-01-T2 | 01 | 1 | OBSV-02 | T-07-01, T-07-04 | Rolldown preserves literal `function Name(...)` declarations + sourcemap `names[]` includes real identifiers (`RenderThrowSmoke`, `SmokePage`, plus 50+ kept names like `RootLayout`/`AppErrorFallback` directly observable in the JS chunks); `VITE_NETLIFY_CONTEXT=$CONTEXT` shell-substituted in netlify.toml | build + grep | See **OBSV-02 runnable command set** below the table — expected `wc -l` ≥ 1. The `--mode development` flag triggers `disable: mode !== 'production'` at vite.config.ts:30, deterministically skipping the Sentry plugin's upload AND its `filesToDeleteAfterUpload` hook (Round-2 HIGH-2 fix; replaces the prior `SENTRY_AUTH_TOKEN= npx vite build` Round-1 pattern). **Amended 2026-04-30:** original assertion was a `grep` for esbuild's `__name(` helper; Rolldown does not emit that helper — see `.planning/phases/07-observability-hardening/artifacts/__name-grep.txt`. | ✅ existing | ⬜ pending |
 | 07-02-T1 | 02 | 2 | OBSV-01 | — | RenderThrowSmoke is a render-phase throw with deterministic Sentry-search message; named export only; no Sentry calls | typecheck + grep | `npx tsc -b --noEmit; grep -c 'export function RenderThrowSmoke' src/components/debug/RenderThrowSmoke.tsx` (== 1) | ✅ existing | ⬜ pending |
 | 07-02-T2 | 02 | 2 | OBSV-01 | T-07-05, T-07-06 | `/__smoke?render=1` throws in render phase on non-prod; returns 404 on production via `beforeLoad` env-gate; route file is `src/routes/[__smoke].tsx` (bracket-escaped) | build + grep | `npm run build; grep -c "VITE_NETLIFY_CONTEXT === 'production'" 'src/routes/[__smoke].tsx'` (== 1) AND `grep -c "fullPath: '/__smoke'" src/routeTree.gen.ts` (>= 1) | ✅ existing | ⬜ pending |
 | 07-02-T3 | 02 | 2 | OBSV-01 | T-07-05, T-07-06 | Local production-context smoke gate verified by manual browser checkpoint at `/__smoke?render=1` with `VITE_NETLIFY_CONTEXT=production` prod build: TanStack not-found UI rendered, AppErrorFallback NOT rendered, RenderThrowSmoke chunk NOT fetched (DevTools Network tab), no Sentry capture event for smoke message (Round-3 consensus HIGH fix — the prior Round-2 curl-based auto check was vacuous for SPA route gates) | manual browser checkpoint | (manual — see Manual-Only Verifications table below; build + preview commands ARE automated, the assertion is manual DOM/Network inspection) | ✅ existing | ⬜ pending |
 | 07-03-T1 | 03 | 3 | OBSV-01, OBSV-02 | — | Sentry event mechanism.type two-tier criterion (Round-2 MEDIUM-1; Round-3 LOW-5 escalation): PRIMARY = ≥1 event in {auto.function.react.error_handler, auto.function.react.error_boundary}; solo `generic` = PARTIAL (sign-off blocked); `auto.browser.*` = FAIL. Top frames un-mangled; D-08 evidence captured. Local sourcemap re-inspection uses `git worktree` not `git checkout` (Round-3 LOW-2). Node fallback for jq uses `JSON.parse(fs.readFileSync)` not `require()` (Round-3 LOW-1). | manual deploy-preview | (manual — see Manual-Only Verifications table below + 07-VERIFICATION.md) | ✅ existing | ⬜ pending |
 | 07-03-T2 | 03 | 3 | OBSV-01, OBSV-02 | T-07-13 | 07-VERIFICATION.md follows 06-VERIFICATION.md 12-section template; 5/5 SC pass; no `<placeholder>` tokens remain | grep | `grep -c '## Goal Achievement\|## Required Artifacts\|## Human Verification Required' .planning/phases/07-observability-hardening/07-VERIFICATION.md` (== 3) | ✅ existing | ⬜ pending |
-| 07-03-T3 | 03 | 3 | OBSV-02 | T-07-11 | OBSV-02-bundle-delta.md exists with same-session 3-way main-vs-phase-7-without-keepNames-vs-phase-7-with-keepNames measurement (Round-2 MEDIUM-3); total + per-chunk gzip table sourced from Vite's printed gzip column (Round-3 LOW-4 — single source of truth per D-13; alternative `find ... \| xargs gzip` method removed); D-14 policy applied to keepNames-isolated delta | grep | `grep -c '## Total gzip delta\|## Per-chunk gzip table\|## Target check' .planning/closure/OBSV-02-bundle-delta.md` (== 3) AND `grep -c '^gzip_source: vite-printed-gzip-column$' .planning/closure/OBSV-02-bundle-delta.md` (== 1) | ✅ existing | ⬜ pending |
+| 07-03-T3 | 03 | 3 | OBSV-02 | T-07-11 | OBSV-02-bundle-delta.md exists with same-session 3-way main-vs-phase-7-without-keepNames-vs-phase-7-with-keepNames measurement (Round-2 MEDIUM-3); total + per-chunk gzip table sourced from Vite's printed gzip column (Round-3 LOW-4 — single source of truth per D-13; alternative `find ... \| xargs gzip` method removed); D-14 policy applied to keepNames-isolated delta | grep | See **OBSV-02 closure-doc grep set** below the table — expected counts: `## Total gzip delta\|## Per-chunk gzip table\|## Target check` total == 3, `^gzip_source: vite-printed-gzip-column$` == 1. | ✅ existing | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 *Task IDs above match the finalized PLAN.md files (07-01-PLAN.md, 07-02-PLAN.md, 07-03-PLAN.md). Refined 2026-04-29; realigned 2026-04-30 against Round-2 + Round-3 revisions.*
+
+### Runnable command sets
+
+Shell commands moved out of the table cells above so they can be copy/pasted with unescaped alternation (raw `|` is markdown-fragile inside table cells; gate-running them from a fenced block avoids the false-negative risk).
+
+**OBSV-02 runnable command set** (07-01-T2):
+
+```bash
+npx vite build --mode development
+grep -lE 'function (RootLayout|AppErrorFallback|RenderThrowSmoke)\b' dist/assets/*.js | wc -l
+# expected: >= 1
+```
+
+**OBSV-02 closure-doc grep set** (07-03-T3):
+
+```bash
+grep -c '## Total gzip delta\|## Per-chunk gzip table\|## Target check' .planning/closure/OBSV-02-bundle-delta.md
+# expected: == 3
+
+grep -c '^gzip_source: vite-printed-gzip-column$' .planning/closure/OBSV-02-bundle-delta.md
+# expected: == 1
+```
 
 ---
 

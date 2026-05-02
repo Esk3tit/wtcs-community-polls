@@ -353,7 +353,8 @@ const RenderThrowSmoke = lazy(() =>
 
 export const Route = createFileRoute('/__smoke')({
   validateSearch: (search: Record<string, unknown>): SmokeSearch => {
-    return search.render === '1' ? { render: '1' } : {}
+    const r = search.render
+    return r === '1' || r === 1 ? { render: '1' } : {}
   },
   // Phase 7 D-06: live prod returns standard 404 — appears not to exist.
   beforeLoad: () => {
