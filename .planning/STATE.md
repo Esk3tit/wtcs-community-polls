@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Hygiene & Polish
-status: "PR #21 (`gsd/phase-07-observability-hardening` @ 82bb086) ready to merge. D-14 ship-anyway accepted on +6.24% keepNames-isolated bundle delta. Phase 8 (E2E Test Hygiene) starts next."
+status: executing
 stopped_at: Phase 8 context gathered
-last_updated: "2026-05-02T19:43:54.417Z"
-last_activity: 2026-04-30 -- Phase 07 verifier PASSED with 0 gaps; STATE/REQUIREMENTS reconciled per verifier hygiene warnings
+last_updated: "2026-05-02T20:42:19.982Z"
+last_activity: 2026-05-02 -- Phase 08 planning complete
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 3
+  total_plans: 7
   completed_plans: 3
-  percent: 100
+  percent: 43
 ---
 
 # Project State
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-04-28 after v1.0 milestone)
 
 Phase: 07 (observability-hardening) — COMPLETE (verifier PASSED, 0 gaps)
 Plan: 3 of 3 complete (07-01 wired createRoot + keepNames + VITE_NETLIFY_CONTEXT; 07-02 env-gated /__smoke route + RenderThrowSmoke; 07-03 D-08 evidence + 07-VERIFICATION.md + OBSV-02-bundle-delta.md). Both REQ-IDs (OBSV-01, OBSV-02) closed.
-Status: PR #21 (`gsd/phase-07-observability-hardening` @ 82bb086) ready to merge. D-14 ship-anyway accepted on +6.24% keepNames-isolated bundle delta. Phase 8 (E2E Test Hygiene) starts next.
-Last activity: 2026-04-30 -- Phase 07 verifier PASSED with 0 gaps; STATE/REQUIREMENTS reconciled per verifier hygiene warnings
+Status: Ready to execute
+Last activity: 2026-05-02 -- Phase 08 planning complete
 
 ## Accumulated Context
 
