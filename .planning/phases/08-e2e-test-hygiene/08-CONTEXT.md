@@ -93,6 +93,7 @@ The Playwright E2E suite is honest under the canonical two-layer seed (base `sup
 - `e2e/tests/auth-errors.spec.ts` — compliance check; rule-adjustment only if it trips (Claude's Discretion).
 - `e2e/helpers/auth.ts` — re-export the service-role admin client (or factor into a thin getter the fixture imports).
 - `eslint.config.js` — append the `no-restricted-syntax` flat-config block (TEST-08).
+- `package.json` — add `"e2e": "playwright test --config e2e/playwright.config.ts"` script (Plan 02 Task 2). README cites `npm run e2e` for symmetry with `npm run lint` / `npm test` (RESEARCH §9 recommendation). Reclassified from "Read-only awareness" per REVIEWS R-5 — Cursor flagged the planner's discretionary script addition as contradicting the original "no new scripts needed" wording; the cheaper resolution (vs dropping the script and citing the raw `npx playwright test ...` command in the README) is to update CONTEXT to acknowledge the modification.
 
 ### Files to create
 - `e2e/fixtures/poll-fixture.ts` — `freshPoll` test-scoped fixture (TEST-09).
@@ -105,7 +106,6 @@ The Playwright E2E suite is honest under the canonical two-layer seed (base `sup
 - `e2e/fixtures/test-users.ts` — `fixtureUsers` map; the freshPoll fixture title-tags use these handles indirectly via `testInfo.title`.
 - `supabase/seed.sql` — base seed; reference for understanding the two-layer architecture.
 - `.github/workflows/ci.yml` — runs `eslint .` + `npm run e2e`; the new lint rule activates automatically when `eslint.config.js` is updated.
-- `package.json` — `lint`, `e2e` scripts; no new scripts needed.
 
 ### User feedback / writing constraints
 - `.../.claude/.../memory/feedback_no_review_archaeology_in_source.md` — source comments WHY-only; never cite plan/round/phase IDs in code (rot tags). Plan refs belong in PR/commit messages, not in `src/` or `e2e/`.
@@ -167,3 +167,4 @@ None of the above belongs in Phase 8.
 
 *Phase: 08-e2e-test-hygiene*
 *Context gathered: 2026-05-02*
+*Revised: 2026-05-02 — REVIEWS R-5 reclassified `package.json` from "Read-only awareness" to "Files to modify" to reflect Plan 02 Task 2's `npm run e2e` script addition.*
