@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Hygiene & Polish
-status: ready-to-merge
-stopped_at: Phase 7 complete — verifier PASSED (5/5 SC, OBSV-01+02 closed); PR #21 ready to merge after user accepts +6.24% keepNames-isolated bundle delta per D-14 ship-anyway disposition
-last_updated: "2026-04-30T10:10:00.000Z"
-last_activity: 2026-04-30 -- Phase 07 verifier PASSED with 0 gaps; STATE/REQUIREMENTS reconciled; awaiting PR #21 merge
+status: "PR #21 (`gsd/phase-07-observability-hardening` @ 82bb086) ready to merge. D-14 ship-anyway accepted on +6.24% keepNames-isolated bundle delta. Phase 8 (E2E Test Hygiene) starts next."
+stopped_at: Phase 8 context gathered
+last_updated: "2026-05-02T19:43:54.417Z"
+last_activity: 2026-04-30 -- Phase 07 verifier PASSED with 0 gaps; STATE/REQUIREMENTS reconciled per verifier hygiene warnings
 progress:
   total_phases: 4
   completed_phases: 1
@@ -67,6 +67,6 @@ None for v1.0 close. v1.1 scope and phasing TBD via `/gsd-new-milestone`.
 
 ## Session Continuity
 
-Last session: 2026-04-29T06:41:19.286Z
-Stopped at: Phase 7 context gathered
+Last session: 2026-05-02T19:43:54.411Z
+Stopped at: Phase 8 context gathered
 Resume action: `/gsd-new-milestone` to scope v1.1
