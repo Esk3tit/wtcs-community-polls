@@ -2,10 +2,12 @@ import { test, expect } from '@playwright/test'
 import { loginAs } from '../helpers/auth'
 import { fixtureUsers } from '../fixtures/test-users'
 
-// Matches both '[E2E]' and '[E2E SMOKE]' fixture title prefixes. Unclosed
-// bracket on purpose — closing it as `/\[E2E\]/` would silently miss the
-// SMOKE-tagged fixture rows used by this spec.
-const E2E_TITLE = /\[E2E/
+// Matches both '[E2E]' and '[E2E SMOKE]' fixture title prefixes. The
+// character class `[\] ]` accepts either the closing bracket (plain
+// `[E2E]`) or a space (`[E2E SMOKE]`/`[E2E ANY-TAG]`). Tightening this
+// from `/\[E2E/` rejects accidental drift like `[E2EX...]` while still
+// admitting future tagged variants that follow the `[E2E <tag>]` shape.
+const E2E_TITLE = /\[E2E[\] ]/
 
 /**
  * D-08 journey #2: user filters by category tab + narrows with search.
