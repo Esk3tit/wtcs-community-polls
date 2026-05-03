@@ -49,3 +49,29 @@ skipped: 2
 ## Gaps
 
 [none yet]
+
+## Second-Human Verification
+
+> Phase 8 / TEST-10 closure. The original `result: skipped` records above
+> are preserved. This section appends executor-by-executor evidence per
+> test. Runbook: `.planning/phases/08-e2e-test-hygiene/08-UAT-10-SCRIPT.md`
+> (D-13). Phase 8 closure does NOT block on these fields being filled in
+> (D-11) — the artifact (template + runbook) is the deliverable; evidence
+> appears asynchronously when a qualified tester is available.
+
+### Test 2 — Non-Member Login Rejection
+
+- executor: <Discord handle, e.g. `MapCommittee#1234`>
+- verified-at: <UTC ISO 8601, e.g. `2026-05-09T18:42:00Z`>
+- result: <pass | fail>
+- notes: |
+    <≥1 line — describe what was observed; if fail, attach screenshot path under
+    .planning/phases/08-e2e-test-hygiene/artifacts/test-10-evidence/>
+
+### Test 3 — Error Page Invite Link
+
+- executor: <Discord handle>
+- verified-at: <UTC ISO 8601>
+- result: <pass | fail>
+- notes: |
+    <≥1 line>
