@@ -1,0 +1,90 @@
+import { test as base, expect } from '@playwright/test'
+import { fixtureUsers } from './test-users'
+import { getAdminClient } from '../helpers/auth'
+
+// Per-test mutable poll state. Inserts one poll + two choices before the test
+// runs, deletes the poll after (FK cascade on polls.id wipes the choices,
+// votes, and vote_counts rows in one statement — verified at the schema level
+// in supabase/migrations/00000000000000_schema.sql).
+//
+// Test-scoped (NOT worker-scoped) on purpose: cross-test contamination
+// defeats the per-test isolation goal that motivated this fixture.
+//
+// Title pattern `[E2E] {sanitized testInfo.title} {Date.now()}` keeps the
+// row compatible with the E2E-SCOPE-1 list-locator convention even if a
+// future spec accidentally counts un-filtered.
+//
+// The literal `description: 'freshPoll fixture row'` is a deterministic
+// leak-detection marker — verification queries target this exact string
+// rather than a `[E2E]%` LIKE which would also match static seed rows.
+//
+// try/catch/finally guards the partial-setup leak window: Playwright's
+// fixture runner does NOT auto-invoke teardown if the fixture body throws
+// before reaching await provide(...). Without this guard, a polls.insert
+// success followed by a choices.insert failure would leak the polls row.
+// The catch block captures the test error so the finally block can
+// preserve it via AggregateError if cleanup also throws.
+type PollFixtures = {
+  freshPoll: { id: string; title: string }
+}
+
+export const test = base.extend<PollFixtures>({
+  // eslint-disable-next-line no-empty-pattern
+  freshPoll: async ({}, provide, testInfo) => {
+    const admin = getAdminClient()
+
+    // Sanitize testInfo.title for cosmetic readability when it surfaces in
+    // the rendered card title. polls.title is TEXT with no length cap so
+    // truncation is purely UX.
+    const slug = testInfo.title.replace(/[^\w\s.-]/g, '').slice(0, 80)
+    const title = `[E2E] ${slug} ${Date.now()}`
+
+    const { data, error } = await admin
+      .from('polls')
+      .insert({
+        title,
+        description: 'freshPoll fixture row',
+        status: 'active',
+        is_pinned: false,
+        category_id: null,
+        created_by: fixtureUsers.adminUser.id,
+        closes_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      })
+      .select('id, title')
+      .single()
+    if (error || !data) throw error ?? new Error('freshPoll insert returned no row')
+
+    let testErr: unknown
+    let deleteErr: unknown
+    try {
+      // Two choices so the consuming spec can vote — choices.poll_id has
+      // ON DELETE CASCADE so they get cleaned up automatically by the
+      // single-statement teardown in the finally block below.
+      const { error: choiceErr } = await admin.from('choices').insert([
+        { poll_id: data.id, label: 'Yes', sort_order: 1 },
+        { poll_id: data.id, label: 'No', sort_order: 2 },
+      ])
+      if (choiceErr) throw choiceErr
+
+      await provide({ id: data.id, title: data.title })
+    } catch (e) {
+      // Capture the test error so the finally block can preserve it if
+      // cleanup also throws — otherwise the failing test is masked.
+      testErr = e
+    } finally {
+      // Single statement: cascade handles choices, votes, vote_counts.
+      const { error: cleanupErr } = await admin.from('polls').delete().eq('id', data.id)
+      deleteErr = cleanupErr ?? undefined
+    }
+
+    // Re-throw logic runs after finally to satisfy no-unsafe-finally.
+    // Preserve both errors so the failing test isn't masked by cleanup churn.
+    if (testErr !== undefined && deleteErr !== undefined) {
+      throw new AggregateError([testErr, deleteErr], 'fixture cleanup failed after test failure')
+    }
+    if (deleteErr !== undefined) throw deleteErr
+    if (testErr !== undefined) throw testErr as Error
+  },
+})
+
+export { expect }
