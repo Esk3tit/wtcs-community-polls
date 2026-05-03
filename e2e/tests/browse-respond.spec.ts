@@ -27,12 +27,15 @@ test('[@smoke] user browses topics, responds, sees live results', async ({ page,
     .first()
   await expect(firstCard).toBeVisible()
 
-  // CR-PR4: clicking firstCard centers on the bounding box, which on a pinned
-  // (already-expanded) card may land on an inner actionable element such as a
-  // choice-button — submitting a vote before the explicit firstChoice.click()
-  // below. Instead, target the CollapsibleTrigger explicitly and only click
-  // when it reports aria-expanded=false.
-  // eslint-disable-next-line no-restricted-syntax -- DOM-scoped inside fixture card; only one collapsed trigger exists.
+  // Defensive: clicking firstCard's bounding box on a pinned (already-expanded)
+  // card may land on an inner choice-button and submit a vote before the
+  // explicit firstChoice.click() below. Target the CollapsibleTrigger
+  // explicitly and click only when it reports aria-expanded=false.
+  // freshPoll is pinned (is_pinned=true), so SuggestionCard does not spread
+  // role/aria-expanded onto the wrapper; this branch is normally dead.
+  // Kept for resilience if a future fixture flips is_pinned=false (count
+  // would then be 1 and the click would fire).
+  // eslint-disable-next-line no-restricted-syntax -- DOM-scoped inside fixture card; at most one collapsed trigger exists when card is unpinned.
   const collapsedTrigger = firstCard.getByRole('button', { expanded: false }).first()
   if (await collapsedTrigger.count()) {
     await collapsedTrigger.click()
