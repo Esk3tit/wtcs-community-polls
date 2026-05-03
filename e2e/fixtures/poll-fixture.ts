@@ -34,6 +34,8 @@ type PollFixtures = {
 }
 
 export const test = base.extend<PollFixtures>({
+  // Empty destructure required by Playwright's fixture signature; freshPoll
+  // has no upstream fixture deps but must accept the deps object positionally.
   // eslint-disable-next-line no-empty-pattern
   freshPoll: async ({}, provide, testInfo) => {
     const admin = getAdminClient()
