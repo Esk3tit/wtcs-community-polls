@@ -50,7 +50,13 @@ export const test = base.extend<PollFixtures>({
       .replace(/\s+/g, ' ')
       .trim()
       .slice(0, 80)
-    const title = `[E2E] ${slug} ${Date.now()}`
+    // Append workerIndex to disambiguate parallel workers that could
+    // otherwise produce identical titles within the same millisecond.
+    // polls.title has no UNIQUE constraint, but the spec's `.filter({
+    // hasText: freshPoll.title })` would match BOTH cards and `.first()`
+    // becomes non-deterministic. workerIndex is stable per worker
+    // process and effectively zero-cost.
+    const title = `[E2E] ${slug} ${Date.now()}-${testInfo.workerIndex}`
 
     const { data, error } = await admin
       .from('polls')
