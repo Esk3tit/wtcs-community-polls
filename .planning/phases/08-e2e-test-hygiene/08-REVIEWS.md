@@ -1,64 +1,50 @@
 ---
 phase: 8
-round: 4
+round: 5 (convergence cycle 1)
 reviewers: [gemini, codex, cursor]
 skipped: [claude, coderabbit]
-skip_reason: "claude: running inside Claude Code. coderabbit: working tree clean post-commit."
-previous_rounds: "git commits 0e598cc (r1), f662e87 (r2), 77af7f0 (r3) — see git history."
-reviewed_at: 2026-05-03T04:21:16Z
+skip_reason: "claude: running inside Claude Code. coderabbit: working tree clean."
+previous_rounds: "git commits 0e598cc (r1), f662e87 (r2), 77af7f0 (r3), 93d56b4 (r4)"
+reviewed_at: 2026-05-03T04:38:45Z
 plans_reviewed: [08-01-PLAN.md, 08-02-PLAN.md, 08-03-PLAN.md, 08-04-PLAN.md]
 ---
 
-# Cross-AI Plan Review — Phase 8: E2E Test Hygiene (Round 4)
+# Cross-AI Plan Review — Phase 8: E2E Test Hygiene (Convergence Cycle 1)
 
 ## Gemini Review
 
-## Round-4 Plan Review — Phase 8: E2E Test Hygiene
-
-The round-4 revisions correctly address the logic inversion and command masking issues, but introduce a **hallucinated fix** (claiming to update the Roadmap without adding it to any plan) and a **denied-but-present HIGH blocker** (leading spaces in imports).
+## Plan Review — Phase 8, Convergence Cycle 1
 
 ### 1. HIGH / MEDIUM Verdicts
 
 | ID | Subject | Verdict | Rationale |
 |:---|:---|:---|:---|
-| **HIGH-3** | **Inverted tsc verify** | **ACCEPTED** | Dropped the `tsc` pipelines from `08-01-PLAN.md`. Since `tsconfig.app.json` excludes `e2e/`, this removal is the correct "cheapest fix." |
-| **HIGH-4** | **Remaining `; echo` masking** | **ACCEPTED** | Fixed in `08-02-PLAN.md:374` and `08-04-PLAN.md:259` using `&& echo`. All command chains now correctly gate on exit status. |
-| **MEDIUM-4** | **Plan 04 grep-c count** | **ACCEPTED** | `08-04-PLAN.md` Task 2 verify now correctly expects count=1 for the new em-dash heading and count=1 for the original numbered heading. |
-| **MEDIUM-6** | **ROADMAP regex drift** | **NEEDS-WORK** | The intro claims this is fixed, but **none of the 4 plans** contain a task to modify `.planning/ROADMAP.md`. The drift persists. |
+| **HIGH-5** | **cards-grep self-failure** | **ACCEPTED** | `08-03-PLAN.md` L304 + L310 now use `! grep -qE "^[[:space:]]*const cards\b|\bcards\."`. This correctly anchors the declaration check and targets method access, avoiding the "const cards" text inside the descriptive WHY comments. |
+| **MEDIUM-7** | **REQUIREMENTS.md drift** | **ACCEPTED** | `.planning/REQUIREMENTS.md` L23 + L25 have been updated to drop the `^` anchor, bringing the requirements into alignment with the established convention. |
+| **MEDIUM-8** | **VALIDATION.md stale query** | **ACCEPTED** | `.planning/phases/08-e2e-test-hygiene/08-VALIDATION.md` L45 now correctly uses the `description = 'freshPoll fixture row'` marker for leak detection, preventing false positives from static seed rows. |
 
 ---
 
 ### 2. NEW Concerns
 
-#### 🔴 HIGH — Broken Import Syntax (Leading Space) persists
-The planner's intro claims the "leading space" issue is a false positive, but the provided plan text **explicitly contains it** in multiple places:
-*   **08-01 Task 1 (L136):** `from ' @supabase/supabase-js'`
-*   **08-01 Task 2 (L241):** `from ' @playwright/test'`
-*   **08-03 Task 1 (L139):** `-import { ... } from ' @playwright/test'`
-*   **08-03 Task 4 (L349, L357):** `from ' @playwright/test'`
+#### 🟡 MEDIUM — Hardcoded paths in `<verify>` blocks
+`08-02-PLAN.md` (L164, L197, L374) and `08-04-PLAN.md` (L259, L330) still use the hardcoded absolute path `cd /Users/khaiphan/code/wtcs-community-polls`. These will fail in CI or any environment other than the specific user's machine. They should be normalized to `cd "$(git rev-parse --show-toplevel)"` as seen in `08-01-PLAN.md`.
 
-Since the existing file (`e2e/helpers/auth.ts`) contains `from '@supabase/supabase-js'` (no space), the `replace` tool in Plan 01 Task 1 **will fail to find the line**. Furthermore, the new files created will have invalid package imports.
-
-#### 🟡 MEDIUM — Hallucinated ROADMAP fix
-As noted in Verdict MEDIUM-6, the planner "claimed" the roadmap fix in the intro but failed to include the modification in any task list. `ROADMAP.md` is currently not in the `files_modified` list for any plan.
+#### 🟡 MEDIUM — `08-03-PLAN.md` canary `printf` typo
+The synthetic canary `printf` commands at `08-03-PLAN.md` L349 and L357 contain a typo: `'ntest` instead of `'\ntest`.
+*   Current: `printf "import ... test'ntest('x', ..."`
+*   Expected: `printf "import ... test\ntest('x', ..."`
+The current version will generate files with syntax errors. While `npx eslint` will still likely exit with a non-zero status, it will be due to the syntax error rather than the `no-restricted-syntax` rule, potentially masking a failure of the lint rule itself.
 
 ---
 
-### 3. Suggestions
+### 3. Risk Assessment
 
-*   **STRIP THE LEADING SPACES** from all import strings in `08-01-PLAN.md` and `08-03-PLAN.md`. They are objectively present in the current plan text.
-*   **Add the ROADMAP task:** Update `08-02-PLAN.md` to include `.planning/ROADMAP.md` in `files_modified` and add a task to update lines 69–70 as promised.
-*   **Check the Canary:** In `08-03-PLAN.md` Task 4 (Plan-level verification), ensure the `printf` commands do not include the leading space in their generated file content.
+**Overall risk: MEDIUM**
 
----
+The core logic and spec migrations are sound, and the round-4 blockers have been addressed. However, the hardcoded paths remain an execution risk for portability, and the `printf` typo degrades the reliability of the automated verification gates.
 
-### 4. Risk Assessment
-
-**Overall risk: HIGH**
-
-The plan is currently **un-executable** because Plan 01 Task 1 will fail to match the import line due to the leading space. The planner's explicit denial of this issue ("No leading-space imports exist") suggests a risk of repeated hallucination. Once the spaces are stripped and the Roadmap task is actually added to a plan, the risk will drop to LOW.
-
-**READY TO EXECUTE (Conditional):** ONLY if the executor manually strips the leading spaces from import strings during implementation. Otherwise, REVISE.
+**READY TO EXECUTE (Conditional):** Only after normalizing the `cd` paths to use `git rev-parse` and fixing the `printf` syntax in the canary tests.
 
 ---
 
@@ -66,179 +52,140 @@ The plan is currently **un-executable** because Plan 01 Task 1 will fail to matc
 
 **Verdicts**
 
-| Item | Verdict | Notes |
-|---|---:|---|
-| HIGH-3 | ACCEPTED | The bad `tsc | grep | head` gates are gone from [08-01-PLAN.md](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-01-PLAN.md:181) and [08-01-PLAN.md](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-01-PLAN.md:309). Dropping them is sound because `tsconfig.app.json` excludes `e2e/`; the old check was no real type gate. |
-| HIGH-4 | ACCEPTED | The two active plan gates now use `&& echo`: [08-02-PLAN.md](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-02-PLAN.md:374), [08-04-PLAN.md](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-04-PLAN.md:259). No active `; echo` masking remains in plans. |
-| MEDIUM-4 | ACCEPTED | The heading-count fix is correct and anchored: [08-04-PLAN.md](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-04-PLAN.md:330), acceptance at [08-04-PLAN.md](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-04-PLAN.md:333). It separately verifies new `### Test 2/3 — ...` and legacy `### 2./3.` headings. |
-| MEDIUM-6 | ACCEPTED, narrowly | ROADMAP now matches the unanchored convention at [ROADMAP.md](/Users/khaiphan/code/wtcs-community-polls/.planning/ROADMAP.md:69) and [ROADMAP.md](/Users/khaiphan/code/wtcs-community-polls/.planning/ROADMAP.md:70). Caveat below: other canonical docs still say `/^\[E2E/`. |
+- **HIGH-5: ACCEPTED** — narrowed grep is present in [08-03-PLAN.md:304](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-03-PLAN.md:304) and [08-03-PLAN.md:310](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-03-PLAN.md:310). It avoids self-matching the comment text while still catching `const cards` declarations and `cards.` method access.
+- **MEDIUM-7: ACCEPTED** — REQUIREMENTS now uses unanchored `/\[E2E\]/` in TEST-07 and TEST-08 at [REQUIREMENTS.md:23](/Users/khaiphan/code/wtcs-community-polls/.planning/REQUIREMENTS.md:23) and [REQUIREMENTS.md:25](/Users/khaiphan/code/wtcs-community-polls/.planning/REQUIREMENTS.md:25).
+- **MEDIUM-8: ACCEPTED** — VALIDATION leak query now targets `description = 'freshPoll fixture row'` at [08-VALIDATION.md:45](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-VALIDATION.md:45), matching the fixture insert marker in [08-01-PLAN.md:261](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-01-PLAN.md:261).
 
 **New Concerns**
 
-- MEDIUM: `filter-search` verification will fail after applying its own planned edit. The new comment includes ``const cards`` / `cards` at [08-03-PLAN.md](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-03-PLAN.md:246), but the verify forbids any `\bcards\b` anywhere at [08-03-PLAN.md](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-03-PLAN.md:304) and [08-03-PLAN.md](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-03-PLAN.md:310). Narrow that grep to code references, e.g. `const cards =` and `cards.`.
-
-- MEDIUM: Regex convention drift remains outside ROADMAP. `.planning/REQUIREMENTS.md` still requires `hasText: /^\[E2E/` at [REQUIREMENTS.md](/Users/khaiphan/code/wtcs-community-polls/.planning/REQUIREMENTS.md:23) and [REQUIREMENTS.md](/Users/khaiphan/code/wtcs-community-polls/.planning/REQUIREMENTS.md:25); CONTEXT/PATTERNS/RESEARCH also retain anchored examples. If unanchored `/\[E2E\]/` is now canonical, update at least REQUIREMENTS and CONTEXT or explicitly mark older research/pattern snippets as superseded.
-
-- MEDIUM: Validation still has the old generic leak query: `[E2E]%` in [08-VALIDATION.md](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-VALIDATION.md:45). Plan 03 correctly uses `description = 'freshPoll fixture row'` at [08-03-PLAN.md](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-03-PLAN.md:33). Update VALIDATION or final verification may false-fail against static seed rows.
-
-- LOW: Plan 04’s “byte-identical preservation” plan-level command compares `HEAD` to the working tree after the change, so it is vacuous: [08-04-PLAN.md](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-04-PLAN.md:392). Use `HEAD~1:` or rely on `git diff -U0` before commit.
-
-**Suggestions**
-
-- Change the `filter-search` no-cards check to `! rg -n "^\s*const cards\b|\bcards\." e2e/tests/filter-search.spec.ts`.
-- Update `.planning/REQUIREMENTS.md` and `08-CONTEXT.md` to the unanchored `/\[E2E\]/` convention, or add a supersession note.
-- Update `08-VALIDATION.md` TEST-09 cleanup to the freshPoll-specific description marker.
-- Optional: add an `e2e/tsconfig.json` later if you want real type-only coverage for E2E helpers; not required to fix HIGH-3.
+- **MEDIUM** — Plan 01 has a self-failing acceptance criterion. The fixture code uses `if (error || !data)`, `if (choiceErr)`, and `if (deleteErr)` at [08-01-PLAN.md:270](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-01-PLAN.md:270), [08-01-PLAN.md:281](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-01-PLAN.md:281), and [08-01-PLAN.md:292](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-01-PLAN.md:292), but the grep criterion at [08-01-PLAN.md:316](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-01-PLAN.md:316) only matches one of those. Replace it with explicit greps for the three branches.
+- **MEDIUM** — TEST-10 remains semantically wrong in REQUIREMENTS: “no 2FA on Discord account” at [REQUIREMENTS.md:29](/Users/khaiphan/code/wtcs-community-polls/.planning/REQUIREMENTS.md:29) conflicts with the runbook’s required `2FA ENABLED` prerequisite at [08-04-PLAN.md:113](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-04-PLAN.md:113) and its own correction note at [08-04-PLAN.md:116](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-04-PLAN.md:116). Update REQUIREMENTS to say 2FA-enabled/non-WTCS-member.
+- **LOW** — Plan 04’s byte-identical preservation check uses `git show HEAD` at [08-04-PLAN.md:392](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-04-PLAN.md:392), which can compare the file to itself after commit. Use pre-plan ref / merge-base instead.
 
 **Risk Assessment**
 
-Overall execute-phase risk is MEDIUM. The round-3 HIGH fixes are sound, but the Plan 03 `cards` verifier is currently self-failing, and stale validation/docs can send executors toward contradictory gates. Fix those small planning defects before execution.
+Overall risk: **MEDIUM**. Targeted fixes landed, but the Plan 01 acceptance grep and stale TEST-10 requirement should be corrected before execution.
 
 ---
 
 ## Cursor Review
 
-## 1. Round-4 fix verdicts
+## 1. Prior-fix verdicts
 
-| Item | Verdict | Notes |
-|------|---------|--------|
-| **HIGH-3** | **ACCEPTED** | Inverted `tsc \| grep … && echo OK` pipelines are gone. Task 1 `<automated>` verify is now grep-only ending in `&& echo OK` (`08-01-PLAN.md` ~L181). Task 2 drops `tsc` from `<automated>` (~L309) and explains exclusion via `tsconfig.app.json` `"include": ["src"]` in `<acceptance_criteria>` / `<done>` (~L322–L325). Matches repo `tsconfig.app.json` L29. |
-| **HIGH-4** | **ACCEPTED** | README / runbook verifies use `&& echo "OK lines=$LINES"` (`08-02-PLAN.md` L374; `08-04-PLAN.md` L259–L260). |
-| **MEDIUM-4** | **ACCEPTED** | Task 2 `<automated>` requires exactly one each of `^### Test 2 — …$`, `^### Test 3 — …$`, `^### 2\. …$`, `^### 3\. …$` (`08-04-PLAN.md` L330–L331). Coexistence is spelled out in `<action>` (~L291). Count `= 1` catches duplicates or missing headings; incidental prose matches are unlikely with anchored full-line patterns. |
-| **MEDIUM-6** | **ACCEPTED** | ROADMAP Phase 8 success criterion #1 uses `/\[E2E\]/` (`ROADMAP.md` L69). Criterion #2 still mentions `.filter({ hasText: /\[E2E\]/ })` (`ROADMAP.md` L70) — semantic match to README/rule messaging; see NEW **MEDIUM** on lint vs wording. |
-
----
-
-## 2. NEW concerns
-
-| Tag | Issue |
-|-----|--------|
-| **HIGH** | **`08-03-PLAN.md` Task 2 `<automated>` contradicts the verbatim migration.** The verify ends with `! grep -qE "\bcards\b" e2e/tests/filter-search.spec.ts` (~L304), but **Edit 1 target shape** embeds the token **`cards`** in the comment `` `const cards` `` (~L248). After a faithful paste, **grep finds `cards` and the verify fails on success.** Execute-blocking until the verify or the comment text is reconciled (e.g. reject `\bcards\b`; use `cards.` / `const cards =` negated patterns only; or rephrase the comment to avoid the word “cards”). |
-| **MEDIUM** | **`08-02-PLAN.md` YAML `must_haves` L25 is stale:** it still reads “cite `npx` … **NOT** a fictitious `npm run e2e` unless package.json gains the script,” while L26 adds that script and Task 3 makes **`npm run e2e`** primary in README. Reword L25 so both bullets agree (not an execution bug, confuses reviewers). |
-| **MEDIUM** | **Hard-coded repo path** in verifies: `cd /Users/khaiphan/code/wtcs-community-polls` (`08-02-PLAN.md` L164, L197, L374; `08-04-PLAN.md` L259, L330). **`08-01` uses `$(git rev-parse --show-toplevel)`** — same portability pattern should apply everywhere or clones / CI-path execution breaks. |
-| **MEDIUM** | **ROADMAP / ESLint drift (known, still worth tracking):** SC #2 (`ROADMAP.md` L70) implies **only** `.filter({ hasText: /\[E2E\]/ })`; **implementation is “any `.filter()` in chain”** (CONTEXT D-07). README/rule message reinforce `[E2E]`; ROADMAP is the odd strict wording. |
-| **LOW** | **Type-safety gap after dropping `tsc`:** No project TS compile step covers `e2e/` under current `tsconfig.app.json`. ESLint + Playwright catch many issues; **pure typing mistakes** (unused imports, wrong optional props) may slip until runtime. Acceptable tradeoff per planner; optional follow-up is a tiny `e2e/tsconfig.json` + `tsc -p e2e` (Round-3 option C). |
-| **LOW** | **`08-04` plan-level verify `HEAD~1..HEAD`** assumes single-commit Plan 04 — brittle under squash/amend (already typical GSD caveat). |
-| **LOW** | **`08-02` Task 1 verify:** `transpileModule` + `grep` string anchors are finicky maintenance-wise; minor executor friction if ESLint reformats strings. |
-
-No additional `; echo` / obvious `grep … \|\| true` masking spotted beyond Round-3 scope.
+| ID | Verdict | Evidence |
+|----|---------|----------|
+| **HIGH-5** | **ACCEPTED** | `08-03-PLAN.md` L304 + L310 use `! grep -qE "^[[:space:]]*const cards\b|\bcards\."` — scopes to `const cards` declarations and `cards.` member access, avoiding free-text “cards” in comments. (Repo uses `grep -qE`, not `-nE`; behavior equivalent for pass/fail gates.) |
+| **MEDIUM-7** | **ACCEPTED** | `.planning/REQUIREMENTS.md` L23–L25 use `/\[E2E\]/` in `Locator.filter({ hasText: … })` — aligned with ESLint message / README style. |
+| **MEDIUM-8** | **ACCEPTED** | `08-VALIDATION.md` L45 uses `where description = 'freshPoll fixture row' …` — matches Plan 01 marker and avoids seed-title false positives. |
 
 ---
 
-## 3. Suggestions
+## 2. New concerns
 
-- Fix **Plan 03 Task 2** verify vs comment **`cards`** mismatch **before** any autonomous run (highest leverage).
-- Normalize **`<automated>` `cd`** to **`cd "$(git rev-parse --show-toplevel)"`** across Plans 02–04.
-- Tighten **`08-02` frontmatter L25** to: README cites **`npm run e2e`** and optionally **`npx playwright …`** for CI parity / debug.
-- Optionally align **ROADMAP SC #2** with D-07: “`.filter(...)` in chain (convention: `/\[E2E\]/`)”.
-
----
-
-## 4. Risk assessment
-
-**Overall: MEDIUM** until the **Plan 03 `\bcards\b` verify bug** is fixed; that gate would fail even when the spec is correctly migrated.
-
-Substantively, HIGH-3/HIGH-4/MEDIUM-4/MEDIUM-6 changes are sound; dropping `tsc` is coherent with `tsconfig.app.json`. **`READY TO EXECUTE` applies only after amending Plan 03 Task 2 verify (or the verbatim comment)** — otherwise autonomous execution of that task will incorrectly fail.
+| Severity | Issue |
+|----------|--------|
+| **MEDIUM** | **TEST-10 wording in canonical requirements** — `.planning/REQUIREMENTS.md` L29 still says second human **“(no 2FA on Discord account)”**, while Phase 8 runbook design (and `08-04-PLAN.md` verbatim runbook) requires **2FA enabled** so the gate clears; only the runbook footnote admits the mismatch. Same stale phrase appears in `.planning/PROJECT.md` L120 and `.planning/research/v1.1-SUMMARY.md` L19. Executors reading REQUIREMENTS first get the wrong tester profile. |
+| **MEDIUM** | **`TEST-10-readonly` gate is incomplete in `08-VALIDATION.md` L48** — table says only `src/**` and `supabase/**`; `08-04-PLAN.md` success criteria require **no `e2e/**`** touches. A commit that only changed `e2e/` would still show `wc -l` → 0 for that command, so the documented gate under-checks vs the plan’s stated bar. |
+| **LOW** | **`08-03-PLAN.md` L310** cites WHY-comment at **“L248”** while `e2e/tests/filter-search.spec.ts` is far shorter (~64 lines pre-migration) — stale line reference; confusing for reviewers, not execution-blocking. |
+| **LOW** | **Plan 02 Task 1 verify** (`08-02-PLAN.md`) uses `require('typescript').transpileModule` on `eslint.config.js` — brittle if the verify environment ever lacks `typescript` on `NODE_PATH` (usually fine with npm devDeps). |
 
 ---
 
-## Round-3 Fix Verdicts (consensus)
+## 3. Risk assessment
+
+**Overall: LOW** for executing Phase 8 implementation: HIGH-5 / MEDIUM-7 / MEDIUM-8 fixes are sound in-repo; ESLint `:has(filter)` / inline-filter strategy / `freshPoll` marker / cascade story are consistent.
+
+**Remaining MEDIUM items are documentation/gate alignment** (TEST-10 tester wording; TEST-10-readonly including `e2e/**`), not structural flaws in the four plans.
+
+**READY TO EXECUTE** — addressing the two MEDIUM doc/gate items before calling Phase 8 “audit-clean” on requirements/traceability is advisable but not a blocker to starting Waves 1–2 code work.
+
+---
+
+## Round-4 Fix Verdicts (consensus)
 
 | Item | Subject | Gemini | Codex | Cursor | Consensus |
 |------|---------|--------|-------|--------|-----------|
-| HIGH-3 | Drop inverted tsc verify | ACCEPTED | ACCEPTED | ACCEPTED | ✅ ACCEPTED |
-| HIGH-4 | Replace remaining `; echo "..."` | ACCEPTED | ACCEPTED | ACCEPTED | ✅ ACCEPTED |
-| MEDIUM-4 | Plan 04 grep-c counts (1+1) | ACCEPTED | ACCEPTED | ACCEPTED | ✅ ACCEPTED |
-| MEDIUM-6 | ROADMAP anchor drop | ACCEPTED | ACCEPTED narrow | ACCEPTED | ✅ ACCEPTED with caveat |
+| HIGH-5 | Narrowed cards-grep | ACCEPTED | ACCEPTED | ACCEPTED | ✅ ACCEPTED |
+| MEDIUM-7 | REQUIREMENTS.md anchor drop | ACCEPTED | ACCEPTED | ACCEPTED | ✅ ACCEPTED |
+| MEDIUM-8 | VALIDATION.md leak query | ACCEPTED | ACCEPTED | ACCEPTED | ✅ ACCEPTED |
 
-All 4 round-3 fixes are sound. The only remaining issues are NEW concerns surfaced in this round.
+All 3 round-4 fixes universally ACCEPTED. No regressions.
 
-## NEW Concerns (round 4)
+## NEW Concerns (cycle 1)
 
-### 🔴 HIGH-5 — Plan 03 Task 2 `! grep -qE "\bcards\b"` will self-fail (Codex + Cursor convergent)
+### 🔴 HIGH-equivalent — Plan 01 acceptance grep self-failing (Codex MEDIUM, orchestrator-elevated)
 
-**Location:** `08-03-PLAN.md:304` (verify) and `:310` (acceptance criterion).
+**Location:** `08-01-PLAN.md:316`. Acceptance criterion: `grep -c "if (.* error" e2e/fixtures/poll-fixture.ts` returns **at least 3**.
 
-**Bug:** The verify chain includes `! grep -qE "cards" e2e/tests/filter-search.spec.ts` — intended to assert no leftover `cards` variable references after the inline-filter migration. But the source comment Plan 03 Task 2 INSERTS into the spec at L247 says:
+**Bug:** The fixture has 3 error-handling branches:
+- L270: `if (error || !data) throw error ?? ...` — matches the pattern ("error" is space-prefixed)
+- L281: `if (choiceErr) throw choiceErr` — `choiceErr` is camelCase, NO space-prefixed "error"
+- L292: `if (deleteErr)` — `deleteErr` is camelCase, NO space-prefixed "error"
 
-> `// (not aliased to a \`const cards\` variable) because the ESLint AST...`
+Pattern `if (.* error` (BRE) matches only L270. Returns **1**, criterion expects **≥3** → self-failing.
 
-The grep pattern `cards` matches this comment text. So even when the migration is correctly applied, the negative grep fails → verify reports FAILURE on success → Plan 03 Task 2 cannot pass autonomously.
+**Severity rationale:** Same self-failing-acceptance pattern as round-4 HIGH-5 (cards-grep). Codex labeled MEDIUM but it's HIGH-equivalent because Plan 01 Task 2 cannot pass autonomously.
 
-**Verified by orchestrator:** `sed -n '244,260p' 08-03-PLAN.md` confirms the comment includes `const cards`. `sed -n '302,312p' 08-03-PLAN.md` confirms the negative grep is unbound.
-
-**Mitigation (per Codex):** Narrow the grep to actual code references, not comments:
-
+**Fix:** Replace single grep with three explicit branches:
 ```bash
-! grep -nE "^[[:space:]]*const cards|cards\." e2e/tests/filter-search.spec.ts
+grep -q 'if (error || !data)' e2e/fixtures/poll-fixture.ts && \
+  grep -q 'if (choiceErr)' e2e/fixtures/poll-fixture.ts && \
+  grep -q 'if (deleteErr)' e2e/fixtures/poll-fixture.ts
 ```
 
-Matches `const cards` (declaration) and `cards.` (method/property access) — NOT free-text "cards" inside a code comment. Apply same fix to both the `<verify>` block and the matching `<acceptance_criteria>` line.
+### 🟡 MEDIUM — TEST-10 wording drift in REQUIREMENTS / PROJECT (Cursor + Codex convergent)
 
-### 🟡 MEDIUM-7 — REQUIREMENTS.md still cites legacy `/^\[E2E/` (Codex)
+**Locations:** `.planning/REQUIREMENTS.md:29` ("no 2FA on Discord account"), `.planning/PROJECT.md:120`, `.planning/research/v1.1-SUMMARY.md:19` — all carry the OLD blocker phrasing. Plan 04 runbook + L116 footnote correctly explain the inversion (2FA must be ENABLED so the gate clears and the not-in-server check fires).
 
-**Locations:** `.planning/REQUIREMENTS.md:23` (TEST-07) and `:25` (TEST-08) both still reference `Locator.filter({ hasText: /^\[E2E/ })`.
+**Risk:** Executor reading REQUIREMENTS first gets wrong tester profile.
 
-**Verified by orchestrator:** `grep -n '/\^' REQUIREMENTS.md` confirms both occurrences.
+**Fix:** Update REQUIREMENTS.md L29 + PROJECT.md L120 + v1.1-SUMMARY.md L19 to read "2FA-enabled, non-WTCS-member Discord tester" with a brief WHY note.
 
-**Risk:** Same governance-drift class as round-3 MEDIUM-6 (ROADMAP) — REQUIREMENTS is a more authoritative source-of-truth than ROADMAP. If a future executor reads REQUIREMENTS as the contract, they could re-introduce the broken anchor convention.
+### 🟡 MEDIUM — Hardcoded `cd /Users/khaiphan/...` paths in 5 verify blocks (Gemini)
 
-**Mitigation:** Update REQUIREMENTS.md L23 + L25 to use `/\[E2E\]/` (one-line edit per occurrence).
+**Locations:** `08-02-PLAN.md` L164, L197, L374; `08-04-PLAN.md` L259, L330. CodeRabbit flagged this in round 1 but it was deferred. Real CI portability issue.
 
-### 🟡 MEDIUM-8 — VALIDATION.md L45 leak query is stale (Codex)
+**Fix:** Replace with `cd "$(git rev-parse --show-toplevel)"` (already used in 08-01). 5 line edits.
 
-**Location:** `.planning/phases/08-e2e-test-hygiene/08-VALIDATION.md:45` — TEST-09-cleanup gate still says:
+### 🟡 MEDIUM — `TEST-10-readonly` gate incomplete in VALIDATION.md L48 (Cursor)
 
-```sql
-select count(*) from polls where title like '[E2E]%' and created_at > now() - interval '5 minutes'
-```
+**Location:** `.planning/phases/08-e2e-test-hygiene/08-VALIDATION.md:48` — gate command says `-- 'src/**' 'supabase/**'` but Plan 04 success criteria require **no `e2e/**`** touches either. A commit that only changed e2e/ would still show wc -l → 0 for that command.
 
-But Plan 03 Task 4 manual checkpoint correctly uses the tightened freshPoll-specific marker:
+**Fix:** Add `'e2e/**'` to the path filter.
 
-```sql
-select count(*) from polls where description = 'freshPoll fixture row' and created_at > now() - interval '5 minutes'
-```
+### 🟢 LOW — Plan 03 stale L248 line reference (Cursor)
 
-**Risk:** The stale query will match canonical `b0000…*` seed rows that are intentionally permanent — false-positive leak signal. The plan-level verify in 08-03 supersedes VALIDATION.md (Plan is authoritative for executor), but VALIDATION.md drift will confuse anyone reading it as the Nyquist gate.
+**Location:** 08-03-PLAN.md:310 cites WHY-comment at "L248" but `e2e/tests/filter-search.spec.ts` is shorter than that. Cosmetic; not execution-blocking.
 
-**Mitigation:** Update VALIDATION.md L45 query to use `description = 'freshPoll fixture row'` instead of `title like '[E2E]%'`.
+### 🟢 LOW — Plan 04 byte-identical `git show HEAD` (Codex — repeat)
 
-### 🟢 LOW-9 — Plan 04 plan-level `git diff HEAD <file>` is vacuous (Codex)
+Same finding as round 3 LOW-9. Compares file to itself post-commit. Use `git show HEAD~1:` or pre-commit `git diff -U0` instead.
 
-**Location:** `08-04-PLAN.md:392` — plan-level verification command compares `HEAD` against the working tree AFTER the change is made, which always shows the diff (the addition). Doesn't actually prove preservation.
+### 🟢 LOW — Plan 02 transpileModule brittleness (Cursor)
 
-**Mitigation (optional):** Use `git diff HEAD~1:` (compare against the commit before this task) OR run `git diff -U0` BEFORE the commit lands. Low priority; acceptance criterion at L344 already covers byte-identical via `grep -q` on the original-text strings.
-
-### 🟢 LOW-10 — Cursor's optional 08-02 frontmatter / ROADMAP SC #2 polish (Cursor)
-
-Cursor suggests tightening Plan 02 frontmatter L25 description and aligning ROADMAP SC #2 wording with D-07 (".filter() in chain"). Cosmetic only; non-blocking.
+Brittle if verify environment lacks typescript on NODE_PATH. Usually fine with npm devDeps.
 
 ## Repeat False Positive (Gemini)
 
-**Gemini HIGH "Broken Imports with Leading Spaces" — REPEATED from round 3.** Gemini again claims Plan 01 contains `from ' @supabase/supabase-js'` with a leading space inside the quote.
+**Gemini MEDIUM "printf typo `'ntest`"** — Gemini misread the literal `\ntest` (escaped newline + 'test') as `'ntest` (apostrophe + 'ntest'). The actual printf source is correct (`@playwright/test'\ntest('x', ...` — escaped 
+ separates the import line from the test() call).
 
-**Re-verified by orchestrator** via `grep -nE "from '[ ]" .planning/phases/08-e2e-test-hygiene/*-PLAN.md` — **returned EMPTY for the second consecutive round.**
+**Verified by orchestrator:** `grep -nE "printf|ntest" 08-03-PLAN.md` shows the correct `
+` escape on L447 and L455. **Gemini's 3rd verified false positive across 5 review rounds.**
 
-Gemini appears to be hallucinating this finding consistently. The actual imports use the standard form. Planner should ignore Gemini's HIGH and continue NOT to introduce a fix for non-existent issue.
-
-Recommendation: when running future `/gsd-review`, treat any Gemini claim about quoted strings or import syntax with extra skepticism — verify independently before acting.
+Per orchestrator counting rule: this false positive is EXCLUDED from the cycle's HIGH/MEDIUM count.
 
 ## Consensus Summary
 
 ### Risk Spread
 
-- **Gemini: HIGH** (inflated by repeated false positive about leading-space imports)
-- **Codex: MEDIUM** (HIGH-5 cards-grep is the only execution blocker; everything else is doc cleanup)
-- **Cursor: MEDIUM** ("READY TO EXECUTE applies only after amending Plan 03 Task 2 verify")
+- **Gemini: MEDIUM** (hardcoded paths real; printf typo false-positive)
+- **Codex: MEDIUM** (Plan 01 grep self-failure + TEST-10 wording — both real)
+- **Cursor: LOW + READY TO EXECUTE** (only 2 doc-alignment MEDIUMs, no plan structural flaws)
 
-**Adjusted consensus: MEDIUM as written — HIGH-5 cards-grep self-failure is the one real blocker. After that 1-line fix, plus the 3 MEDIUM doc-drift cleanups, risk drops to LOW.**
+**Adjusted consensus: MEDIUM as written.** No reviewer raised HIGH. Plan 01 acceptance-grep self-failure (Codex MEDIUM) is HIGH-equivalent in execution impact (autonomous task can't pass). After that 1-line fix + 3 doc-alignment fixes, risk drops to LOW with no remaining concerns.
 
-## Top 3 Concerns to Address Before Execution
+## CYCLE_SUMMARY: current_high=0
 
-1. **🔴 HIGH-5 — Fix `cards` grep self-failure in 08-03-PLAN.md** — narrow to `^[[:space:]]*const cards|cards\.` so the negative grep targets code references, not the WHY comment text. Without this, Plan 03 Task 2 cannot pass autonomously.
-2. **🟡 MEDIUM-7 — Update REQUIREMENTS.md L23 + L25** to drop the `^` anchor in the cited filter regex (mirrors round-3 MEDIUM-6 for ROADMAP).
-3. **🟡 MEDIUM-8 — Update VALIDATION.md L45 leak query** to use the freshPoll-specific `description = 'freshPoll fixture row'` marker instead of the broad `title like '[E2E]%'`.
-
-## How to Apply
-
-Run `/gsd-plan-phase 8 --reviews` to feed REVIEWS.md round 4 back to the planner.
+## Current HIGH Concerns
+None. (Codex's MEDIUM "Plan 01 acceptance grep self-failing" is severity-equivalent to a HIGH but not labeled as such by any reviewer; the orchestrator surfaces it for one more revision pass per the user's "keep going until no concerns or just nitpicks" rule.)
