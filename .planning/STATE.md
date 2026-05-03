@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Hygiene & Polish
 status: ready_to_plan
-stopped_at: Phase 8 context gathered
-last_updated: "2026-05-03T05:15:29.443Z"
-last_activity: 2026-05-03 -- Phase 08 execution started
+stopped_at: Phase 8 shipped — PR #22 merged
+last_updated: "2026-05-03T18:30:00.000Z"
+last_activity: 2026-05-03 -- Phase 08 shipped (PR #22 merged)
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 7
-  completed_plans: 3
-  percent: 50
+  completed_plans: 7
+  percent: 75
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-28 after v1.0 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** Phase 08 — e2e-test-hygiene
+**Current focus:** Phase 09 — UI Closure Evidence (next)
 
 ## Current Position
 
 Phase: 9
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-05-03
+Last activity: 2026-05-03 — Phase 08 shipped (PR #22 merged at 7f73583)
 
 ## Accumulated Context
 
@@ -67,6 +67,6 @@ None for v1.0 close. v1.1 scope and phasing TBD via `/gsd-new-milestone`.
 
 ## Session Continuity
 
-Last session: 2026-05-02T19:43:54.411Z
-Stopped at: Phase 8 context gathered
-Resume action: `/gsd-new-milestone` to scope v1.1
+Last session: 2026-05-03T18:30:00.000Z
+Stopped at: Phase 8 shipped (PR #22 merged at 7f73583)
+Resume action: `/gsd-plan-phase 9` to plan UI Closure Evidence
