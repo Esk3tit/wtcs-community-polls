@@ -71,10 +71,10 @@ Full v1.0 phase details (goals, plans, success criteria) preserved in [milestone
   3. A Playwright test-scoped `freshPoll` fixture exists, provides per-test mutable poll/vote state via `await use(...)`, and cleans up after itself; at least one spec consumes it as proof of contract.
   4. Phase 03 UAT tests 2 (Non-Member Login Rejection) and 3 (Error Page Invite Link) have second-human evidence appended to `.planning/phases/03-response-integrity/03-UAT.md` with timestamp, executor handle, and pass/fail per case.
 **Plans**: 4 plans
-- [ ] 08-01-PLAN.md — Service-role admin client + freshPoll Playwright fixture (Wave 1, autonomous, TEST-09 prerequisite)
-- [ ] 08-02-PLAN.md — ESLint no-restricted-syntax rule + e2e/README.md + npm run e2e script (Wave 1, autonomous, TEST-08)
+- [x] 08-01-PLAN.md — Service-role admin client + freshPoll Playwright fixture (Wave 1, autonomous, TEST-09 prerequisite)
+- [x] 08-02-PLAN.md — ESLint no-restricted-syntax rule + e2e/README.md + npm run e2e script (Wave 1, autonomous, TEST-08)
 - [ ] 08-03-PLAN.md — Spec migrations (browse-respond fixture migration, filter-search [E2E]-filter, admin-create + auth-errors compliance check) (Wave 2, has checkpoint, depends on 08-01 + 08-02, TEST-07 + TEST-09)
-- [ ] 08-04-PLAN.md — TEST-10 second-human runbook + 03-UAT.md Second-Human Verification append (Wave 1, autonomous, TEST-10; D-11 async evidence)
+- [x] 08-04-PLAN.md — TEST-10 second-human runbook + 03-UAT.md Second-Human Verification append (Wave 1, autonomous, TEST-10; D-11 async evidence)
 **Branch**: `gsd/phase-08-e2e-test-hygiene`
 
 ### Phase 9: UI Closure Evidence
