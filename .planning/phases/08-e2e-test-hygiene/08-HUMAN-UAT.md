@@ -1,14 +1,14 @@
 ---
-status: partial
+status: complete
 phase: 08-e2e-test-hygiene
 source: [08-VERIFICATION.md]
 started: 2026-05-02T23:00:00Z
-updated: 2026-05-03T10:35:00Z
+updated: 2026-05-03T17:56:00Z
 ---
 
 ## Current Test
 
-Test 2 (second-human Phase 03 UAT 2+3) — async per D-11; does not block Phase 8 closure.
+[testing complete]
 
 ## Tests
 
@@ -31,7 +31,7 @@ evidence: |
   - Re-verified post code-review fix-loop: 5/5 in 9.3s on commit 5ac65a6 (12 atomic fix commits bccaca0..aa5a983 modified e2e infra: eslint.config.js, poll-fixture.ts, auth.ts, browse-respond.spec.ts, filter-search.spec.ts, README.md; new e2e/global-setup.ts + playwright.config.ts wire-up)
   - Pre-run leak query: 0 rows; post-run leak query: 0 rows (global-setup.ts orphan pre-cleanup confirmed working)
   - Three gap fixes in commit 308c578 (fixture is_pinned/category defaults, filter-search regex, slug @-tag stripping) — root causes documented in `.planning/debug/phase-8-smoke-failures.md` (resolved)
-  - CI re-verification on 5ac65a6 still pending push of post-fix-loop branch state
+  - CI re-verified on 3207f8f: run 25286405258 ✓ (lint-and-unit 55s + e2e 2m34s) https://github.com/Esk3tit/wtcs-community-polls/actions/runs/25286405258
 
 ### 2. Second-human Phase 03 UAT Tests 2 + 3 (Non-Member Login Rejection, Error Page Invite Link)
 expected: |
@@ -40,15 +40,16 @@ expected: |
   - Tester pastes filled evidence under `## Second-Human Verification` in `.planning/phases/03-response-integrity/03-UAT.md`
   - Both Test 2 and Test 3 result: pass
   - Per D-11, this runs asynchronously and does NOT block Phase 8 closure — current placeholder template is the Phase 8 synchronous deliverable
-result: [pending]
+result: skipped
+reason: Async team handoff — different team member runs the second-human verification out-of-band per D-11. Tester pastes evidence into 03-UAT.md `## Second-Human Verification` when complete; Phase 8 closure does not depend on it.
 
 ## Summary
 
 total: 2
 passed: 1
 issues: 0
-pending: 1
-skipped: 0
+pending: 0
+skipped: 1
 blocked: 0
 
 ## Gaps
