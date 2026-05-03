@@ -3,7 +3,7 @@ status: partial
 phase: 08-e2e-test-hygiene
 source: [08-VERIFICATION.md]
 started: 2026-05-02T23:00:00Z
-updated: 2026-05-03T00:30:00Z
+updated: 2026-05-03T10:35:00Z
 ---
 
 ## Current Test
@@ -25,12 +25,13 @@ expected: |
   - Push branch `gsd/phase-08-e2e-test-hygiene`; CI Playwright `e2e` job goes green
   - Reply `approved <CI_RUN_URL>` once both local and CI pass
 result: pass
-verified: 2026-05-03T00:30:00Z
+verified: 2026-05-03T10:35:00Z
 evidence: |
-  - Local smoke: 5/5 passed in 7.4s (parallel, 5 workers) on commit 308c578 — see `.planning/debug/phase-8-smoke-failures.md` Resolution
-  - Local leak query: 0 rows
-  - CI: PR #22 (https://github.com/Esk3tit/wtcs-community-polls/pull/22) — workflow run 25273571093 success (https://github.com/Esk3tit/wtcs-community-polls/actions/runs/25273571093)
+  - Initial pass: 5/5 in 7.4s on commit 308c578 (CI run 25273571093 ✓, PR #22)
+  - Re-verified post code-review fix-loop: 5/5 in 9.3s on commit 5ac65a6 (12 atomic fix commits bccaca0..aa5a983 modified e2e infra: eslint.config.js, poll-fixture.ts, auth.ts, browse-respond.spec.ts, filter-search.spec.ts, README.md; new e2e/global-setup.ts + playwright.config.ts wire-up)
+  - Pre-run leak query: 0 rows; post-run leak query: 0 rows (global-setup.ts orphan pre-cleanup confirmed working)
   - Three gap fixes in commit 308c578 (fixture is_pinned/category defaults, filter-search regex, slug @-tag stripping) — root causes documented in `.planning/debug/phase-8-smoke-failures.md` (resolved)
+  - CI re-verification on 5ac65a6 still pending push of post-fix-loop branch state
 
 ### 2. Second-human Phase 03 UAT Tests 2 + 3 (Non-Member Login Rejection, Error Page Invite Link)
 expected: |
