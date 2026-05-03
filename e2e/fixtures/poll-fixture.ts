@@ -92,12 +92,23 @@ export const test = base.extend<PollFixtures>({
 
     // Re-throw logic runs after finally to satisfy no-unsafe-finally.
     // Preserve both errors so the failing test isn't masked by cleanup churn.
+    // Coerce non-Error throws (null, undefined, plain strings) into Error
+    // instances so Playwright's reporter renders the failure usefully.
     if (testErr !== undefined && deleteErr !== undefined) {
-      throw new AggregateError([testErr, deleteErr], 'fixture cleanup failed after test failure')
+      throw new AggregateError(
+        [normalizeError(testErr), normalizeError(deleteErr)],
+        'fixture cleanup failed after test failure',
+      )
     }
-    if (deleteErr !== undefined) throw deleteErr
-    if (testErr !== undefined) throw testErr as Error
+    if (deleteErr !== undefined) throw normalizeError(deleteErr)
+    if (testErr !== undefined) throw normalizeError(testErr)
   },
 })
+
+// Coerce arbitrary thrown values (null, undefined, strings, supabase error
+// shapes) into Error so the test reporter has a stack/message to render.
+function normalizeError(e: unknown): Error {
+  return e instanceof Error ? e : new Error(`Non-Error throw: ${String(e)}`)
+}
 
 export { expect }
