@@ -27,17 +27,18 @@ test('[@smoke] user filters by category and searches', async ({ page }) => {
   await page.goto('/topics')
 
   // E2E-SCOPE-1: ignore canonical b0000…* polls; assert only on fixture
-  // d0000…* rows whose titles carry the [E2E] prefix. Filter is inlined
-  // (not aliased to a `const cards` variable) because the ESLint AST
-  // selector only sees `.filter()` in the SAME chain expression — a
-  // variable-based locator would false-positive on `.first()`/`.count()`/
+  // d0000…* rows whose titles carry the [E2E prefix. The regex /\[E2E/
+  // (without closing bracket) matches both "[E2E]" and "[E2E SMOKE]" titles.
+  // Filter is inlined (not aliased to a `const cards` variable) because the
+  // ESLint AST selector only sees `.filter()` in the SAME chain expression —
+  // a variable-based locator would false-positive on `.first()`/`.count()`/
   // `.toHaveCount()` calls (the AST cannot trace variable assignments).
   await expect(
-    page.getByTestId('suggestion-card').filter({ hasText: /\[E2E\]/ }).first(),
+    page.getByTestId('suggestion-card').filter({ hasText: /\[E2E/ }).first(),
   ).toBeVisible()
   const initialCount = await page
     .getByTestId('suggestion-card')
-    .filter({ hasText: /\[E2E\]/ })
+    .filter({ hasText: /\[E2E/ })
     .count()
   expect(initialCount).toBeGreaterThan(0)
 
@@ -61,7 +62,7 @@ test('[@smoke] user filters by category and searches', async ({ page }) => {
   ).toBeHidden({ timeout: 5_000 })
   const filteredCount = await page
     .getByTestId('suggestion-card')
-    .filter({ hasText: /\[E2E\]/ })
+    .filter({ hasText: /\[E2E/ })
     .count()
   expect(filteredCount).toBeGreaterThan(0)
   expect(filteredCount).toBeLessThanOrEqual(initialCount)
@@ -72,6 +73,6 @@ test('[@smoke] user filters by category and searches', async ({ page }) => {
   // token, so this matches exactly one card.
   await page.getByLabel(/search topics/i).fill('SMOKE')
   await expect(
-    page.getByTestId('suggestion-card').filter({ hasText: /\[E2E\]/ }),
+    page.getByTestId('suggestion-card').filter({ hasText: /\[E2E/ }),
   ).toHaveCount(1, { timeout: 5_000 })
 })

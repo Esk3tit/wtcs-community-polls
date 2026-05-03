@@ -24,6 +24,11 @@ import { getAdminClient } from '../helpers/auth'
 // success followed by a choices.insert failure would leak the polls row.
 // The catch block captures the test error so the finally block can
 // preserve it via AggregateError if cleanup also throws.
+//
+// is_pinned=true: ensures SuggestionCard initializes isOpen=true so
+// CollapsibleContent renders immediately — choice-buttons are in the DOM
+// without needing a click-to-expand step. category_id uses the Lineup
+// Changes seed category so the card is visible after category filtering.
 type PollFixtures = {
   freshPoll: { id: string; title: string }
 }
@@ -35,8 +40,16 @@ export const test = base.extend<PollFixtures>({
 
     // Sanitize testInfo.title for cosmetic readability when it surfaces in
     // the rendered card title. polls.title is TEXT with no length cap so
-    // truncation is purely UX.
-    const slug = testInfo.title.replace(/[^\w\s.-]/g, '').slice(0, 80)
+    // truncation is purely UX. Strip [@grep-tag] annotations first so test
+    // names like "[@smoke] user browses..." don't bleed tokens (e.g. "smoke")
+    // into the fixture title — those tokens collide with sibling specs that
+    // search for them as unique seed identifiers (e.g. filter-search SMOKE).
+    const slug = testInfo.title
+      .replace(/\[@\S+?\]/g, '')
+      .replace(/[^\w\s.-]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 80)
     const title = `[E2E] ${slug} ${Date.now()}`
 
     const { data, error } = await admin
@@ -45,8 +58,8 @@ export const test = base.extend<PollFixtures>({
         title,
         description: 'freshPoll fixture row',
         status: 'active',
-        is_pinned: false,
-        category_id: null,
+        is_pinned: true,
+        category_id: 'a0000000-0000-0000-0000-000000000001',
         created_by: fixtureUsers.adminUser.id,
         closes_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       })
