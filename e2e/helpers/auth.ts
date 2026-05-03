@@ -24,18 +24,26 @@ import { fixtureUsers, FIXTURE_PASSWORD } from '../fixtures/test-users'
  */
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL ?? 'http://localhost:54321'
-const ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY
-
-if (!ANON_KEY) {
-  throw new Error(
-    'VITE_SUPABASE_ANON_KEY env var required for Playwright auth helper. ' +
-      'In local dev, run `supabase status` and export the anon key; in CI, ' +
-      'Plan 05-06 wires it from the repo secret LOCAL_ANON_KEY.',
-  )
-}
 
 const PROJECT_REF = new URL(SUPABASE_URL).hostname.split('.')[0] || 'localhost'
 const STORAGE_KEY = `sb-${PROJECT_REF}-auth-token`
+
+// Lazy ANON_KEY accessor: assertion fires only when loginAs is actually
+// invoked. A module-top throw would defeat the early-return that
+// global-setup.ts performs for ad-hoc runs that don't need either supabase
+// key, blocking the entire suite at import time. Mirrors the lazy pattern
+// used by getAdminClient() for SUPABASE_SERVICE_ROLE_KEY.
+function getAnonKey(): string {
+  const k = process.env.VITE_SUPABASE_ANON_KEY
+  if (!k) {
+    throw new Error(
+      'VITE_SUPABASE_ANON_KEY env var required for Playwright auth helper. ' +
+        'In local dev, run `supabase status` and export the anon key; in CI, ' +
+        'wired from the repo secret LOCAL_ANON_KEY.',
+    )
+  }
+  return k
+}
 
 /**
  * Sign a fixture user in and inject the resulting Supabase session into
@@ -71,11 +79,11 @@ export async function loginAs(page: Page, fixtureUserId: string): Promise<void> 
     )
   }
 
-  // Module-top throw above narrows ANON_KEY to string here via control-flow
-  // analysis — no cast needed. A future refactor that moves the throw
-  // inside a function would surface as a real type error rather than
-  // silently accepting `undefined`.
-  const client = createClient(SUPABASE_URL, ANON_KEY, {
+  // Resolve ANON_KEY here (not at module scope) so that callers who never
+  // invoke loginAs — e.g. global-setup.ts importing only getAdminClient —
+  // are not blocked at import time when the env var is unset.
+  const anonKey = getAnonKey()
+  const client = createClient(SUPABASE_URL, anonKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   })
 
