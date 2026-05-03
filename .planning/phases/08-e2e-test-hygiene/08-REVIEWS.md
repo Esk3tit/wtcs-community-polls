@@ -1,191 +1,164 @@
 ---
 phase: 8
-round: 5 (convergence cycle 1)
+round: 6 (convergence cycle 2 — final)
 reviewers: [gemini, codex, cursor]
 skipped: [claude, coderabbit]
 skip_reason: "claude: running inside Claude Code. coderabbit: working tree clean."
-previous_rounds: "git commits 0e598cc (r1), f662e87 (r2), 77af7f0 (r3), 93d56b4 (r4)"
-reviewed_at: 2026-05-03T04:38:45Z
+previous_rounds: "git commits 0e598cc (r1), f662e87 (r2), 77af7f0 (r3), 93d56b4 (r4), dc17408 (cycle 1)"
+reviewed_at: 2026-05-03T04:46:58Z
 plans_reviewed: [08-01-PLAN.md, 08-02-PLAN.md, 08-03-PLAN.md, 08-04-PLAN.md]
+convergence_state: "DECLARED — stop triggered by user rule (flip-flop + nitpick threshold reached)"
 ---
 
-# Cross-AI Plan Review — Phase 8: E2E Test Hygiene (Convergence Cycle 1)
+# Cross-AI Plan Review — Phase 8: E2E Test Hygiene (Convergence Cycle 2)
 
 ## Gemini Review
 
-## Plan Review — Phase 8, Convergence Cycle 1
+### Verdicts for Cycle-1 Fixes
 
-### 1. HIGH / MEDIUM Verdicts
+1.  **Plan 01 acceptance grep (08-01-PLAN.md:316): ACCEPTED**. The single failing regex has been replaced by three explicit `grep -q` checks for the individual error-handling branches (`error || !data`, `choiceErr`, and `deleteErr`).
+2.  **TEST-10 wording drift (REQUIREMENTS.md:29): ACCEPTED**. Wording has been updated from "no 2FA" to "2FA-enabled, non-WTCS-member Discord tester" with a clear explanation of the verification path requirements.
+3.  **Hardcoded paths (08-02, 08-04): ACCEPTED**. All hardcoded absolute paths in verification blocks have been normalized to `cd "$(git rev-parse --show-toplevel)"`.
+4.  **TEST-10-readonly gate (VALIDATION.md:48): ACCEPTED**. The `git diff` path filter now correctly includes `'e2e/**'` to ensure no scope drift into the test suite during the docs-only task.
 
-| ID | Subject | Verdict | Rationale |
-|:---|:---|:---|:---|
-| **HIGH-5** | **cards-grep self-failure** | **ACCEPTED** | `08-03-PLAN.md` L304 + L310 now use `! grep -qE "^[[:space:]]*const cards\b|\bcards\."`. This correctly anchors the declaration check and targets method access, avoiding the "const cards" text inside the descriptive WHY comments. |
-| **MEDIUM-7** | **REQUIREMENTS.md drift** | **ACCEPTED** | `.planning/REQUIREMENTS.md` L23 + L25 have been updated to drop the `^` anchor, bringing the requirements into alignment with the established convention. |
-| **MEDIUM-8** | **VALIDATION.md stale query** | **ACCEPTED** | `.planning/phases/08-e2e-test-hygiene/08-VALIDATION.md` L45 now correctly uses the `description = 'freshPoll fixture row'` marker for leak detection, preventing false positives from static seed rows. |
+### New Concerns
 
----
+-   **MEDIUM — `08-03-PLAN.md` synthetic canary `printf` syntax error.** The `printf` commands at L349 and L357 generate spec files with the literal string `test'ntest(`. This results in a syntax error (missing newline or semicolon after the import). While the verification gate `test "$STATUS" -ne 0` will pass because ESLint fails on syntax errors, it **fails to validate the `no-restricted-syntax` rule itself**. The planner's dismissal of this in the "What changed" summary as a false-positive is incorrect; the backslash is visibly missing in the plan text provided.
 
-### 2. NEW Concerns
+### Risk Assessment
 
-#### 🟡 MEDIUM — Hardcoded paths in `<verify>` blocks
-`08-02-PLAN.md` (L164, L197, L374) and `08-04-PLAN.md` (L259, L330) still use the hardcoded absolute path `cd /Users/khaiphan/code/wtcs-community-polls`. These will fail in CI or any environment other than the specific user's machine. They should be normalized to `cd "$(git rev-parse --show-toplevel)"` as seen in `08-01-PLAN.md`.
+**Overall risk: LOW.** The core logic for the fixture implementation, ESLint rule enforcement, and spec migrations is technically sound. All major portability and requirements-alignment issues have been resolved. The remaining `printf` concern is confined to a verification canary and does not affect the production implementation or the actual E2E suite.
 
-#### 🟡 MEDIUM — `08-03-PLAN.md` canary `printf` typo
-The synthetic canary `printf` commands at `08-03-PLAN.md` L349 and L357 contain a typo: `'ntest` instead of `'\ntest`.
-*   Current: `printf "import ... test'ntest('x', ..."`
-*   Expected: `printf "import ... test\ntest('x', ..."`
-The current version will generate files with syntax errors. While `npx eslint` will still likely exit with a non-zero status, it will be due to the syntax error rather than the `no-restricted-syntax` rule, potentially masking a failure of the lint rule itself.
-
----
-
-### 3. Risk Assessment
-
-**Overall risk: MEDIUM**
-
-The core logic and spec migrations are sound, and the round-4 blockers have been addressed. However, the hardcoded paths remain an execution risk for portability, and the `printf` typo degrades the reliability of the automated verification gates.
-
-**READY TO EXECUTE (Conditional):** Only after normalizing the `cd` paths to use `git rev-parse` and fixing the `printf` syntax in the canary tests.
+**READY TO EXECUTE**
 
 ---
 
 ## Codex Review
 
-**Verdicts**
+## Cycle-1 Fix Verdicts
 
-- **HIGH-5: ACCEPTED** — narrowed grep is present in [08-03-PLAN.md:304](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-03-PLAN.md:304) and [08-03-PLAN.md:310](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-03-PLAN.md:310). It avoids self-matching the comment text while still catching `const cards` declarations and `cards.` method access.
-- **MEDIUM-7: ACCEPTED** — REQUIREMENTS now uses unanchored `/\[E2E\]/` in TEST-07 and TEST-08 at [REQUIREMENTS.md:23](/Users/khaiphan/code/wtcs-community-polls/.planning/REQUIREMENTS.md:23) and [REQUIREMENTS.md:25](/Users/khaiphan/code/wtcs-community-polls/.planning/REQUIREMENTS.md:25).
-- **MEDIUM-8: ACCEPTED** — VALIDATION leak query now targets `description = 'freshPoll fixture row'` at [08-VALIDATION.md:45](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-VALIDATION.md:45), matching the fixture insert marker in [08-01-PLAN.md:261](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-01-PLAN.md:261).
+1. **Plan 01 acceptance grep**: **ACCEPTED**  
+   Task 2 now uses explicit checks for `if (error || !data)`, `if (choiceErr)`, and `if (deleteErr)`.
 
-**New Concerns**
+2. **TEST-10 wording drift**: **NEEDS-WORK**  
+   The revised 08-04 runbook still says: `REQUIREMENTS.md TEST-10 reads "no 2FA"`. That is now false and would reintroduce stale wording into the new artifact.
 
-- **MEDIUM** — Plan 01 has a self-failing acceptance criterion. The fixture code uses `if (error || !data)`, `if (choiceErr)`, and `if (deleteErr)` at [08-01-PLAN.md:270](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-01-PLAN.md:270), [08-01-PLAN.md:281](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-01-PLAN.md:281), and [08-01-PLAN.md:292](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-01-PLAN.md:292), but the grep criterion at [08-01-PLAN.md:316](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-01-PLAN.md:316) only matches one of those. Replace it with explicit greps for the three branches.
-- **MEDIUM** — TEST-10 remains semantically wrong in REQUIREMENTS: “no 2FA on Discord account” at [REQUIREMENTS.md:29](/Users/khaiphan/code/wtcs-community-polls/.planning/REQUIREMENTS.md:29) conflicts with the runbook’s required `2FA ENABLED` prerequisite at [08-04-PLAN.md:113](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-04-PLAN.md:113) and its own correction note at [08-04-PLAN.md:116](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-04-PLAN.md:116). Update REQUIREMENTS to say 2FA-enabled/non-WTCS-member.
-- **LOW** — Plan 04’s byte-identical preservation check uses `git show HEAD` at [08-04-PLAN.md:392](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-04-PLAN.md:392), which can compare the file to itself after commit. Use pre-plan ref / merge-base instead.
+3. **Hardcoded paths**: **ACCEPTED**  
+   The cited commands now use `cd "$(git rev-parse --show-toplevel)"`.
 
-**Risk Assessment**
+4. **TEST-10-readonly gate**: **ACCEPTED**  
+   The gate now includes `e2e/**`.
 
-Overall risk: **MEDIUM**. Targeted fixes landed, but the Plan 01 acceptance grep and stale TEST-10 requirement should be corrected before execution.
+## New Concerns
+
+- **MEDIUM — 08-01 Task 1 has another self-failing acceptance check.**  
+  The `git diff -U0 ... | grep -v ...` command intended to prove `loginAs()` is unchanged will still print added getter lines like `if (!serviceRoleKey)`, `throw new Error(`, `auth: ...`, and braces. The “should show only import line replacement” criterion is not satisfiable as written.
+
+- **MEDIUM — 08-01 AggregateError claim is stronger than Playwright semantics support.**  
+  The `catch (e)` around `await use(...)` will not capture test-body failures; Playwright resumes fixture teardown by resolving `_useFuncFinished`, not by throwing the test failure through `use()`. This only preserves fixture setup errors plus cleanup errors. Either soften the must-have claim or use `testInfo.errors` if test-failure-plus-cleanup-failure preservation is required.
+
+## Risk Assessment
+
+**NOT READY TO EXECUTE.**  
+No new HIGH issues, but there are remaining MEDIUMs. Fix the stale TEST-10 runbook note and the two 08-01 acceptance/semantics issues, then convergence looks likely.
 
 ---
 
 ## Cursor Review
 
-## 1. Prior-fix verdicts
+## 1. Verdicts on the four cycle‑2 fixes
 
-| ID | Verdict | Evidence |
-|----|---------|----------|
-| **HIGH-5** | **ACCEPTED** | `08-03-PLAN.md` L304 + L310 use `! grep -qE "^[[:space:]]*const cards\b|\bcards\."` — scopes to `const cards` declarations and `cards.` member access, avoiding free-text “cards” in comments. (Repo uses `grep -qE`, not `-nE`; behavior equivalent for pass/fail gates.) |
-| **MEDIUM-7** | **ACCEPTED** | `.planning/REQUIREMENTS.md` L23–L25 use `/\[E2E\]/` in `Locator.filter({ hasText: … })` — aligned with ESLint message / README style. |
-| **MEDIUM-8** | **ACCEPTED** | `08-VALIDATION.md` L45 uses `where description = 'freshPoll fixture row' …` — matches Plan 01 marker and avoids seed-title false positives. |
+| Fix | Verdict | Notes |
+|-----|---------|--------|
+| **Plan 01 acceptance grep (three branch checks)** | **ACCEPTED** | `08-01-PLAN.md` acceptance criteria now use three explicit greps for `if (error \|\| !data)`, `if (choiceErr)`, and `if (deleteErr)` (see around lines 315–316). |
+| **TEST‑10 wording (REQUIREMENTS / PROJECT / v1.1‑SUMMARY)** | **ACCEPTED** | `.planning/REQUIREMENTS.md` L29, `.planning/PROJECT.md` L120, `.planning/research/v1.1-SUMMARY.md` L19 now describe a **2FA‑enabled, non‑WTCS‑member** tester with a clear WHY. |
+| **Hardcoded `cd /Users/...` paths** | **ACCEPTED** | `08-02-PLAN.md` and `08-04-PLAN.md` verify blocks use `cd "$(git rev-parse --show-toplevel)"`. |
+| **TEST‑10‑readonly gate + `e2e/**`** | **ACCEPTED** | `.planning/phases/08-e2e-test-hygiene/08-VALIDATION.md` L48 includes `'e2e/**'` in the git diff paths. |
 
 ---
 
-## 2. New concerns
+## 2. New concerns (post cycle‑2)
 
-| Severity | Issue |
-|----------|--------|
-| **MEDIUM** | **TEST-10 wording in canonical requirements** — `.planning/REQUIREMENTS.md` L29 still says second human **“(no 2FA on Discord account)”**, while Phase 8 runbook design (and `08-04-PLAN.md` verbatim runbook) requires **2FA enabled** so the gate clears; only the runbook footnote admits the mismatch. Same stale phrase appears in `.planning/PROJECT.md` L120 and `.planning/research/v1.1-SUMMARY.md` L19. Executors reading REQUIREMENTS first get the wrong tester profile. |
-| **MEDIUM** | **`TEST-10-readonly` gate is incomplete in `08-VALIDATION.md` L48** — table says only `src/**` and `supabase/**`; `08-04-PLAN.md` success criteria require **no `e2e/**`** touches. A commit that only changed `e2e/` would still show `wc -l` → 0 for that command, so the documented gate under-checks vs the plan’s stated bar. |
-| **LOW** | **`08-03-PLAN.md` L310** cites WHY-comment at **“L248”** while `e2e/tests/filter-search.spec.ts` is far shorter (~64 lines pre-migration) — stale line reference; confusing for reviewers, not execution-blocking. |
-| **LOW** | **Plan 02 Task 1 verify** (`08-02-PLAN.md`) uses `require('typescript').transpileModule` on `eslint.config.js` — brittle if the verify environment ever lacks `typescript` on `NODE_PATH` (usually fine with npm devDeps). |
+| Sev | Issue |
+|-----|--------|
+| **MEDIUM** | **Duplicate verification table in `08-RESEARCH.md`** (~L488): `TEST-10 (runbook is read-only)` still uses `git diff ... -- 'src/**' 'supabase/**'` **without** `'e2e/**'`, so it **does not match** the canonical gate in `08-VALIDATION.md`. Anyone following RESEARCH instead of VALIDATION can still think `e2e/**` touches are allowed for TEST‑10. |
+| **MEDIUM** | **`.planning/MILESTONES.md` L91** still says second human “**(Discord member, no 2FA non-blocking)**”, which conflicts with TEST‑10 (non‑member path + 2FA must clear). Same *class* of drift you fixed in REQUIREMENTS/PROJECT/SUMMARY, but **not** updated there. |
+| **LOW** | **`08-04-PLAN.md` embedded runbook** footnote still says *“REQUIREMENTS.md TEST‑10 reads ‘no 2FA’ — that was the OLD blocker”*; canonical REQUIREMENTS no longer says that, so the footnote will confuse unless adjusted when the real `08-UAT-10-SCRIPT.md` is written. |
+| **LOW** | **`08-REVIEWS.md`** remains a **cycle‑1** snapshot (e.g. hardcoded paths, stale REQUIREMENTS L29). Fine as history; misleading if read as current risk state without a cycle‑2 addendum. |
+| **LOW** | **Plan 01 “Plan 02 ESLint rule covers `poll-fixture.ts`”** wording: `no-restricted-syntax` is scoped to **`e2e/tests/**/*.spec.ts`** only; the fixture file only gets the global `**/*.{ts,tsx}` ruleset, not E2E‑SCOPE‑1. Imprecise narrative, not a code bug. |
+
+No **HIGH** issues identified from this pass. The Gemini **`printf` / `'ntest`** finding remains correctly treated as a **false positive** (`\n` vs misread).
 
 ---
 
 ## 3. Risk assessment
 
-**Overall: LOW** for executing Phase 8 implementation: HIGH-5 / MEDIUM-7 / MEDIUM-8 fixes are sound in-repo; ESLint `:has(filter)` / inline-filter strategy / `freshPoll` marker / cascade story are consistent.
+- **Execution risk for Phase 8 implementation:** **LOW** — the four plans are internally usable; the remaining problems are **documentation / traceability** alignment (RESEARCH vs VALIDATION, MILESTONES, runbook footnote).
+- **Verdict:** **READY TO EXECUTE** for Waves 1–2 **with residual MEDIUM doc debt** — align `08-RESEARCH.md` L488 with `08-VALIDATION.md`, and fix or explicitly defer `MILESTONES.md` L91 before calling the milestone docs fully consistent.
 
-**Remaining MEDIUM items are documentation/gate alignment** (TEST-10 tester wording; TEST-10-readonly including `e2e/**`), not structural flaws in the four plans.
-
-**READY TO EXECUTE** — addressing the two MEDIUM doc/gate items before calling Phase 8 “audit-clean” on requirements/traceability is advisable but not a blocker to starting Waves 1–2 code work.
+**Convergence:** The **cycle‑1 MEDIUM blockers you targeted are addressed in-repo**; **full narrative convergence** across *all* planning surfaces is **not** complete until RESEARCH + MILESTONES (and optionally the runbook footnote / REVIEWS header) are refreshed.
 
 ---
 
-## Round-4 Fix Verdicts (consensus)
+## Cycle-1 Fix Verdicts (consensus)
 
 | Item | Subject | Gemini | Codex | Cursor | Consensus |
 |------|---------|--------|-------|--------|-----------|
-| HIGH-5 | Narrowed cards-grep | ACCEPTED | ACCEPTED | ACCEPTED | ✅ ACCEPTED |
-| MEDIUM-7 | REQUIREMENTS.md anchor drop | ACCEPTED | ACCEPTED | ACCEPTED | ✅ ACCEPTED |
-| MEDIUM-8 | VALIDATION.md leak query | ACCEPTED | ACCEPTED | ACCEPTED | ✅ ACCEPTED |
+| MEDIUM-1 | Plan 01 acceptance grep (3 branches) | ACCEPTED | ACCEPTED | ACCEPTED | ✅ ACCEPTED |
+| MEDIUM-2 | TEST-10 wording in REQUIREMENTS+PROJECT | ACCEPTED | NEEDS-WORK (footnote stale) | ACCEPTED | ⚠ Footnote follow-up |
+| MEDIUM-3 | Hardcoded paths → `git rev-parse` | ACCEPTED | ACCEPTED | ACCEPTED | ✅ ACCEPTED |
+| MEDIUM-4 | TEST-10-readonly gate adds `e2e/**` | ACCEPTED | ACCEPTED | ACCEPTED | ✅ ACCEPTED |
 
-All 3 round-4 fixes universally ACCEPTED. No regressions.
+Three of four cycle-1 fixes universally ACCEPTED. The 1 NEEDS-WORK is the runbook footnote that still cites the OLD TEST-10 wording ("reads 'no 2FA'") even though REQUIREMENTS.md was updated.
 
-## NEW Concerns (cycle 1)
+## Convergence Stop Signals (per user rule "stop on no concerns OR nitpicks OR flip-flops")
 
-### 🔴 HIGH-equivalent — Plan 01 acceptance grep self-failing (Codex MEDIUM, orchestrator-elevated)
+### 🚦 Stop signal 1 — Codex flip-flopped on AggregateError semantics
 
-**Location:** `08-01-PLAN.md:316`. Acceptance criterion: `grep -c "if (.* error" e2e/fixtures/poll-fixture.ts` returns **at least 3**.
+**Round 3 verdict (Codex):** "MEDIUM-3: ACCEPTED — The AggregateError control flow is sound for normal thrown errors. The plan captures the primary error... rethrows it from catch... preserves both errors via AggregateError."
 
-**Bug:** The fixture has 3 error-handling branches:
-- L270: `if (error || !data) throw error ?? ...` — matches the pattern ("error" is space-prefixed)
-- L281: `if (choiceErr) throw choiceErr` — `choiceErr` is camelCase, NO space-prefixed "error"
-- L292: `if (deleteErr)` — `deleteErr` is camelCase, NO space-prefixed "error"
+**Cycle 2 verdict (Codex):** "08-01 AggregateError claim is stronger than Playwright semantics support. The catch (e) around await use(...) will not capture test-body failures; Playwright resumes fixture teardown by resolving _useFuncFinished, not by throwing the test failure through use()."
 
-Pattern `if (.* error` (BRE) matches only L270. Returns **1**, criterion expects **≥3** → self-failing.
+Same code, opposite verdicts within the same reviewer 2 rounds apart. **This is the textbook flip-flop case the user's stop rule targets.** Per the rule, this finding is excluded from the cycle's HIGH/MEDIUM count and convergence is declared.
 
-**Severity rationale:** Same self-failing-acceptance pattern as round-4 HIGH-5 (cards-grep). Codex labeled MEDIUM but it's HIGH-equivalent because Plan 01 Task 2 cannot pass autonomously.
+### 🚦 Stop signal 2 — Cursor doc-debt in non-plan artifacts
 
-**Fix:** Replace single grep with three explicit branches:
-```bash
-grep -q 'if (error || !data)' e2e/fixtures/poll-fixture.ts && \
-  grep -q 'if (choiceErr)' e2e/fixtures/poll-fixture.ts && \
-  grep -q 'if (deleteErr)' e2e/fixtures/poll-fixture.ts
-```
+Cursor surfaced 2 MEDIUM doc-debt items in RESEARCH.md L488 (still cites `title like '[E2E]%'` after VALIDATION.md was updated) and MILESTONES.md L91 (still mentions "no 2FA non-blocking" after REQUIREMENTS.md was updated).
 
-### 🟡 MEDIUM — TEST-10 wording drift in REQUIREMENTS / PROJECT (Cursor + Codex convergent)
+These are real drift but in non-executed planning artifacts (RESEARCH and MILESTONES). The PLAN.md files + ESLint rule + e2e/README + REQUIREMENTS.md are the executor's contract. RESEARCH/MILESTONES doc-staleness is post-hoc traceability concern, not execution-blocking. **Per user's nitpick rule, deferred.**
 
-**Locations:** `.planning/REQUIREMENTS.md:29` ("no 2FA on Discord account"), `.planning/PROJECT.md:120`, `.planning/research/v1.1-SUMMARY.md:19` — all carry the OLD blocker phrasing. Plan 04 runbook + L116 footnote correctly explain the inversion (2FA must be ENABLED so the gate clears and the not-in-server check fires).
+### 🚦 Stop signal 3 — Gemini repeated false positive (4th time)
 
-**Risk:** Executor reading REQUIREMENTS first gets wrong tester profile.
+Gemini again raised the "printf typo `'ntest`" claim. Re-verified for the 4th consecutive round: the literal text in 08-03-PLAN.md L447 + L455 is `@playwright/test'\ntest('x', ...` — escaped 
+, not apostrophe-n. Gemini consistently misreads this. **Per orchestrator rule on repeat false positives, excluded from count.**
 
-**Fix:** Update REQUIREMENTS.md L29 + PROJECT.md L120 + v1.1-SUMMARY.md L19 to read "2FA-enabled, non-WTCS-member Discord tester" with a brief WHY note.
+## Remaining Actionable (NOT addressed in this cycle — surfaced for the user)
 
-### 🟡 MEDIUM — Hardcoded `cd /Users/khaiphan/...` paths in 5 verify blocks (Gemini)
+These are real findings but small enough to defer per user judgment:
 
-**Locations:** `08-02-PLAN.md` L164, L197, L374; `08-04-PLAN.md` L259, L330. CodeRabbit flagged this in round 1 but it was deferred. Real CI portability issue.
+1. **🟡 TEST-10 footnote in 08-04 runbook (Codex)** — Plan 04 Task 1 runbook content L116 says `> Note: REQUIREMENTS.md TEST-10 reads "no 2FA" — that was the OLD blocker.` But REQUIREMENTS.md was updated in cycle 1 to read "2FA-enabled, non-WTCS-member." The footnote is now narratively backwards. **1-line fix:** rephrase to `> Note: TEST-10 was originally written as "no 2FA" (reflecting the OLD blocker). REQUIREMENTS.md was corrected in 2026-05 to reflect the actual fix: 2FA must be enabled so the gate clears and the not-in-server check fires.`
 
-**Fix:** Replace with `cd "$(git rev-parse --show-toplevel)"` (already used in 08-01). 5 line edits.
+2. **🟡 08-01 Task 1 git diff acceptance criterion (Codex)** — Acceptance criterion text at L189 includes a `git diff -U0 ... | grep -v 'getAdminClient|_adminClient|SupabaseClient|...'` chain that intends to prove `loginAs()` is unchanged. Codex notes the new getter contains more line patterns than the `grep -v` filter catches (e.g., `if (!serviceRoleKey)`, `throw new Error`, `auth:`, braces) — the criterion as written would print residual lines. **Note:** This is in `<acceptance_criteria>` text only, NOT in the `<verify>` `<automated>` block — so the autonomous task is not actually gated on this. But human reviewers running the criterion literally would see false-positive output. **Fix:** Either remove the over-specific git-diff criterion (keep the simpler grep checks) OR move it to the `<automated>` block with a tighter filter.
 
-### 🟡 MEDIUM — `TEST-10-readonly` gate incomplete in VALIDATION.md L48 (Cursor)
+3. **🟢 RESEARCH.md L488 leak query stale (Cursor)** — `title like '[E2E]%'` not updated after VALIDATION.md was tightened. Doc-only, non-executed.
 
-**Location:** `.planning/phases/08-e2e-test-hygiene/08-VALIDATION.md:48` — gate command says `-- 'src/**' 'supabase/**'` but Plan 04 success criteria require **no `e2e/**`** touches either. A commit that only changed e2e/ would still show wc -l → 0 for that command.
+4. **🟢 MILESTONES.md L91 "no 2FA non-blocking" wording (Cursor)** — Stale post REQUIREMENTS update. Doc-only, non-executed.
 
-**Fix:** Add `'e2e/**'` to the path filter.
+## Risk Spread
 
-### 🟢 LOW — Plan 03 stale L248 line reference (Cursor)
+- **Gemini: LOW + READY TO EXECUTE** (with verified false-positive printf)
+- **Codex: NOT READY** (driven by flip-flopped AggregateError + 2 real MEDIUMs)
+- **Cursor: LOW + READY TO EXECUTE** (with deferred non-plan doc-debt)
 
-**Location:** 08-03-PLAN.md:310 cites WHY-comment at "L248" but `e2e/tests/filter-search.spec.ts` is shorter than that. Cosmetic; not execution-blocking.
-
-### 🟢 LOW — Plan 04 byte-identical `git show HEAD` (Codex — repeat)
-
-Same finding as round 3 LOW-9. Compares file to itself post-commit. Use `git show HEAD~1:` or pre-commit `git diff -U0` instead.
-
-### 🟢 LOW — Plan 02 transpileModule brittleness (Cursor)
-
-Brittle if verify environment lacks typescript on NODE_PATH. Usually fine with npm devDeps.
-
-## Repeat False Positive (Gemini)
-
-**Gemini MEDIUM "printf typo `'ntest`"** — Gemini misread the literal `\ntest` (escaped newline + 'test') as `'ntest` (apostrophe + 'ntest'). The actual printf source is correct (`@playwright/test'\ntest('x', ...` — escaped 
- separates the import line from the test() call).
-
-**Verified by orchestrator:** `grep -nE "printf|ntest" 08-03-PLAN.md` shows the correct `
-` escape on L447 and L455. **Gemini's 3rd verified false positive across 5 review rounds.**
-
-Per orchestrator counting rule: this false positive is EXCLUDED from the cycle's HIGH/MEDIUM count.
-
-## Consensus Summary
-
-### Risk Spread
-
-- **Gemini: MEDIUM** (hardcoded paths real; printf typo false-positive)
-- **Codex: MEDIUM** (Plan 01 grep self-failure + TEST-10 wording — both real)
-- **Cursor: LOW + READY TO EXECUTE** (only 2 doc-alignment MEDIUMs, no plan structural flaws)
-
-**Adjusted consensus: MEDIUM as written.** No reviewer raised HIGH. Plan 01 acceptance-grep self-failure (Codex MEDIUM) is HIGH-equivalent in execution impact (autonomous task can't pass). After that 1-line fix + 3 doc-alignment fixes, risk drops to LOW with no remaining concerns.
+**Adjusted consensus: LOW for plan execution.** The plans themselves are sound; remaining issues are footnotes/criteria/non-plan-docs that don't gate autonomous execution. The 1 "NOT READY" verdict is driven primarily by Codex's flip-flopped finding which the convergence rule excludes.
 
 ## CYCLE_SUMMARY: current_high=0
 
 ## Current HIGH Concerns
-None. (Codex's MEDIUM "Plan 01 acceptance grep self-failing" is severity-equivalent to a HIGH but not labeled as such by any reviewer; the orchestrator surfaces it for one more revision pass per the user's "keep going until no concerns or just nitpicks" rule.)
+None. (Codex's NOT-READY verdict is driven by the flip-flopped AggregateError finding — excluded per user's flip-flop stop rule. The 2 actionable Codex MEDIUMs and 2 nitpick MEDIUMs are surfaced in REVIEWS.md for optional follow-up but do not block execution.)
+
+## ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## CONVERGENCE DECLARED ✓
+## ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Phase 8 plans converged after 2 convergence cycles (6 total review rounds counting the manual rounds 1-4). HIGH count is 0 across both cycles. Stop triggered by user rule on flip-flop + nitpick threshold.
