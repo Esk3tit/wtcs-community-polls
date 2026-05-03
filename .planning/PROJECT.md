@@ -117,7 +117,7 @@ GitHub milestone: https://github.com/Esk3tit/wtcs-community-polls/milestone/1
 - [ ] Phase 03 VERIFICATION.md retrospective
 - [ ] 17 SUMMARY frontmatter `requirements-completed` declarations
 - [ ] Backfill Phase 04 UAT test 6a evidence (demote click flow — passed off-record on second admin, needs 04-UAT.md update)
-- [ ] Phase 03 UAT tests 2 + 3 with second human (no 2FA)
+- [ ] Phase 03 UAT tests 2 + 3 with second human (2FA-enabled, non-WTCS-member Discord tester — 2FA must be ON so the gate clears and the non-member check fires)
 
 ### Planned for v1.2 (Admin Visibility Controls)
 

@@ -45,7 +45,7 @@ created: 2026-05-02
 | TEST-09-cleanup | Fixture inserts +1 then deletes -1 row per test (no leak) | integration | `psql "$DB_URL" -c "select count(*) from polls where description = 'freshPoll fixture row' and created_at > now() - interval '5 minutes'"` (expect 0 after suite — narrowed to fixture-specific marker so static `b0000…*` seed rows do not false-positive) | ❌ Wave 0 — fixture file new |
 | TEST-09-consumer | `browse-respond.spec.ts` passes via `freshPoll` fixture | e2e | `npx playwright test --config e2e/playwright.config.ts e2e/tests/browse-respond.spec.ts --grep @smoke` | ✅ file exists; needs migration |
 | TEST-10-artifacts | Runbook exists, 03-UAT.md has Second-Human Verification section | docs | `[ -f .planning/phases/08-e2e-test-hygiene/08-UAT-10-SCRIPT.md ] && grep -q '^## Second-Human Verification' .planning/phases/03-response-integrity/03-UAT.md` | ❌ Wave 0 |
-| TEST-10-readonly | TEST-10 task touches no `src/**` or `supabase/**` files | git diff | `git diff --name-only $(git merge-base HEAD main)..HEAD -- 'src/**' 'supabase/**' \| wc -l` should be 0 for the TEST-10 plan task | ✅ enforceable via task scoping |
+| TEST-10-readonly | TEST-10 task touches no `src/**`, `supabase/**`, or `e2e/**` files | git diff | `git diff --name-only $(git merge-base HEAD main)..HEAD -- 'src/**' 'supabase/**' 'e2e/**' \| wc -l` should be 0 for the TEST-10 plan task (Plan 04 success criteria — TEST-10 is a docs-only runbook task; any e2e/ touch indicates scope drift) | ✅ enforceable via task scoping |
 
 ---
 

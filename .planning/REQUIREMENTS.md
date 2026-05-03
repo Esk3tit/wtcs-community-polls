@@ -26,7 +26,7 @@
 
 - [ ] **TEST-09**: Playwright test-scoped `freshPoll` fixture provides per-test mutable state with cleanup around `await use()` — hybrid model: SQL seeds keep static reference data (categories, auth users), fixtures own per-test poll/vote rows.
 
-- [ ] **TEST-10**: Phase 03 UAT tests 2 + 3 executed with a second human (no 2FA on Discord account) — covers non-member rejection at OAuth callback and invite-link flow. Evidence appended to `.planning/phases/03-response-integrity/03-UAT.md`.
+- [ ] **TEST-10**: Phase 03 UAT tests 2 + 3 executed with a second human (2FA-enabled, non-WTCS-member Discord tester — 2FA must be enabled so the Discord 2FA gate clears and the not-in-server check actually fires; an account without 2FA is blocked at the gate before non-member detection can run) — covers non-member rejection at OAuth callback and invite-link flow. Evidence appended to `.planning/phases/03-response-integrity/03-UAT.md`.
 
 ### UI & Design
 
