@@ -4,8 +4,8 @@ milestone: v1.1
 milestone_name: Hygiene & Polish
 status: executing
 stopped_at: Phase 8 context gathered
-last_updated: "2026-05-02T21:23:16.361Z"
-last_activity: 2026-05-02 -- Phase 08 planning complete
+last_updated: "2026-05-03T04:10:50.364Z"
+last_activity: 2026-05-03 -- Phase 08 planning complete
 progress:
   total_phases: 4
   completed_phases: 1
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-04-28 after v1.0 milestone)
 Phase: 07 (observability-hardening) — COMPLETE (verifier PASSED, 0 gaps)
 Plan: 3 of 3 complete (07-01 wired createRoot + keepNames + VITE_NETLIFY_CONTEXT; 07-02 env-gated /__smoke route + RenderThrowSmoke; 07-03 D-08 evidence + 07-VERIFICATION.md + OBSV-02-bundle-delta.md). Both REQ-IDs (OBSV-01, OBSV-02) closed.
 Status: Ready to execute
-Last activity: 2026-05-02 -- Phase 08 planning complete
+Last activity: 2026-05-03 -- Phase 08 planning complete
 
 ## Accumulated Context
 
