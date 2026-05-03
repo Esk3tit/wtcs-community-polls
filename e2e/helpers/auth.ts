@@ -71,7 +71,11 @@ export async function loginAs(page: Page, fixtureUserId: string): Promise<void> 
     )
   }
 
-  const client = createClient(SUPABASE_URL, ANON_KEY as string, {
+  // Module-top throw above narrows ANON_KEY to string here via control-flow
+  // analysis — no cast needed. A future refactor that moves the throw
+  // inside a function would surface as a real type error rather than
+  // silently accepting `undefined`.
+  const client = createClient(SUPABASE_URL, ANON_KEY, {
     auth: { autoRefreshToken: false, persistSession: false },
   })
 
