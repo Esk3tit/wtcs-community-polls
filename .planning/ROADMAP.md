@@ -73,7 +73,7 @@ Full v1.0 phase details (goals, plans, success criteria) preserved in [milestone
 **Plans**: 4 plans
 - [x] 08-01-PLAN.md — Service-role admin client + freshPoll Playwright fixture (Wave 1, autonomous, TEST-09 prerequisite)
 - [x] 08-02-PLAN.md — ESLint no-restricted-syntax rule + e2e/README.md + npm run e2e script (Wave 1, autonomous, TEST-08)
-- [ ] 08-03-PLAN.md — Spec migrations (browse-respond fixture migration, filter-search [E2E]-filter, admin-create + auth-errors compliance check) (Wave 2, has checkpoint, depends on 08-01 + 08-02, TEST-07 + TEST-09)
+- [x] 08-03-PLAN.md — Spec migrations (browse-respond fixture migration, filter-search [E2E]-filter, admin-create + auth-errors compliance check) (Wave 2, has checkpoint, depends on 08-01 + 08-02, TEST-07 + TEST-09)
 - [x] 08-04-PLAN.md — TEST-10 second-human runbook + 03-UAT.md Second-Human Verification append (Wave 1, autonomous, TEST-10; D-11 async evidence)
 **Branch**: `gsd/phase-08-e2e-test-hygiene`
 
