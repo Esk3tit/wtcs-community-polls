@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Page } from '@playwright/test'
 import { fixtureUsers, FIXTURE_PASSWORD } from '../fixtures/test-users'
 
@@ -100,4 +100,27 @@ export async function loginAs(page: Page, fixtureUserId: string): Promise<void> 
     },
     [STORAGE_KEY, JSON.stringify(payload)] as [string, string],
   )
+}
+
+// Module-scoped lazy singleton: created on first access, reused across fixtures.
+// Service-role bypasses RLS — only used inside e2e/fixtures/* and e2e/helpers/*,
+// never inside specs (the loginAs() public API stays anon-only). Lazy so that
+// non-fixture-using specs (e.g. auth-errors.spec.ts, which never needs admin)
+// can still import this module when SUPABASE_SERVICE_ROLE_KEY is absent.
+let _adminClient: SupabaseClient | null = null
+
+export function getAdminClient(): SupabaseClient {
+  if (_adminClient) return _adminClient
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!serviceRoleKey) {
+    throw new Error(
+      'SUPABASE_SERVICE_ROLE_KEY env var required for E2E admin client. ' +
+        'In local dev, run `supabase status` and export it; in CI, ' +
+        'derived from supabase status (see .github/workflows/ci.yml).',
+    )
+  }
+  _adminClient = createClient(SUPABASE_URL, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+  return _adminClient
 }
