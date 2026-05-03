@@ -20,9 +20,9 @@
 
 ### Testing
 
-- [ ] **TEST-07**: Three failing Playwright specs (admin-create, browse-respond, filter-search) pass under the canonical two-layer seed by scoping shared-DB list locators to `[E2E]`-prefixed entries via `Locator.filter({ hasText: /^\[E2E/ })`. browse-respond.spec.ts also casts a vote inside the test before asserting `[1-9]\d*` total responses.<br>_GitHub: #11, #12, #13 — research: `.planning/research/v1.1-PLAYWRIGHT-FIXTURES.md`_
+- [ ] **TEST-07**: Three failing Playwright specs (admin-create, browse-respond, filter-search) pass under the canonical two-layer seed by scoping shared-DB list locators to `[E2E]`-prefixed entries via `Locator.filter({ hasText: /\[E2E\]/ })`. browse-respond.spec.ts also casts a vote inside the test before asserting `[1-9]\d*` total responses.<br>_GitHub: #11, #12, #13 — research: `.planning/research/v1.1-PLAYWRIGHT-FIXTURES.md`_
 
-- [ ] **TEST-08**: ESLint `no-restricted-syntax` rule prevents unscoped list locators from landing in `e2e/tests/**/*.spec.ts` — any `page.locator(...).all()` / `.nth(n)` / `.first()` on a shared-DB list without a preceding `.filter({ hasText: /^\[E2E/ })` fails lint. Convention documented in `e2e/README.md` (or equivalent).
+- [ ] **TEST-08**: ESLint `no-restricted-syntax` rule prevents unscoped list locators from landing in `e2e/tests/**/*.spec.ts` — any `page.locator(...).all()` / `.nth(n)` / `.first()` on a shared-DB list without a preceding `.filter({ hasText: /\[E2E\]/ })` fails lint. Convention documented in `e2e/README.md` (or equivalent).
 
 - [ ] **TEST-09**: Playwright test-scoped `freshPoll` fixture provides per-test mutable state with cleanup around `await use()` — hybrid model: SQL seeds keep static reference data (categories, auth users), fixtures own per-test poll/vote rows.
 
