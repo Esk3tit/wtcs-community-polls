@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Hygiene & Polish
-status: ready-to-merge
-stopped_at: Phase 7 complete — verifier PASSED (5/5 SC, OBSV-01+02 closed); PR #21 ready to merge after user accepts +6.24% keepNames-isolated bundle delta per D-14 ship-anyway disposition
-last_updated: "2026-04-30T10:10:00.000Z"
-last_activity: 2026-04-30 -- Phase 07 verifier PASSED with 0 gaps; STATE/REQUIREMENTS reconciled; awaiting PR #21 merge
+status: ready_to_plan
+stopped_at: Phase 8 context gathered
+last_updated: "2026-05-03T05:15:29.443Z"
+last_activity: 2026-05-03 -- Phase 08 execution started
 progress:
   total_phases: 4
-  completed_phases: 1
-  total_plans: 3
+  completed_phases: 2
+  total_plans: 7
   completed_plans: 3
-  percent: 100
+  percent: 50
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-28 after v1.0 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** Phase 07 — observability-hardening
+**Current focus:** Phase 08 — e2e-test-hygiene
 
 ## Current Position
 
-Phase: 07 (observability-hardening) — COMPLETE (verifier PASSED, 0 gaps)
-Plan: 3 of 3 complete (07-01 wired createRoot + keepNames + VITE_NETLIFY_CONTEXT; 07-02 env-gated /__smoke route + RenderThrowSmoke; 07-03 D-08 evidence + 07-VERIFICATION.md + OBSV-02-bundle-delta.md). Both REQ-IDs (OBSV-01, OBSV-02) closed.
-Status: PR #21 (`gsd/phase-07-observability-hardening` @ 82bb086) ready to merge. D-14 ship-anyway accepted on +6.24% keepNames-isolated bundle delta. Phase 8 (E2E Test Hygiene) starts next.
-Last activity: 2026-04-30 -- Phase 07 verifier PASSED with 0 gaps; STATE/REQUIREMENTS reconciled per verifier hygiene warnings
+Phase: 9
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-05-03
 
 ## Accumulated Context
 
@@ -67,6 +67,6 @@ None for v1.0 close. v1.1 scope and phasing TBD via `/gsd-new-milestone`.
 
 ## Session Continuity
 
-Last session: 2026-04-29T06:41:19.286Z
-Stopped at: Phase 7 context gathered
+Last session: 2026-05-02T19:43:54.411Z
+Stopped at: Phase 8 context gathered
 Resume action: `/gsd-new-milestone` to scope v1.1

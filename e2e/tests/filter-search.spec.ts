@@ -2,6 +2,13 @@ import { test, expect } from '@playwright/test'
 import { loginAs } from '../helpers/auth'
 import { fixtureUsers } from '../fixtures/test-users'
 
+// Matches both '[E2E]' and '[E2E SMOKE]' fixture title prefixes. The
+// character class `[\] ]` accepts either the closing bracket (plain
+// `[E2E]`) or a space (`[E2E SMOKE]`/`[E2E ANY-TAG]`). Tightening this
+// from `/\[E2E/` rejects accidental drift like `[E2EX...]` while still
+// admitting future tagged variants that follow the `[E2E <tag>]` shape.
+const E2E_TITLE = /\[E2E[\] ]/
+
 /**
  * D-08 journey #2: user filters by category tab + narrows with search.
  *
@@ -26,10 +33,20 @@ test('[@smoke] user filters by category and searches', async ({ page }) => {
   await loginAs(page, fixtureUsers.memberUser.id)
   await page.goto('/topics')
 
-  // Baseline: at least one card rendered.
-  const cards = page.getByTestId('suggestion-card')
-  await expect(cards.first()).toBeVisible()
-  const initialCount = await cards.count()
+  // E2E-SCOPE-1: ignore canonical b0000…* polls; assert only on fixture
+  // d0000…* rows whose titles carry the [E2E prefix. See E2E_TITLE above
+  // for the matching regex (matches both "[E2E]" and "[E2E SMOKE]").
+  // Filter is inlined (not aliased to a `const cards` variable) because the
+  // ESLint AST selector only sees `.filter()` in the SAME chain expression —
+  // a variable-based locator would false-positive on `.first()`/`.count()`/
+  // `.toHaveCount()` calls (the AST cannot trace variable assignments).
+  await expect(
+    page.getByTestId('suggestion-card').filter({ hasText: E2E_TITLE }).first(),
+  ).toBeVisible()
+  const initialCount = await page
+    .getByTestId('suggestion-card')
+    .filter({ hasText: E2E_TITLE })
+    .count()
   expect(initialCount).toBeGreaterThan(0)
 
   // Filter by a category tab. Lineup Changes is a fixture category and
@@ -50,7 +67,10 @@ test('[@smoke] user filters by category and searches', async ({ page }) => {
   await expect(
     page.getByTestId('suggestion-card').filter({ hasText: /Sinai/i }).first(),
   ).toBeHidden({ timeout: 5_000 })
-  const filteredCount = await cards.count()
+  const filteredCount = await page
+    .getByTestId('suggestion-card')
+    .filter({ hasText: E2E_TITLE })
+    .count()
   expect(filteredCount).toBeGreaterThan(0)
   expect(filteredCount).toBeLessThanOrEqual(initialCount)
 
@@ -59,5 +79,7 @@ test('[@smoke] user filters by category and searches', async ({ page }) => {
   // supabase/seed.sql poll has the same MiG-29 substring but no SMOKE
   // token, so this matches exactly one card.
   await page.getByLabel(/search topics/i).fill('SMOKE')
-  await expect(cards).toHaveCount(1, { timeout: 5_000 })
+  await expect(
+    page.getByTestId('suggestion-card').filter({ hasText: E2E_TITLE }),
+  ).toHaveCount(1, { timeout: 5_000 })
 })

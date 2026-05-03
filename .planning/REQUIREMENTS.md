@@ -20,13 +20,13 @@
 
 ### Testing
 
-- [ ] **TEST-07**: Three failing Playwright specs (admin-create, browse-respond, filter-search) pass under the canonical two-layer seed by scoping shared-DB list locators to `[E2E]`-prefixed entries via `Locator.filter({ hasText: /^\[E2E/ })`. browse-respond.spec.ts also casts a vote inside the test before asserting `[1-9]\d*` total responses.<br>_GitHub: #11, #12, #13 — research: `.planning/research/v1.1-PLAYWRIGHT-FIXTURES.md`_
+- [ ] **TEST-07**: Three failing Playwright specs (admin-create, browse-respond, filter-search) pass under the canonical two-layer seed by scoping shared-DB list locators to `[E2E`-prefixed entries via `Locator.filter({ hasText: /\[E2E/ })` (unanchored — matches both `[E2E]` legacy and `[E2E SMOKE]` static-seed titles). browse-respond.spec.ts also casts a vote inside the test before asserting `[1-9]\d*` total responses.<br>_GitHub: #11, #12, #13 — research: `.planning/research/v1.1-PLAYWRIGHT-FIXTURES.md`_
 
-- [ ] **TEST-08**: ESLint `no-restricted-syntax` rule prevents unscoped list locators from landing in `e2e/tests/**/*.spec.ts` — any `page.locator(...).all()` / `.nth(n)` / `.first()` on a shared-DB list without a preceding `.filter({ hasText: /^\[E2E/ })` fails lint. Convention documented in `e2e/README.md` (or equivalent).
+- [ ] **TEST-08**: ESLint `no-restricted-syntax` rule prevents unscoped list locators from landing in `e2e/tests/**/*.spec.ts` — any `page.locator(...).all()` / `.nth(n)` / `.first()` on a shared-DB list without a preceding `.filter({ hasText: /\[E2E/ })` fails lint. Convention documented in `e2e/README.md` (or equivalent).
 
 - [ ] **TEST-09**: Playwright test-scoped `freshPoll` fixture provides per-test mutable state with cleanup around `await use()` — hybrid model: SQL seeds keep static reference data (categories, auth users), fixtures own per-test poll/vote rows.
 
-- [ ] **TEST-10**: Phase 03 UAT tests 2 + 3 executed with a second human (no 2FA on Discord account) — covers non-member rejection at OAuth callback and invite-link flow. Evidence appended to `.planning/phases/03-response-integrity/03-UAT.md`.
+- [ ] **TEST-10**: Phase 03 UAT tests 2 + 3 executed with a second human (2FA-enabled, non-WTCS-member Discord tester — 2FA must be enabled so the Discord 2FA gate clears and the not-in-server check actually fires; an account without 2FA is blocked at the gate before non-member detection can run) — covers non-member rejection at OAuth callback and invite-link flow. Evidence appended to `.planning/phases/03-response-integrity/03-UAT.md`.
 
 ### UI & Design
 

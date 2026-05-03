@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "e2e": "playwright test --config e2e/playwright.config.ts",
     "generate": "tsr generate",
     "build": "tsr generate && tsc -b && vite build",
     "lint": "eslint .",

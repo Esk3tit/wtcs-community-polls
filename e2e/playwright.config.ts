@@ -15,6 +15,10 @@ import { defineConfig, devices } from '@playwright/test'
  */
 export default defineConfig({
   testDir: './tests',
+  // One-shot pre-suite cleanup of orphaned freshPoll fixture rows; see
+  // e2e/global-setup.ts for the rationale (covers transient teardown
+  // failures across runs).
+  globalSetup: './global-setup.ts',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
