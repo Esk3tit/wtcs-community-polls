@@ -143,7 +143,7 @@ export default defineConfig([
         ":not(:has(CallExpression[callee.property.name='filter']))",
       message:
         "E2E-SCOPE-1: filter to [E2E] prefix before counting/indexing list locators. " +
-        "Use .filter({ hasText: /^\\[E2E/ }) before .first/.nth/.last/.all/.toHaveCount, " +
+        "Use .filter({ hasText: /\\[E2E/ }) before .first/.nth/.last/.all/.toHaveCount, " +
         "OR add `// eslint-disable-next-line no-restricted-syntax -- WHY` if the locator " +
         "is already DOM-scoped. See e2e/README.md.",
     }],
@@ -287,7 +287,7 @@ await expect(cards).toHaveCount(1, { timeout: 5_000 })
 -  const cards = page.getByTestId('suggestion-card')
 +  // E2E-SCOPE-1: ignore canonical b0000…* polls; assert only on fixture
 +  // d0000…* rows whose titles carry the [E2E] prefix.
-+  const cards = page.getByTestId('suggestion-card').filter({ hasText: /^\[E2E/ })
++  const cards = page.getByTestId('suggestion-card').filter({ hasText: /\[E2E/ })
 ```
 
 Downstream `cards.first()` (L31), `cards.count()` (L32, L53), and `cards.toHaveCount(1, ...)` (L62) all become rule-compliant because the parent locator now has `.filter()` in its chain.
@@ -303,7 +303,7 @@ Per D-07, ANY `.filter()` is enough — this stays as-is. Optional: add a 1-line
 **Established patterns to respect:**
 - `[@smoke]` prefix preserved.
 - `data-testid="suggestion-card"` selector vocabulary preserved.
-- `.filter({ hasText: /^\[E2E/ })` is the canonical SCOPE-1 form — verbatim regex lives in the e2e/README.md.
+- `.filter({ hasText: /\[E2E/ })` is the canonical SCOPE-1 form — verbatim regex lives in the e2e/README.md.
 
 ---
 
@@ -385,15 +385,14 @@ export { expect }
 | **Pointer** | `.planning/research/v1.1-PLAYWRIGHT-FIXTURES.md` |
 | **freshPoll fixture usage** | Short snippet: `import { test, expect } from '../fixtures/poll-fixture'` + `test('...', async ({ page, freshPoll }) => {...})`. Cite when to reach for it (vote-precondition specs) vs the `[E2E]`-filter convention (read-only list specs). |
 | **Two-layer seed explainer** | One paragraph: base `supabase/seed.sql` (idempotent ON CONFLICT) + additive `e2e/fixtures/seed.sql` (applied via `psql`). Explain why naive `.toHaveCount(N)` is broken-by-design. |
-| **How to run E2E locally** | Use the EXACT command from RESEARCH §9 — there is **no `npm run e2e` script**. The commands are: `supabase start` → apply additive seed via `psql` → `npx playwright test --config e2e/playwright.config.ts --grep @smoke`. Add headed/single-spec debug variants. |
+| **How to run E2E locally** | Default: `npm run e2e` (script in `package.json`). Full sequence per RESEARCH §9: `supabase start` → apply additive seed via `psql` → `npm run e2e` (or the explicit `npx playwright test --config e2e/playwright.config.ts --grep @smoke` for filtering/debug). Add headed/single-spec debug variants. |
 | **Common gotchas list** | Top 3-5 footguns: un-filtered counting; `.first()` on shared DB; missing vote precondition; FK cascade gaps. |
 
 **Established constraints to respect:**
 - Length target ~80-150 lines (D-09).
 - Must contain the literal string `E2E-SCOPE-1` and a code block referencing `Locator.filter` (RESEARCH §10 verification command grep targets these tokens).
 - Source-comment discipline applies: WHY-only; do NOT cite Phase 8, plan IDs, or PR numbers in the README body. Cite the upstream research document by path only.
-- Do NOT cite `npm run e2e` — that script does not exist (RESEARCH §9).
-- Recommended (per RESEARCH §9): add `"e2e": "playwright test --config e2e/playwright.config.ts"` to `package.json` for symmetry — planner's call. If added, the README cites `npm run e2e`; if not, the README cites the full `npx ...` command.
+- Cite `npm run e2e` as the default local command (the `"e2e": "playwright test --config e2e/playwright.config.ts"` script is now present in `package.json`); include the explicit `npx playwright test --config e2e/playwright.config.ts ...` form for filter/debug variants.
 
 ---
 
@@ -528,7 +527,7 @@ test('[@smoke] user browses topics, responds, sees live results', async ({ page 
 - `e2e/tests/admin-create.spec.ts:34` — runtime `[E2E] Admin-create ${Date.now()}`.
 - RESEARCH §6 fixture skeleton — `[E2E] ${slug} ${Date.now()}`.
 
-**Apply to:** Every E2E-managed poll row (seeded OR runtime-inserted). The lint rule's regex `/^\[E2E/` and the `e2e/README.md` documentation depend on this convention.
+**Apply to:** Every E2E-managed poll row (seeded OR runtime-inserted). The lint rule's regex `/\[E2E/` and the `e2e/README.md` documentation depend on this convention.
 
 ---
 

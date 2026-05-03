@@ -61,8 +61,8 @@ export default defineConfig([
             // unrelated to locator filtering and was the WR-01 false-negative.
             ":not(:has(.callee CallExpression[callee.property.name='filter']))",
           message:
-            'E2E-SCOPE-1: filter to [E2E] prefix before counting/indexing list locators. ' +
-            'Use .filter({ hasText: /\\[E2E\\]/ }) before .first/.nth/.last/.toHaveCount/.count, ' +
+            'E2E-SCOPE-1: filter to [E2E prefix before counting/indexing list locators. ' +
+            'Use .filter({ hasText: /\\[E2E/ }) before .first/.nth/.last/.toHaveCount/.count, ' +
             'OR add `// eslint-disable-next-line no-restricted-syntax -- WHY` if the locator ' +
             'is already DOM-scoped. See e2e/README.md.',
         },

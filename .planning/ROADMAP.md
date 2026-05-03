@@ -66,8 +66,8 @@ Full v1.0 phase details (goals, plans, success criteria) preserved in [milestone
 **Depends on**: Nothing (test-only changes plus one second-human session)
 **Requirements**: TEST-07, TEST-08, TEST-09, TEST-10
 **Success Criteria** (what must be TRUE):
-  1. The three previously-failing Playwright specs (`admin-create.spec.ts`, `browse-respond.spec.ts`, `filter-search.spec.ts`) pass green against the canonical two-layer seed in CI, with their list locators filtered via `Locator.filter({ hasText: /\[E2E\]/ })`.
-  2. An ESLint `no-restricted-syntax` rule fails the build when an `e2e/tests/**/*.spec.ts` file calls `page.locator(...).all()` / `.nth(n)` / `.first()` on a shared-DB list without a preceding `.filter({ hasText: /\[E2E\]/ })`; the rule is documented in `e2e/README.md` (E2E-SCOPE-1).
+  1. The three previously-failing Playwright specs (`admin-create.spec.ts`, `browse-respond.spec.ts`, `filter-search.spec.ts`) pass green against the canonical two-layer seed in CI, with their list locators filtered via `Locator.filter({ hasText: /\[E2E/ })`.
+  2. An ESLint `no-restricted-syntax` rule fails the build when an `e2e/tests/**/*.spec.ts` file calls `page.locator(...).all()` / `.nth(n)` / `.first()` on a shared-DB list without a preceding `.filter({ hasText: /\[E2E/ })`; the rule is documented in `e2e/README.md` (E2E-SCOPE-1).
   3. A Playwright test-scoped `freshPoll` fixture exists, provides per-test mutable poll/vote state via `await use(...)`, and cleans up after itself; at least one spec consumes it as proof of contract.
   4. Phase 03 UAT tests 2 (Non-Member Login Rejection) and 3 (Error Page Invite Link) have second-human evidence appended to `.planning/phases/03-response-integrity/03-UAT.md` with timestamp, executor handle, and pass/fail per case.
 **Plans**: 4 plans

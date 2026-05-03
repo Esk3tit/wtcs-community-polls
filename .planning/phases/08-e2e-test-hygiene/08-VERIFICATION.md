@@ -113,7 +113,8 @@ No blocking anti-patterns found. No stub indicators. No placeholder returns. No 
 | ESLint rule fires on unscoped `.first()` | synthetic canary: `printf ... > _lint-canary.spec.ts && npx eslint ...; rm` | exit 1 — error fired with E2E-SCOPE-1 message | PASS |
 | ESLint rule quiet on all 4 spec files | `npx eslint e2e/tests/` | exit 0 | PASS |
 | TypeScript build (src/) clean | `npx tsc -b` | exit 0 | PASS |
-| Unit test suite | `npm test` — 1167 tests | 1167 passed (0 failed test cases; 8 test files fail due to missing env, not code failures) | PASS |
+| Unit test cases (local) | `npm test` — 1167 cases that ran | 1167 passed, 0 failed | PASS |
+| Unit test files — env-gated | `npm test` (local, no service-role env) | 8 test files did not load due to missing local env (no code failures); same suite is green in CI on commit `3207f8f` (run 25286405258, lint-and-unit 55s) where env is provided | PASS (CI-green) |
 | Full repo lint | `npx eslint .` | exit 0 | PASS |
 | Playwright @smoke suite against live Supabase | `npm run e2e -- --grep @smoke` (requires supabase start + seed) | NOT RUN — deferred to human Task 4 | SKIP |
 | Fixture leak check post-suite | `psql ... select count(*) from polls where description = 'freshPoll fixture row' ...` | NOT RUN | SKIP |

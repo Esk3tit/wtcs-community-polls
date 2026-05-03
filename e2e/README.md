@@ -4,20 +4,20 @@ Playwright `1.59.1` end-to-end suite for WTCS Community Polls. Runs against a
 local Supabase stack in CI and locally; produces the four critical-journey
 @smoke tests cited in `.planning/research/v1.1-PLAYWRIGHT-FIXTURES.md`.
 
-## E2E-SCOPE-1 — list locators must filter to `[E2E]` rows
+## E2E-SCOPE-1 — list locators must filter to `[E2E` rows
 
 The CI database is seeded in two layers (see "Two-layer seed" below). Naive
 list assertions like `page.getByTestId('suggestion-card').first()` or
 `.toHaveCount(N)` drift the moment either layer adds a row. The convention:
 
-- **Always** use `Locator.filter({ hasText: /\[E2E\]/ })` before any of
+- **Always** use `Locator.filter({ hasText: /\[E2E/ })` before any of
   `.toHaveCount`, `.count`, `.first`, `.nth`, `.last`, `.all` on a
   shared-DB list.
 - **Or** consume the `freshPoll` fixture (below) for vote-precondition specs.
 
 ESLint enforces this in `eslint.config.js`:
 
-```
+```text
 no-restricted-syntax (e2e/tests/**/*.spec.ts):
   CallExpression matching .toHaveCount/.count/.first/.nth/.last
   without a preceding .filter() in the callee chain → error.
@@ -27,7 +27,7 @@ The rule's `:has()` walk is field-scoped to the `.callee` subtree (not
 the full descendant tree), so `.filter()` calls in **arguments** do NOT
 satisfy the rule. Examples:
 
-- `page.getByTestId('x').filter({ hasText: /\[E2E\]/ }).first()` — passes (filter in chain).
+- `page.getByTestId('x').filter({ hasText: /\[E2E/ }).first()` — passes (filter in chain).
 - `expect(page.getByTestId('x').filter({...})).toHaveCount(1)` — passes (filter in chain wrapped by expect).
 - `expect(page.getByTestId('x')).toHaveCount(arr.filter(p).length)` — **fails** (filter is in argument, unrelated to the locator).
 - `page.getByTestId('x').first()` — fails (no filter).
@@ -79,7 +79,7 @@ test('[@smoke] user votes on a fresh poll', async ({ page, freshPoll }) => {
 When to reach for which:
 - **Vote-precondition specs** (assert non-zero counts after voting) → `freshPoll`.
 - **Read-only list specs** (filter/search/visibility) → static
-  `e2e/fixtures/seed.sql` rows + the `.filter({ hasText: /\[E2E\]/ })`
+  `e2e/fixtures/seed.sql` rows + the `.filter({ hasText: /\[E2E/ })`
   convention.
 
 ## Two-layer seed
@@ -92,12 +92,13 @@ Two SQL files seed the test DB:
 2. **Additive** — `e2e/fixtures/seed.sql`. Idempotent. Applied via
    `psql "$db_url" -f e2e/fixtures/seed.sql` with
    `PGOPTIONS='-c app.e2e_seed_allowed=true'` (fail-closed guard prevents
-   accidental application against non-local databases). Adds the four `[E2E]`
-   prefixed fixture polls + the test-user `auth.users`/`profiles` rows.
+   accidental application against non-local databases). Adds the four `[E2E`
+   prefixed fixture polls (`[E2E]` and `[E2E SMOKE]` titles) + the test-user
+   `auth.users`/`profiles` rows.
 
 Because both layers contribute rows, `expect(cards).toHaveCount(N)` against
 the unfiltered list is broken-by-design — the count depends on which layers
-ran. The E2E-SCOPE-1 filter narrows assertions to the `[E2E]`-prefixed rows
+ran. The E2E-SCOPE-1 filter narrows assertions to the `[E2E`-prefixed rows
 the test owns.
 
 ## Run locally

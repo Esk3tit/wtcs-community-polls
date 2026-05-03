@@ -13,7 +13,7 @@
 - **`auth-errors.spec.ts` is rule-clean.** Zero matched call sites — no eslint-disable or filter additions needed.
 - **The research-suggested AST selector is too narrow on its own.** `>` is a direct-child combinator and `:not(...)` only blocks the immediate `filter` parent — it does NOT scan the full chain. A tightened selector + the eslint-disable escape-hatch (D-06) is what makes the rule honest. See §3 for the exact selector and AST trace.
 - **Service-role client must be NEW.** `e2e/helpers/auth.ts` does NOT currently mint a service-role client — CONTEXT line 119 (and the Domain → Existing Code Insights bullet) are wrong on this. `auth.ts` uses ONLY `ANON_KEY` (L27). The fixture cannot "import the same client." The planner must add a new module-scoped service-role client export to `auth.ts` (or factor into a sibling helper) — see §5.
-- **CI is gap-free for the new lint rule.** `npm run lint` runs as a precondition to e2e (lint-and-unit gate at ci.yml L23–34, e2e `needs: lint-and-unit` at L37). The fixture seed is applied via `psql … -f e2e/fixtures/seed.sql` after `supabase start` (L131). One small documentation gap: there is **no `npm run e2e` script** — CI invokes `npx playwright test --config e2e/playwright.config.ts --grep @smoke` directly. README must use the same incantation, NOT a fictitious `npm run e2e`.
+- **CI is gap-free for the new lint rule.** `npm run lint` runs as a precondition to e2e (lint-and-unit gate at ci.yml L23–34, e2e `needs: lint-and-unit` at L37). The fixture seed is applied via `psql … -f e2e/fixtures/seed.sql` after `supabase start` (L131). Note: `package.json` now defines `"e2e": "playwright test --config e2e/playwright.config.ts"` (added during Phase 8); CI still invokes `npx playwright test --config e2e/playwright.config.ts --grep @smoke` directly with the explicit `--grep @smoke` filter, while local devs may use the equivalent `npm run e2e` (or pass `--grep @smoke` for the smoke subset). Earlier drafts of this research called the script "fictitious" — that note is stale and superseded by the script's addition.
 
 ---
 
@@ -434,17 +434,19 @@ All four fixture polls are static-titled (`[E2E SMOKE] Remove MiG-29 …`, `[E2E
 
 **No CI gaps that would prevent the new lint rule from firing.** When `eslint.config.js` lands with the new rule, the next CI run executes `npm run lint` → `eslint .` (per `package.json` L11) → the rule activates against `e2e/tests/**/*.spec.ts`. Lint failures block the e2e job.
 
-**One documentation gotcha for `e2e/README.md` (D-09 scope):** there is **no `npm run e2e` script**. The README's "How to run E2E locally" section MUST cite the actual command:
+**Documentation note for `e2e/README.md` (D-09 scope):** `package.json` now defines `"e2e": "playwright test --config e2e/playwright.config.ts"` (added during Phase 8). The README's "How to run E2E locally" section may use either form:
 
 ```bash
 # After supabase start + seed:
+npm run e2e -- --grep @smoke
+# equivalent to:
 npx playwright test --config e2e/playwright.config.ts --grep @smoke
 
 # Single spec (debug):
 npx playwright test --config e2e/playwright.config.ts e2e/tests/browse-respond.spec.ts --headed
 ```
 
-Citing a fictitious `npm run e2e` would mislead. Adding `"e2e": "playwright test --config e2e/playwright.config.ts"` to `package.json` is a 1-line plan task if the planner wants to honor the convention used elsewhere in the codebase (`npm run lint`, `npm test`) — recommend doing this for symmetry.
+CI invokes the `npx` form directly with `--grep @smoke`. Earlier drafts of this research called `npm run e2e` "fictitious" — that note is stale; the script exists and both forms are valid.
 
 ---
 
@@ -482,7 +484,7 @@ Per `nyquist_validation` enabled (no explicit `false` in `.planning/config.json`
 | TEST-08 (rule fires on violation) | ESLint flags `cards.first()` w/o `.filter()` | unit (synthetic) | `printf "import { test } from '@playwright/test'\ntest('x', async ({ page }) => { await page.getByTestId('y').first() })\n" > e2e/tests/_lint-canary.spec.ts && npx eslint e2e/tests/_lint-canary.spec.ts; rm e2e/tests/_lint-canary.spec.ts` (expect non-zero exit) | ❌ Wave 0 — canary spec generated/torn-down per run |
 | TEST-08 (rule does NOT fire on compliant code) | ESLint passes on the four updated specs | unit | `npx eslint e2e/tests/` (expect zero exit) | ✅ files exist post-Wave 1 |
 | TEST-08 (README documents rule) | `e2e/README.md` exists, ≥80 lines, contains literal string `E2E-SCOPE-1` and a code block referencing `Locator.filter` | docs | `[ -f e2e/README.md ] && [ "$(wc -l < e2e/README.md)" -ge 80 ] && grep -q 'E2E-SCOPE-1' e2e/README.md && grep -q 'Locator.filter' e2e/README.md` | ❌ Wave 0 — file to be created |
-| TEST-09 (fixture inserts + cleans up exactly 1 row) | Row-count delta around `await use(...)` is +1 then -1 | integration | After spec run: `psql "$DB_URL" -c "select count(*) from polls where title like '[E2E]%' and created_at > now() - interval '5 minutes'"` (expect 0; non-zero indicates leak) | ❌ Wave 0 — fixture file to be created |
+| TEST-09 (fixture inserts + cleans up exactly 1 row) | Row-count delta around `await use(...)` is +1 then -1 | integration | After spec run: `psql "$DB_URL" -c "select count(*) from polls where description = 'freshPoll fixture row' and created_at > now() - interval '5 minutes'"` (expect 0; non-zero indicates leak). Filter on the fixture's deterministic `description` marker — the title prefix `[E2E]%` would false-positive against static seeded rows. | ❌ Wave 0 — fixture file to be created |
 | TEST-09 (proof-of-contract consumer green) | `browse-respond.spec.ts` passes using `freshPoll` fixture | e2e | `npx playwright test --config e2e/playwright.config.ts e2e/tests/browse-respond.spec.ts --grep @smoke` | ✅ file exists; needs migration |
 | TEST-10 (runbook + template exist) | `08-UAT-10-SCRIPT.md` exists, `03-UAT.md` has `## Second-Human Verification` section | docs | `[ -f .planning/phases/08-e2e-test-hygiene/08-UAT-10-SCRIPT.md ] && grep -q '^## Second-Human Verification' .planning/phases/03-response-integrity/03-UAT.md` | ❌ Wave 0 — files to be created/edited |
 | TEST-10 (runbook is read-only) | No source-code paths touched by TEST-10 work | git diff | After plan completes: `git diff --name-only $(git merge-base HEAD main)..HEAD -- 'src/**' 'supabase/**' | grep -v '^$' | wc -l` should be 0 for the TEST-10 plan task only | ✅ enforceable via plan task scoping |

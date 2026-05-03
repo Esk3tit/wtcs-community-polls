@@ -22,8 +22,11 @@ import { getAdminClient } from '../helpers/auth'
 // fixture runner does NOT auto-invoke teardown if the fixture body throws
 // before reaching await provide(...). Without this guard, a polls.insert
 // success followed by a choices.insert failure would leak the polls row.
-// The catch block captures the test error so the finally block can
-// preserve it via AggregateError if cleanup also throws.
+// The catch block captures fixture setup errors (e.g. choices insert
+// failure) so the finally block can preserve them via AggregateError if
+// cleanup also throws. Note: provide() resolves normally after the test
+// body completes; test-body failures are reported by Playwright separately
+// and do NOT flow through this catch.
 //
 // is_pinned=true: ensures SuggestionCard initializes isOpen=true so
 // CollapsibleContent renders immediately — choice-buttons are in the DOM
@@ -75,7 +78,7 @@ export const test = base.extend<PollFixtures>({
       .single()
     if (error || !data) throw error ?? new Error('freshPoll insert returned no row')
 
-    let testErr: unknown
+    let setupErr: unknown
     let deleteErr: unknown
     try {
       // Two choices so the consuming spec can vote — choices.poll_id has
@@ -89,9 +92,11 @@ export const test = base.extend<PollFixtures>({
 
       await provide({ id: data.id, title: data.title })
     } catch (e) {
-      // Capture the test error so the finally block can preserve it if
-      // cleanup also throws — otherwise the failing test is masked.
-      testErr = e
+      // Capture fixture setup errors (e.g. choices insert failure) so the
+      // finally block can preserve them if cleanup also throws — otherwise
+      // the failing setup is masked. provide() resolves normally after the
+      // test body, so test-body failures are NOT captured here.
+      setupErr = e
     } finally {
       // Single statement: cascade handles choices, votes, vote_counts.
       const { error: cleanupErr } = await admin.from('polls').delete().eq('id', data.id)
@@ -99,24 +104,35 @@ export const test = base.extend<PollFixtures>({
     }
 
     // Re-throw logic runs after finally to satisfy no-unsafe-finally.
-    // Preserve both errors so the failing test isn't masked by cleanup churn.
+    // Preserve both errors so the failing setup isn't masked by cleanup churn.
     // Coerce non-Error throws (null, undefined, plain strings) into Error
     // instances so Playwright's reporter renders the failure usefully.
-    if (testErr !== undefined && deleteErr !== undefined) {
+    if (setupErr !== undefined && deleteErr !== undefined) {
       throw new AggregateError(
-        [normalizeError(testErr), normalizeError(deleteErr)],
-        'fixture cleanup failed after test failure',
+        [normalizeError(setupErr), normalizeError(deleteErr)],
+        'fixture cleanup failed after setup failure',
       )
     }
     if (deleteErr !== undefined) throw normalizeError(deleteErr)
-    if (testErr !== undefined) throw normalizeError(testErr)
+    if (setupErr !== undefined) throw normalizeError(setupErr)
   },
 })
 
 // Coerce arbitrary thrown values (null, undefined, strings, supabase error
 // shapes) into Error so the test reporter has a stack/message to render.
+// Object-shaped throwables (e.g. PostgrestError) carry message/code/details
+// fields that String(e) would flatten to "[object Object]" — pull those off
+// before falling back so DB failures stay debuggable in the report.
 function normalizeError(e: unknown): Error {
-  return e instanceof Error ? e : new Error(`Non-Error throw: ${String(e)}`)
+  if (e instanceof Error) return e
+  if (typeof e === 'object' && e !== null) {
+    const message = 'message' in e && typeof e.message === 'string' ? e.message : undefined
+    const code = 'code' in e && typeof e.code === 'string' ? ` (code: ${e.code})` : ''
+    const details =
+      'details' in e && typeof e.details === 'string' && e.details ? ` — ${e.details}` : ''
+    if (message) return new Error(`${message}${code}${details}`)
+  }
+  return new Error(`Non-Error throw: ${String(e)}`)
 }
 
 export { expect }
