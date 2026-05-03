@@ -3,12 +3,12 @@ status: partial
 phase: 08-e2e-test-hygiene
 source: [08-VERIFICATION.md]
 started: 2026-05-02T23:00:00Z
-updated: 2026-05-02T23:00:00Z
+updated: 2026-05-03T00:30:00Z
 ---
 
 ## Current Test
 
-[awaiting human testing]
+Test 2 (second-human Phase 03 UAT 2+3) — async per D-11; does not block Phase 8 closure.
 
 ## Tests
 
@@ -24,7 +24,13 @@ expected: |
     ```
   - Push branch `gsd/phase-08-e2e-test-hygiene`; CI Playwright `e2e` job goes green
   - Reply `approved <CI_RUN_URL>` once both local and CI pass
-result: [pending]
+result: pass
+verified: 2026-05-03T00:30:00Z
+evidence: |
+  - Local smoke: 5/5 passed in 7.4s (parallel, 5 workers) on commit 308c578 — see `.planning/debug/phase-8-smoke-failures.md` Resolution
+  - Local leak query: 0 rows
+  - CI: PR #22 (https://github.com/Esk3tit/wtcs-community-polls/pull/22) — workflow run 25273571093 success (https://github.com/Esk3tit/wtcs-community-polls/actions/runs/25273571093)
+  - Three gap fixes in commit 308c578 (fixture is_pinned/category defaults, filter-search regex, slug @-tag stripping) — root causes documented in `.planning/debug/phase-8-smoke-failures.md` (resolved)
 
 ### 2. Second-human Phase 03 UAT Tests 2 + 3 (Non-Member Login Rejection, Error Page Invite Link)
 expected: |
@@ -38,9 +44,9 @@ result: [pending]
 ## Summary
 
 total: 2
-passed: 0
+passed: 1
 issues: 0
-pending: 2
+pending: 1
 skipped: 0
 blocked: 0
 

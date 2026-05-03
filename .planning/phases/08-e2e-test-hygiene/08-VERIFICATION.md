@@ -1,24 +1,27 @@
 ---
 phase: 08-e2e-test-hygiene
-verified: 2026-05-02T23:00:00Z
-status: human_needed
-score: 7/8 must-haves verified
+verified: 2026-05-03T00:30:00Z
+status: passed
+score: 8/8 must-haves verified
 overrides_applied: 0
 human_verification:
   - test: "Run full Playwright smoke suite against canonical two-layer seed and verify zero fixture leak"
-    expected: "npm run lint exits 0; 4 specs / 4 passed; select count(*) from polls where description = 'freshPoll fixture row' and created_at > now() - interval '5 minutes' returns 0; push branch and confirm CI green (e2e job green)"
-    why_human: "Requires live local Supabase stack (supabase start + e2e/fixtures/seed.sql applied) plus CI run. This is Plan 08-03 Task 4 checkpoint:human-verify gate — Playwright runs were deferred per orchestrator D-11 because the local Supabase stack was not available in the execution worktree."
+    expected: "npx playwright test --grep @smoke exits 0; specs all pass; leak query returns 0; push branch and confirm CI green"
+    result: pass
+    verified: 2026-05-03T00:30:00Z
+    evidence: "Local smoke 5/5 in 7.4s parallel; leak count 0; CI run 25273571093 success on PR #22 (https://github.com/Esk3tit/wtcs-community-polls/actions/runs/25273571093). Three gap fixes (commit 308c578) — see .planning/debug/phase-8-smoke-failures.md (resolved)."
   - test: "Second-human Phase 03 UAT Tests 2 + 3 (Non-Member Login Rejection, Error Page Invite Link)"
     expected: "Qualified tester (2FA-enabled Discord account, not WTCS server member, not original executor) runs 08-UAT-10-SCRIPT.md and pastes filled evidence under ## Second-Human Verification in 03-UAT.md — result: pass for both tests"
-    why_human: "Per D-11, the actual second-human session runs asynchronously. The runbook + template artifact is the Phase 8 synchronous deliverable; the filled evidence appears when a qualified tester is recruited. 03-UAT.md currently shows placeholder fields only."
+    result: deferred
+    why_deferred: "Per D-11, the actual second-human session runs asynchronously. The runbook + template artifact is the Phase 8 synchronous deliverable. Phase 8 closure does NOT block on the placeholder fields being filled in. Tracked in 08-HUMAN-UAT.md item 2 (status: pending)."
 ---
 
 # Phase 8: E2E Test Hygiene — Verification Report
 
 **Phase Goal:** Playwright E2E suite is honest under the canonical two-layer seed — every shared-DB list locator is `[E2E]`-scoped, the convention is lint-enforced, per-test mutable state lives in a fixture, and the two second-human-gated Phase 03 UAT cases have evidence on file.
-**Verified:** 2026-05-02T23:00:00Z
-**Status:** human_needed
-**Re-verification:** No — initial verification
+**Verified:** 2026-05-03T00:30:00Z (initial 2026-05-02; re-verified after smoke gap closure)
+**Status:** passed
+**Re-verification:** Yes — initial verifier returned `human_needed` (7/8); local smoke run revealed 2 gap bugs documented in `.planning/debug/phase-8-smoke-failures.md`; fixed in commit 308c578; local 5/5 + CI green confirmed; status now `passed` (8/8). The async second-human Phase 03 UAT (item 2) is explicitly deferred per D-11 and does not block Phase 8 closure.
 
 ---
 
