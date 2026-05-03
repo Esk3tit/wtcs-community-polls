@@ -54,7 +54,7 @@ export default defineConfig([
         'error',
         {
           selector:
-            "CallExpression[callee.type='MemberExpression'][callee.property.name=/^(toHaveCount|first|nth|last)$/]" +
+            "CallExpression[callee.type='MemberExpression'][callee.property.name=/^(toHaveCount|first|nth|last|count)$/]" +
             // Field-scope the :has() walk to the callee subtree via `.callee`
             // so .filter() calls in arguments (e.g. toHaveCount(arr.filter(x).length))
             // do NOT silently satisfy the rule. Argument-side .filter() is
@@ -62,7 +62,7 @@ export default defineConfig([
             ":not(:has(.callee CallExpression[callee.property.name='filter']))",
           message:
             'E2E-SCOPE-1: filter to [E2E] prefix before counting/indexing list locators. ' +
-            'Use .filter({ hasText: /\\[E2E\\]/ }) before .first/.nth/.last/.toHaveCount, ' +
+            'Use .filter({ hasText: /\\[E2E\\]/ }) before .first/.nth/.last/.toHaveCount/.count, ' +
             'OR add `// eslint-disable-next-line no-restricted-syntax -- WHY` if the locator ' +
             'is already DOM-scoped. See e2e/README.md.',
         },

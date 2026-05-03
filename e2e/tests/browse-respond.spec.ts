@@ -37,6 +37,7 @@ test('[@smoke] user browses topics, responds, sees live results', async ({ page,
   // would then be 1 and the click would fire).
   // eslint-disable-next-line no-restricted-syntax -- DOM-scoped inside fixture card; at most one collapsed trigger exists when card is unpinned.
   const collapsedTrigger = firstCard.getByRole('button', { expanded: false }).first()
+  // eslint-disable-next-line no-restricted-syntax -- DOM-scoped variable bound above; .count() probes presence of the at-most-one collapsed trigger.
   if (await collapsedTrigger.count()) {
     await collapsedTrigger.click()
   }

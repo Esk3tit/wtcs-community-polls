@@ -11,14 +11,15 @@ list assertions like `page.getByTestId('suggestion-card').first()` or
 `.toHaveCount(N)` drift the moment either layer adds a row. The convention:
 
 - **Always** use `Locator.filter({ hasText: /\[E2E\]/ })` before any of
-  `.toHaveCount`, `.first`, `.nth`, `.last`, `.all` on a shared-DB list.
+  `.toHaveCount`, `.count`, `.first`, `.nth`, `.last`, `.all` on a
+  shared-DB list.
 - **Or** consume the `freshPoll` fixture (below) for vote-precondition specs.
 
 ESLint enforces this in `eslint.config.js`:
 
 ```
 no-restricted-syntax (e2e/tests/**/*.spec.ts):
-  CallExpression matching .toHaveCount/.first/.nth/.last
+  CallExpression matching .toHaveCount/.count/.first/.nth/.last
   without a preceding .filter() in the callee chain → error.
 ```
 
