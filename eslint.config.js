@@ -39,8 +39,14 @@ export default defineConfig([
     files: ['e2e/tests/**/*.spec.ts'],
     rules: {
       // E2E-SCOPE-1: list locators on the shared E2E DB drift unless they
-      // filter to [E2E]-prefixed rows. The :has() walk catches a .filter()
-      // call anywhere in the chain; bare counters/indexers are flagged.
+      // filter to [E2E]-prefixed rows. The :has() walk descends only into
+      // the callee chain (MemberExpression subtree) so .filter() calls
+      // appearing in arguments (e.g. `toHaveCount(arr.filter(...).length)`)
+      // do NOT silently satisfy the rule. `.all` is intentionally omitted
+      // from the matched method names because `Promise.all([...])` is
+      // canonical Playwright pattern for racing navigation+click and
+      // would otherwise hard-fail; Locator.all() is rare and can be
+      // suppressed via the escape-hatch when needed.
       // Escape-hatch: `eslint-disable-next-line no-restricted-syntax -- WHY`
       // is permitted when the locator is already DOM-scoped (e.g. inside
       // a card boundary). PR review enforces WHY comment quality.
@@ -48,11 +54,15 @@ export default defineConfig([
         'error',
         {
           selector:
-            "CallExpression[callee.type='MemberExpression'][callee.property.name=/^(toHaveCount|first|nth|all|last)$/]" +
-            ":not(:has(CallExpression[callee.property.name='filter']))",
+            "CallExpression[callee.type='MemberExpression'][callee.property.name=/^(toHaveCount|first|nth|last)$/]" +
+            // Field-scope the :has() walk to the callee subtree via `.callee`
+            // so .filter() calls in arguments (e.g. toHaveCount(arr.filter(x).length))
+            // do NOT silently satisfy the rule. Argument-side .filter() is
+            // unrelated to locator filtering and was the WR-01 false-negative.
+            ":not(:has(.callee CallExpression[callee.property.name='filter']))",
           message:
             'E2E-SCOPE-1: filter to [E2E] prefix before counting/indexing list locators. ' +
-            'Use .filter({ hasText: /\\[E2E\\]/ }) before .first/.nth/.last/.all/.toHaveCount, ' +
+            'Use .filter({ hasText: /\\[E2E\\]/ }) before .first/.nth/.last/.toHaveCount, ' +
             'OR add `// eslint-disable-next-line no-restricted-syntax -- WHY` if the locator ' +
             'is already DOM-scoped. See e2e/README.md.',
         },
