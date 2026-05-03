@@ -1,232 +1,286 @@
 ---
 phase: 8
-round: 2
+round: 3
 reviewers: [gemini, codex, cursor]
 skipped: [claude, coderabbit]
-skip_reason: "claude: running inside Claude Code (CLAUDE_CODE_ENTRYPOINT=cli). coderabbit: working tree clean post-commit, nothing to review locally."
-previous_round: "git commit 0e598cc (round 1 — see git history for prior REVIEWS.md)"
-reviewed_at: 2026-05-02T21:13:15Z
+skip_reason: "claude: running inside Claude Code. coderabbit: working tree clean post-commit."
+previous_rounds: "git commit 0e598cc (round 1) + f662e87 (round 2) — see git history."
+reviewed_at: 2026-05-03T03:45:10Z
 plans_reviewed: [08-01-PLAN.md, 08-02-PLAN.md, 08-03-PLAN.md, 08-04-PLAN.md]
 ---
 
-# Cross-AI Plan Review — Phase 8: E2E Test Hygiene (Round 2)
+# Cross-AI Plan Review — Phase 8: E2E Test Hygiene (Round 3)
 
-Round 2 reviews the **revised** plans (post R-1 through R-5 fixes). Round 1 REVIEWS.md is preserved in git commit `0e598cc`.
+Round 3 reviews the round-2-revised plans (post HIGH-1, HIGH-2, MEDIUM-3 fixes).
 
 ## Gemini Review
 
-## Round-2 Plan Review: Phase 8 — E2E Test Hygiene
+### Round-3 Plan Review: Phase 8 — E2E Test Hygiene
 
-The revised plans are semantically sound and provide a robust implementation strategy that directly addresses all Round-1 action items. The adoption of the inline-filter approach in `filter-search.spec.ts` (R-1) and the addition of a deterministic `description` leak marker (R-4) significantly harden the execution phase.
+The Round-2 fixes for the filter convention and the echo-OK masking are partially sound, but the implementation has introduced a critical logic inversion in the verification layer and failed to address the broken import syntax flagged in the previous round.
 
-### R-1 through R-5 Verdicts
+---
 
-| ID | Issue | Verdict | Citation |
+### 1. HIGH / MEDIUM Verdicts
+
+| ID | Subject | Verdict | Rationale |
 |:---|:---|:---|:---|
-| **R-1** | AST blind spot (HIGH) | **ACCEPTED** | **Plan 03 (Task 2:200-240)**: Correctly inlines the `.filter()` chain for every list-locator call in `filter-search.spec.ts`, removing the variable-alias risk entirely. |
-| **R-2** | Wave sequencing (MEDIUM) | **ACCEPTED** | **Plan 03 (Task 1:125-130)**: Enforces a per-spec atomic protocol (lint + test + commit per spec) ensuring intermediate commits are CI-safe. |
-| **R-3** | grep -F usage (LOW) | **ACCEPTED** | **Plan 03 (Task 1:179, Task 2:244)**: All fixed-string verifications now use the `-F` flag for literal matching. |
-| **R-4** | try/finally (MEDIUM) | **ACCEPTED** | **Plan 01 (Task 2:238-257)**: Setup wrapped in `try/finally`; **Plan 01 (Task 2:199)**: Adds deterministic `description: 'freshPoll fixture row'` leak marker. |
-| **R-5** | package.json (MEDIUM) | **ACCEPTED** | **08-CONTEXT.md (L94-102)**: Correctly reclassifies `package.json` to "Files to modify" and acknowledges the script addition. |
+| **HIGH-1** | **Filter convention (anchor)** | **ACCEPTED** | Dropping the `^` anchor in `/\[E2E\]/` is correct. `SuggestionCard.tsx` renders the category badge and timer before the title, so the card's `textContent` never starts with `[E2E]`. |
+| **HIGH-2** | **Verify chains (echo-OK)** | **NEEDS-WORK** | Replacing `; echo OK` with `&& echo OK` is correct for `eslint` and `playwright`, but it has created a **logic inversion** for `tsc | grep` pipes in Plan 01. See NEW-1 below. |
+| **MEDIUM-3** | **Fixture cleanup logic** | **ACCEPTED** | Plan 01 Task 2 (L274–286) correctly uses `AggregateError` to preserve the original test failure if the cleanup `DELETE` also fails. This ensures fail-fast honesty. |
 
-### NEW Concerns
+---
 
-*   **Spaces in package import strings (LOW)**
-    *   **Description**: In Plan 01 (L136, L241) and Plan 03 (L139), code snippets use strings like `' @playwright/test'` and `' @supabase/supabase-js'` (with a leading space inside the quote). The existing codebase uses `'@playwright/test'` (no space). 
-    *   **Risk**: This may cause the `replace` tool to fail if used for surgical line replacement, or introduce trivial lint/formatting noise if applied as-is.
-*   **Leak-check time window (LOW)**
-    *   **Description**: Plan 03 (L327) uses `interval '5 minutes'` for the post-suite leak check.
-    *   **Risk**: While the smoke suite is fast, slower CI runners or concurrent builds might occasionally exceed this window, leading to a false "count 0" (ignoring a leak that happened 6 minutes ago). A 10-minute window is safer.
+### 2. NEW Concerns
 
-### Suggestions
+#### 🔴 HIGH — Broken Imports with Leading Spaces (REGRESSION/BLOCKER)
+Multiple `import` statements in Plan 01 (Task 1:136, Task 2:241) and Plan 03 (Task 1:139) contain a leading space inside the quotes:
+*   `import { ... } from ' @supabase/supabase-js'`
+*   `import { ... } from ' @playwright/test'`
 
-*   **Strip the leading spaces** from the package name strings (e.g., change `' @playwright/test'` to `'@playwright/test'`) in all code blocks during execution to match the established style in `package.json`.
-*   **Relax the leak-check interval** in Plan 03 Task 4 from 5 minutes to 10 or 15 minutes to provide more head-room for CI runner latency.
+This was flagged in the Round-2 Gemini review as a LOW concern but is actually **HIGH**. The `replace` tool in Plan 01 Task 1 will fail to find the "existing" line because it includes this space, and the new file created in Task 2 will contain invalid package name references. This will block autonomous execution.
 
-### Risk Assessment
+#### 🔴 HIGH — Inverted TSC Verification (REGRESSION)
+Plan 01 Task 1 (L181) and Task 2 (L304) use:
+`npx tsc ... | grep -E "error TS" | head -5 && echo OK`
+Because `grep` exits 0 only when matches are **found**, these verification blocks will:
+1.  **Fail on success:** If the code is clean, `grep` returns 1, the chain stops, and `echo OK` is skipped (triggering an agent retry).
+2.  **Pass on failure:** If there are 100 errors, `grep` returns 0, `head` returns 0, and `echo OK` runs (triggering a false green).
 
-**Overall risk: LOW**
+#### 🟡 MEDIUM — Functionally Useless Type Check
+`tsconfig.app.json` (referenced in Plan 01 L181/L304) explicitly **excludes** the `e2e/` directory. Using it to verify `e2e/fixtures/poll-fixture.ts` or `e2e/helpers/auth.ts` is a no-op; `tsc` will not report errors for these files even if they are broken.
 
-The planner has successfully mitigated the high-severity AST blind spot and established a clear, atomic migration sequence. The inclusion of synthetic canaries (synthetic violations) in the Plan 03 verification phase ensures the new lint rule is genuinely active and understood before the phase closes. The remaining concerns are minor formatting and interval adjustments.
+#### 🟡 MEDIUM — Atomicity Inconsistency
+Plan 03 (L34) promises "ONE spec file per task," but Task 3 (L323) still groups `admin-create.spec.ts` and `auth-errors.spec.ts` into a single task with a shared verify block. This was flagged in the Round-2 Cursor review and remains unaddressed.
 
-**Ready to execute.**
+---
+
+### 3. Suggestions
+
+*   **Strip the leading spaces** from all `import` strings in the plan (e.g., use `'@playwright/test'` instead of `' @playwright/test'`).
+*   **Correct the `tsc` pipes:** Either run `npx tsc -p <config> --noEmit && echo OK` directly, or use `! npx tsc ... | grep "error TS" && echo OK` to ensure "OK" only follows zero matches.
+*   **Update the E2E Type Check:** Create an `e2e/tsconfig.json` that includes the e2e directory so `tsc` can actually verify the new helper and fixture code.
+*   **Split Plan 03 Task 3** into Task 3a and Task 3b to maintain true per-spec atomicity.
+
+---
+
+### 4. Risk Assessment
+
+**Overall risk: HIGH**
+
+While the architectural fixes for Phase 8 are solid, the **verification logic inversion** and **broken import syntax** will cause an autonomous agent to fail or falsely report success. The agent will likely get stuck at Plan 01 Task 1 due to the `replace` tool failing to match the space-prefixed import string.
+
+**Do NOT execute until the `tsc` logic and import strings are corrected.**
 
 ---
 
 ## Codex Review
 
-**R-1 Through R-5 Verdicts**
-- **R-1: ACCEPTED** — Plan 03 now documents the AST alias blind spot and uses inline filters instead of `const cards` reuse (`08-03-PLAN.md:27-28`, `68`, `231-291`). This fixes the lint false-positive class.
-- **R-2: NEEDS-WORK** — Per-spec atomic intent is present (`08-03-PLAN.md:34`, `195`, `297`, `339`), but the verify commands end with `; echo OK`, so failed lint/Playwright commands can still exit 0 (`08-03-PLAN.md:202`, `304`, `342`). The gate is not reliable yet.
-- **R-3: ACCEPTED** — The changed filter-pattern checks use fixed-string `grep -F` where it matters (`08-03-PLAN.md:202`, `304`, `307-312`).
-- **R-4: ACCEPTED** — The fixture now wraps choices insert + `use()` in `try/finally` and deletes in `finally` (`08-01-PLAN.md:22`, `54`, `268-283`). Leak marker is present (`08-01-PLAN.md:26`, `257`; `08-03-PLAN.md:392-397`).
-- **R-5: ACCEPTED** — `package.json` is now in Plan 02 frontmatter and task scope (`08-02-PLAN.md:7-10`, `180-205`), and CONTEXT reclassifies it under Files to modify (`08-CONTEXT.md:89-96`, `170`).
+**Verdicts**
 
-**New Concerns**
-- **HIGH — `[E2E]` inline filter may not match actual cards.** Plan 03 uses `filter({ hasText: /^\[E2E/ })` on `suggestion-card` (`08-03-PLAN.md:246-258`, `286-288`), but `SuggestionCard` renders category/time before title (`src/components/suggestions/SuggestionCard.tsx:47-74`). Playwright’s `hasText` regex is evaluated against the element text, so the card text likely starts with category text, not `[E2E]`. Use a title-scoped filter, e.g. `filter({ has: page.getByRole('heading', { name: /^\[E2E/ }) })`, or relax the documented convention.
-- **HIGH — verify commands mask failures.** Multiple `<automated>` commands use `... && failing-command ; echo OK`, which returns success after `echo OK` even if the prior command failed (`08-01-PLAN.md:181`, `294`; `08-02-PLAN.md:164`, `374`; `08-03-PLAN.md:202`, `304`, `342`; `08-04-PLAN.md:259`, `330`). Replace with `set -euo pipefail; ...; echo OK`.
-- **MEDIUM — E2E TypeScript is not actually checked.** Plan 01 relies on `npx tsc --noEmit -p tsconfig.app.json` for E2E fixture typing (`08-01-PLAN.md:181`, `294`, `306`, `337`, `347`), but `tsconfig.app.json` only includes `src` (`tsconfig.app.json:29`). Add `tsconfig.e2e.json` or use `tsc --noEmit --allowJs false ...` with `e2e/**/*.ts`.
-- **MEDIUM — cleanup failure masks test-body failure.** If `await use(...)` throws and the delete also fails, the `deleteErr` throw in `finally` replaces the original test failure (`08-01-PLAN.md:278-283`). Capture both and throw an `AggregateError`, or preserve the primary error while reporting cleanup failure.
-- **LOW — stale context/source comments remain.** CONTEXT still says `e2e/helpers/auth.ts` already mints a service-role client (`08-CONTEXT.md:118-119`), and the existing source comment says service-role is not used in that file (`e2e/helpers/auth.ts:14-15`) while Plan 01 forbids edits before line 103 (`08-01-PLAN.md:176-178`). Update those comments to distinguish `loginAs()` anon auth from the new lazy admin getter.
+- **HIGH-1: ACCEPTED** — The `^` anchor is gone from the revised plan files. The enforced/documented convention now uses `/\[E2E\]/`, e.g. [08-02-PLAN.md:145](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-02-PLAN.md:145), [08-02-PLAN.md:242](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-02-PLAN.md:242), and inline migrations at [08-03-PLAN.md:253](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-03-PLAN.md:253). False positives from literal `[E2E]` in descriptions are possible but low-risk under the reserved-prefix convention.
+
+- **HIGH-2: NEEDS-WORK** — The 7 exact `; echo OK` cases appear fixed, but failure-masking remains. Two verifier blocks still use `; echo`: [08-02-PLAN.md:374](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-02-PLAN.md:374), [08-04-PLAN.md:259](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-04-PLAN.md:259). Also, Plan 01 has `tsc | grep | head && echo OK` pipelines that lose the `tsc` exit status without `pipefail`: [08-01-PLAN.md:181](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-01-PLAN.md:181), [08-01-PLAN.md:309](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-01-PLAN.md:309).
+
+- **MEDIUM-3: ACCEPTED** — The `AggregateError` control flow is sound for normal thrown errors. The plan captures the primary error at [08-01-PLAN.md:272](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-01-PLAN.md:272), rethrows it from `catch` at [08-01-PLAN.md:284-288](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-01-PLAN.md:284), deletes in `finally` at [08-01-PLAN.md:289-291](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-01-PLAN.md:289), and preserves both errors via `AggregateError` at [08-01-PLAN.md:293-295](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-01-PLAN.md:293).
+
+**NEW Concerns**
+
+- **HIGH — Remaining verifier masking.** The two `; echo` blocks above still always exit 0 after `echo`. Fix before execution.
+
+- **MEDIUM — `tsc` verifier pipelines are not gates.** [08-01-PLAN.md:181](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-01-PLAN.md:181) and [08-01-PLAN.md:309](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-01-PLAN.md:309) pipe `tsc` through `grep/head`; without `set -o pipefail`, the pipeline can pass even if `tsc` fails. Use `npx tsc ...` as its own `&&` operand, or wrap with `bash -o pipefail -c '...'`.
+
+- **MEDIUM — Plan 04 acceptance count is impossible.** Plan 04 expects `grep -c "^### Test 2 — Non-Member Login Rejection$"` to return 2 at [08-04-PLAN.md:333-335](/Users/khaiphan/code/wtcs-community-polls/.planning/phases/08-e2e-test-hygiene/08-04-PLAN.md:333), but the existing original heading is `### 2. Non-Member Login Rejection`, not `### Test 2 — ...`. The count should be 1 for the new section, plus a separate preservation check for the original heading.
+
+- **LOW — `testErr !== undefined` misses `throw undefined`.** Extremely unlikely, but `unknown` can be `undefined`; use `let hasPrimaryErr = false` plus `let primaryErr: unknown` for fully correct preservation.
 
 **Suggestions**
-- Replace all `; echo OK` verify blocks with `set -euo pipefail` wrappers.
-- Change `[E2E]` scoping to target the title/heading, not whole-card text.
-- Add an E2E TypeScript config and make Plan 01/03 use it.
-- Preserve both test and cleanup errors with `AggregateError`.
-- Remove or correct stale CONTEXT claims around admin-create edits and service-role reuse.
+
+- Replace every remaining `; echo ...` with `&& echo ...`.
+- Add `set -o pipefail` anywhere a verifier uses a pipeline as a gate.
+- Rewrite Plan 01 TypeScript checks as direct commands, not “search output for errors”.
+- Fix Plan 04’s H3 count assertions to match the actual original `03-UAT.md` headings.
+- Rename `testErr` to `primaryErr` and add a boolean sentinel for the cleanup aggregate path.
 
 **Risk Assessment**
-**MEDIUM-HIGH** for execute-phase until the verify commands and `[E2E]` card-filter semantics are fixed. The architecture is solid, and the R-1/R-4 revisions are directionally right, but current verification can falsely pass and the main filter pattern may fail against the real card DOM. Once those two are corrected, risk drops to **LOW-MEDIUM** because the remaining work is test-only and tightly scoped.
+
+**MEDIUM.** The core implementation direction is now sound: the anchor fix is correct, the leak marker aligns with the Plan 03 query, and the `AggregateError` cleanup path is materially better. The remaining risk is verification integrity, not product logic. Fixing the remaining `; echo` and pipeline gates should drop execute-phase risk to LOW.
 
 ---
 
 ## Cursor Review
 
-## R-1 to R-5 Verdicts
+## 1. Round-2 fix verdicts
 
-- **R-1 (AST blind spot)** — **ACCEPTED**  
-  `08-03-PLAN.md` now explicitly adopts inline-filter mitigation and removes alias-based flow (`L28`, `L68`, `L231`, `L246-L259`, `L271-L289`, `L309-L310`), which addresses the data-flow blind spot called out in round 1.
-
-- **R-2 (wave sequencing / atomicity)** — **NEEDS-WORK**  
-  The intent is fixed (`L34`, `L70`, `L195-L196`, `L297`), but execution is inconsistent in Task 3: it handles two specs in one task (`L322-L323`) with one chained verify command (`L342`), which violates the stated “ONE spec file per task” atomic rule (`L34`).
-
-- **R-3 (`grep -F` consistency)** — **ACCEPTED**  
-  Fixed-string grep usage is now consistently applied for filter-pattern checks where it matters (`L72`, `L208`, `L210`, `L304`, `L307`, `L311-L312`).
-
-- **R-4 (fixture partial-setup leak via try/finally)** — **ACCEPTED**  
-  Plan 01 now wraps setup/use in `try/finally` and keeps single-statement delete in `finally` (`08-01-PLAN.md L22`, `L54`, `L268-L284`). Leak-marker narrowing is also wired (`L26`, `L212`, `L257`; `08-03-PLAN.md L33`, `L392-L397`).
-
-- **R-5 (`package.json` reclassification mismatch)** — **ACCEPTED**  
-  Context and plan now align: `package.json` is explicitly in modify set and has a concrete task (`08-CONTEXT.md L89-L97`; `08-02-PLAN.md L7-L10`, `L181-L206`).
-
-## New Concerns
-
-- **MEDIUM — Cleanup error can mask real test failure in fixture finally**  
-  In `08-01-PLAN.md`, `finally` throws on delete error (`L282-L284`). If test/assertion fails and cleanup also fails, JS will surface cleanup error and hide the primary test failure. This is not a leak regression, but it is a diagnosability regression.
-
-- **MEDIUM — Internal inconsistency on “per-spec atomic” contract**  
-  Plan 03 claims each task targets one spec (`L34`), but Task 3 targets two files (`L323`) and verifies both in one chain (`L342`). This weakens rollback/isolation guarantees the revision was trying to enforce.
-
-- **LOW — Context still conflicts with plan on `admin-create.spec.ts` modification expectation**  
-  `08-CONTEXT.md` still says `admin-create.spec.ts` should add `[E2E]` filter (`L90`), while revised Plan 03 says no source change needed (`08-03-PLAN.md L29`, `L77`). This can mislead executors/reviewers even if implementation choice is correct.
-
-## Suggestions
-
-- Split `08-03` Task 3 into **Task 3a** (`admin-create`) and **Task 3b** (`auth-errors`) with separate verify blocks and commits.
-- In fixture cleanup, preserve original failure context when delete fails (e.g., capture primary error and throw aggregate/cause-style error in `finally`).
-- Update `08-CONTEXT.md` canonical file list to remove/clarify the stale `admin-create` “must modify” instruction.
-- Keep the leak query marker (`description = 'freshPoll fixture row'`) as-is; it is materially tighter than title-prefix matching.
-
-## Risk Assessment
-
-**Overall execute-phase risk: MEDIUM.**  
-The round-1 fixes are mostly solid and materially improve correctness (AST mitigation, try/finally leak guard, package/script consistency). Remaining risk is execution hygiene and debug clarity: one atomicity inconsistency in Plan 03 and potential error masking in fixture teardown can slow incident triage or produce confusing failures, but neither is a fundamental design blocker.
+| Fix | Verdict | Notes |
+|-----|---------|--------|
+| **HIGH-1** (`/^\[E2E/` → `/\[E2E\]/`, no `^`) | **ACCEPTED** | Matches the real DOM order: `CategoryBadge` (category name) is rendered before the title `<h3>` in `SuggestionCard.tsx`, so card `textContent` does not start with `[E2E]`. See ```47:74:src/components/suggestions/SuggestionCard.tsx``` |
+| **HIGH-2** (`; echo OK` → `&& echo OK`) | **ACCEPTED** | Correct bash semantics for “only print OK when the whole chain succeeded.” |
+| **MEDIUM-3** (`AggregateError` + `testErr` in `finally`) | **ACCEPTED** | Four outcomes behave as intended: pass/pass; pass + delete fail → `deleteErr`; fail + delete pass → original `e` from `catch`; fail + delete fail → `AggregateError`. `let testErr: unknown` stays `undefined` when `catch` never runs. |
 
 ---
 
-## CodeRabbit Review
+## 2. NEW concerns (post–round-3)
 
-_Skipped: working tree was clean after committing R-1 through R-5 revisions. `coderabbit review` reviews uncommitted local changes only and exits early when none exist. The round-1 CodeRabbit pass (commit `0e598cc`) covered the planning artifacts at first commit; subsequent revisions are doc-level edits._
+| ID | Severity | Issue |
+|----|----------|--------|
+| **N-1** | **HIGH** | **08-01-PLAN Task 1 & Task 2 `<automated>` verify chains are logically wrong after HIGH-2.** Task 1 (line ~181): `npx tsc ... \| grep -v "e2e/" \| grep -E "error TS" \| head -5 && echo OK` requires the **middle `grep` to match** to reach `echo OK`. On a clean `tsc`, stdout is often empty → `grep` exits **1** → **`echo OK` never runs** → verify **fails on success**. Task 2 (line ~309) is worse: it **expects** `error TS` lines for `poll-fixture.ts`; **zero errors** → same false failure. `tsconfig.app.json` only `"include": ["src"]`, so this `tsc` run does not even typecheck `e2e/` (```29:29:tsconfig.app.json```). HIGH-2 did not create the bad intent, but **unmasked** that these chains were never a valid “compile OK” gate (previously masked by `; echo OK`). |
+| **N-2** | **MEDIUM** | **Doc / governance drift:** ROADMAP success criterion #1 still says `filter({ hasText: /^\[E2E/ })` while revised plans use `/\[E2E\]/`. Executors may follow ROADMAP and reintroduce the broken anchor. |
+| **N-3** | **LOW** | **Substring `[E2E]`:** Without `^`, any card whose visible text includes the literal `[E2E]` (e.g. future body copy) could be grouped with E2E rows. Mitigated by reserving that substring for E2E-managed titles; residual risk is low. |
+| **N-4** | **LOW** | **Plan 03 Task 2 verify** `! grep -qE "\bcards\b"`: safe for the intended edit, but brittle if the word “cards” is later added in a comment or string in that file. |
+| **N-5** | **LOW** | **Leak query** (`description = 'freshPoll fixture row'` + time window) stays aligned with the fixture’s `description` marker and Plan 03 checkpoint — no regression from round-3. |
+
+**Other `&& echo OK` chains (e.g. Plan 03 browse/filter):** mostly `grep && eslint && playwright && echo OK` — fine. **Risk is concentrated in the `tsc \| grep ... error` patterns** (N-1).
 
 ---
 
-## Round-1 Fix Verdicts (consensus across reviewers)
+## 3. Suggestions
+
+- **Fix 08-01 verify scripts:** e.g. `npx tsc --noEmit -p tsconfig.app.json` **alone** for Task 1 (auth is not in `tsconfig.app` anyway), or use a project that **includes** `e2e/` and assert `tsc` exit code **0** without requiring matching error lines.
+- **Update `.planning/ROADMAP.md`** Phase 8 success criterion #1 to `/\[E2E\]/` (or “title-scoped filter”) so it matches PLAN / README / ESLint message.
+- **Optional:** In README / patterns, one line explaining **why** `^` is avoided on **card** locators (category before title) reduces future “helpful” reintroduction of `^`.
+- **Plan 04 / governance:** Clarify who updates `REQUIREMENTS.md` TEST-10 wording so it does not contradict the runbook’s “2FA required” note (runbook already explains the change).
+
+---
+
+## 4. Risk assessment
+
+**Overall: MEDIUM**
+
+Implementation ideas (lazy admin client, fixture try/finally + `AggregateError`, inline filter for AST, second-human runbook) are coherent and the round-2 fixes are **sound**. Risk is elevated because **08-01 automated verification is specified to fail on a healthy tree** (N-1), which will block or confuse GSD execute unless the verify blocks are corrected before or during execution. Secondary risk is **ROADMAP vs plan regex drift** (N-2) reintroducing the anchor bug in a later edit.
+
+---
+
+## Round-2 Fix Verdicts (consensus)
 
 | Item | Subject | Gemini | Codex | Cursor | Consensus |
 |------|---------|--------|-------|--------|-----------|
-| R-1 | AST blind spot (inline-filter approach) | ACCEPTED | ACCEPTED | ACCEPTED | ✅ ACCEPTED |
-| R-2 | Per-spec atomic Tasks 1/2/3 | ACCEPTED | **NEEDS-WORK** | NEEDS-WORK | ⚠ Partial — see HIGH below |
-| R-3 | grep -F on filter-pattern checks | ACCEPTED | ACCEPTED | ACCEPTED | ✅ ACCEPTED |
-| R-4 | try/finally + leak marker in fixture | ACCEPTED | ACCEPTED | ACCEPTED | ✅ ACCEPTED |
-| R-5 | package.json reclassification | ACCEPTED | ACCEPTED | ACCEPTED | ✅ ACCEPTED |
+| HIGH-1 | Drop `^` anchor from `/^\[E2E/` | ACCEPTED | ACCEPTED | ACCEPTED | ✅ ACCEPTED |
+| HIGH-2 | Replace `; echo OK` with `&& echo OK` | NEEDS-WORK | NEEDS-WORK | ACCEPTED | ⚠ Partial — see NEW HIGH below |
+| MEDIUM-3 | AggregateError fixture cleanup | ACCEPTED | ACCEPTED | ACCEPTED | ✅ ACCEPTED |
 
-Three of five round-1 fixes are unambiguously sound. R-2 lands the *intent* (per-spec atomic tasks) but has an execution flaw exposed in this round.
+Two of three round-2 fixes are unambiguously sound. HIGH-2 caught the literal `; echo OK` strings but missed two related patterns.
 
-## NEW Concerns (round 2)
+## NEW Concerns (round 3)
 
-### 🔴 HIGH — `[E2E]` inline filter does NOT match the actual card DOM (Codex; verified by orchestrator)
+### 🔴 HIGH-3 — `tsc | grep | head && echo OK` is logically inverted (Gemini + Codex + Cursor all flagged)
 
-**Finding:** `Locator.filter({ hasText: /^\[E2E/ })` requires the element's text content to **start with** `[E2E`. But `src/components/suggestions/SuggestionCard.tsx:43-74` renders the `CategoryBadge` (e.g., "Aviation") and time-remaining text BEFORE the title `<h3>{suggestion.title}</h3>`. The card's text content order is:
+**Locations:** `08-01-PLAN.md:181` (Task 1) and `08-01-PLAN.md:309` (Task 2).
 
-1. PinnedBanner (if pinned)
-2. `CategoryBadge` name ("Aviation", "Ground", etc.)
-3. ResolutionBadge (if resolved)
-4. Time-remaining ("5d remaining")
-5. **Title `[E2E] ...`** ← only the title carries the prefix
-
-So `page.locator('[data-testid="suggestion-card"]').filter({ hasText: /^\[E2E/ })` will FAIL because the regex anchor `^` won't match — the card text starts with the category name.
-
-**Verified by orchestrator:** `grep -n "data-testid=\"suggestion-card\"" -A 30 src/components/suggestions/SuggestionCard.tsx` — confirmed render order at lines 47-74.
-
-**Impact:** This is the **central convention** Phase 8 is introducing. 8 occurrences across the plans and the e2e/README docs all use `/^\[E2E/`. If the convention is wrong, TEST-07 cannot pass.
-
-**Mitigation options (planner's call):**
-- **(A) Drop the `^` anchor:** `filter({ hasText: /\[E2E\]/ })` — matches `[E2E]` anywhere in the card text. Risk: matches nested elements that happen to contain the literal `[E2E]`. Low risk in practice for this app.
-- **(B) Title-scoped filter:** `filter({ has: page.getByRole('heading', { name: /^\[E2E/ }) })` — anchors against the heading text only. More precise, more verbose.
-- **(C) Add a `data-testid="suggestion-title"` on the `<h3>` and filter via title locator:** cleanest semantically; small UI-tier change.
-
-Recommended: **(A)** — drop the anchor. `[E2E]` in any other element's text would itself be a bug worth catching.
-
-**This invalidates parts of RESEARCH §3 and PATTERNS.md as well** — both should be revised to remove the `^` anchor or document the chosen mitigation.
-
-### 🔴 HIGH — `; echo OK` pattern in 7 `<automated>` blocks masks failures (Codex; verified by orchestrator)
-
-**Finding:** Multiple `<automated>` verification blocks end with the pattern `... && cmd-N ; echo OK`. Bash semantics: `A && B ; C` is parsed as `(A && B) ; C`, and `;` terminates a command without affecting exit status. The pipeline's exit status is whatever `echo OK` returns — which is **always 0**.
-
-**Impact:** A failing `npx eslint`, `npx playwright test`, or grep check exits non-zero, the chain breaks, but `echo OK` runs and the `<automated>` block reports success. The executor will mark the task done despite the verification having failed.
-
-**Verified by orchestrator:** `grep -n "; echo OK" .planning/phases/08-e2e-test-hygiene/*-PLAN.md | wc -l` → 7 occurrences in 08-01 (×2), 08-02 (×1), 08-03 (×3), 08-04 (×1).
-
-**Mitigation:** Replace every `; echo OK` ending with one of:
-- **(A) Drop `echo OK` entirely** — let the chain's exit status propagate. Most direct fix.
-- **(B) Wrap in subshell:** `(set -euo pipefail; A && B && C) && echo OK` — guarantees the chain fails fast AND `echo OK` only runs on success.
-- **(C) Use `&&` instead of `;`:** `A && B && C && echo OK` — only echoes OK if everything passed.
-
-Recommended: **(C)** for minimum-diff fix. Apply to all 7 occurrences.
-
-### 🟡 MEDIUM — `AggregateError` for cleanup-during-test-failure (Codex)
-
-When the test body throws AND cleanup also throws, only the cleanup error is rethrown by the current finally block — the original test failure is lost. Use `AggregateError` to preserve both:
-```ts
-try { await use(value) }
-catch (testErr) { try { await admin.from('polls').delete().eq('id', data.id) } catch (cleanupErr) { throw new AggregateError([testErr, cleanupErr]) } throw testErr }
-finally { /* runs only if try completed without throw */ }
+**Pattern:**
+```bash
+npx tsc --noEmit -p tsconfig.app.json 2>&1 | grep -v 'e2e/' | grep -E 'error TS' | head -5 && echo OK
 ```
-Or simpler: keep try/finally and add a check that captures the test error first. Low-priority refinement; debug-clarity nice-to-have.
 
-### 🟡 MEDIUM — Stale CONTEXT.md claims (Codex)
+**Bug:** `grep -E 'error TS'` exits 0 only when matches are FOUND. So:
+- **On a healthy tree** (no TS errors): `grep` exits 1, the `&&` chain breaks, `echo OK` is NEVER printed → verify reports FAILURE on success.
+- **On a broken tree** (with TS errors): `grep` exits 0, `head -5` exits 0, `echo OK` runs → verify reports SUCCESS on failure.
 
-Codex notes some CONTEXT lines about admin-create.spec.ts edits and service-role reuse may now be stale post-revision. Worth a brief CONTEXT cleanup pass.
+The verification is **inverted** — passes when broken, fails when healthy.
 
-### 🟢 LOW — E2E TypeScript config (Codex suggestion)
+**Compounding issue (Gemini + Cursor MEDIUM):** `tsconfig.app.json` has `"include": ["src"]` and excludes `e2e/` entirely. So even if the pipeline worked, `tsc` cannot type-check the new `e2e/helpers/auth.ts` or `e2e/fixtures/poll-fixture.ts` code under this config. The verification is doubly broken: wrong logic AND wrong scope.
 
-An `e2e/tsconfig.json` separate from `tsconfig.app.json` would let Plan 01/03 run `npx tsc --noEmit -p e2e/tsconfig.json` without the `grep -v "e2e/"` workaround currently in 08-01-PLAN.md:181. Quality-of-life only.
+**Verified by orchestrator:** `sed -n '180,182p; 308,310p' 08-01-PLAN.md` confirms both occurrences. `cat tsconfig.app.json` confirms `include: ["src"]`.
+
+**Mitigation options:**
+- **(A) Drop the tsc check entirely from these verify blocks.** ESLint already validates the spec files; Playwright runs catch type errors at runtime. Lowest-cost fix.
+- **(B) Use `! npx tsc ... 2>&1 | grep -E 'error TS'` && echo OK** — inverts the logic so OK only follows zero matches. Requires `set -o pipefail` to actually gate `tsc`'s exit status.
+- **(C) Create `e2e/tsconfig.json` that includes `e2e/`, run `npx tsc -p e2e/tsconfig.json --noEmit && echo OK`** — direct exit-status gating, real type-check. Most thorough, requires a new file.
+
+Recommended: **(C)** if the planner is willing to add an `e2e/tsconfig.json` (small, well-scoped); otherwise **(A)** since the value of `tsc`-against-non-included-files is zero anyway.
+
+### 🔴 HIGH-4 — Two more `; echo "..."` patterns mask failures (Codex)
+
+**Locations:** `08-02-PLAN.md:374` and `08-04-PLAN.md:259`.
+
+Both end with `; echo "OK lines=$LINES"`. Same bash semantics as the original `; echo OK` bug — `;` separates commands without affecting exit status. Failed prerequisite checks are masked.
+
+**Verified by orchestrator:** `sed -n '372,376p' 08-02-PLAN.md; sed -n '257,261p' 08-04-PLAN.md` — both confirmed.
+
+**Mitigation:** Replace `;` with `&&` in both occurrences (same fix as round-2 HIGH-2, just missed 2 cases that used informational echo with line counts instead of literal "OK").
+
+### 🟡 MEDIUM-4 — Plan 04 Task 2 acceptance criterion expects impossible grep count (Codex)
+
+**Location:** `08-04-PLAN.md:333` and `:335` — acceptance criteria say:
+- `grep -c "^### Test 2 — Non-Member Login Rejection$" .planning/phases/03-response-integrity/03-UAT.md` returns **2** (original + new sub-block)
+- Same for Test 3 expecting count=2
+
+**Bug:** `03-UAT.md` line 19 has `### 2. Non-Member Login Rejection` (and L24: `### 3. Error Page Invite Link`) — NOT `### Test 2 — ...` format. Plan 04's runbook script and the new Second-Human Verification sub-block use the `### Test 2 — ...` format, but the original headings use `### 2.` format.
+
+After Plan 04 appends, the file will have:
+- 1 occurrence of `### 2. Non-Member Login Rejection` (original)
+- 1 occurrence of `### Test 2 — Non-Member Login Rejection` (new sub-block)
+- Total `### Test 2 — ...` count = **1**, not 2.
+
+**Verified by orchestrator:** `grep -nE "^### " .planning/phases/03-response-integrity/03-UAT.md` shows L19 `### 2. Non-Member Login Rejection` and L24 `### 3. Error Page Invite Link`.
+
+**Mitigation:** Change the acceptance criterion to expect **count = 1** for the `### Test 2 — ...` format (the new sub-block only), AND add a separate preservation check `grep -c "^### 2\. Non-Member Login Rejection$" 03-UAT.md` returns 1 (original heading preserved byte-identical).
+
+### 🟡 MEDIUM-5 — Plan 03 Task 3 violates per-spec atomic intent (Gemini)
+
+**Location:** `08-03-PLAN.md:323` — Task 3 covers BOTH `admin-create.spec.ts` AND `auth-errors.spec.ts` in one task with a shared verify block. Round-1 R-2 promised per-spec atomic Tasks 1/2/3.
+
+**Defensible because:** RESEARCH §2a + §4 confirm both files require ZERO source edits — Task 3 is a verification-only compliance check, not a migration. The shared verify block is acceptable when no changes are made.
+
+**Mitigation (optional):** Split into Task 3a + Task 3b for strict per-spec atomic adherence, OR document in the task name that this is a "verification-only batch task" to make the intent explicit. Low-priority; not a blocker.
+
+### 🟡 MEDIUM-6 — ROADMAP success criterion #1 still cites `/^\[E2E/` (Cursor N-2)
+
+**Location:** `.planning/ROADMAP.md:69` and `:70` — both criteria still reference the legacy `^` anchor.
+
+**Risk:** A future executor reading ROADMAP as the authoritative spec could re-introduce the broken anchor convention. Round-1 RESEARCH.md and PATTERNS.md were left at `^` per orchestrator direction (planning-only docs); ROADMAP is more visible and more likely to drift back.
+
+**Mitigation:** Update ROADMAP.md L69-70 to use `/\[E2E\]/` to match the revised plans + ESLint rule message + e2e/README content. One-line edit.
+
+### 🟢 LOW-7 — `testErr !== undefined` misses `throw undefined` (Codex)
+
+Extremely unlikely (TypeScript discourages throwing `undefined`), but `unknown` can technically be `undefined`. Use a boolean sentinel:
+```ts
+let hasPrimaryErr = false; let primaryErr: unknown
+try { await use(value) }
+catch (e) { hasPrimaryErr = true; primaryErr = e; throw e }
+finally { ... if (deleteErr) { if (hasPrimaryErr) throw new AggregateError([primaryErr, deleteErr], ...); throw deleteErr } }
+```
+Polishing-only; no real risk.
+
+## False Positive (worth flagging)
+
+**Gemini HIGH "Broken Imports with Leading Spaces"** — Gemini claimed Plan 01 Task 1 (L136), Task 2 (L241), and Plan 03 Task 1 (L139) contain `from ' @supabase/supabase-js'` (space inside the quote).
+
+**Verified by orchestrator** via `grep -nE "from '\s|from \" " .planning/phases/08-e2e-test-hygiene/08-01-PLAN.md .planning/phases/08-e2e-test-hygiene/08-03-PLAN.md` — **returned EMPTY.** No leading-space imports exist. **Gemini is wrong on this finding.** The actual imports use the standard `'@playwright/test'` and `'@supabase/supabase-js'` form.
+
+Round 3 had one verified false positive; the planner should not act on this concern. The other Gemini findings (HIGH-3 tsc inversion, MEDIUM e2e tsconfig, MEDIUM Task 3 atomicity) are all real and load-bearing.
 
 ## Consensus Summary
 
 ### Agreed Strengths
 
-- All three reviewers ACCEPT R-1 inline-filter approach as the correct fix for the AST data-flow blind spot.
-- All three reviewers ACCEPT R-3 `grep -F` and R-5 `package.json` reclassification.
-- Gemini and Cursor judge overall risk as LOW/MEDIUM after fixes; Codex's harsher MEDIUM-HIGH is driven by the two NEW HIGH findings above.
+- HIGH-1 anchor drop is universally accepted as the right fix.
+- MEDIUM-3 AggregateError control flow is universally accepted as sound.
+- Architectural direction (lazy admin client, fixture, inline filter, second-human runbook) is coherent and ready to execute once verification gates are corrected.
 
 ### Agreed Concerns
 
-- **R-2 (per-spec atomic) is intent-correct but execution-broken** because the verify chains use `; echo OK`. Both Codex and Cursor flagged this; Cursor noted it as "atomicity inconsistency in Plan 03" — the diagnosis converges on the same root cause.
-- **Verify commands need to actually fail loudly.** This is the single most impactful fix to ship before execute-phase.
+- **HIGH-3 tsc inversion** is the dominant load-bearing issue — flagged by ALL THREE reviewers with consistent diagnosis (logic inversion + scope mismatch). Without this fix, Plan 01 cannot be autonomously executed.
+- **HIGH-4 `; echo "..."` masking** is a 2-line fix Codex caught that Gemini missed when checking the literal `; echo OK` string.
 
-### Divergent Views
+### Risk Spread
 
-- **Risk level:** Gemini LOW, Cursor MEDIUM, Codex MEDIUM-HIGH. The divergence comes from how each reviewer weighted the `; echo OK` and card-text findings — Codex was the only one to surface them concretely.
-- **Filter convention bug (the `^` anchor problem):** Only Codex flagged this. Gemini and Cursor read the convention as semantically valid without verifying against the live card DOM. The orchestrator independently verified Codex is correct.
+- Gemini: HIGH (verification inversion + claimed-but-false import bug)
+- Codex: MEDIUM (architecture sound; verification integrity gaps drop to LOW with fixes)
+- Cursor: MEDIUM (08-01 verify will block execute; everything else solid)
+
+Adjusted consensus: **MEDIUM-HIGH as written; LOW after HIGH-3 + HIGH-4 fixes.**
 
 ## Top 3 Concerns to Address Before Execution
 
-1. **🔴 HIGH — Drop the `^` anchor from the `/^\[E2E/` filter convention** (or switch to title-scoped `has: page.getByRole('heading', ...)`). Update RESEARCH §3, PATTERNS.md, e2e/README, and all 8 occurrences across plans. Without this, TEST-07 cannot pass.
-2. **🔴 HIGH — Replace 7 `; echo OK` occurrences with `&& echo OK`** so verify failures actually surface. Without this, the per-spec atomic guarantee from R-2 is illusory.
-3. **🟡 MEDIUM — Use `AggregateError` (or test-error-first capture) in the fixture cleanup** so test-body errors aren't masked by cleanup errors during teardown.
+1. **🔴 HIGH-3 — Fix the inverted tsc verify chains** in 08-01 Tasks 1 and 2. Recommended: drop tsc from these verifies (option A) — ESLint + Playwright runs already gate type errors; `tsc` against `tsconfig.app.json` cannot see e2e files anyway.
+2. **🔴 HIGH-4 — Replace the 2 remaining `; echo "..."` patterns** in 08-02:374 and 08-04:259 with `&& echo "..."` so failed prerequisite checks surface.
+3. **🟡 MEDIUM-4 — Fix Plan 04 grep-c acceptance count** (expect 1 for new `### Test 2 — ...` heading + 1 separate check that original `### 2.` heading is preserved). Otherwise the verify will fail at execute time.
+
+Also recommended (cheap):
+- 🟡 MEDIUM-6 — Update ROADMAP.md L69-70 to drop the `^` anchor (governance drift prevention).
 
 ## How to Apply
 
-Run `/gsd-plan-phase 8 --reviews` to feed REVIEWS.md round 2 back to the planner for a targeted revision pass.
+Run `/gsd-plan-phase 8 --reviews` to feed REVIEWS.md round 3 back to the planner.
