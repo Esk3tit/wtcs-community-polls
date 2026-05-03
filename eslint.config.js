@@ -35,4 +35,28 @@ export default defineConfig([
       ],
     },
   },
+  {
+    files: ['e2e/tests/**/*.spec.ts'],
+    rules: {
+      // E2E-SCOPE-1: list locators on the shared E2E DB drift unless they
+      // filter to [E2E]-prefixed rows. The :has() walk catches a .filter()
+      // call anywhere in the chain; bare counters/indexers are flagged.
+      // Escape-hatch: `eslint-disable-next-line no-restricted-syntax -- WHY`
+      // is permitted when the locator is already DOM-scoped (e.g. inside
+      // a card boundary). PR review enforces WHY comment quality.
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "CallExpression[callee.type='MemberExpression'][callee.property.name=/^(toHaveCount|first|nth|all|last)$/]" +
+            ":not(:has(CallExpression[callee.property.name='filter']))",
+          message:
+            'E2E-SCOPE-1: filter to [E2E] prefix before counting/indexing list locators. ' +
+            'Use .filter({ hasText: /\\[E2E\\]/ }) before .first/.nth/.last/.all/.toHaveCount, ' +
+            'OR add `// eslint-disable-next-line no-restricted-syntax -- WHY` if the locator ' +
+            'is already DOM-scoped. See e2e/README.md.',
+        },
+      ],
+    },
+  },
 ])
