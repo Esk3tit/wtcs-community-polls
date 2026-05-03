@@ -40,16 +40,21 @@ expected: |
   - Tester pastes filled evidence under `## Second-Human Verification` in `.planning/phases/03-response-integrity/03-UAT.md`
   - Both Test 2 and Test 3 result: pass
   - Per D-11, this runs asynchronously and does NOT block Phase 8 closure — current placeholder template is the Phase 8 synchronous deliverable
-result: skipped
-reason: Async team handoff — different team member runs the second-human verification out-of-band per D-11. Tester pastes evidence into 03-UAT.md `## Second-Human Verification` when complete; Phase 8 closure does not depend on it.
+result: pass
+verified: 2026-05-03T17:58:00Z
+evidence: |
+  - Tester: test-dev-account (2FA-enabled Discord, non-WTCS-member, separate from original Phase 03 executor)
+  - Test 2 (Non-Member Login Rejection): all 6 PASS criteria met — URL `/auth/error?reason=not-in-server`, heading "WTCS Server Membership Required", Join + Try Signing In Again buttons visible, no Supabase auth cookies, reload stayed on error page
+  - Test 3 (Error Page Invite Link): Join href resolved to discord.gg/aUe8NGP3U2 (verified via Copy Link Address); click opened new tab on the WTCS Discord invite ("War Thunder Esports Official Discord — Gaijin"); Try Signing In Again returned to Discord OAuth approval flow
+  - Evidence pasted under `## Second-Human Verification` in `.planning/phases/03-response-integrity/03-UAT.md`
 
 ## Summary
 
 total: 2
-passed: 1
+passed: 2
 issues: 0
 pending: 0
-skipped: 1
+skipped: 0
 blocked: 0
 
 ## Gaps

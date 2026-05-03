@@ -61,17 +61,28 @@ skipped: 2
 
 ### Test 2 — Non-Member Login Rejection
 
-- executor: <Discord handle, e.g. `MapCommittee#1234`>
-- verified-at: <UTC ISO 8601, e.g. `2026-05-09T18:42:00Z`>
-- result: <pass | fail>
+- executor: test-dev-account (2FA-enabled Discord, non-WTCS-member, separate from original Phase 03 executor)
+- verified-at: 2026-05-03T17:58:00Z
+- result: pass
 - notes: |
-    <≥1 line — describe what was observed; if fail, attach screenshot path under
-    .planning/phases/08-e2e-test-hygiene/artifacts/test-10-evidence/>
+    Ran on production https://polls.wtcsmapban.com from incognito profile (zero pre-existing cookies).
+    Completed Discord OAuth handshake with test-dev account; redirected back to:
+    https://polls.wtcsmapban.com/auth/error?reason=not-in-server
+    Error page rendered correctly: heading "WTCS Server Membership Required",
+    "Join the WTCS Discord Server" button (black) and "Try Signing In Again" link both visible.
+    DevTools cookies pane: no Supabase auth cookies set for polls.wtcsmapban.com.
+    Page reload stayed on the error page (no session was created).
 
 ### Test 3 — Error Page Invite Link
 
-- executor: <Discord handle>
-- verified-at: <UTC ISO 8601>
-- result: <pass | fail>
+- executor: test-dev-account (same session as Test 2)
+- verified-at: 2026-05-03T17:58:00Z
+- result: pass
 - notes: |
-    <≥1 line>
+    Continued from Test 2 error page (no navigation away).
+    "Join the WTCS Discord Server" href resolved to https://discord.gg/aUe8NGP3U2.
+    Click opened a new tab landing on the WTCS Discord invite page
+    ("War Thunder Esports Official Discord — Gaijin", 33,543 online / 93,735 members,
+    "Accept Invite" button visible).
+    Returned to error page tab; "Try Signing In Again" returned the browser to the
+    Discord OAuth approval/auth flow (re-prompted for OAuth scope grant).
