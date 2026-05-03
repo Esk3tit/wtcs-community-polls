@@ -18,13 +18,23 @@ ESLint enforces this in `eslint.config.js`:
 
 ```
 no-restricted-syntax (e2e/tests/**/*.spec.ts):
-  CallExpression matching .toHaveCount/.first/.nth/.last/.all
-  without a preceding .filter() anywhere in the chain → error.
+  CallExpression matching .toHaveCount/.first/.nth/.last
+  without a preceding .filter() in the callee chain → error.
 ```
 
-The rule walks the call chain via `:has(...)`, so
-`page.getByTestId('x').filter({ hasText: /\[E2E\]/ }).first()` passes and
-`page.getByTestId('x').first()` fails.
+The rule's `:has()` walk is field-scoped to the `.callee` subtree (not
+the full descendant tree), so `.filter()` calls in **arguments** do NOT
+satisfy the rule. Examples:
+
+- `page.getByTestId('x').filter({ hasText: /\[E2E\]/ }).first()` — passes (filter in chain).
+- `expect(page.getByTestId('x').filter({...})).toHaveCount(1)` — passes (filter in chain wrapped by expect).
+- `expect(page.getByTestId('x')).toHaveCount(arr.filter(p).length)` — **fails** (filter is in argument, unrelated to the locator).
+- `page.getByTestId('x').first()` — fails (no filter).
+
+`Promise.all([...])` is NOT flagged: `.all` was removed from the matched
+method names because it collides with the canonical Playwright pattern
+of `await Promise.all([page.click(...), page.waitForURL(...)])`.
+Locator.all() (rare) can be suppressed via the escape-hatch when needed.
 
 ### Escape hatch (DOM-scoped locators)
 
