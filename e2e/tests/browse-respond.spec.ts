@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../fixtures/poll-fixture'
 import { loginAs } from '../helpers/auth'
 import { fixtureUsers } from '../fixtures/test-users'
 
@@ -16,12 +16,15 @@ import { fixtureUsers } from '../fixtures/test-users'
  *   - Result bars render role="meter"; visible text includes "{N}%" and
  *     "N total responses" (confirmed in 05-04 SUMMARY Decisions #2).
  */
-test('[@smoke] user browses topics, responds, sees live results', async ({ page }) => {
+test('[@smoke] user browses topics, responds, sees live results', async ({ page, freshPoll }) => {
   await loginAs(page, fixtureUsers.memberUser.id)
   await page.goto('/topics')
 
-  // At least one fixture suggestion card rendered.
-  const firstCard = page.getByTestId('suggestion-card').first()
+  // E2E-SCOPE-1: bind to fixture-inserted poll by exact title match.
+  const firstCard = page
+    .getByTestId('suggestion-card')
+    .filter({ hasText: freshPoll.title })
+    .first()
   await expect(firstCard).toBeVisible()
 
   // CR-PR4: clicking firstCard centers on the bounding box, which on a pinned
@@ -29,6 +32,7 @@ test('[@smoke] user browses topics, responds, sees live results', async ({ page 
   // choice-button — submitting a vote before the explicit firstChoice.click()
   // below. Instead, target the CollapsibleTrigger explicitly and only click
   // when it reports aria-expanded=false.
+  // eslint-disable-next-line no-restricted-syntax -- DOM-scoped inside fixture card; only one collapsed trigger exists.
   const collapsedTrigger = firstCard.getByRole('button', { expanded: false }).first()
   if (await collapsedTrigger.count()) {
     await collapsedTrigger.click()
@@ -37,10 +41,11 @@ test('[@smoke] user browses topics, responds, sees live results', async ({ page 
   // Pick the first choice in the expanded card. ChoiceButtons tags every
   // choice with data-testid="choice-button" so the selector is stable
   // across SuggestionCard's CollapsibleTrigger button.
+  // eslint-disable-next-line no-restricted-syntax -- DOM-scoped inside fixture card; .first() picks the first choice button.
   const firstChoice = firstCard.getByTestId('choice-button').first()
   await firstChoice.click()
 
   // After submit the card transitions to ResultBars — look for the
   // "N total response(s)" string which is only rendered post-submission.
-  await expect(firstCard.getByText(/\d+\s+total response/i)).toBeVisible({ timeout: 10_000 })
+  await expect(firstCard.getByText(/[1-9]\d*\s+total response/i)).toBeVisible({ timeout: 10_000 })
 })
