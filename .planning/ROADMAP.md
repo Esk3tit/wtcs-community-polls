@@ -87,7 +87,11 @@ Full v1.0 phase details (goals, plans, success criteria) preserved in [milestone
   3. `.planning/closure/UIDN-03-shadcn-audit.md` exists and contains the 12-item per-route consistency checklist (token usage, Button variants, spacing scale, etc.) applied across all top-level routes, with the canonical preset (per UIDN-04 ADR) cited as the audit baseline.
   4. PROJECT.md Key Decisions table is updated: `Mobile-first responsive design` flips from ⚠️ Revisit → ✓ Good (citing UIDN-02 evidence) and `shadcn/ui + Tailwind CSS v4 (Maia/Neutral)` flips from ⚠️ Revisit → ✓ Good (citing UIDN-03 evidence + UIDN-04 ADR).
   5. No shadcn component restyle ships in this phase — UIDN-04 is documentation reconciliation only (scope guard against creeping a preset migration into v1.1).
-**Plans**: TBD
+**Plans**: 4 plans
+- [ ] 09-01-PLAN.md — UIDN-04 atomic reconciliation (DESIGN-SYSTEM Style line + PROJECT.md Constraints + CLAUDE.md regen + ADR-001) (Wave 1, autonomous)
+- [ ] 09-02-PLAN.md — Audit harness scripts (audit-mobile.sh + audit-screenshots.mjs + .gitignore) (Wave 1, autonomous)
+- [ ] 09-03-PLAN.md — UIDN-02 mobile evidence run + atomic Mobile-first row flip (Wave 2, has checkpoint, depends on 09-02)
+- [ ] 09-04-PLAN.md — UIDN-03 shadcn audit + atomic shadcn row flip+relabel (Wave 3, has checkpoint, depends on 09-01 + 09-02 + 09-03)
 **Branch**: `gsd/phase-09-ui-closure-evidence`
 **UI hint**: yes
 
