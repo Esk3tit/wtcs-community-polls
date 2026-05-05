@@ -10,7 +10,7 @@ with personality.
 ## UI framework
 
 - **Component library:** shadcn/ui (with Tailwind CSS v4)
-- **Style:** Maia (soft rounded corners, generous spacing — consumer-facing warmth)
+- **Style:** new-york (matches `components.json`; canonicalized in ADR-001 below)
 - **Base color:** Neutral
 - **Theme:** Neutral
 - **Chart color:** Neutral
@@ -172,3 +172,35 @@ every user-facing surface.
 - Empty states: Brief and helpful. "No active topics right now."
 - Error states: Clear and actionable. "Discord 2FA required. Enable it in Discord Settings > My Account."
 - No exclamation marks, no hype language, no "exciting" or "awesome"
+
+---
+
+## ADR-001: shadcn style canonicalized as `new-york`
+
+**Date:** 2026-05-04
+**Status:** Accepted
+**Phase:** 9 (UIDN-04)
+**GitHub:** Issue #18
+
+### Context
+
+`components.json` declared `"style": "new-york"` from Phase 1 init. DESIGN-SYSTEM.md and PROJECT.md Constraints both stated "Maia". Components were shipped (Phases 1–4) against the `new-york` recipe — buttons, cards, inputs, dialogs, sheets — and the v1.0 launch on 2026-04-28 was on the `new-york` build. The Maia claim in docs was aspirational and never matched the shipped artifact.
+
+### Decision
+
+`new-york` is the canonical shadcn style for this project. The two losing surfaces (DESIGN-SYSTEM.md `Style:` line and PROJECT.md Constraints) are updated to match. CLAUDE.md is regenerated from PROJECT.md.
+
+### Reasoning
+
+1. Components are already shipped against `new-york` per `components.json` (read-only ground truth).
+2. Restyling to Maia would mean re-running `npx shadcn-ui init --style maia` and replacing every component file in `src/components/ui/` — out of scope per ROADMAP SC #5 (no preset migration in v1.1) and per `<deferred>` in 09-CONTEXT.md.
+3. The Neutral baseColor + token set is unaffected (style affects component visual recipe — borders, shadows, radius defaults — not the color tokens). Aligns with `src/index.css` `:root` / `.dark` blocks which are valid under either style.
+4. Auditing in a different state from what's shipped would invalidate the UIDN-03 closure evidence on first inspection. Reconcile-then-audit is the only honest sequence.
+
+### Consequences
+
+- DESIGN-SYSTEM.md and PROJECT.md now match `components.json`. CLAUDE.md auto-derivation regenerates correctly.
+- UIDN-03's 12-item per-route checklist is keyed to `new-york` defaults: `rounded-md` for inputs/buttons, `rounded-lg` for cards/sheets/dialogs (new-york's slightly more conservative radius vs Maia's generous warmth).
+- Future contributors reading docs see the actual config; surprise gap closed.
+- No code change; no user-visible UI change; no token change.
+- Establishes a minimal ADR convention for the project (5-section: Context / Decision / Reasoning / Consequences / metadata). Heavier ADR tooling is deferred.

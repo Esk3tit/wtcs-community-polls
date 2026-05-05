@@ -167,7 +167,7 @@ GitHub milestone: https://github.com/Esk3tit/wtcs-community-polls/milestone/1
 - **Scale**: Must work within Supabase free tier limits (500MB DB, 1GB storage, 2M Edge Function invocations/month)
 - **Hosting**: Netlify legacy free tier — separate site from main WTCS app
 - **Rate limiting**: Upstash Redis free tier — sliding-window 5 req/60s on submit-vote
-- **Design system**: shadcn/ui Maia style, Neutral preset (bbVJxbc), Inter font
+- **Design system**: shadcn/ui new-york style, Neutral baseColor, Inter font
 
 ## Key Decisions
 

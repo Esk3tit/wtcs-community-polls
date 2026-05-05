@@ -3,7 +3,7 @@
 
 **WTCS Community Polls**
 
-A community suggestion and opinion-gathering platform for the War Thunder Competitive Scene (WTCS). Admins create suggestions/topics (e.g. "Remove MiG-29 12-3 from this lineup"), community members share their opinions via Discord OAuth. Hosted at polls.wtcsmapban.com as a sibling to the main WTCS Map Vote/Ban app — fully independent, sharing only admin accounts conceptually.
+A community suggestion and opinion-gathering platform for the War Thunder Competitive Scene (WTCS). Admins create suggestions/topics (e.g. "Remove MiG-29 12-3 from this lineup"), community members share their opinions via Discord OAuth. Hosted at [polls.wtcsmapban.com](https://polls.wtcsmapban.com) as a sibling to the main WTCS Map Vote/Ban app — fully independent, sharing only admin accounts conceptually. Live since 2026-04-28 (v1.0).
 
 **User-facing name:** WTCS Community Suggestions
 **Internal/admin name:** WTCS Community Polls (used in code, DB, admin UI)
@@ -12,13 +12,13 @@ A community suggestion and opinion-gathering platform for the War Thunder Compet
 
 ### Constraints
 
-- **Budget**: $0/month — Supabase free tier, Netlify legacy free tier, Upstash Redis free tier
-- **Tech stack**: Vite + React + TypeScript + TanStack Router + shadcn/ui + Tailwind CSS v4 (frontend), Supabase (backend), Netlify (hosting) — all locked decisions
-- **Auth**: Discord OAuth only, enforced via Supabase native Discord provider
+- **Budget**: $0/month — Supabase free tier, Netlify legacy free tier, Upstash Redis free tier (validated through v1.0 ship)
+- **Tech stack**: Vite + React 19 + TypeScript + TanStack Router + shadcn/ui + Tailwind CSS v4 (frontend), Supabase (backend), Netlify (hosting) — all locked decisions, all shipped
+- **Auth**: Discord OAuth only, enforced via Supabase native Discord provider with mandatory 2FA
 - **Scale**: Must work within Supabase free tier limits (500MB DB, 1GB storage, 2M Edge Function invocations/month)
 - **Hosting**: Netlify legacy free tier — separate site from main WTCS app
-- **Rate limiting**: Upstash Redis free tier (if needed for abuse prevention)
-- **Design system**: shadcn/ui Maia style, Neutral preset (bbVJxbc), Inter font
+- **Rate limiting**: Upstash Redis free tier — sliding-window 5 req/60s on submit-vote
+- **Design system**: shadcn/ui new-york style, Neutral baseColor, Inter font
 <!-- GSD:project-end -->
 
 <!-- GSD:stack-start source:codebase/STACK.md -->
@@ -188,7 +188,7 @@ A community suggestion and opinion-gathering platform for the War Thunder Compet
 <!-- GSD:skills-start source:skills/ -->
 ## Project Skills
 
-No project skills found. Add skills to any of: `.claude/skills/`, `.agents/skills/`, `.cursor/skills/`, or `.github/skills/` with a `SKILL.md` index file.
+No project skills found. Add skills to any of: `.claude/skills/`, `.agents/skills/`, `.cursor/skills/`, `.github/skills/`, or `.codex/skills/` with a `SKILL.md` index file.
 <!-- GSD:skills-end -->
 
 <!-- GSD:workflow-start source:GSD defaults -->
