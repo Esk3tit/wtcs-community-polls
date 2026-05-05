@@ -40,8 +40,12 @@ test-results/
 
 # Phase 9 audit harness artifacts (per-run binary outputs — not committed).
 # The summary .md evidence files in .planning/closure/UIDN-0[23]-*.md ARE committed.
-# F1 / Decision A: MANIFEST.json IS committed (sha256-pinned record of every
-# binary artifact); only the binary subdirs themselves are ignored.
+# F1 / Decision A: MANIFEST.json (sha256-pinned record of every binary
+# artifact) sits at .planning/closure/artifacts/MANIFEST.json — its parent
+# directory is NOT ignored, so it tracks normally. The !MANIFEST.json line
+# below is defensive (documents intent + survives a future "ignore the whole
+# artifacts/ tree" edit). Note: a `!file` rule cannot rescue a file whose
+# PARENT directory is ignored — git skips ignored dirs entirely.
 .planning/closure/artifacts/lighthouse/
 .planning/closure/artifacts/screenshots/
 !.planning/closure/artifacts/MANIFEST.json
