@@ -30,11 +30,11 @@
 
 ### UI & Design
 
-- [ ] **UIDN-02**: Mobile-first responsive design closure evidence captured — Lighthouse mobile audit (Perf≥90, A11y≥95, BP≥95, SEO≥90) + 6-width breakpoint matrix (320/375/414/768/1024/1440 px) with screenshots per top-level route. Output: `.planning/closure/UIDN-02-mobile-evidence.md`. Flips `Mobile-first responsive design` Key Decision from ⚠️ Revisit → ✓ Good.<br>_GitHub: #18 — research: `.planning/research/v1.1-MOBILE-AUDIT.md`_
+- [x] **UIDN-02**: Mobile-first responsive design closure evidence captured — Lighthouse mobile audit (Perf≥90, A11y≥95, BP≥95, SEO≥90) + 6-width breakpoint matrix (320/375/414/768/1024/1440 px) with screenshots per top-level route. Output: `.planning/closure/UIDN-02-mobile-evidence.md`. Flips `Mobile-first responsive design` Key Decision from ⚠️ Revisit → ✓ Good.<br>_GitHub: #18 — research: `.planning/research/v1.1-MOBILE-AUDIT.md`_
 
-- [ ] **UIDN-03**: shadcn polish closure evidence captured — 12-item per-route consistency checklist applied across all top-level routes (token usage, Button variants, spacing scale, etc.). Output: `.planning/closure/UIDN-03-shadcn-audit.md`. Flips `shadcn/ui + Tailwind CSS v4 (Maia/Neutral)` Key Decision from ⚠️ Revisit → ✓ Good. **Blocked on UIDN-04.**
+- [x] **UIDN-03**: shadcn polish closure evidence captured — 12-item per-route consistency checklist applied across all top-level routes (token usage, Button variants, spacing scale, etc.). Output: `.planning/closure/UIDN-03-shadcn-audit.md`. Flips `shadcn/ui + Tailwind CSS v4 (Maia/Neutral)` Key Decision from ⚠️ Revisit → ✓ Good. **Blocked on UIDN-04.**
 
-- [ ] **UIDN-04**: shadcn style canonicality investigated and reconciled — `components.json` declares `"new-york"` while `DESIGN-SYSTEM.md` and PROJECT.md Constraints claim `"Maia"`. Discovery task: visually diff installed components against both presets to determine which was actually built against; update the two losing surfaces to match the winner. Output: ADR-style note appended to `DESIGN-SYSTEM.md` documenting the decision. **Blocks UIDN-03.**
+- [x] **UIDN-04**: shadcn style canonicality investigated and reconciled — `components.json` declares `"new-york"` while `DESIGN-SYSTEM.md` and PROJECT.md Constraints claim `"Maia"`. Discovery task: visually diff installed components against both presets to determine which was actually built against; update the two losing surfaces to match the winner. Output: ADR-style note appended to `DESIGN-SYSTEM.md` documenting the decision. **Blocks UIDN-03.**
 
 ### Documentation / Planning Hygiene
 
@@ -77,7 +77,7 @@
 | TEST-09 | Phase 8 | Pending |
 | TEST-10 | Phase 8 | Pending |
 | UIDN-04 | Phase 9 | Pending (blocks UIDN-03) |
-| UIDN-02 | Phase 9 | Pending |
+| UIDN-02 | Phase 9 | Complete |
 | UIDN-03 | Phase 9 | Pending (blocked on UIDN-04) |
 | DOCS-01 | Phase 10 | Pending |
 | DOCS-02 | Phase 10 | Pending |
