@@ -37,3 +37,11 @@ test-results/
 .agents/
 .claude/
 .playwright-mcp/
+
+# Phase 9 audit harness artifacts (per-run binary outputs — not committed).
+# The summary .md evidence files in .planning/closure/UIDN-0[23]-*.md ARE committed.
+# F1 / Decision A: MANIFEST.json IS committed (sha256-pinned record of every
+# binary artifact); only the binary subdirs themselves are ignored.
+.planning/closure/artifacts/lighthouse/
+.planning/closure/artifacts/screenshots/
+!.planning/closure/artifacts/MANIFEST.json
