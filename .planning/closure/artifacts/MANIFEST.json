@@ -1,0 +1,369 @@
+{
+  "entries": [
+    {
+      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-admin.report.html",
+      "sha256": "283113bcda6875ed2982d97cb426ad5f10508991cc0b906e1c8dfebced665add",
+      "sizeBytes": 484763,
+      "recordedAt": "2026-05-05T07:13:26Z",
+      "kind": "lighthouse"
+    },
+    {
+      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-admin.report.json",
+      "sha256": "58383fa031a129151b269fba183cd441e93173b7b83835ac34a6ac578589b0a9",
+      "sizeBytes": 410798,
+      "recordedAt": "2026-05-05T07:13:26Z",
+      "kind": "lighthouse"
+    },
+    {
+      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-archive.report.html",
+      "sha256": "517c190d95ea23fc36ec0a8fbcd0f6609772da0d1610945df5ff54ceaf7eaa6c",
+      "sizeBytes": 456571,
+      "recordedAt": "2026-05-05T07:13:26Z",
+      "kind": "lighthouse"
+    },
+    {
+      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-archive.report.json",
+      "sha256": "9c172bb3b0c109ab09443f1daa870847fe3c65a95786454779c01951fe239512",
+      "sizeBytes": 382491,
+      "recordedAt": "2026-05-05T07:13:26Z",
+      "kind": "lighthouse"
+    },
+    {
+      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-auth-error.report.html",
+      "sha256": "02ad430ad26affb3dc050757e77237b1784b8e87f5f0d7092d7d3c26982920fb",
+      "sizeBytes": 448899,
+      "recordedAt": "2026-05-05T07:13:26Z",
+      "kind": "lighthouse"
+    },
+    {
+      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-auth-error.report.json",
+      "sha256": "78d0817143a1d98a1103467fc22c472ef06e1f1191a97d6d450b71bd5122edf1",
+      "sizeBytes": 373367,
+      "recordedAt": "2026-05-05T07:13:26Z",
+      "kind": "lighthouse"
+    },
+    {
+      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-home.report.html",
+      "sha256": "b000a8a404aef415359bebb0fa82a69f13c2c238ef38fba8af362060a9d9b0b4",
+      "sizeBytes": 448569,
+      "recordedAt": "2026-05-05T07:13:26Z",
+      "kind": "lighthouse"
+    },
+    {
+      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-home.report.json",
+      "sha256": "80eb103ea99f177c59cb99ed8d362688c669125141fc924b41e83bd0ada3c9f3",
+      "sizeBytes": 372412,
+      "recordedAt": "2026-05-05T07:13:26Z",
+      "kind": "lighthouse"
+    },
+    {
+      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-topics.report.html",
+      "sha256": "70835a777e56241242d3fd266b64ed4743486d68d7340a93500473cc2f1de117",
+      "sizeBytes": 484617,
+      "recordedAt": "2026-05-05T07:13:26Z",
+      "kind": "lighthouse"
+    },
+    {
+      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-topics.report.json",
+      "sha256": "7fd0110048b70956db4ebe9808b79a332c673b35d7d3aecb31ab24521ad78ec6",
+      "sizeBytes": 410750,
+      "recordedAt": "2026-05-05T07:13:26Z",
+      "kind": "lighthouse"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-1024-admin-suggestions-id-edit.png",
+      "sha256": "8083eb5b915ffafe6a93fa5808608ec1ff31a2ae79303fe30f2b9e13c97958be",
+      "sizeBytes": 87266,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-1024-admin-suggestions-new.png",
+      "sha256": "df08d479cd2ae7e8797f95717e9cc43289fa4b0c992ec4d8fde6137091a4a231",
+      "sizeBytes": 69350,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-1024-admin.png",
+      "sha256": "e90e273ec5b58779d84be6ba650cdae55feded333af299cbf27a43f25b10a6f7",
+      "sizeBytes": 43111,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-1024-archive.png",
+      "sha256": "e90e273ec5b58779d84be6ba650cdae55feded333af299cbf27a43f25b10a6f7",
+      "sizeBytes": 43111,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-1024-auth-error.png",
+      "sha256": "4de9f2ec9a78cb955bb25d4276182d64cfad9a091effd86949774418ea563c60",
+      "sizeBytes": 34776,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-1024-home.png",
+      "sha256": "e90e273ec5b58779d84be6ba650cdae55feded333af299cbf27a43f25b10a6f7",
+      "sizeBytes": 43111,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-1024-topics.png",
+      "sha256": "e90e273ec5b58779d84be6ba650cdae55feded333af299cbf27a43f25b10a6f7",
+      "sizeBytes": 43111,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-1440-admin-suggestions-id-edit.png",
+      "sha256": "90fbb0de1961444885513ea2bc191623f6fc7803381854362779dbf41ab67390",
+      "sizeBytes": 90653,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-1440-admin-suggestions-new.png",
+      "sha256": "57a0f1fe69917a404f08e2e9ead70693fc9ae9712664427d7cdb0e4515e484f9",
+      "sizeBytes": 72455,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-1440-admin.png",
+      "sha256": "a10058430bc11233a9826e460cc93439c6d3c5ec45acbd9f251da0cec396a766",
+      "sizeBytes": 45648,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-1440-archive.png",
+      "sha256": "a10058430bc11233a9826e460cc93439c6d3c5ec45acbd9f251da0cec396a766",
+      "sizeBytes": 45648,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-1440-auth-error.png",
+      "sha256": "df0510bd5d03ba7722cfe7a0f5882f00aeaaf76fd282e03caaf6b5c59232b3bb",
+      "sizeBytes": 37004,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-1440-home.png",
+      "sha256": "a10058430bc11233a9826e460cc93439c6d3c5ec45acbd9f251da0cec396a766",
+      "sizeBytes": 45648,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-1440-topics.png",
+      "sha256": "a10058430bc11233a9826e460cc93439c6d3c5ec45acbd9f251da0cec396a766",
+      "sizeBytes": 45648,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-320-admin-suggestions-id-edit.png",
+      "sha256": "58b5adbafeaf6a5578c3155540dff13e2fcac7ca1aedb01ba170cd6d87f8b90d",
+      "sizeBytes": 74622,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-320-admin-suggestions-new.png",
+      "sha256": "2533cc6be84dae7e73db65a01af1061ee986c0d4abe7b2849ffb6a6cd9efad0b",
+      "sizeBytes": 57696,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-320-admin.png",
+      "sha256": "45e322795e08abce7b19f1459cbd6ad8e892f8e989b11466023fd9ad80fc05c5",
+      "sizeBytes": 37240,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-320-archive.png",
+      "sha256": "45e322795e08abce7b19f1459cbd6ad8e892f8e989b11466023fd9ad80fc05c5",
+      "sizeBytes": 37240,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-320-auth-error.png",
+      "sha256": "f0289a44eeb407942e4d2d5074db5b5b27c44e5bd288da9f807c1e30da880c8b",
+      "sizeBytes": 28919,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-320-home.png",
+      "sha256": "45e322795e08abce7b19f1459cbd6ad8e892f8e989b11466023fd9ad80fc05c5",
+      "sizeBytes": 37240,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-320-topics.png",
+      "sha256": "45e322795e08abce7b19f1459cbd6ad8e892f8e989b11466023fd9ad80fc05c5",
+      "sizeBytes": 37240,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-375-admin-suggestions-id-edit.png",
+      "sha256": "4435feba39505cdae15805902ef6d5063a25815ec12f4a4c5f3aad915d1d68ff",
+      "sizeBytes": 77294,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-375-admin-suggestions-new.png",
+      "sha256": "90e3faaa4772bca5b6506e3b4ca939f73ae3d941f87d6eb1ebfdce912f2c374d",
+      "sizeBytes": 59749,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-375-admin.png",
+      "sha256": "c4c7925aa54b82a459d9f1e9623a71971853074457a68f87be73f94dd54bf0f1",
+      "sizeBytes": 38410,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-375-archive.png",
+      "sha256": "c4c7925aa54b82a459d9f1e9623a71971853074457a68f87be73f94dd54bf0f1",
+      "sizeBytes": 38410,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-375-auth-error.png",
+      "sha256": "cf4b269f8aa6c7ad60fe9f6098bc8c3e43286463619100e05f599ac75617f8ed",
+      "sizeBytes": 29098,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-375-home.png",
+      "sha256": "c4c7925aa54b82a459d9f1e9623a71971853074457a68f87be73f94dd54bf0f1",
+      "sizeBytes": 38410,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-375-topics.png",
+      "sha256": "c4c7925aa54b82a459d9f1e9623a71971853074457a68f87be73f94dd54bf0f1",
+      "sizeBytes": 38410,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-414-admin-suggestions-id-edit.png",
+      "sha256": "d354ac6a2608b4aba827cb67b4e04fb59a626d75c0aff4d0e791e40924985292",
+      "sizeBytes": 78486,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-414-admin-suggestions-new.png",
+      "sha256": "2ec5e5cda3dc3fd0feae681a190976267c1af3417a10ecde8b419b71f83937d9",
+      "sizeBytes": 60411,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-414-admin.png",
+      "sha256": "06e955f190887eb32505d81c14a4c4897cba0b0bcc875f38c158d58cdc5c6d9b",
+      "sizeBytes": 38608,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-414-archive.png",
+      "sha256": "06e955f190887eb32505d81c14a4c4897cba0b0bcc875f38c158d58cdc5c6d9b",
+      "sizeBytes": 38608,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-414-auth-error.png",
+      "sha256": "2a233a5359e6ed999ebb9508d677b39f208606b83c600bfb903a97d7f07d3062",
+      "sizeBytes": 29610,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-414-home.png",
+      "sha256": "06e955f190887eb32505d81c14a4c4897cba0b0bcc875f38c158d58cdc5c6d9b",
+      "sizeBytes": 38608,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-414-topics.png",
+      "sha256": "06e955f190887eb32505d81c14a4c4897cba0b0bcc875f38c158d58cdc5c6d9b",
+      "sizeBytes": 38608,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-768-admin-suggestions-id-edit.png",
+      "sha256": "cb1ffdba99bf38a29aa530a5c4e073d46729d3726152bcd065031141f5a0ecb4",
+      "sizeBytes": 84176,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-768-admin-suggestions-new.png",
+      "sha256": "7390b00d9c6b13185db9306b3b27a2f52f294f57a7ad5b25c42bcf6a7277ecce",
+      "sizeBytes": 66915,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-768-admin.png",
+      "sha256": "c9005260eaf988c5bddd9cff767765a6cf8c97cfc96c87e39e1f9bf714452b29",
+      "sizeBytes": 41294,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-768-archive.png",
+      "sha256": "c9005260eaf988c5bddd9cff767765a6cf8c97cfc96c87e39e1f9bf714452b29",
+      "sizeBytes": 41294,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-768-auth-error.png",
+      "sha256": "10f7a25def96f36dfe88e748053ea2b4e51287b932a81f26a13611b7a0eb0d4f",
+      "sizeBytes": 33233,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-768-home.png",
+      "sha256": "c9005260eaf988c5bddd9cff767765a6cf8c97cfc96c87e39e1f9bf714452b29",
+      "sizeBytes": 41294,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/screenshots/bp-768-topics.png",
+      "sha256": "c9005260eaf988c5bddd9cff767765a6cf8c97cfc96c87e39e1f9bf714452b29",
+      "sizeBytes": 41294,
+      "recordedAt": "2026-05-05T07:14:12.446Z",
+      "kind": "screenshot"
+    }
+  ],
+  "updatedAt": "2026-05-05T07:14:12.446Z"
+}
