@@ -73,6 +73,11 @@ const warnings = []  // F6 — collected per-screenshot DOM-assertion misses
       const url = `${BASE_URL}${route.path}`
       console.log(`[unauth] ${width}px ${url}`)
       await page.goto(url, { waitUntil: 'networkidle' })
+      // Hydration race: networkidle can fire before React mounts the SPA shell.
+      // Wait (best-effort) for mustSee text to appear so the PNG captures the
+      // hydrated UI rather than a loading skeleton. .catch swallows the
+      // timeout — screenshot is still taken (F6 warning-only philosophy).
+      await page.locator('body').filter({ hasText: route.mustSee }).first().waitFor({ timeout: 5000 }).catch(() => {})
       await page.screenshot({
         path: `${ARTIFACTS_DIR}/bp-${width}-${route.name}.png`,
         fullPage: true,
@@ -149,6 +154,11 @@ const warnings = []  // F6 — collected per-screenshot DOM-assertion misses
       const url = `${LOCAL_URL}${route.path}`
       console.log(`[auth] ${width}px ${url}`)
       await page.goto(url, { waitUntil: 'networkidle' })
+      // Hydration race: networkidle can fire before React mounts the SPA shell.
+      // Wait (best-effort) for mustSee text to appear so the PNG captures the
+      // hydrated UI rather than a loading skeleton. .catch swallows the
+      // timeout — screenshot is still taken (F6 warning-only philosophy).
+      await page.locator('body').filter({ hasText: route.mustSee }).first().waitFor({ timeout: 5000 }).catch(() => {})
       await page.screenshot({
         path: `${ARTIFACTS_DIR}/bp-${width}-${route.name}.png`,
         fullPage: true,

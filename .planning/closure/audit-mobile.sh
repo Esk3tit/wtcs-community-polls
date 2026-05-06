@@ -39,7 +39,7 @@ for i in "${!ROUTES[@]}"; do
     --chrome-flags="--headless=new --no-sandbox" \
     --output=html --output=json \
     --output-path="$out" \
-    --quiet || { echo "  lighthouse exited non-zero on ${route}"; fail_count=$((fail_count+1)); continue; }
+    --quiet || { echo "  lighthouse exited non-zero on ${route}"; fail_count=$((fail_count+1)); results+=("FAIL ${name}: lighthouse crash"); continue; }
 
   # Lighthouse appends .report.<ext> automatically when multiple outputs are requested.
   perf=$(jq -r '.categories.performance.score * 100 | floor' "${out}.report.json")
@@ -80,7 +80,7 @@ jq --arg dir "$ARTIFACTS_DIR/" '
 
 for f in "$ARTIFACTS_DIR"/lh-mobile-*.report.html "$ARTIFACTS_DIR"/lh-mobile-*.report.json; do
   [ -f "$f" ] || continue
-  sha=$(shasum -a 256 "$f" | awk '{print $1}')
+  sha=$(shasum -a 256 "$f" 2>/dev/null | awk '{print $1}' || sha256sum "$f" 2>/dev/null | awk '{print $1}')
   size=$(wc -c < "$f" | tr -d ' ')
   jq --arg path "$f" --arg sha "$sha" --argjson size "$size" --arg at "$recordedAt" --arg kind "lighthouse" '
     .entries = ((.entries // []) | map(select(.path != $path))) + [{
