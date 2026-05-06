@@ -53,7 +53,7 @@ That said, CLAUDE.md does contain several **content-quality defects** in the aut
 **File:** `.gitignore:41-47`
 **Issue:** The 7-line comment block introduces the `!.planning/closure/artifacts/MANIFEST.json` rule as if the parent is ignored:
 
-```
+```gitignore
 # F1 / Decision A: MANIFEST.json IS committed (sha256-pinned record of every
 # binary artifact); only the binary subdirs themselves are ignored.
 .planning/closure/artifacts/lighthouse/

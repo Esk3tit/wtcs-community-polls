@@ -13,6 +13,10 @@ set -uo pipefail
 BASE_URL="https://polls.wtcsmapban.com"
 ROUTES=(       "/"     "/topics" "/archive" "/auth/error" "/admin"  )
 ROUTE_NAMES=(  "home"  "topics"  "archive"  "auth-error"  "admin"   )
+if [ "${#ROUTES[@]}" -ne "${#ROUTE_NAMES[@]}" ]; then
+  echo "ERROR: ROUTES (${#ROUTES[@]}) and ROUTE_NAMES (${#ROUTE_NAMES[@]}) must have the same length" >&2
+  exit 2
+fi
 THRESHOLD_PERF=90
 THRESHOLD_A11Y=95
 THRESHOLD_BP=95
