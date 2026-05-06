@@ -69,6 +69,15 @@ mkdir -p "$(dirname "$MANIFEST")"
 recordedAt="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 [ -f "$MANIFEST" ] || echo '{"entries":[]}' > "$MANIFEST"
 tmp="$(mktemp)"
+
+# Prune stale Lighthouse entries from the previous run before upserting current
+# files. Without this, deleted/failed routes leave dangling MANIFEST rows
+# pointing at files removed by the rm -rf above.
+jq --arg dir "$ARTIFACTS_DIR/" '
+  .entries = [(.entries // [])[]
+    | select(.kind != "lighthouse" or (.path | startswith($dir) | not))]
+' "$MANIFEST" > "$tmp" && mv "$tmp" "$MANIFEST"
+
 for f in "$ARTIFACTS_DIR"/lh-mobile-*.report.html "$ARTIFACTS_DIR"/lh-mobile-*.report.json; do
   [ -f "$f" ] || continue
   sha=$(shasum -a 256 "$f" | awk '{print $1}')

@@ -74,7 +74,7 @@ A single closure-evidence file (`.planning/closure/UIDN-03-shadcn-audit.md`, 122
 
 ## Atomic commit (Path 3 — evidence only)
 
-```
+```text
 f403400  docs(09-04): UIDN-03 shadcn audit — deferred (4 FAIL cells in item 4 / Button)
 
   1 file changed, 122 insertions(+)

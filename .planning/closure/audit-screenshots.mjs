@@ -26,20 +26,23 @@ const BASE_URL = 'https://polls.wtcsmapban.com'
 const LOCAL_URL = 'http://localhost:4173'   // npm run preview default (matches playwright.config.ts:28)
 const BREAKPOINTS = [320, 375, 414, 768, 1024, 1440]
 const UNAUTH_ROUTES = [
-  // F6 — each route carries a `mustSee` text/regex probed AFTER the screenshot;
-  // miss logs a WARN + records into `warnings[]` (does not abort the run — the
-  // PNG is still captured for human review).
-  { path: '/',           name: 'home',       mustSee: /WTCS|community|polls|suggestions/i },
-  { path: '/topics',     name: 'topics',     mustSee: /topics|polls|suggestions/i },
-  { path: '/archive',    name: 'archive',    mustSee: /archive|past|closed/i },
-  { path: '/auth/error', name: 'auth-error', mustSee: /sign in|login|error|auth/i },
-  { path: '/admin',      name: 'admin',      mustSee: /sign in|login|discord/i },                       // captures redirect-to-login
+  // F6 — each route carries an `expectedPath` (final pathname after any AuthGuard
+  // redirect, per 09-04 hash analysis) AND a `mustSee` text/regex probed AFTER
+  // the screenshot. A miss on EITHER check logs a WARN + records into
+  // `warnings[]` (does not abort the run — the PNG is still captured for human
+  // review). Body-text alone is insufficient because broad regexes can match
+  // redirect destinations and accept them as route-specific evidence.
+  { path: '/',           expectedPath: '/',           name: 'home',       mustSee: /WTCS|community|polls|suggestions/i },
+  { path: '/topics',     expectedPath: '/',           name: 'topics',     mustSee: /topics|polls|suggestions/i },          // AuthGuard redirect to LandingPage when unauth
+  { path: '/archive',    expectedPath: '/',           name: 'archive',    mustSee: /archive|past|closed/i },               // AuthGuard redirect to LandingPage when unauth
+  { path: '/auth/error', expectedPath: '/auth/error', name: 'auth-error', mustSee: /sign in|login|error|auth/i },
+  { path: '/admin',      expectedPath: '/',           name: 'admin',      mustSee: /sign in|login|discord/i },             // AuthGuard redirect to LandingPage when unauth
 ]
 const AUTH_ROUTES = [
-  // F6 — auth routes assert a known admin element to confirm the session was
-  // honored (we did NOT redirect to /auth/error or get bounced to /).
-  { path: '/admin/suggestions/new',                                                  name: 'admin-suggestions-new',     mustSee: /title|description|create|new suggestion/i },
-  { path: '/admin/suggestions/d0000000-0000-0000-0000-000000000001/edit',            name: 'admin-suggestions-id-edit', mustSee: /edit|update|MiG-29|save/i }, // [E2E SMOKE] fixture poll
+  // F6 — auth routes assert strict expectedPath equality (session honored, no
+  // bounce to /auth/error or /) AND mustSee text presence.
+  { path: '/admin/suggestions/new',                                       expectedPath: '/admin/suggestions/new',                                       name: 'admin-suggestions-new',     mustSee: /title|description|create|new suggestion/i },
+  { path: '/admin/suggestions/d0000000-0000-0000-0000-000000000001/edit', expectedPath: '/admin/suggestions/d0000000-0000-0000-0000-000000000001/edit', name: 'admin-suggestions-id-edit', mustSee: /edit|update|MiG-29|save/i }, // [E2E SMOKE] fixture poll
 ]
 const ARTIFACTS_DIR = '.planning/closure/artifacts/screenshots'
 
@@ -74,12 +77,15 @@ const warnings = []  // F6 — collected per-screenshot DOM-assertion misses
         path: `${ARTIFACTS_DIR}/bp-${width}-${route.name}.png`,
         fullPage: true,
       })
-      // F6 — DOM assertion (warning-only; does not abort the run).
+      // F6 — DOM + path assertion (warning-only; does not abort the run).
+      // Path check defends against unexpected redirects masquerading as the route.
       const bodyText = await page.locator('body').innerText().catch(() => '')
-      const ok = route.mustSee instanceof RegExp ? route.mustSee.test(bodyText) : bodyText.includes(route.mustSee)
+      const finalPath = new URL(page.url()).pathname
+      const matchesBody = route.mustSee instanceof RegExp ? route.mustSee.test(bodyText) : bodyText.includes(route.mustSee)
+      const ok = finalPath === route.expectedPath && matchesBody
       if (!ok) {
-        console.warn(`[unauth] WARN bp-${width}-${route.name}: page body did not match mustSee=${route.mustSee}`)
-        warnings.push(`bp-${width}-${route.name}: missing mustSee match`)
+        console.warn(`[unauth] WARN bp-${width}-${route.name}: final=${finalPath} expected=${route.expectedPath} bodyMatch=${matchesBody}`)
+        warnings.push(`bp-${width}-${route.name}: final=${finalPath} expected=${route.expectedPath} bodyMatch=${matchesBody}`)
       }
     }
   }
@@ -147,14 +153,16 @@ const warnings = []  // F6 — collected per-screenshot DOM-assertion misses
         path: `${ARTIFACTS_DIR}/bp-${width}-${route.name}.png`,
         fullPage: true,
       })
-      // F6 — DOM assertion: ensure session was honored AND we did not bounce to /auth/error or /.
+      // F6 — DOM + path assertion: session was honored AND we landed exactly on
+      // the expected path (no /auth/error bounce, no / fallback, no detour).
       const bodyText = await page.locator('body').innerText().catch(() => '')
       const finalUrl = page.url()
-      const onAuthErr = finalUrl.includes('/auth/error')
-      const ok = !onAuthErr && (route.mustSee instanceof RegExp ? route.mustSee.test(bodyText) : bodyText.includes(route.mustSee))
+      const finalPath = new URL(finalUrl).pathname
+      const matchesBody = route.mustSee instanceof RegExp ? route.mustSee.test(bodyText) : bodyText.includes(route.mustSee)
+      const ok = finalPath === route.expectedPath && matchesBody
       if (!ok) {
-        console.warn(`[auth] WARN bp-${width}-${route.name}: redirected to ${finalUrl} OR mustSee=${route.mustSee} not present`)
-        warnings.push(`bp-${width}-${route.name}: session not honored or mustSee miss (final=${finalUrl})`)
+        console.warn(`[auth] WARN bp-${width}-${route.name}: final=${finalPath} expected=${route.expectedPath} bodyMatch=${matchesBody}`)
+        warnings.push(`bp-${width}-${route.name}: final=${finalPath} expected=${route.expectedPath} bodyMatch=${matchesBody} (fullUrl=${finalUrl})`)
       }
     }
   }
@@ -186,7 +194,14 @@ if (warnings.length > 0) {
     manifest = JSON.parse(await readFile(manifestPath, 'utf8'))
     if (!Array.isArray(manifest.entries)) manifest.entries = []
   } catch { /* fresh manifest */ }
-  const byPath = new Map(manifest.entries.map((e) => [e.path, e]))
+  // Prune stale screenshot rows under the current ARTIFACTS_DIR before
+  // upserting — the rm -rf above wiped the disk; the manifest must follow.
+  // Other artifact kinds (lighthouse) are preserved.
+  const byPath = new Map(
+    manifest.entries
+      .filter((e) => !(e.kind === 'screenshot' && e.path.startsWith(`${ARTIFACTS_DIR}/`)))
+      .map((e) => [e.path, e]),
+  )
   const recordedAt = new Date().toISOString()
   const files = (await readdir(ARTIFACTS_DIR)).filter((f) => f.endsWith('.png')).sort()
   for (const f of files) {

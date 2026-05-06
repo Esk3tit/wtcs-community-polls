@@ -117,7 +117,7 @@ The `FIXTURE_PASSWORD` string `'playwright-fixture-only-do-not-use-in-prod'` is 
 
 8 lines appended after the existing `.netlify` / `.agents/` / `.claude/` / `.playwright-mcp/` block:
 
-```
+```gitignore
 # Phase 9 audit harness artifacts (per-run binary outputs — not committed).
 # The summary .md evidence files in .planning/closure/UIDN-0[23]-*.md ARE committed.
 # F1 / Decision A: MANIFEST.json IS committed (sha256-pinned record of every
