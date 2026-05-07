@@ -38,7 +38,7 @@ Full v1.0 phase details (goals, plans, success criteria) preserved in [milestone
 
 - [x] **Phase 7: Observability Hardening** — Wire Sentry React 19 error hooks into `createRoot` and preserve function names in production sourcemaps; one Netlify deploy-preview smoke verifies both fixes
 - [x] **Phase 8: E2E Test Hygiene** (4/4 plans) — Scope all shared-DB list locators to `[E2E]`-prefixed entries (E2E-SCOPE-1), enforce via ESLint, extract `freshPoll` Playwright fixture, and run Phase 03 UAT tests 2+3 with a second human (PR #22 merged 2026-05-03)
-- [ ] **Phase 9: UI Closure Evidence** — Reconcile shadcn style canonicality (UIDN-04 ADR) before running mobile Lighthouse + 6-width breakpoint matrix (UIDN-02) and 12-item per-route shadcn checklist (UIDN-03); flips two ⚠️ Revisit Key Decisions to ✓ Good
+- [x] **Phase 9: UI Closure Evidence** (4/4 plans) — Reconciled shadcn canonicality to `new-york` (UIDN-04 ADR-001); UIDN-02 + UIDN-03 deferred to v1.2 with archived evidence (Path-3 acceptance per plan tri-branch) — PR #24 merged 2026-05-06
 - [ ] **Phase 10: Planning Hygiene Backfill** — Pure planning-doc edits across `.planning/phases/01..04/`: VALIDATION.md frontmatter, Phase 03 VERIFICATION.md retrospective, 17 SUMMARY `requirements-completed` declarations, and Phase 04 UAT 6a evidence — zero code changes, parallelizable with Phases 7–9
 
 </details>
