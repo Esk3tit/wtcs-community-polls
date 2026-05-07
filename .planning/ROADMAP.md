@@ -9,7 +9,7 @@ This roadmap delivers a Discord-authenticated community suggestion and opinion-g
 ## Milestones
 
 - ✅ **v1.0 — Launch-Ready MVP** — Phases 1–6 (shipped 2026-04-28) — see [MILESTONES.md](MILESTONES.md) and [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
-- 📋 **v1.1 — Hygiene & Polish (current)** — Phases 7–10 (planning 2026-04-28) — see [GitHub milestone v1.1](https://github.com/Esk3tit/wtcs-community-polls/milestone/1)
+- ✅ **v1.1 — Hygiene & Polish** — Phases 7–10 (complete 2026-05-07) — see [GitHub milestone v1.1](https://github.com/Esk3tit/wtcs-community-polls/milestone/1)
 
 ## Phases
 
@@ -34,12 +34,12 @@ Full v1.0 phase details (goals, plans, success criteria) preserved in [milestone
 </details>
 
 <details open>
-<summary>📋 <strong>v1.1 — Hygiene & Polish (Phases 7–10) — PLANNING 2026-04-28</strong></summary>
+<summary>✅ <strong>v1.1 — Hygiene & Polish (Phases 7–10) — COMPLETE 2026-05-07</strong></summary>
 
 - [x] **Phase 7: Observability Hardening** — Wire Sentry React 19 error hooks into `createRoot` and preserve function names in production sourcemaps; one Netlify deploy-preview smoke verifies both fixes
 - [x] **Phase 8: E2E Test Hygiene** (4/4 plans) — Scope all shared-DB list locators to `[E2E]`-prefixed entries (E2E-SCOPE-1), enforce via ESLint, extract `freshPoll` Playwright fixture, and run Phase 03 UAT tests 2+3 with a second human (PR #22 merged 2026-05-03)
 - [x] **Phase 9: UI Closure Evidence** (4/4 plans) — Reconciled shadcn canonicality to `new-york` (UIDN-04 ADR-001); UIDN-02 + UIDN-03 deferred to v1.2 with archived evidence (Path-3 acceptance per plan tri-branch) — PR #24 merged 2026-05-06
-- [ ] **Phase 10: Planning Hygiene Backfill** (5/5 plans) — Pure planning-doc edits across `.planning/phases/01..04/`: VALIDATION.md frontmatter, Phase 03 VERIFICATION.md retrospective, 9 SUMMARY `requirements-completed` declarations, and Phase 04 UAT 6a evidence — zero code changes, parallelizable with Phases 7–9
+- [x] **Phase 10: Planning Hygiene Backfill** (5/5 plans) — Pure planning-doc edits across `.planning/phases/01..04/`: VALIDATION.md frontmatter, Phase 03 VERIFICATION.md retrospective, 9 SUMMARY `requirements-completed` declarations, and Phase 04 UAT 6a evidence — zero code changes, parallelizable with Phases 7–9 (completed 2026-05-07)
 
 </details>
 
@@ -118,4 +118,4 @@ Full v1.0 phase details (goals, plans, success criteria) preserved in [milestone
 | Milestone | Phases | Plans | Status | Shipped |
 |-----------|--------|-------|--------|---------|
 | v1.0 | 1–6 | 32/32 | ✅ Shipped | 2026-04-28 |
-| v1.1 | 7–10 | 5/TBD | 📋 Planned | — |
+| v1.1 | 7–10 | 16/16 | ✅ Complete | 2026-05-07 |
