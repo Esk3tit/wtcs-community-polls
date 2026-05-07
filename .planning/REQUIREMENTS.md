@@ -38,13 +38,13 @@
 
 ### Documentation / Planning Hygiene
 
-- [ ] **DOCS-01**: VALIDATION.md frontmatter backfilled on phases 01, 02, 03, 04 — bring all four legacy phase dirs in line with the post-Phase-05 frontmatter schema used in 05/06.
+- [x] **DOCS-01**: VALIDATION.md frontmatter backfilled on phases 01, 02, 03, 04 — bring all four legacy phase dirs in line with the post-Phase-05 frontmatter schema used in 05/06.
 
-- [ ] **DOCS-02**: Phase 03 VERIFICATION.md retrospective written — Phase 03 closed without a VERIFICATION.md per the v1.0 audit; backfill so the phase has a closure record consistent with phases 01/02/04/05/06.
+- [x] **DOCS-02**: Phase 03 VERIFICATION.md retrospective written — Phase 03 closed without a VERIFICATION.md per the v1.0 audit; backfill so the phase has a closure record consistent with phases 01/02/04/05/06.
 
-- [ ] **DOCS-03**: SUMMARY frontmatter `requirements-completed` declared on the 17 SUMMARY files flagged by the v1.0 milestone audit (`.planning/milestones/v1.0-MILESTONE-AUDIT.md`) — declarations bring these files into traceability table compliance.
+- [x] **DOCS-03**: SUMMARY frontmatter `requirements-completed` declared on the 17 SUMMARY files flagged by the v1.0 milestone audit (`.planning/milestones/v1.0-MILESTONE-AUDIT.md`) — declarations bring these files into traceability table compliance.
 
-- [ ] **DOCS-04**: Phase 04 UAT test 6a (demote click flow) evidence backfilled — test passed off-record on a second admin during v1.0 → v1.1 transition; append the evidence to `.planning/phases/04-admin-panel-suggestion-management/04-UAT.md` and mark complete.
+- [x] **DOCS-04**: Phase 04 UAT test 6a (demote click flow) evidence backfilled — test passed off-record on a second admin during v1.0 → v1.1 transition; append the evidence to `.planning/phases/04-admin-panel-suggestion-management/04-UAT.md` and mark complete.
 
 ---
 
@@ -79,7 +79,7 @@
 | UIDN-04 | Phase 9 | Complete (Phase 9 — PR #24; ADR-001 in DESIGN-SYSTEM.md; unblocks UIDN-03) |
 | UIDN-02 | Phase 9 | Deferred to v1.2 (Phase 9 — PR #24; evidence captured; Lighthouse Perf gate missed 5/5 routes) |
 | UIDN-03 | Phase 9 | Deferred to v1.2 (Phase 9 — PR #24; evidence captured; 4 FAIL cells in item 4 / Button native-button drift) |
-| DOCS-01 | Phase 10 | Pending |
-| DOCS-02 | Phase 10 | Pending |
-| DOCS-03 | Phase 10 | Pending |
-| DOCS-04 | Phase 10 | Pending |
+| DOCS-01 | Phase 10 | Completed (Phase 10) |
+| DOCS-02 | Phase 10 | Completed (Phase 10) |
+| DOCS-03 | Phase 10 | Completed (Phase 10) |
+| DOCS-04 | Phase 10 | Completed (Phase 10) |
