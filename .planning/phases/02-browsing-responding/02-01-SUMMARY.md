@@ -43,6 +43,7 @@ metrics:
   tasks_total: 2
   files_created: 17
   files_modified: 1
+requirements-completed: [CATG-02, CATG-03, CATG-04]
 ---
 
 # Phase 02 Plan 01: Suggestion Browsing UI Summary
