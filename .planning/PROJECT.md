@@ -33,7 +33,7 @@ This platform gathers community **opinions**, not binding votes. Nothing on the 
 **Target features:**
 - E2E test fixture/seed cleanup (3 Playwright spec bugs filed under #11, #12, #13)
 - Observability robustness — Sentry React 19 ErrorBoundary capture path (#17), Vite/Rolldown sourcemap function-name preservation (#19)
-- UI design polish closure — UIDN-02 mobile-first responsive evidence + UIDN-03 shadcn Maia/Neutral polish (#18)
+- UI design polish closure — UIDN-02 mobile-first responsive evidence + UIDN-03 shadcn new-york/Neutral polish (#18)
 - Planning hygiene backfill — VALIDATION.md frontmatter on phases 01–04, Phase 03 VERIFICATION.md retrospective, 17 SUMMARY frontmatter `requirements-completed` declarations + retroactive Phase 04 UAT 6a evidence (passed off-record on second admin)
 - 1 deferred UAT item (Phase 03 tests 2+3 — non-member rejection + invite link, second human required)
 
@@ -109,7 +109,7 @@ GitHub milestone: https://github.com/Esk3tit/wtcs-community-polls/milestone/1
 ### Active (v1.1 — Hygiene & Polish)
 
 - [ ] **UIDN-02**: Mobile-first responsive design — closure evidence (Lighthouse + UI audit) — issue #18
-- [ ] **UIDN-03**: Modern polished visual design — shadcn Maia/Neutral closure evidence — issue #18
+- [ ] **UIDN-03**: Modern polished visual design — shadcn new-york/Neutral closure evidence — issue #18
 - [ ] Playwright E2E spec fixture/seed hygiene (issues #11, #12, #13)
 - [ ] Sentry React 19 ErrorBoundary capture transport (issue #17)
 - [ ] Vite/Rolldown sourcemap function-name preservation (issue #19)
@@ -167,7 +167,7 @@ GitHub milestone: https://github.com/Esk3tit/wtcs-community-polls/milestone/1
 - **Scale**: Must work within Supabase free tier limits (500MB DB, 1GB storage, 2M Edge Function invocations/month)
 - **Hosting**: Netlify legacy free tier — separate site from main WTCS app
 - **Rate limiting**: Upstash Redis free tier — sliding-window 5 req/60s on submit-vote
-- **Design system**: shadcn/ui Maia style, Neutral preset (bbVJxbc), Inter font
+- **Design system**: shadcn/ui new-york style, Neutral baseColor, Inter font
 
 ## Key Decisions
 
