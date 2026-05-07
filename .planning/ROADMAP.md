@@ -110,7 +110,7 @@ Full v1.0 phase details (goals, plans, success criteria) preserved in [milestone
 - [x] 10-02-PLAN.md — DOCS-02: Retroactive 03-VERIFICATION.md creation (Wave 1, autonomous, parallel with 01 and 04)
 - [x] 10-03-PLAN.md — DOCS-03: 9 SUMMARY requirements-completed declarations with D-08 cross-check (Wave 2, depends on 10-02)
 - [x] 10-04-PLAN.md — DOCS-04: 04-UAT.md Off-Record Verification append for UAT 6a (Wave 1, autonomous, parallel with 01 and 02)
-- [ ] 10-05-PLAN.md — Phase 10 closure: 10-VERIFICATION.md + 10-VALIDATION.md stub + REQUIREMENTS.md flip (Wave 3, depends on 10-01..04)
+- [x] 10-05-PLAN.md — Phase 10 closure: 10-VERIFICATION.md + 10-VALIDATION.md stub + REQUIREMENTS.md flip (Wave 3, depends on 10-01..04) (completed 2026-05-07)
 **Branch**: `gsd/phase-10-planning-hygiene-backfill`
 
 ## Progress
