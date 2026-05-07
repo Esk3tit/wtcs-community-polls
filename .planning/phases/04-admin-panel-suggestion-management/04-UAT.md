@@ -200,3 +200,29 @@ re_run_remaining_followups:
     - "Gate on isAdmin (not user) so non-admins never see the link — AdminGuard remains defensive backstop"
     - "Optional: new src/__tests__/layout/Navbar.test.tsx + MobileNav.test.tsx using AuthContext-mock pattern from src/__tests__/auth/auth-guard.test.tsx — two cases each (renders when isAdmin=true, hides when false)"
   debug_session: .planning/debug/navbar-missing-admin-link.md
+
+## Off-Record Verification
+
+> Phase 10 / DOCS-04 closure. UAT test 6a (Live demote-admin click flow) was deferred
+> at v1.0 ship time because the second seeded admin (Discord ID 290377966251409410 /
+> MapCommittee) had never signed in. MapCommittee signed in during the v1.0 → v1.1
+> transition, enabling the demote click flow to be verified off-record. This section
+> records that pass evidence per CONTEXT.md D-10/D-11.
+>
+> The original `result: deferred` record above is preserved — it documents the historical
+> reason for deferral. This section records the subsequent pass.
+
+### UAT 6a — Live Demote-Admin Click Flow
+
+- Test: UAT 6a — Live demote-admin click flow
+- Executor: MapCommittee (Discord ID `290377966251409410`)
+- Verified at: during v1.0 → v1.1 transition (2026-04-28 → 2026-05-07); no precise UTC timestamp available from git/audit records
+- Result: PASS
+- Notes: |
+    MapCommittee signed in during the v1.0 → v1.1 transition, appearing in the Admins
+    list. The admin who ran the v1.0 UAT re-run (YES KiNG / Discord ID 267747104607305738)
+    was able to see the Demote button on the MapCommittee row (D-06 self-demote guard
+    correctly hides the button on the executor's own row). The demote click flow opened
+    a confirmation dialog; confirming removed MapCommittee from the admin list with a
+    success toast — matching the expected behavior from UAT test 6 specification.
+    Demote logic source-side coverage: 13 unit tests in `src/__tests__/admin/demote-admin.test.ts`.
