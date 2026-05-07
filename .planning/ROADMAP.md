@@ -106,10 +106,10 @@ Full v1.0 phase details (goals, plans, success criteria) preserved in [milestone
   4. `.planning/phases/04-admin-panel-suggestion-management/04-UAT.md` is updated to record Phase 04 UAT test 6a (demote click flow) as passed, citing the off-record execution on the second admin (Discord ID 290377966251409410 / MapCommittee) during the v1.0 → v1.1 transition.
   5. Re-running the v1.0 milestone audit script against `.planning/phases/01..04/` reports zero outstanding planning-artifact gaps from the original audit's "tech debt → v1.1" list.
 **Plans**: 5 plans
-- [ ] 10-01-PLAN.md — DOCS-01: VALIDATION.md frontmatter backfill on phases 01-04 (Wave 1, autonomous)
-- [ ] 10-02-PLAN.md — DOCS-02: Retroactive 03-VERIFICATION.md creation (Wave 1, autonomous, parallel with 01 and 04)
+- [x] 10-01-PLAN.md — DOCS-01: VALIDATION.md frontmatter backfill on phases 01-04 (Wave 1, autonomous)
+- [x] 10-02-PLAN.md — DOCS-02: Retroactive 03-VERIFICATION.md creation (Wave 1, autonomous, parallel with 01 and 04)
 - [ ] 10-03-PLAN.md — DOCS-03: 9 SUMMARY requirements-completed declarations with D-08 cross-check (Wave 2, depends on 10-02)
-- [ ] 10-04-PLAN.md — DOCS-04: 04-UAT.md Off-Record Verification append for UAT 6a (Wave 1, autonomous, parallel with 01 and 02)
+- [x] 10-04-PLAN.md — DOCS-04: 04-UAT.md Off-Record Verification append for UAT 6a (Wave 1, autonomous, parallel with 01 and 02)
 - [ ] 10-05-PLAN.md — Phase 10 closure: 10-VERIFICATION.md + 10-VALIDATION.md stub + REQUIREMENTS.md flip (Wave 3, depends on 10-01..04)
 **Branch**: `gsd/phase-10-planning-hygiene-backfill`
 
