@@ -1,7 +1,8 @@
 ---
 phase: 10
+cycle: 2
 reviewers: [gemini, codex]
-reviewed_at: 2026-05-07T10:35:00Z
+reviewed_at: 2026-05-07T10:49:28Z
 plans_reviewed:
   - 10-01-PLAN.md
   - 10-02-PLAN.md
@@ -11,193 +12,164 @@ plans_reviewed:
 attempted_unavailable:
   - claude (skipped — running inside Claude Code, would not be independent)
   - cursor (failed — usage limit exceeded)
-  - coderabbit (failed — "No files found for review"; working tree clean and recent commits already merged)
+  - coderabbit (failed — "No files found for review"; working tree clean, recent commits already merged or local diff-only)
   - opencode (CLI not installed)
   - qwen (CLI not installed)
+prior_cycle_high_count: 4
+prior_cycle_highs:
+  - "HIGH #1: 10-02 TEST-10 framing — UAT 2+3 must stay DEFERRED, not closed"
+  - "HIGH #2: 10-03 autonomous vs D-08 — user-resolution gate must block writes"
+  - "HIGH #3: 10-05 closure overclaim — must use ROADMAP-verbatim wording, not 'all tech_debt closed'"
+  - "HIGH #4: 10-05 inherit unresolved truth — must precondition on upstream truth-reconciliations"
 ---
 
-# Cross-AI Plan Review — Phase 10: Planning Hygiene Backfill
+# Cross-AI Plan Review — Phase 10: Planning Hygiene Backfill (Cycle 2)
 
-**Phase scope:** Pure planning-doc edits across `.planning/phases/01..04/`. Zero code changes. 5 plans (10-01..10-05) covering DOCS-01 (VALIDATION frontmatter backfill), DOCS-02 (retroactive 03-VERIFICATION.md), DOCS-03 (17 SUMMARY `requirements-completed` declarations), DOCS-04 (Phase 04 UAT 6a off-record evidence), and 10-05 closure.
+**Cycle:** 2 of convergence loop. Cycle 1 raised 4 HIGH concerns addressed in commit `6c79d93`. Reviewers were instructed to evaluate each prior HIGH explicitly as FULLY RESOLVED / PARTIALLY RESOLVED / STILL OPEN.
+
+**Phase scope:** Pure planning-doc edits across `.planning/phases/01..04/`. Zero code changes. 5 plans (10-01..10-05) covering DOCS-01 (VALIDATION frontmatter backfill), DOCS-02 (retroactive 03-VERIFICATION.md), DOCS-03 (9 SUMMARY `requirements-completed` declarations), DOCS-04 (Phase 04 UAT 6a off-record evidence), and 10-05 closure.
 
 ---
 
 ## Gemini Review
 
-# Phase 10 Implementation Plan Review: Planning Hygiene Backfill
+# Phase 10 Plan Review — Cycle 2
 
-This review evaluates the implementation plans for **Phase 10: Planning Hygiene Backfill**. This phase is unique as it involves **zero code changes**, focusing entirely on bringing v1.0 planning artifacts into compliance with the project's established documentation standards.
+The implementation plans for **Phase 10: Planning Hygiene Backfill** have been reviewed. This cycle focuses on the convergence of truth-reconciliation for legacy artifacts and the enforcement of human-gated decision paths.
 
-## 1. Summary
-The plans for Phase 10 provide a methodical and rigorous approach to closing documentation debt from the project's first four phases. By backfilling frontmatter, creating missing verification records, and formalizing requirement traceability in summary files, the project achieves an "audit-clean" state. The strategy relies on empirical evidence from the v1.0 milestone audit to make retrospective claims (such as `nyquist_compliant: true`) while preserving historical records of deferrals. The dependency mapping and verification steps are well-tailored for a documentation-only phase.
+## 1. Cycle 1 HIGH Disposition
 
-## 2. Strengths
-- **Rigorous Traceability (D-07/D-08):** The "2-of-3 sources" agreement rule for declaring completed requirements in SUMMARY files is an excellent safeguard against documentation drift and ensures high confidence in the backfilled data.
-- **Historical Integrity (D-10):** Choosing to append "Off-Record Verification" evidence while preserving original deferred records (e.g., in `04-UAT.md`) maintains an honest narrative of the project's lifecycle.
-- **Structural Consistency (D-03):** Retroactively creating `03-VERIFICATION.md` using the full template of peer phases ensures the `.planning/` directory remains uniform and easy to navigate for future auditors.
-- **Manual Re-Audit (SC5):** The inclusion of a manual re-audit section in `10-VERIFICATION.md` that explicitly walks through each v1.0 tech debt item provides a clear "Definition of Done" for the hygiene pass.
-- **Detailed Verification Gates:** The use of specific `grep` commands in every plan ensures that the changes can be automatically validated without human eyes on every line.
+| ID | Concern | Disposition | Reasoning |
+|:---|:---|:---|:---|
+| **HIGH #1** | 10-02 TEST-10 framing | **FULLY RESOLVED** | 10-02-PLAN.md explicitly treats UAT tests 2+3 as DEFERRED, cites Phase 8/TEST-10 as the owner, and includes grep gates in Task 1 to ensure this framing lands. 10-05-PLAN.md also verifies this framing before flipping REQUIREMENTS.md. |
+| **HIGH #2** | 10-03 autonomous vs D-08 | **FULLY RESOLVED** | 10-03-PLAN.md is now `autonomous: false`. Task 2 preconditions strictly forbid modification of SUMMARY files unless the discrepancy file contains a "No discrepancies" marker or a user sign-off line. |
+| **HIGH #3** | 10-05 closure overclaim | **FULLY RESOLVED** | 10-05-PLAN.md uses verbatim ROADMAP wording for success criterion #5. It includes a specific "anti-overclaim" grep check to ensure the phrase "all tech_debt closed" does not appear. |
+| **HIGH #4** | 10-05 inherit unresolved truth | **FULLY RESOLVED** | 10-05-PLAN.md Task 2 contains robust preconditions that verify the state of 03-VERIFICATION.md (DEFERRED framing) and the 10-03 discrepancy gate before modifying REQUIREMENTS.md. |
 
-## 3. Concerns
-- **SUMMARY Count Reconciliation (MEDIUM):** Plan 10-03 notes a reconciliation from 17 audit citations down to 9 distinct files. While the logic is sound, the agent executing this must be extremely careful to cross-reference the `provides:` blocks correctly to ensure REQ-IDs aren't assigned to the wrong plan within a multi-plan phase.
-- **Date Hardcoding (LOW):** The plans hardcode `2026-05-07` as the `last_updated` and `sign-off` date. While this matches the "current date" in the session context, if the execution slips to a later day, the docs will be slightly inaccurate (though this is a minor aesthetic issue in a planning doc).
-- **Single-Source Discrepancies (LOW):** Plan 10-03 generates a discrepancy record. There is a small risk that the agent might ignore a valid requirement completion if it only appears in one source due to previous documentation negligence, though the "2-of-3" rule is the safer default.
+## 2. Summary
+The Phase 10 plans are now of exceptionally high quality. They demonstrate a sophisticated understanding of "audit-truth" consistency, ensuring that retrospective documentation accurately reflects historical state without overclaiming closure on items owned by other phases (specifically Phase 8's TEST-10). The human-gate in Plan 10-03 correctly implements the user-decision requirement for single-source requirement declarations.
 
-## 4. Suggestions
-- **Automated Discrepancy Reporting:** In Plan 10-03 Task 1, ensure the agent explicitly lists the *missing* source for any REQ-ID that *did* pass the 2-of-3 rule, as this highlights exactly where the documentation debt was originally located.
-- **Final Tree Pass:** After Plan 10-05, a simple `find .planning -name "*.md" | xargs grep "status: draft"` check would be a "belt-and-suspenders" way to ensure no other stragglers exist beyond the targeted phases 01-04.
-- **Sign-off Clarity:** In `03-VERIFICATION.md`, consider adding a brief note in the "Status" or "Notes" section that explicitly points to Phase 10 as the origin of this retroactive document to avoid confusing future contributors looking at git history.
+## 3. Strengths
+* **Truth-Anchoring:** 10-02 and 10-05 are tightly coupled to ensure that Phase 03 UAT deferrals are never accidentally marked as closed by this hygiene phase.
+* **Precondition Rigor:** 10-05 Task 2 implements a multi-point check (DEFERRED framing, user-resolution sign-off, artifact existence) that prevents the high-level REQUIREMENTS.md from drifting away from the underlying evidence.
+* **Negative Validation:** The use of `grep ... exits 1` to ensure the *absence* of overclaims is an excellent engineering standard for documentation-only phases.
+* **Reconciliation of Counts:** Plan 10-03 provides a clear explanation for why "17 audit citations" resolves to "9 distinct SUMMARY files," preventing confusion during execution.
 
-## 5. Risk Assessment
+## 4. Concerns
+* **LOW: Discrepancy Record Formatting:** In 10-03 Task 1, if discrepancies exist, the recommendation is to include a "User decision" column. Ensure the executor provides enough context for the user to make that decision (e.g., *why* it's only a single source). *Mitigated by the explicit objective to surface for user resolution.*
+* **LOW: Commit Message Clarity:** While the plan specifies atomic commits per requirement, ensure the commit messages for 10-01 and 10-02 (the "retroactive" claims) explicitly cite the "retrospective based on 378/378 tests" rationale to avoid appearing like falsified history to future auditors.
+
+## 5. Suggestions
+* **10-03 Discrepancy Table:** When generating the table, if a REQ-ID has only one source, consider listing *which* source it is (Audit, Requirements, or Verification) in the discrepancy table itself to save the user from re-reading the full planned declarations table.
+
+## 6. Risk Assessment
+
 **Overall Risk: LOW**
 
-**Justification:**
-The phase is exclusively documentation-focused. There is **zero risk to the production environment, application logic, or data integrity**. The primary risk is "documentation error" (e.g., mis-mapping a requirement to a summary file), which is mitigated by the redundant cross-check rule and the requirement to produce a discrepancy report. The use of atomic commits per requirement further reduces the impact of any single mistake. Matching the existing structural patterns from Phases 05 and 06 makes the successful completion of this phase highly likely and beneficial for the project's long-term maintainability.
+The phase is documentation-only, eliminating code regression risk. The primary risk (truth-drift) has been mitigated through nested preconditions and explicit "Deferred" framing for items owned by Phase 8. The project is well-positioned to reach an "audit-clean" state before v1.2 feature work begins.
+
+**Verdict: APPROVED for execution.**
 
 ---
 
 ## Codex Review
 
+**Cycle 1 HIGH Disposition**
+
+| Item | Verdict | Reasoning |
+|---|---|---|
+| HIGH #1: 10-02 TEST-10 framing | **PARTIALLY RESOLVED** | The plan now repeatedly says UAT 2+3 are `DEFERRED`, Phase 8 owns TEST-10, and Phase 10 must not modify `08-VERIFICATION.md` or `REQUIREMENTS.md` TEST-10. However the prescribed `03-VERIFICATION.md` sign-off still says `03-UAT.md 4/6 functional passes → 6/6 via Phase 8 TEST-10`, which reintroduces closure ambiguity. Remove that phrase. |
+| HIGH #2: 10-03 autonomous vs D-08 | **PARTIALLY RESOLVED** | `autonomous: false` and Task 2 preconditions are the right shape. But the gate can be bypassed because Task 1 may create a placeholder line beginning `Resolved-by:`, and Task 2 only greps `^Resolved-by:`. That can pass without real user resolution. |
+| HIGH #3: 10-05 closure overclaim | **FULLY RESOLVED** | 10-05 uses the ROADMAP-scoped wording, explicitly says out-of-scope tech_debt remains open, and has an anti-overclaim check for `all tech_debt closed`. |
+| HIGH #4: 10-05 inherit unresolved truth | **PARTIALLY RESOLVED** | Task 2 now gates the `REQUIREMENTS.md` flip on upstream truth checks, which is good. But the gate inherits the flawed `Resolved-by:` check from 10-03, and Task 1 can still write `10-VERIFICATION.md` with `5/5` before those preconditions run. |
+
 **Summary**
 
-The plans are well-scoped for a documentation-only phase and mostly achieve the Phase 10 goal. The dependency waves are sensible: 10-01/02/04 can run independently, 10-03 correctly waits on 03-VERIFICATION, and 10-05 is a closure gate. The main risk is not runtime regression; it is audit-truth drift. Several plans contain wording or verification gates that could leave the planning artifacts internally contradictory.
-
-**10-01-PLAN.md**
+The replan is materially stronger than Cycle 1: scope is clearer, TEST-10 ownership is mostly preserved, the DOCS-03 human gate exists, and 10-05 now avoids the broad "all tech_debt closed" claim. The remaining risk is not implementation complexity; it is audit-truth precision. A few hardcoded phrases and grep gates can still let the docs say more than the evidence supports.
 
 **Strengths**
-- Narrow, low-risk edits limited to four `VALIDATION.md` frontmatter blocks.
-- Preserves original `created:` dates and uses Phase 06 as the schema source.
-- Keeps `REQUIREMENTS.md` flips deferred to the closure plan.
+
+- Good wave structure: 10-03 depends on 10-02, and 10-05 depends on all prior plans.
+- Strong preservation of historical records: append-only 04-UAT evidence, deferred rows kept intact.
+- The 17 vs 9 reconciliation is sensible: the audit supports 17 missing declarations, not 17 distinct files.
+- 10-05 explicitly separates planning-artifact gaps from unrelated prod cleanup tech debt.
+- DOCS-03's 2-of-3 source rule is the right control for avoiding fabricated `requirements-completed` claims.
 
 **Concerns**
-- LOW: Grep checks are not frontmatter-scoped, so a body match could produce false confidence.
-- LOW: 04-VALIDATION still contains a stale `TBD / pending` body row; frontmatter will say complete while body can still read stale.
-- LOW: "Body unchanged" is required but not mechanically verified.
+
+- **HIGH, carried residual #1:** `10-02` still contains the phrase `4/6 functional passes → 6/6 via Phase 8 TEST-10`. That conflicts with the intended DEFERRED framing.
+- **HIGH, carried residual #2/#4:** The `Resolved-by:` gate is too weak. A placeholder line starting with `Resolved-by:` can satisfy Task 2 in both 10-03 and 10-05.
+- **MEDIUM:** `10-05` Task 1 writes `10-VERIFICATION.md` with `5/5 success criteria verified` before the upstream truth-reconciliation preconditions in Task 2. Put the same preconditions before Task 1.
+- **MEDIUM:** `10-03` includes "expected assignments" for Phase 02 that conflict with the actual `02-VERIFICATION.md` mapping. Since the plan also says "Do NOT guess," remove the precomputed guesses or replace them with verified mappings.
+- **LOW:** `10-02` must-have says the Observable Truths table has `≥4` rows, but the prescribed file has 3 success-criterion rows.
+- **LOW:** Several grep checks verify content anywhere in the file, not specifically in YAML frontmatter. This is acceptable for a doc-only phase, but weaker than the stated acceptance criteria.
 
 **Suggestions**
-- Use an `awk`/frontmatter-only check or a small diff check.
-- Either explicitly accept stale body content as historical, or add a retrospective note if audit cleanliness requires it.
 
-**Risk Assessment: LOW**
-Doc-only, deterministic, and easy to review.
+1. Replace the 10-02 sign-off parenthetical with: `03-UAT.md 4/6 functional passes; UAT 2+3 remain deferred to Phase 8 TEST-10`.
+2. Do not create any `Resolved-by:` line in Task 1 when discrepancies exist. Require a non-placeholder pattern like `^Resolved-by: [^<].+ on 20[0-9]{2}-[0-9]{2}-[0-9]{2}$`.
+3. Also verify every discrepancy row has a non-empty `User decision` value before Task 2 writes.
+4. Move the upstream truth preconditions to the start of 10-05 Task 1, not only Task 2.
+5. Fix the Phase 02 DOCS-03 mapping text to follow `02-VERIFICATION.md`: CATG-02..04 to 02-01, VOTE/RSLT/INFR to 02-02, TEST-03 to 02-03, and treat 02-04 as a discrepancy or empty declaration unless 2 sources support it.
+6. Clarify whether `04-05-SUMMARY.md` is in scope as "frontmatter normalization" rather than one of the audit's 17 missing REQ declarations.
 
-**10-02-PLAN.md**
+**Risk Assessment**
 
-**Strengths**
-- Good peer-phase structure: frontmatter, success criteria, traceability, plan verdicts, sign-off.
-- Correctly cites rather than duplicating major evidence sources.
-- Retroactive framing is explicit, which protects historical accuracy.
+Overall risk: **MEDIUM**.
 
-**Concerns**
-- HIGH: The plan's treatment of Phase 03 UAT tests 2+3 is inconsistent. `03-UAT.md` (line 53) now has pass evidence, but `08-VERIFICATION.md` (line 54) and `REQUIREMENTS.md` (line 29) still describe TEST-10 as pending/deferred.
-- MEDIUM: The acceptance check `head -10 ... | grep "^# Phase 03"` will fail because the proposed frontmatter is longer than 10 lines.
-- MEDIUM: Some grep checks use alternation and can pass if only one REQ-ID is present.
-- LOW: The "exact content" approach may bake in stale claims instead of reflecting the source files at execution time.
-
-**Suggestions**
-- Decide the source of truth before writing: either "4/6 at ship; tests 2+3 now PASS per 03-UAT evidence" or "still deferred." Do not mix both.
-- Avoid saying Phase 8 closed TEST-10 unless `08-VERIFICATION.md` / `REQUIREMENTS.md` are also reconciled.
-- Replace brittle checks with explicit checks for `AUTH-03`, `VOTE-04`, and `TEST-04` separately.
-
-**Risk Assessment: MEDIUM**
-No code risk, but high risk of creating a misleading closure artifact.
-
-**10-03-PLAN.md**
-
-**Strengths**
-- Correct dependency on 10-02.
-- The 2-of-3 source rule is a strong control against fabricated traceability.
-- Producing a discrepancy record before edits is the right audit pattern.
-
-**Concerns**
-- HIGH: D-08 says single-source candidates must be surfaced for user resolution before write, but the plan is marked autonomous and Task 2 proceeds based on executor recommendations.
-- MEDIUM: The "17 SUMMARY files" wording conflicts with current plan language. The audit says "17 declarations" at `v1.0-MILESTONE-AUDIT.md` (line 497), while `ROADMAP.md` (line 105) and `REQUIREMENTS.md` (line 45) still say "17 SUMMARY files."
-- MEDIUM: The precomputed Phase 02 assignments are misleading; `02-VERIFICATION.md` (line 131) maps most VOTE/RSLT/INFR IDs to `02-02`, CATG IDs to `02-01`, and TEST-03 to `02-03`.
-- LOW: `04-05-SUMMARY.md` was not part of the original audit debt; adding `requirements-completed: []` is fine, but should be labeled consistency cleanup, not audit closure.
-
-**Suggestions**
-- Make the plan conditionally non-autonomous: if discrepancies exist, stop for user decision.
-- Update ROADMAP/REQUIREMENTS wording from "17 SUMMARY files" to "17 declarations across 9 SUMMARY files," or make 10-VERIFICATION explicitly reconcile that.
-- Remove expected mappings from the plan body and require deriving all declarations from the source tables.
-
-**Risk Assessment: MEDIUM**
-Traceability work is valuable, but current wording can produce audit-count drift.
-
-**10-04-PLAN.md**
-
-**Strengths**
-- Append-only approach preserves the original deferred record.
-- The evidence block has the right fields and identifies MapCommittee by Discord ID.
-- Cites unit-test coverage as corroborating source-side evidence.
-
-**Concerns**
-- MEDIUM: Pure append leaves `04-UAT.md` (line 3) frontmatter saying `result: partial` and test 6a `result: deferred`; future audits may still detect the old pending state.
-- MEDIUM: The verification command `grep -q ... | tail -1` will effectively always pass because `grep -q` emits no output and the pipeline status comes from `tail`.
-- LOW: The exact off-record timestamp is not sourced; the fallback range is acceptable, but the plan should say what was checked.
-
-**Suggestions**
-- Preserve the original 6a row, but also add a superseding frontmatter key or summary note such as `phase10_off_record_result: complete`.
-- Fix the PASS grep to avoid the pipeline.
-- Cite where the off-record evidence came from, even if that source is "no precise UTC timestamp available."
-
-**Risk Assessment: MEDIUM**
-The append is safe, but audit scanners/readers may still see the file as partial.
-
-**10-05-PLAN.md**
-
-**Strengths**
-- Correctly waits on all four requirement plans.
-- Includes a final verification artifact and a doc-only validation rationale.
-- Separates requirement satisfaction from closure bookkeeping.
-
-**Concerns**
-- HIGH: The proposed re-audit text says all tech-debt rows are closed while also listing OPEN out-of-scope rows. Phrase this as "zero outstanding planning-artifact gaps," not "all tech_debt closed."
-- HIGH: It inherits the unresolved truth issues from 10-02 and 10-04; flipping DOCS checkboxes before reconciling those would make `REQUIREMENTS.md` too optimistic.
-- MEDIUM: 10-01..04 summary files are required by 10-05 but are not listed in the earlier plans' `files_modified`.
-- LOW: ROADMAP/STATE closure updates are omitted; if project convention expects them, Phase 10 may remain visually open.
-
-**Suggestions**
-- Gate the REQUIREMENTS flip on actual grep checks, not just existence of closure docs.
-- Add summary outputs to each prior plan's file list.
-- Consider updating `ROADMAP.md` / `STATE.md`, or explicitly state they are handled outside Phase 10.
-
-**Risk Assessment: MEDIUM**
-Runtime risk is nil, but final closure can overclaim unless prior inconsistencies are fixed.
-
-**Overall Risk Assessment: MEDIUM**
-
-The implementation surface is low-risk because it is documentation-only. The audit-integrity risk is medium: the plans need to reconcile Phase 03 TEST-10 state, the 17-vs-9 count, and the 04-UAT partial/deferred metadata before closure.
+Runtime risk is low because the phase is documentation-only. Audit risk remains medium because two prior HIGH controls are present but not yet enforceable enough, and one hardcoded closure phrase still conflicts with the intended truth model. Fixing those is small, local text work.
 
 ---
 
 ## Consensus Summary
 
+### Cycle 1 HIGH Disposition (consensus)
+
+| Cycle 1 HIGH | Gemini | Codex | Consensus |
+|---|---|---|---|
+| #1 — 10-02 TEST-10 framing | FULLY RESOLVED | PARTIALLY RESOLVED | **PARTIALLY RESOLVED** — Codex finds residual closure-ambiguity phrase in 10-02 sign-off ("4/6 → 6/6 via Phase 8 TEST-10") that can be read as Phase 10 claiming TEST-10 closure. Disagreement is text-level, not structural. |
+| #2 — 10-03 user gate | FULLY RESOLVED | PARTIALLY RESOLVED | **PARTIALLY RESOLVED** — Codex flags that the `^Resolved-by:` regex accepts placeholder lines (e.g., `Resolved-by: <fill-in-handle> on <YYYY-MM-DD>` left untouched would still match). Gate exists in shape but is bypassable in practice. |
+| #3 — 10-05 closure overclaim | FULLY RESOLVED | FULLY RESOLVED | **FULLY RESOLVED** — both reviewers agree ROADMAP-verbatim wording + anti-overclaim grep nail this down. |
+| #4 — 10-05 inherit unresolved truth | FULLY RESOLVED | PARTIALLY RESOLVED | **PARTIALLY RESOLVED** — Codex notes preconditions live only on Task 2, so Task 1 can write `5/5 success criteria verified` before truth-reconciliation lands; also inherits the weak `Resolved-by:` regex from #2. |
+
 ### Agreed Strengths
-Both reviewers converge on:
-- **Doc-only scope = LOW production risk.** Zero code changes mean no regression risk to the live platform.
-- **Sensible dependency waves.** 10-01/02/04 parallel; 10-03 correctly gated on 10-02 (needs 03-VERIFICATION traceability table); 10-05 is the closure gate.
-- **Solid audit-integrity patterns.** The "2-of-3 sources" rule (D-08), append-only preservation of historical deferred records (D-10), and citing-not-duplicating evidence (D-04) are noted as well-designed safeguards by both reviewers.
-- **Schema mirroring.** Using Phase 06 as canonical frontmatter and peer phases (01/02/04/05/06) as VERIFICATION.md structural template gives the work a clear definition of done.
 
-### Agreed Concerns
-The reviewers diverge on severity but converge on the *type* of risk: **audit-truth drift**, not runtime risk.
+- **Wave structure correct** — 10-03 depends on 10-02; 10-05 depends on all prior plans (Gemini + Codex).
+- **Truth-anchoring** between 10-02 and 10-05 prevents drift on TEST-10 ownership (Gemini + Codex).
+- **17→9 file count reconciliation** is well explained (Gemini + Codex).
+- **Anti-overclaim negative grep** in 10-05 is a strong audit control (Gemini + Codex).
+- **2-of-3 source cross-check rule** in 10-03 is the right control for fabricated REQ-IDs (Gemini + Codex).
+- **Historical-record preservation** — append-only 04-UAT, deferred rows kept intact (Codex; aligned with Gemini's "Historical Integrity" point).
 
-- **Plan 10-03 traceability hazards.** Both flag concerns around the SUMMARY file mapping. Gemini at MEDIUM (mis-mapping REQ-IDs across multi-plan phases); Codex at HIGH (autonomous-mode contradicts D-08's "stop for user resolution" rule when discrepancies exist) and MEDIUM (precomputed Phase 02 assignments may not match `02-VERIFICATION.md` actual mappings; "17 SUMMARY files" vs "17 declarations across 9 files" wording drift).
-- **Verification-gate brittleness.** Codex flagged several MEDIUM grep issues (`head -10 | grep` will fail because frontmatter exceeds 10 lines; `grep -q ... | tail -1` always passes because `grep -q` emits no output; alternation `(A|B)` passes if only one ID present). Gemini did not surface these but echoes the general "verification gates need to be tight."
+### Agreed Concerns (highest priority)
+
+- **HIGH (Codex; Gemini silent):** 10-02 sign-off line text `"4/6 functional passes → 6/6 via Phase 8 TEST-10"` reintroduces closure ambiguity that the rest of the plan worked hard to remove. Pure text fix — replace with `"4/6 functional passes; UAT 2+3 remain deferred to Phase 8 TEST-10"`.
+- **HIGH (Codex; Gemini silent):** `Resolved-by:` precondition gate (10-03 Task 2 + 10-05 Task 2) accepts placeholder text. The plan even prescribes Task 1 to *write* a templated `Resolved-by: <fill-in-handle> on <YYYY-MM-DD>` line for the user to populate — the gate's `grep -q "^Resolved-by:"` matches that placeholder. Gate is bypassable in practice. Fix: require non-placeholder regex like `^Resolved-by: [^<].+ on 20[0-9]{2}-[0-9]{2}-[0-9]{2}$`, AND/OR require empty `User decision` cells to be filled before pass.
+- **MEDIUM (Codex; Gemini silent):** 10-05 Task 1 writes `10-VERIFICATION.md` (claiming 5/5 verified) before Task 2's upstream-truth preconditions run. The truth gate should fire BEFORE `10-VERIFICATION.md` is written, not just before `REQUIREMENTS.md` flip — otherwise a stale/incorrect verification artifact lands when the gate later fails.
+- **MEDIUM (Codex; Gemini silent):** 10-03 contains "expected assignments" for Phase 02 (e.g., "02-01: VOTE-01, VOTE-02") that may conflict with `02-VERIFICATION.md` actual mapping. Plan says "Do NOT guess — read the files," but the precomputed guesses can leak into the discrepancy file as anchors. Either remove them or verify against `02-VERIFICATION.md` before writing.
+- **LOW (Codex):** 10-02 must-have says "≥4 success-criterion rows" but the prescribed file body has 3 rows. Minor mismatch; either lower threshold or add a row.
+- **LOW (Codex):** Several grep checks scan the entire file rather than the YAML frontmatter specifically. Acceptable for doc-only but weaker than acceptance criteria suggest.
+- **LOW (Gemini):** Discrepancy table should cite WHICH single source supports each flagged REQ-ID inline, not just flag presence.
+- **LOW (Gemini):** Commit messages for retroactive claims (10-01, 10-02) should explicitly cite the "378/378 tests + audit verdict" rationale.
 
 ### Divergent Views
-- **Overall risk level.** Gemini: LOW. Codex: MEDIUM. The disagreement is whether *audit-integrity drift* should be treated as a meaningful risk or an aesthetic concern. Codex's HIGH concerns (cross-document inconsistency between 10-02's claims and 08-VERIFICATION/REQUIREMENTS state, autonomous-mode contradicting D-08, 10-05 re-audit overclaiming "all tech_debt closed") all point to the same theme: a doc-only phase can still ship a *misleading* closure artifact if cross-document state isn't reconciled. The user should weigh this — the production platform isn't at risk, but the project's audit story might be.
-- **Single-source discrepancies (10-03).** Gemini frames as LOW (the 2-of-3 rule is sufficient safety). Codex frames as HIGH (the *autonomous* execution mode contradicts the CONTEXT.md D-08 directive to halt for user resolution).
 
-### Codex-Only HIGH Concerns (require user review before execution)
-1. **10-02 vs 08-VERIFICATION / REQUIREMENTS state inconsistency on TEST-10.** If 03-UAT.md now contains pass evidence (per Phase 8 second-human run), Phase 10's retroactive 03-VERIFICATION.md must reconcile with that — and the reconciliation needs to ripple to 08-VERIFICATION.md and REQUIREMENTS.md, OR Phase 10 must explicitly defer TEST-10 to its actual owner (Phase 8).
-2. **10-03 autonomous mode contradicts D-08.** D-08 says single-source REQ-ID candidates "are flagged as discrepancies in `10-RESEARCH.md` for resolution by the user before write — do NOT silently include or exclude them." But the plan is marked Wave 2 autonomous. Either (a) make 10-03 conditionally non-autonomous (halt on discrepancies), or (b) confirm with the user that executor judgment is acceptable for single-source cases.
-3. **10-05 closure overclaim risk.** Re-audit text should phrase as "zero outstanding planning-artifact gaps from the original audit's tech_debt → v1.1 list" rather than "all tech_debt closed" — the audit lists out-of-scope items that are NOT closed by Phase 10 (e.g., fake admin Discord IDs cleanup, [E2E] poll cleanup), and overclaiming would be misleading.
-4. **10-05 inherits unresolved truth issues from 10-02 and 10-04.** Flipping DOCS-01..04 to `[x]` in REQUIREMENTS.md before the 10-02 cross-document reconciliation lands would make REQUIREMENTS.md too optimistic about the planning state.
+**On HIGH #1, #2, #4 closure status.** Gemini sees structural mitigations (DEFERRED grep gates, autonomous: false, preconditions table) and rules them FULLY RESOLVED. Codex audits the actual text + regex strength and finds:
+1. A residual closure-ambiguity phrase in 10-02 sign-off,
+2. A bypassable `Resolved-by:` regex,
+3. Preconditions that protect REQUIREMENTS.md but NOT 10-VERIFICATION.md.
 
-### Recommended Pre-Execution Fixes (cheap to apply)
-1. **10-01:** Switch grep checks from line-grep to frontmatter-scoped (`awk '/^---$/{n++} n==1' file | grep ...` or use a small parser). Add a "body unchanged" diff check.
-2. **10-02:** Replace `head -10 | grep "^# Phase 03"` with frontmatter-aware check; reconcile TEST-10 framing with current 03-UAT.md / 08-VERIFICATION.md state before writing exact content.
-3. **10-03:** Make Wave 2 conditional: if `10-RESEARCH.md` discrepancy section is non-empty, halt for user resolution (per D-08). Replace alternation `(A|B)` greps with separate per-ID checks. Remove precomputed Phase 02 mappings from plan body; derive at execution time from `02-VERIFICATION.md`.
-4. **10-04:** Fix `grep -q ... | tail -1` (drop the pipe; use plain `grep -q` and check exit code). Add a frontmatter superseding key (`phase10_off_record_result: complete`) so future auditors see closure without rewriting history.
-5. **10-05:** Phrase re-audit as "zero outstanding planning-artifact gaps from tech_debt → v1.1 list." Gate REQUIREMENTS flip on actual grep checks, not just file existence. Verify each prior plan's `files_modified` includes its `*-SUMMARY.md` output.
+The convergence-loop contract treats PARTIALLY RESOLVED HIGHs as **unresolved**. Codex's stricter reading governs the count. **Net unresolved HIGHs in cycle 2: 2** (one carrying #1, one carrying #2/#4 conflated by Codex into a single residual issue).
+
+### Recommended Cycle 3 Fixes (text-level, ≤30 min)
+
+1. **10-02:** Replace sign-off parenthetical `"03-UAT.md 4/6 functional passes → 6/6 via Phase 8 TEST-10"` with `"03-UAT.md 4/6 functional passes; UAT 2+3 remain deferred to Phase 8 TEST-10"`.
+2. **10-03 Task 1 + 10-05 Task 2:** Strengthen `Resolved-by:` regex to reject placeholders. Concrete pattern: `grep -qE "^Resolved-by: [^<[:space:]][^<]+ on 20[0-9]{2}-[0-9]{2}-[0-9]{2}$"`. Also require `User decision` column has no empty cells when discrepancies are present.
+3. **10-05 Task 1:** Add the same upstream-truth preconditions block from Task 2 to the top of Task 1 — verification artifact must not be written before truth gates fire.
+4. **10-03 expected-assignments block:** Either delete the precomputed Phase 02 assignments or annotate each with "verify against 02-VERIFICATION.md before writing." Same for 04-02/04-04 candidate REQ-IDs.
+
+These are small local text edits — risk profile remains LOW; audit-precision risk drops to LOW once applied.
+
+---
+
+*End cycle 2 review.*
