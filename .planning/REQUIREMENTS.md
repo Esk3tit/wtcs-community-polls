@@ -10,9 +10,9 @@ This document tracks the v1.2 milestone requirements. After v1.0 (43 of 45 reqs)
 
 - [x] **VIS-01**: Each suggestion has a per-row `results_hidden` boolean that gates whether voters who voted can see the vote count breakouts. Default is `false` (visible) for all newly created polls and all existing v1.0/v1.1 polls (backwards compat — preserves RSLT-05 default behavior). DB-enforced via `polls.results_hidden boolean NOT NULL DEFAULT false`. *(Plan 11-01, 2026-05-11)*
 
-- [ ] **VIS-02**: Admins can flip `results_hidden` true ↔ false at any point in a poll's lifecycle (before voting starts, during voting, after voting closes — including archived polls). No window restriction. Two-way: admins can hide and unhide. The flip is audited: every change writes a new row to `audit_log` and updates `polls.results_hidden_changed_at`.
+- [x] **VIS-02**: Admins can flip `results_hidden` true ↔ false at any point in a poll's lifecycle (before voting starts, during voting, after voting closes — including archived polls). No window restriction. Two-way: admins can hide and unhide. The flip is audited: every change writes a new row to `audit_log` and updates `polls.results_hidden_changed_at`. *(Plan 11-02, 2026-05-11 — EF written; deploy gate in Plan 11-05. REVIEW-FIX-H4 race-safe conditional UPDATE; audit + timestamp written only on actual state change.)*
 
-- [ ] **VIS-03**: A new admin-gated Edge Function `toggle-results-visibility` performs the flip. Gated via the existing `requireAdmin` helper (Phase 11 verifies the helper is current; reused as-is if signature still fits). Takes `{ poll_id, hidden: boolean }`, validates, writes the new value + audit row, returns updated poll row.
+- [x] **VIS-03**: A new admin-gated Edge Function `toggle-results-visibility` performs the flip. Gated via the existing `requireAdmin` helper (Phase 11 verifies the helper is current; reused as-is if signature still fits). Takes `{ poll_id, hidden: boolean }`, validates, writes the new value + audit row, returns updated poll row. *(Plan 11-02, 2026-05-11 — `supabase/functions/toggle-results-visibility/index.ts` (120 lines). Validates UUID + strict boolean; 401/400/403/404/500/200 paths complete; response shape `{poll: <full row>}` on both state-change and no-op paths.)*
 
 - [x] **VIS-04**: The `vote_counts` SELECT RLS policy is rewritten to honor `results_hidden`. The policy grants SELECT iff: (a) `auth.uid()` has cast a vote on this poll AND (b) `polls.results_hidden = false`. Admin service-role bypass remains. The old policy is `DROP`'d before the new policy is `CREATE`'d (no OR-permissive combination). Non-voters never see results regardless of state (privacy boundary unchanged from v1.0). *(Plan 11-01, 2026-05-11 — REVIEW-FIX-H3: no `is_current_user_admin()` OR-branch; service-role bypass only.)*
 
@@ -63,8 +63,8 @@ This document tracks the v1.2 milestone requirements. After v1.0 (43 of 45 reqs)
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
 | VIS-01 | Phase 11 | Complete (Plan 11-01, 2026-05-11) |
-| VIS-02 | Phase 11 | Pending |
-| VIS-03 | Phase 11 | Pending |
+| VIS-02 | Phase 11 | Complete (Plan 11-02, 2026-05-11; deploy in Plan 11-05) |
+| VIS-03 | Phase 11 | Complete (Plan 11-02, 2026-05-11; deploy in Plan 11-05) |
 | VIS-04 | Phase 11 | Complete (Plan 11-01, 2026-05-11) |
 | VIS-05 | Phase 11 | Pending |
 | VIS-06 | Phase 12 | Pending |
