@@ -20,6 +20,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
 import { getCorsHeaders } from '../_shared/cors.ts'
+import { writeAudit } from '../_shared/audit.ts'
 
 function json(body: unknown, status: number, cors: HeadersInit) {
   return new Response(JSON.stringify(body), {
@@ -59,6 +60,18 @@ Deno.serve(async (req) => {
     if (error) {
       console.error('close-expired-polls sweep failed:', error)
       return json({ error: 'Internal error' }, 500, corsHeaders)
+    }
+    // D-03 cron-actor exception: actor_id=null. Sequential await — cron is not
+    // latency-bound; serial writes match the EF style and keep ordering stable.
+    for (const row of data ?? []) {
+      await writeAudit(supabaseAdmin, {
+        actor_id: null,
+        action: 'poll_auto_closed',
+        target_type: 'poll',
+        target_id: row.id,
+        before: { status: 'active' },
+        after: { status: 'closed' },
+      })
     }
     return json(
       {
