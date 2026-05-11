@@ -6,6 +6,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { requireAdmin, adminCheckResponse } from '../_shared/admin-auth.ts'
+import { writeAudit } from '../_shared/audit.ts'
 
 function json(body: unknown, status: number, cors: HeadersInit) {
   return new Response(JSON.stringify(body), {
@@ -78,6 +79,15 @@ Deno.serve(async (req) => {
       console.error('demote-admin update failed:', error)
       return json({ error: 'Internal error' }, 500, corsHeaders)
     }
+
+    await writeAudit(supabaseAdmin, {
+      actor_id: user.id,
+      action: 'admin_demoted',
+      target_type: 'profile',
+      target_id: target_user_id,
+      before: { is_admin: true },
+      after: { is_admin: false },
+    })
 
     return json({ success: true }, 200, corsHeaders)
   } catch (err) {
