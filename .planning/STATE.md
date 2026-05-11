@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Admin Visibility Controls
 status: planning
-last_updated: "2026-05-11T00:00:00.000Z"
-last_activity: 2026-05-11
+stopped_at: Phase 11 context gathered
+last_updated: "2026-05-11T17:54:33.859Z"
+last_activity: 2026-05-11 — v1.2 roadmap created (Phases 11–13)
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
-  percent: 0
 ---
 
 # Project State
@@ -49,12 +49,14 @@ v1.1 phase-level context lives in:
 Recent decisions are in PROJECT.md Key Decisions table with outcomes (✓ Good / ⚠️ Revisit / — Pending).
 
 Two Key Decision rows remain ⚠️ pending v1.2 closure:
+
 - `Mobile-first responsive design` — UIDN-02 closure (Phase 13)
 - `shadcn/ui new-york + Tailwind CSS v4` — UIDN-03 closure (Phase 12)
 
 ### v1.2 Open Questions (resolve before Phase 11 plan-phase)
 
 Per research SUMMARY gaps section:
+
 1. Does the anon role (unauthenticated visitors) see results when `results_hidden = false`, or only authenticated voters? REQUIREMENTS.md VIS-04 specifies voters-only — the `vote_counts` RLS policy grants SELECT iff `auth.uid()` has cast a vote AND `results_hidden = false`. Non-voters never see results regardless of state. Confirm this holds for anon role at Phase 11 plan start.
 2. Does `requireAdmin` in `_shared/admin-auth.ts` call the updated `is_current_user_admin()` (migration 9 guild_member gate)? Read at Phase 11 start; flag if stale.
 3. Does `polls_effective` in the current migration use explicit columns or `SELECT *`? Read migration DDL at Phase 11 start before writing migration 10.
@@ -67,6 +69,6 @@ None. All three v1.2 phases have sufficient research detail to proceed directly 
 
 ## Session Continuity
 
-Last session: 2026-05-11
-Stopped at: v1.2 roadmap written — Phases 11, 12, 13 defined with goals, success criteria, and requirement mappings
+Last session: 2026-05-11T17:54:33.852Z
+Stopped at: Phase 11 context gathered
 Resume action: `/gsd-plan-phase 11` to begin Phase 11 implementation planning
