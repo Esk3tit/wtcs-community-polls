@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Hygiene & Polish
-status: "Phase 10 shipped — PR #25"
-stopped_at: Phase 10 context gathered
+status: milestone_complete
+stopped_at: Phase 10 complete (DOCS-01..04 closed; v1.1 milestone complete; PR #25 open)
 last_updated: "2026-05-11T04:36:45.526Z"
-last_activity: "2026-05-10 -- Phase 10 shipped (PR #25)"
+last_activity: "2026-05-10 -- Phase 10 shipped (PR #25); v1.1 milestone complete"
 progress:
   total_phases: 10
   completed_phases: 10
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-04-28 after v1.0 milestone)
 
 ## Current Position
 
-Phase: 10
-Plan: Not started
-Status: Phase 10 shipped — PR #25
-Last activity: 2026-05-10 -- Phase 10 shipped (PR #25)
+Phase: 10 (complete)
+Plan: 10-05 (final)
+Status: Milestone complete — v1.1 Hygiene & Polish (Phases 7–10); PR #25 open
+Last activity: 2026-05-10 -- Phase 10 shipped (PR #25); v1.1 milestone complete
 
 ## Accumulated Context
 
@@ -67,6 +67,6 @@ None for v1.0 close. v1.1 scope and phasing TBD via `/gsd-new-milestone`.
 
 ## Session Continuity
 
-Last session: 2026-05-07T07:09:59.296Z
-Stopped at: Phase 10 context gathered
-Resume action: `/gsd-plan-phase 9` to plan UI Closure Evidence
+Last session: 2026-05-10T17:56:00.000Z
+Stopped at: Phase 10 complete; v1.1 Hygiene & Polish milestone complete (Phases 7–10, 16/16 plans); PR #25 awaiting merge
+Resume action: `/gsd-new-milestone` to begin v1.2 feature planning (Admin Visibility Controls — SEED-002)

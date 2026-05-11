@@ -36,10 +36,10 @@ decisions:
   - "VOTE-01..04 excluded from 04-02 and 04-04 per user decision: VOTE-* are Phase 2/3 requirements; the Phase 4 audit tech_debt text was a copyediting artifact; 04-VERIFICATION.md has no VOTE-* rows"
   - "Gap-closure plans (02-04, 04-05) receive requirements-completed: [] with inline comment explaining no v1.0 REQ-ID maps to them per D-08 cross-check"
 metrics:
-  duration: ~10 minutes (continuation agent, Task 2 only)
+  duration: ~10 minutes (continuation agent, Task 2 only; Task 1 completed by prior agent earlier in session)
   completed: 2026-05-07
-  tasks_completed: 1
-  tasks_total: 1
+  tasks_completed: 2
+  tasks_total: 2
   files_created: 1
   files_modified: 9
 requirements-completed: [DOCS-03]
