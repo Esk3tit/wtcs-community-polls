@@ -58,7 +58,7 @@ Produced `10-DOCS-03-DISCREPANCIES.md` by cross-checking all 9 SUMMARY files aga
 - Source 2: REQUIREMENTS.md inline evidence citations
 - Source 3: v1.0-MILESTONE-AUDIT.md requirements_integration_map
 
-Found two discrepancy rows: VOTE-* in 04-02 and 04-04 (single-source only — audit tech_debt text; no VERIFICATION.md rows for VOTE-* in Phase 4).
+Found two discrepancy rows: `VOTE-*` in 04-02 and 04-04 (single-source only — audit tech_debt text; no VERIFICATION.md rows for `VOTE-*` in Phase 4).
 
 ### User Resolution (5adc5d2)
 

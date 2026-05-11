@@ -51,13 +51,13 @@ All four files passed the combined grep gate:
 - `created:` dates preserved verbatim (01: 2026-04-06, 02: 2026-04-06, 03: 2026-04-07, 04: 2026-04-11)
 - Body content of all four files unchanged
 - Old TBD placeholder row in 04 frontmatter removed (was in Per-Task Verification Map note, not in frontmatter — not present in frontmatter at all)
-- Phase integer alignment: `phase: 02` → `phase: 2`; `phase: 04` → `phase: 4` (D-01 schema)
+- Phase integer alignment: `phase: 02` → `phase: 2`; `phase: 04` → `phase: 4` (canonical integer form used by `06-VALIDATION.md`; no dedicated decision row covers this — it is a typo correction within the D-01/D-02 frontmatter migration scope)
 
 ## Deviations from Plan
 
 None — plan executed exactly as written.
 
-Minor observation: phases 02 and 04 had `phase: 02` / `phase: 04` (string-style) vs the canonical integer form used in phase 06. Corrected to `phase: 2` / `phase: 4` per D-01 schema alignment. This is within-scope of the frontmatter backfill action.
+Minor observation: phases 02 and 04 had `phase: 02` / `phase: 04` (string-style) vs the canonical integer form used in phase 06. Corrected to `phase: 2` / `phase: 4` for canonical integer-form alignment with `06-VALIDATION.md`. This is within-scope of the frontmatter backfill action.
 
 ## Known Stubs
 

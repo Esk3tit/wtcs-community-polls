@@ -23,7 +23,7 @@ Phase 10 is a planning-hygiene-backfill phase. Every change is confined to `.pla
 
 ## Verification
 
-```
+```bash
 $ git diff --name-only 840137c..HEAD | grep -v '^\.planning/'
 (zero source files)
 ```

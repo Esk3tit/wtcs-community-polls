@@ -21,7 +21,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-28 after v1.0 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** Phase 10 — planning-hygiene-backfill
+**Current focus:** v1.2 planning (post-milestone) — next: `/gsd-new-milestone` for Admin Visibility Controls (SEED-002)
 
 ## Current Position
 
