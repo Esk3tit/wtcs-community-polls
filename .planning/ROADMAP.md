@@ -10,6 +10,7 @@ This roadmap delivers a Discord-authenticated community suggestion and opinion-g
 
 - ✅ **v1.0 — Launch-Ready MVP** — Phases 1–6 (shipped 2026-04-28) — see [MILESTONES.md](MILESTONES.md) and [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 - ✅ **v1.1 — Hygiene & Polish** — Phases 7–10 (shipped 2026-05-11) — see [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md) and [GitHub milestone v1.1](https://github.com/Esk3tit/wtcs-community-polls/milestone/1)
+- 🔄 **v1.2 — Admin Visibility Controls** — Phases 11–13 (in progress)
 
 ## Phases
 
@@ -45,10 +46,74 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
 
 </details>
 
+### v1.2 — Admin Visibility Controls (Phases 11–13)
+
+- [ ] **Phase 11: Schema + RLS + EF Foundations** — Migration 10 (`results_hidden` boolean + `results_hidden_changed_at` timestamptz on `polls`, `vote_counts` RLS DROP+CREATE, `polls_effective` view rewrite with `security_invoker = on`), `toggle-results-visibility` Edge Function, 12-cell RLS invariant test suite (TEST-11), admin EF authorization test (TEST-12)
+- [ ] **Phase 12: Admin UI + User UI + UIDN-03 Sweep** — VisibilityCheckbox on creation form, "Hide/Show results" toggle button + AlertDialog on admin cards, `canSeeResults` gate in `SuggestionCard`, hidden-state message component, `useVoteCounts` extension, archive view fix, 4 native-button drift cleanup co-landing in `SuggestionForm.tsx`, `SearchBar.tsx`, `ImageInput.tsx`, Playwright E2E happy path (TEST-13)
+- [ ] **Phase 13: UIDN-02 Mobile Audit Closure** — `audit-screenshots.mjs` hydration-wait fix (Plan 02 defect), Lighthouse mobile audit rerun with authenticated Pass-A evidence for `/topics` and `/archive`, Key Decision rows flipped ⚠️ → ✓
+
+## Phase Details
+
+### Phase 11: Schema + RLS + EF Foundations
+**Goal**: The `results_hidden` policy is enforced at the database layer — RLS on `vote_counts` correctly gates visibility per voter status, and the `toggle-results-visibility` Edge Function is deployed and admin-authorized
+**Depends on**: Phase 10 (v1.1 shipped)
+**Requirements**: VIS-01, VIS-02, VIS-03, VIS-04, VIS-05, VIS-09, TEST-11, TEST-12
+
+**Success Criteria** (what must be TRUE):
+  1. Migration 10 applies cleanly: `polls.results_hidden boolean NOT NULL DEFAULT false` and `polls.results_hidden_changed_at timestamptz` columns exist; all 14 pre-existing migrations continue to pass
+  2. The 12-cell RLS invariant test suite passes in full: every cell where `results_hidden = true` OR the caller has not voted returns 0 rows from `vote_counts`; only `voted + results_hidden = false + authenticated` returns count data; service-role bypasses the policy in all states — **no cell may be skipped; this is a merge blocker**
+  3. Admin EF authorization test confirms: non-admin caller receives HTTP 403; admin caller receives HTTP 200 with updated poll row including the new `results_hidden` value and a non-null `results_hidden_changed_at`; an `audit_log` row is written for every toggle
+  4. The `polls_effective` view exposes `results_hidden` and `results_hidden_changed_at` to all callers (including the React client via the existing public read path); `security_invoker = on` re-applied; the `polls-effective-invariant.test.ts` continues to pass with zero new `from('polls')` direct reads introduced
+  5. `toggle-results-visibility` EF is deployed and reachable: calling it as a non-admin returns 403; calling it as an admin with a valid `{ poll_id, hidden: boolean }` body flips the value and writes the audit row
+
+**Plans**: TBD
+**UI hint**: no
+
+---
+
+### Phase 12: Admin UI + User UI + UIDN-03 Sweep
+**Goal**: Admins can hide and show results on any suggestion from the admin UI, users see either live vote counts or a "Results temporarily hidden by admin" message depending on the current state, and all 4 shadcn native-button drift sites are replaced
+**Depends on**: Phase 11
+**Requirements**: VIS-06, VIS-07, VIS-08, UIDN-03, TEST-13
+
+**Success Criteria** (what must be TRUE):
+  1. Admin creation form has a "Hide results from voters" checkbox (default unchecked); creating a poll with it checked produces a row with `results_hidden = true`; creating with it unchecked produces `results_hidden = false`
+  2. Live and archived admin suggestion cards show a "Hide results" / "Show results" toggle button that opens an AlertDialog with the suggestion title and an audit-trail note before confirming; confirming calls the `toggle-results-visibility` EF and the card label updates immediately
+  3. A logged-in user who has voted on a suggestion with `results_hidden = true` sees "Results temporarily hidden by admin" in place of the vote count breakout; the same user on a suggestion with `results_hidden = false` sees the normal count bars
+  4. The Playwright E2E spec (TEST-13) passes end-to-end: admin creates a poll, a test vote is cast, admin hides results, the voter UI shows the hidden message, admin shows results, the voter UI shows count bars again
+  5. ESLint and `tsc -b` pass with zero errors after the 4 native-button replacements in `SearchBar.tsx`, `SuggestionForm.tsx` (×2), and `ImageInput.tsx`; `type="submit"` is preserved where applicable; no existing form-submission behavior regresses
+
+**Plans**: TBD
+**UI hint**: yes
+
+---
+
+### Phase 13: UIDN-02 Mobile Audit Closure
+**Goal**: The Lighthouse mobile audit runs cleanly against v1.2 production (no F6 hydration-wait warnings, authenticated screenshots captured), and the `Mobile-first responsive design` Key Decision row flips ⚠️ → ✓ if Performance ≥ 90 on all 5 routes
+**Depends on**: Phase 12 (v1.2 production deploy must be live before Lighthouse scores are meaningful)
+**Requirements**: UIDN-02
+
+**Success Criteria** (what must be TRUE):
+  1. `audit-screenshots.mjs` runs without F6 DOM-assertion warnings: `waitForLoadState('networkidle')` (or equivalent hydration wait) is applied before screenshot capture; the byte-identical unauthenticated PNG defect is resolved
+  2. Authenticated Pass-A screenshots are captured for `/topics` and `/archive` using the existing `loginAs` helper from `e2e/helpers/auth.ts`; the screenshot corpus includes both authenticated and unauthenticated state for all audited routes
+  3. Lighthouse mobile audit produces a score for all 5 routes; results are archived in `.planning/closure/UIDN-02-mobile-evidence.md` (v1.2 rerun section) with the raw numeric scores recorded
+  4. The `Mobile-first responsive design` Key Decision row in `PROJECT.md` is flipped from ⚠️ Revisit to ✓ Good if Performance ≥ 90 on all 5 routes; if any route scores below 90, the evidence file documents the delta with rationale and the row remains ⚠️ with a follow-up note
+
+**Plans**: TBD
+**UI hint**: no
+
+---
 
 ## Progress
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 11. Schema + RLS + EF Foundations | 0/? | Not started | - |
+| 12. Admin UI + User UI + UIDN-03 Sweep | 0/? | Not started | - |
+| 13. UIDN-02 Mobile Audit Closure | 0/? | Not started | - |
 
 | Milestone | Phases | Plans | Status | Shipped |
 |-----------|--------|-------|--------|---------|
 | v1.0 | 1–6 | 32/32 | ✅ Shipped | 2026-04-28 |
 | v1.1 | 7–10 | 16/16 | ✅ Shipped | 2026-05-11 |
+| v1.2 | 11–13 | 0/? | 🔄 In progress | - |

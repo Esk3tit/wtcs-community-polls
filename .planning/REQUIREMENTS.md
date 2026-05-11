@@ -60,21 +60,19 @@ This document tracks the v1.2 milestone requirements. After v1.0 (43 of 45 reqs)
 
 ## Traceability
 
-The roadmap phase will populate this section, mapping each REQ-ID to a phase + plan.
-
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| VIS-01 | TBD (Phase 11) | Pending |
-| VIS-02 | TBD (Phase 11) | Pending |
-| VIS-03 | TBD (Phase 11) | Pending |
-| VIS-04 | TBD (Phase 11) | Pending |
-| VIS-05 | TBD (Phase 11) | Pending |
-| VIS-06 | TBD (Phase 12) | Pending |
-| VIS-07 | TBD (Phase 12) | Pending |
-| VIS-08 | TBD (Phase 12) | Pending |
-| VIS-09 | TBD (Phase 11) | Pending |
-| UIDN-02 | TBD (Phase 13) | Pending |
-| UIDN-03 | TBD (Phase 12) | Pending |
-| TEST-11 | TBD (Phase 11) | Pending |
-| TEST-12 | TBD (Phase 11) | Pending |
-| TEST-13 | TBD (Phase 12) | Pending |
+| VIS-01 | Phase 11 | Pending |
+| VIS-02 | Phase 11 | Pending |
+| VIS-03 | Phase 11 | Pending |
+| VIS-04 | Phase 11 | Pending |
+| VIS-05 | Phase 11 | Pending |
+| VIS-06 | Phase 12 | Pending |
+| VIS-07 | Phase 12 | Pending |
+| VIS-08 | Phase 12 | Pending |
+| VIS-09 | Phase 11 | Pending |
+| UIDN-02 | Phase 13 | Pending |
+| UIDN-03 | Phase 12 | Pending |
+| TEST-11 | Phase 11 | Pending |
+| TEST-12 | Phase 11 | Pending |
+| TEST-13 | Phase 12 | Pending |

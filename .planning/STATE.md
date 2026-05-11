@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Admin Visibility Controls
 status: planning
-last_updated: "2026-05-11T07:34:31.597Z"
+last_updated: "2026-05-11T00:00:00.000Z"
 last_activity: 2026-05-11
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,55 +17,56 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-28 after v1.0 milestone)
+See: .planning/PROJECT.md (updated 2026-05-11 after v1.1 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** v1.2 planning (post-milestone) — next: `/gsd-new-milestone` for Admin Visibility Controls (SEED-002)
+**Current focus:** v1.2 — Admin Visibility Controls — Phase 11 ready to plan
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 11 — Schema + RLS + EF Foundations
 Plan: —
-Status: Defining requirements
-Last activity: 2026-05-11 — Milestone v1.2 started
+Status: Ready to plan (roadmap written; `/gsd-plan-phase 11` is the next action)
+Last activity: 2026-05-11 — v1.2 roadmap created (Phases 11–13)
+
+```
+v1.2 progress:  [░░░░░░░░░░░░░░░░░░░░]  0% (0/3 phases)
+```
 
 ## Accumulated Context
 
 Decisions and project history are now logged in PROJECT.md Key Decisions and MILESTONES.md.
-v1.0 phase-level context (decisions, gotchas, retrospectives) lives in:
+v1.1 phase-level context lives in:
 
 - `.planning/MILESTONES.md` — shipped accomplishments + key decision outcomes
-- `.planning/milestones/v1.0-ROADMAP.md` — phase-by-phase scope and plans
-- `.planning/milestones/v1.0-REQUIREMENTS.md` — full v1 requirement set with traceability
-- `.planning/milestones/v1.0-MILESTONE-AUDIT.md` — cross-phase integration verification + tech debt log
-- `.planning/RETROSPECTIVE.md` — what worked, what was inefficient, lessons learned
-- `.planning/phases/0[1-6]-*/` — raw execution history (SUMMARY.md, VERIFICATION.md, UAT.md, VALIDATION.md per phase)
+- `.planning/milestones/v1.1-ROADMAP.md` — phase-by-phase scope and plans
+- `.planning/milestones/v1.1-REQUIREMENTS.md` — v1.1 requirement set with traceability
+- `.planning/milestones/v1.1-MILESTONE-AUDIT.md` — cross-phase integration verification + tech debt log
+- `.planning/phases/0[7-a]-*/` — raw execution history per v1.1 phase
 
 ### Decisions
 
-Recent v1.0 decisions are now in PROJECT.md Key Decisions table with outcomes (✓ Good / ⚠️ Revisit / — Pending).
+Recent decisions are in PROJECT.md Key Decisions table with outcomes (✓ Good / ⚠️ Revisit / — Pending).
 
-### Pending v1.1 Work
+Two Key Decision rows remain ⚠️ pending v1.2 closure:
+- `Mobile-first responsive design` — UIDN-02 closure (Phase 13)
+- `shadcn/ui new-york + Tailwind CSS v4` — UIDN-03 closure (Phase 12)
 
-GitHub milestone v1.1 (https://github.com/Esk3tit/wtcs-community-polls/milestone/1) tracks 6 issues:
+### v1.2 Open Questions (resolve before Phase 11 plan-phase)
 
-- Bugs: #11, #12, #13 (Playwright E2E spec hygiene), #17 (Sentry React 19 ErrorBoundary)
-- Enhancement: #19 (Vite/Rolldown sourcemap function names)
-- Documentation: #18 (UIDN-02/03 closure evidence)
-
-Planning hygiene (no GitHub issue):
-
-- VALIDATION.md frontmatter backfill on phases 01–04
-- Phase 03 VERIFICATION.md retrospective
-- 17 SUMMARY frontmatter `requirements-completed` declarations
-- Phase 03 UAT tests 2 + 3 with second human; Phase 04 UAT test 6a once second admin signs in
+Per research SUMMARY gaps section:
+1. Does the anon role (unauthenticated visitors) see results when `results_hidden = false`, or only authenticated voters? REQUIREMENTS.md VIS-04 specifies voters-only — the `vote_counts` RLS policy grants SELECT iff `auth.uid()` has cast a vote AND `results_hidden = false`. Non-voters never see results regardless of state. Confirm this holds for anon role at Phase 11 plan start.
+2. Does `requireAdmin` in `_shared/admin-auth.ts` call the updated `is_current_user_admin()` (migration 9 guild_member gate)? Read at Phase 11 start; flag if stale.
+3. Does `polls_effective` in the current migration use explicit columns or `SELECT *`? Read migration DDL at Phase 11 start before writing migration 10.
 
 ### Blockers/Concerns
 
-None for v1.0 close. v1.1 scope and phasing TBD via `/gsd-new-milestone`.
+None. All three v1.2 phases have sufficient research detail to proceed directly to plan-phase without additional `/gsd-research-phase` runs (confirmed by all 4 research agents).
+
+**P0 callout for Phase 11:** The 12-cell RLS invariant matrix test suite is a hard merge blocker. No room for "fix in Phase 12." RLS leakage at the `vote_counts` layer would expose pre-aggregated vote counts to non-voters through the Supabase anon key.
 
 ## Session Continuity
 
-Last session: 2026-05-11T06:40:14Z
-Stopped at: v1.1 Hygiene & Polish milestone shipped (Phases 7–10, 16/16 plans; PR #25 merged at fda6072)
-Resume action: `/gsd-new-milestone` to begin v1.2 feature planning (Admin Visibility Controls — SEED-002)
+Last session: 2026-05-11
+Stopped at: v1.2 roadmap written — Phases 11, 12, 13 defined with goals, success criteria, and requirement mappings
+Resume action: `/gsd-plan-phase 11` to begin Phase 11 implementation planning
