@@ -70,9 +70,9 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
 - [x] 11-00-PLAN.md — Wave 0 integration test fixtures (vitest config, helpers, scaffolds) — complete 2026-05-11
 - [x] 11-01-PLAN.md — Migration 10 (polls columns + audit_log + view rewrite + vote_counts policy) — complete 2026-05-11
 - [x] 11-02-PLAN.md — Shared audit helper + toggle-results-visibility EF — complete 2026-05-11
-- [ ] 11-03-PLAN.md — Audit retrofit of 11 existing mutation admin EFs (excluding create-poll, planned in 11-03b)
-- [ ] 11-03b-PLAN.md — create-poll results_hidden extension + audit retrofit (Option A — post-RPC conditional UPDATE)
-- [ ] 11-04-PLAN.md — TEST-11 12-cell RLS matrix + TEST-12 admin EF authz tests
+- [x] 11-03-PLAN.md — Audit retrofit of 11 existing mutation admin EFs (excluding create-poll, planned in 11-03b) — complete 2026-05-11
+- [x] 11-03b-PLAN.md — create-poll results_hidden extension + audit retrofit (Option A — post-RPC conditional UPDATE) — complete 2026-05-11
+- [x] 11-04-PLAN.md — TEST-11 12-cell RLS matrix + TEST-12 admin EF authz tests + create-poll results_hidden 4-case suite — complete 2026-05-11 (runtime PASS gated to Plan 11-05)
 - [ ] 11-05-PLAN.md — [BLOCKING] supabase db push + functions deploy + ship
 **UI hint**: no
 

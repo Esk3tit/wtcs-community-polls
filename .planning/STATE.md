@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Admin Visibility Controls
-status: Wave 2 landed; _shared/audit.ts helper + toggle-results-visibility EF written and committed; deploy gate deferred to Plan 11-05
-stopped_at: Phase 11 Plan 02 complete (Wave 2 — audit helper + toggle EF landed)
-last_updated: "2026-05-11T22:41:15Z"
-last_activity: 2026-05-11 -- Phase 11 Plan 02 complete (_shared/audit.ts + toggle-results-visibility EF; VIS-02 + VIS-03 implementation done, deploy in Plan 05)
+status: Wave 3 complete; Plan 11-04 wired TEST-11 12-cell vote_counts RLS matrix + admin-JWT regression sentinel + TEST-12 toggle-results-visibility 7-case suite + create-poll results_hidden 4-case suite. Runtime PASS gated to Plan 11-05 (live-target migration apply + EF deploy).
+stopped_at: Phase 11 Plan 04 complete (Wave 3 — 3 integration test suites wired; commits 2da285f, 43a35ee, 030558c)
+last_updated: "2026-05-11T23:50:00.000Z"
+last_activity: 2026-05-11 -- Phase 11 Plan 04 complete (TEST-11 12-cell RLS matrix + admin-JWT sentinel + TEST-12 7 cases + create-poll 4 cases; 24 integration cases enumerated)
 progress:
   total_phases: 3
   completed_phases: 0
-  total_plans: 7
-  completed_plans: 4
-  percent: 57
+  total_plans: 9
+  completed_plans: 8
+  percent: 89
 ---
 
 # Project State
@@ -21,17 +21,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-11 after v1.1 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** v1.2 — Admin Visibility Controls — Phase 11 Waves 0+1+2 complete; Wave 3 (Plan 11-03: 12-EF audit retrofit) next
+**Current focus:** v1.2 — Admin Visibility Controls — Phase 11 Waves 0–3 complete; Plan 11-05 (deploy gate: migration 10 apply + EF deploy + live integration-test run) next.
 
 ## Current Position
 
 Phase: 11 — Schema + RLS + EF Foundations
-Plan: 02 complete — Wave 3 (Plan 11-03: 12-EF audit retrofit via writeAudit) ready next
-Status: Wave 2 landed; `_shared/audit.ts` helper (Promise<void> fail-open contract) + `toggle-results-visibility` EF (race-safe conditional UPDATE, audit-on-state-change) committed; deploy gate deferred to Plan 11-05
-Last activity: 2026-05-11 -- Phase 11 Plan 02 complete (_shared/audit.ts + toggle-results-visibility EF; VIS-02 + VIS-03 implementation)
+Plan: 04 complete — Wave 3 (Plan 11-05: deploy gate — migration 10 apply + EF deploy + live test:integration run) ready next
+Status: Wave 3 complete; Plan 11-04 wired TEST-11 12-cell vote_counts RLS matrix + admin-JWT regression sentinel + TEST-12 toggle-results-visibility 7-case suite + create-poll results_hidden 4-case suite. Runtime PASS gated to Plan 11-05.
+Last activity: 2026-05-11 -- Phase 11 Plan 04 complete (TEST-11 + TEST-12 + create-poll suites; 24 integration cases enumerated; lint+typecheck green)
 
 ```
-v1.2 progress:  [██████░░░░░░░░░░░░░░] 17% (Phase 11: 3/5 plans complete)
+v1.2 progress:  [████████████████░░░░] 80% (Phase 11: 5/5 plans through Plan 04 wired; Plan 05 deploy gate remains)
 ```
 
 ## Accumulated Context
@@ -76,6 +76,14 @@ Per research SUMMARY gaps section:
 - **Pitfall 3 enforced:** `writeAudit` is NEVER wrapped in try/catch at call site. Helper's fail-open contract (console.error + return on insert failure) is the contract; wrapping would silence what the helper deliberately surfaces.
 - **VIS-03 + ROADMAP SC-3:** response shape is `{poll: <full row>}` on both state-change and no-op paths — admin UI can refresh card state without a follow-up SELECT.
 
+### Plan 11-04 Decisions Landed (2026-05-11)
+
+- **TEST-11 matrix cells use seedBaseline=true (default).** Service-role × 4 cells expecting `>0` rows depend on a baseline vote_counts row that exists independent of the cell's voted state. Without the seed those 4 cells would silently return 0 from an empty source (false-green resolution per REVIEW-FIX-H2).
+- **Admin-JWT regression sentinel uses seedBaseline=false PAIRED with explicit castVote keyed on memberUser.id.** Earlier draft used seedBaseline=false alone, leaving vote_counts empty and making the assertion a false negative. The corrected pairing produces a row admin would see IF the policy regressed back to `is_current_user_admin() OR ...` (REVIEW-FIX-C2-H5).
+- **TEST-12 fresh poll per case via beforeEach/afterEach.** Earlier plan drafts used a single shared poll from beforeAll; the audit-row case implicitly depended on the toggle case having run. The new design is order-independent (REVIEW-FIX-M6).
+- **create-poll test locks live EF contract via typecast.** Response shape is `{ success, id }` per `supabase/functions/create-poll/index.ts:189`, NOT `{ poll: <row> }` from earlier review-cycle drafts; choices is `string[]` per the same file lines 88–97, NOT `{ text }[]` (REVIEW-FIX-C2-H6).
+- **Runtime PASS deferred to Plan 11-05.** Local Supabase is running but migration 10 is not applied and EF runtime is stopped; the plan body explicitly authorized this gate.
+
 ### Blockers/Concerns
 
 None. All three v1.2 phases have sufficient research detail to proceed directly to plan-phase without additional `/gsd-research-phase` runs (confirmed by all 4 research agents).
@@ -84,6 +92,6 @@ None. All three v1.2 phases have sufficient research detail to proceed directly 
 
 ## Session Continuity
 
-Last session: 2026-05-11T22:41:15Z
-Stopped at: Phase 11 Plan 02 complete (Wave 2 — _shared/audit.ts + toggle-results-visibility EF landed; commits 5d53301, 1772fe8)
-Resume action: `/gsd-execute-phase 11` to continue Phase 11 (Wave 3: Plan 11-03 12-EF audit retrofit)
+Last session: 2026-05-11T23:50:00Z
+Stopped at: Phase 11 Plan 04 complete (Wave 3 — TEST-11 + TEST-12 + create-poll integration suites wired; commits 2da285f, 43a35ee, 030558c)
+Resume action: `/gsd-execute-phase 11` to continue Phase 11 (Plan 11-05 deploy gate — apply migration 10 + deploy EFs + run `npm run test:integration` against live target)
