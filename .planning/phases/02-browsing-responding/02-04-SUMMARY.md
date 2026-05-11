@@ -16,6 +16,8 @@ key_files:
 duration_minutes: 2
 status: complete
 self_check: PASSED
+requirements-completed: []
+# No v1.0 REQ-ID maps to this gap-closure plan per D-08 cross-check; see 10-DOCS-03-DISCREPANCIES.md
 ---
 
 # Plan 02-04 Summary: Route File Regression Fix

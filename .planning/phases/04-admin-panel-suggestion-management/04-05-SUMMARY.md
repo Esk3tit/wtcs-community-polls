@@ -4,6 +4,8 @@ plan: 05
 mode: gap_closure
 status: complete
 gap_closed: "Admin nav entry (UAT Test 3, severity: major)"
+requirements-completed: []
+# No v1.0 REQ-ID maps to this gap-closure plan per D-08 cross-check; see 10-DOCS-03-DISCREPANCIES.md
 ---
 
 ## Summary

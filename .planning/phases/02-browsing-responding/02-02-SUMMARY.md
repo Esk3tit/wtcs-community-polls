@@ -35,6 +35,7 @@ metrics:
   tasks_total: 2
   files_created: 7
   files_modified: 3
+requirements-completed: [VOTE-01, VOTE-02, VOTE-03, RSLT-01, RSLT-02, RSLT-03, RSLT-04, RSLT-05, INFR-04]
 ---
 
 # Phase 02 Plan 02: Vote Submission & Result Display Summary
