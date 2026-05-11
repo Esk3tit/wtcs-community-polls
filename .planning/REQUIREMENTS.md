@@ -20,13 +20,13 @@
 
 ### Testing
 
-- [ ] **TEST-07**: Three failing Playwright specs (admin-create, browse-respond, filter-search) pass under the canonical two-layer seed by scoping shared-DB list locators to `[E2E`-prefixed entries via `Locator.filter({ hasText: /\[E2E/ })` (unanchored — matches both `[E2E]` legacy and `[E2E SMOKE]` static-seed titles). browse-respond.spec.ts also casts a vote inside the test before asserting `[1-9]\d*` total responses.<br>_GitHub: #11, #12, #13 — research: `.planning/research/v1.1-PLAYWRIGHT-FIXTURES.md`_
+- [x] **TEST-07**: Three failing Playwright specs (admin-create, browse-respond, filter-search) pass under the canonical two-layer seed by scoping shared-DB list locators to `[E2E`-prefixed entries via `Locator.filter({ hasText: /\[E2E/ })` (unanchored — matches both `[E2E]` legacy and `[E2E SMOKE]` static-seed titles). browse-respond.spec.ts also casts a vote inside the test before asserting `[1-9]\d*` total responses. **Completed Phase 8 (PR #22 merged 2026-05-03)**: 08-HUMAN-UAT.md item 1 result `pass` 2026-05-03T10:35Z; CI runs 25273571093 + 25286405258 ✓. v1.1 audit (.planning/v1.1-MILESTONE-AUDIT.md) flipped checkbox 2026-05-11.<br>_GitHub: #11, #12, #13 — research: `.planning/research/v1.1-PLAYWRIGHT-FIXTURES.md`_
 
-- [ ] **TEST-08**: ESLint `no-restricted-syntax` rule prevents unscoped list locators from landing in `e2e/tests/**/*.spec.ts` — any `page.locator(...).all()` / `.nth(n)` / `.first()` on a shared-DB list without a preceding `.filter({ hasText: /\[E2E/ })` fails lint. Convention documented in `e2e/README.md` (or equivalent).
+- [x] **TEST-08**: ESLint `no-restricted-syntax` rule prevents unscoped list locators from landing in `e2e/tests/**/*.spec.ts` — any `page.locator(...).all()` / `.nth(n)` / `.first()` on a shared-DB list without a preceding `.filter({ hasText: /\[E2E/ })` fails lint. Convention documented in `e2e/README.md` (or equivalent). **Completed Phase 8 (PR #22 merged 2026-05-03)**: 08-VERIFICATION.md VERIFIED (rule in eslint.config.js; synthetic canary fires; `npx eslint e2e/tests/` exits 0; E2E-SCOPE-1 documented). v1.1 audit flipped checkbox 2026-05-11.
 
-- [ ] **TEST-09**: Playwright test-scoped `freshPoll` fixture provides per-test mutable state with cleanup around `await use()` — hybrid model: SQL seeds keep static reference data (categories, auth users), fixtures own per-test poll/vote rows.
+- [x] **TEST-09**: Playwright test-scoped `freshPoll` fixture provides per-test mutable state with cleanup around `await use()` — hybrid model: SQL seeds keep static reference data (categories, auth users), fixtures own per-test poll/vote rows. **Completed Phase 8 (PR #22 merged 2026-05-03)**: 08-VERIFICATION.md VERIFIED (fixture exists with try/catch/finally + AggregateError + single-statement DELETE; browse-respond.spec.ts is proof-of-contract consumer); 08-HUMAN-UAT item 1 runtime confirmed 2026-05-03. v1.1 audit flipped checkbox 2026-05-11.
 
-- [ ] **TEST-10**: Phase 03 UAT tests 2 + 3 executed with a second human (2FA-enabled, non-WTCS-member Discord tester — 2FA must be enabled so the Discord 2FA gate clears and the not-in-server check actually fires; an account without 2FA is blocked at the gate before non-member detection can run) — covers non-member rejection at OAuth callback and invite-link flow. Evidence appended to `.planning/phases/03-response-integrity/03-UAT.md`.
+- [x] **TEST-10**: Phase 03 UAT tests 2 + 3 executed with a second human (2FA-enabled, non-WTCS-member Discord tester — 2FA must be enabled so the Discord 2FA gate clears and the not-in-server check actually fires; an account without 2FA is blocked at the gate before non-member detection can run) — covers non-member rejection at OAuth callback and invite-link flow. Evidence appended to `.planning/phases/03-response-integrity/03-UAT.md`. **Completed Phase 8 (PR #22 merged 2026-05-03)**: 08-HUMAN-UAT.md item 2 result `pass` 2026-05-03T17:58Z; test-dev-account (2FA-enabled, non-WTCS-member); 03-UAT.md § Second-Human Verification has filled evidence for Tests 2 and 3 (both `result: pass`). v1.1 audit flipped checkbox 2026-05-11.
 
 ### UI & Design
 
@@ -72,10 +72,10 @@
 |--------|-------|--------|
 | OBSV-01 | Phase 7 | Completed (Phase 7 — PR #21) |
 | OBSV-02 | Phase 7 | Completed (Phase 7 — PR #21; +6.24% gzip vs 1.5% target — D-14 ship-anyway applied) |
-| TEST-07 | Phase 8 | Pending |
-| TEST-08 | Phase 8 | Pending |
-| TEST-09 | Phase 8 | Pending |
-| TEST-10 | Phase 8 | Pending |
+| TEST-07 | Phase 8 | Completed (Phase 8 — PR #22 merged 2026-05-03; 08-HUMAN-UAT item 1 pass; v1.1 audit reconciliation 2026-05-11) |
+| TEST-08 | Phase 8 | Completed (Phase 8 — PR #22; 08-VERIFICATION VERIFIED; ESLint rule + synthetic canary; v1.1 audit reconciliation 2026-05-11) |
+| TEST-09 | Phase 8 | Completed (Phase 8 — PR #22; 08-VERIFICATION VERIFIED + 08-HUMAN-UAT runtime pass; v1.1 audit reconciliation 2026-05-11) |
+| TEST-10 | Phase 8 | Completed (Phase 8 — PR #22; 08-HUMAN-UAT item 2 pass 2026-05-03; 03-UAT § Second-Human Verification filled; v1.1 audit reconciliation 2026-05-11) |
 | UIDN-04 | Phase 9 | Complete (Phase 9 — PR #24; ADR-001 in DESIGN-SYSTEM.md; unblocks UIDN-03) |
 | UIDN-02 | Phase 9 | Deferred to v1.2 (Phase 9 — PR #24; evidence captured; Lighthouse Perf gate missed 5/5 routes) |
 | UIDN-03 | Phase 9 | Deferred to v1.2 (Phase 9 — PR #24; evidence captured; 4 FAIL cells in item 4 / Button native-button drift) |

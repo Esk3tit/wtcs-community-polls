@@ -38,10 +38,14 @@ decisions:
 metrics:
   duration: "~15 minutes"
   completed: "2026-05-02"
-  tasks_completed: 3
+  tasks_completed: 4
   tasks_total: 4
   files_modified: 2
   files_verified_unchanged: 2
+requirements-completed: [TEST-07, TEST-08, TEST-09]
+# Plan 08-03 owns runtime-pass for all three Phase-8 spec REQs per 08-VERIFICATION
+# Requirements Coverage table: TEST-07 (08-03 only), TEST-08 (08-02+08-03), TEST-09
+# (08-01+08-03). Task 4 human checkpoint resolved 2026-05-03 (08-HUMAN-UAT item 1).
 ---
 
 # Phase 8 Plan 03: Spec Migration (TEST-07/08/09) Summary
