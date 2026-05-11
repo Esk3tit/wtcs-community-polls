@@ -6,6 +6,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { requireAdmin, adminCheckResponse } from '../_shared/admin-auth.ts'
+import { writeAudit } from '../_shared/audit.ts'
 
 function json(body: unknown, status: number, cors: HeadersInit) {
   return new Response(JSON.stringify(body), {
@@ -66,6 +67,16 @@ Deno.serve(async (req) => {
     if (!slug) {
       return json({ error: 'Category name must contain at least one alphanumeric character' }, 400, corsHeaders)
     }
+    // Best-effort capture of prior name for the audit `before` payload.
+    // maybeSingle() returns null on miss without erroring, so the subsequent
+    // UPDATE remains the canonical 404 source — the existing PGRST116 envelope
+    // is preserved.
+    const { data: priorRow } = await supabaseAdmin
+      .from('categories')
+      .select('name')
+      .eq('id', category_id)
+      .maybeSingle()
+
     const { data, error } = await supabaseAdmin
       .from('categories')
       .update({ name, slug })
@@ -82,6 +93,15 @@ Deno.serve(async (req) => {
       console.error('rename-category update failed:', error)
       return json({ error: 'Internal error' }, 500, corsHeaders)
     }
+
+    await writeAudit(supabaseAdmin, {
+      actor_id: user.id,
+      action: 'category_renamed',
+      target_type: 'category',
+      target_id: category_id,
+      before: priorRow ? { name: priorRow.name } : { id: category_id },
+      after: { name },
+    })
 
     return json({ success: true, category: data }, 200, corsHeaders)
   } catch (err) {
