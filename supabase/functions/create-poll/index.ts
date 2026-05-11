@@ -3,6 +3,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { requireAdmin, adminCheckResponse } from '../_shared/admin-auth.ts'
+import { writeAudit } from '../_shared/audit.ts'
 
 function json(body: unknown, status: number, cors: HeadersInit) {
   const headers = new Headers(cors)
@@ -42,6 +43,7 @@ Deno.serve(async (req) => {
       image_url?: unknown
       closes_at?: unknown
       choices?: unknown
+      results_hidden?: unknown
     }
     try {
       const parsed = await req.json()
@@ -118,6 +120,20 @@ Deno.serve(async (req) => {
       return json({ error: 'closes_at must be at least 1 minute in the future' }, 400, corsHeaders)
     }
 
+    // Strict boolean validation: never coerce 'true'/1/null. Default-false admin-bootstrap polls
+    // get the column DEFAULT from the polls schema; the rare opt-in (true) is applied via a
+    // post-RPC UPDATE below so the RPC contract stays unchanged.
+    const results_hidden =
+      body.results_hidden === undefined
+        ? false
+        : typeof body.results_hidden === 'boolean'
+          ? body.results_hidden
+          : null
+    if (results_hidden === null) {
+      return json({ error: 'Invalid results_hidden' }, 400, corsHeaders)
+    }
+
+    // RPC signature unchanged — results_hidden uses column DEFAULT; rare opt-in flip happens via post-RPC UPDATE below.
     const { data: pollId, error: rpcError } = await supabaseAdmin.rpc('create_poll_with_choices', {
       p_title: title,
       p_description: description,
@@ -130,6 +146,44 @@ Deno.serve(async (req) => {
     if (rpcError) {
       console.error('create_poll_with_choices failed:', rpcError)
       return json({ error: 'Internal error' }, 500, corsHeaders)
+    }
+
+    if (results_hidden === true) {
+      const { error: updateError } = await supabaseAdmin
+        .from('polls')
+        .update({ results_hidden: true, results_hidden_changed_at: new Date().toISOString() })
+        .eq('id', pollId)
+      if (updateError) {
+        // Compensating DELETE so the caller observes all-or-nothing semantics:
+        // returning 500 without the DELETE would leave a visible poll in production despite the admin's hidden intent.
+        // The CASCADE on choices/vote_counts cleans up any pre-seeded rows.
+        const { error: deleteError } = await supabaseAdmin.from('polls').delete().eq('id', pollId)
+        if (deleteError) {
+          // Best-effort: log and still return 500. The poll exists, but the caller is told the operation failed.
+          // Operator follow-up via audit log + Sentry alert can clean up orphaned visible polls if this branch fires.
+          console.error('create-poll compensation DELETE failed:', { pollId, deleteError, originalUpdateError: updateError })
+        }
+        return json({ error: 'Failed to set results_hidden — poll creation rolled back. Retry.' }, 500, corsHeaders)
+      }
+    }
+
+    await writeAudit(supabaseAdmin, {
+      actor_id: user.id,
+      action: 'poll_created',
+      target_type: 'poll',
+      target_id: pollId,
+      before: null,
+      after: { title, category_id, results_hidden },
+    })
+    if (results_hidden === true) {
+      await writeAudit(supabaseAdmin, {
+        actor_id: user.id,
+        action: 'results_hidden_set_at_create',
+        target_type: 'poll',
+        target_id: pollId,
+        before: null,
+        after: { results_hidden: true },
+      })
     }
 
     return json({ success: true, id: pollId }, 200, corsHeaders)
