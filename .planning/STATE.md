@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Hygiene & Polish
 status: milestone_complete
-stopped_at: Phase 10 complete (DOCS-01..04 closed; v1.1 milestone complete; PR #25 open)
-last_updated: "2026-05-11T04:36:45.526Z"
-last_activity: "2026-05-10 -- Phase 10 shipped (PR #25); v1.1 milestone complete"
+stopped_at: v1.1 milestone shipped (PR #25 merged fda6072); ready for v1.2 planning
+last_updated: "2026-05-11T06:40:14Z"
+last_activity: "2026-05-11 -- PR #25 merged (commit fda6072); v1.1 Hygiene & Polish milestone complete and shipped"
 progress:
   total_phases: 10
   completed_phases: 10
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-04-28 after v1.0 milestone)
 
 Phase: 10 (complete)
 Plan: 10-05 (final)
-Status: Milestone complete — v1.1 Hygiene & Polish (Phases 7–10); PR #25 open
-Last activity: 2026-05-10 -- Phase 10 shipped (PR #25); v1.1 milestone complete
+Status: Milestone shipped — v1.1 Hygiene & Polish (Phases 7–10); PR #25 merged (fda6072)
+Last activity: 2026-05-11 -- PR #25 merged (fda6072); v1.1 milestone shipped
 
 ## Accumulated Context
 
@@ -67,6 +67,6 @@ None for v1.0 close. v1.1 scope and phasing TBD via `/gsd-new-milestone`.
 
 ## Session Continuity
 
-Last session: 2026-05-10T17:56:00.000Z
-Stopped at: Phase 10 complete; v1.1 Hygiene & Polish milestone complete (Phases 7–10, 16/16 plans); PR #25 awaiting merge
+Last session: 2026-05-11T06:40:14Z
+Stopped at: v1.1 Hygiene & Polish milestone shipped (Phases 7–10, 16/16 plans; PR #25 merged at fda6072)
 Resume action: `/gsd-new-milestone` to begin v1.2 feature planning (Admin Visibility Controls — SEED-002)
