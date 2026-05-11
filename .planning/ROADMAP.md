@@ -66,11 +66,12 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
   4. The `polls_effective` view exposes `results_hidden` and `results_hidden_changed_at` to all callers (including the React client via the existing public read path); `security_invoker = on` re-applied; the `polls-effective-invariant.test.ts` continues to pass with zero new `from('polls')` direct reads introduced
   5. `toggle-results-visibility` EF is deployed and reachable: calling it as a non-admin returns 403; calling it as an admin with a valid `{ poll_id, hidden: boolean }` body flips the value and writes the audit row
 
-**Plans**: 6 plans
+**Plans**: 7 plans
 - [ ] 11-00-PLAN.md — Wave 0 integration test fixtures (vitest config, helpers, scaffolds)
 - [ ] 11-01-PLAN.md — Migration 10 (polls columns + audit_log + view rewrite + vote_counts policy)
 - [ ] 11-02-PLAN.md — Shared audit helper + toggle-results-visibility EF
-- [ ] 11-03-PLAN.md — Audit retrofit of 12 existing mutation EFs (+ create-poll results_hidden extension)
+- [ ] 11-03-PLAN.md — Audit retrofit of 11 existing mutation admin EFs (excluding create-poll, planned in 11-03b)
+- [ ] 11-03b-PLAN.md — create-poll results_hidden extension + audit retrofit (Option A — post-RPC conditional UPDATE)
 - [ ] 11-04-PLAN.md — TEST-11 12-cell RLS matrix + TEST-12 admin EF authz tests
 - [ ] 11-05-PLAN.md — [BLOCKING] supabase db push + functions deploy + ship
 **UI hint**: no
@@ -114,7 +115,7 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 11. Schema + RLS + EF Foundations | 0/6 | Planned | - |
+| 11. Schema + RLS + EF Foundations | 0/7 | Planned | - |
 | 12. Admin UI + User UI + UIDN-03 Sweep | 0/? | Not started | - |
 | 13. UIDN-02 Mobile Audit Closure | 0/? | Not started | - |
 
@@ -123,3 +124,5 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
 | v1.0 | 1–6 | 32/32 | ✅ Shipped | 2026-04-28 |
 | v1.1 | 7–10 | 16/16 | ✅ Shipped | 2026-05-11 |
 | v1.2 | 11–13 | 0/? | 🔄 In progress | - |
+</content>
+</invoke>
