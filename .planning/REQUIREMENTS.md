@@ -8,13 +8,13 @@ This document tracks the v1.2 milestone requirements. After v1.0 (43 of 45 reqs)
 
 ### Admin Visibility Controls (SEED-002 reframed)
 
-- [ ] **VIS-01**: Each suggestion has a per-row `results_hidden` boolean that gates whether voters who voted can see the vote count breakouts. Default is `false` (visible) for all newly created polls and all existing v1.0/v1.1 polls (backwards compat — preserves RSLT-05 default behavior). DB-enforced via `polls.results_hidden boolean NOT NULL DEFAULT false`.
+- [x] **VIS-01**: Each suggestion has a per-row `results_hidden` boolean that gates whether voters who voted can see the vote count breakouts. Default is `false` (visible) for all newly created polls and all existing v1.0/v1.1 polls (backwards compat — preserves RSLT-05 default behavior). DB-enforced via `polls.results_hidden boolean NOT NULL DEFAULT false`. *(Plan 11-01, 2026-05-11)*
 
 - [ ] **VIS-02**: Admins can flip `results_hidden` true ↔ false at any point in a poll's lifecycle (before voting starts, during voting, after voting closes — including archived polls). No window restriction. Two-way: admins can hide and unhide. The flip is audited: every change writes a new row to `audit_log` and updates `polls.results_hidden_changed_at`.
 
 - [ ] **VIS-03**: A new admin-gated Edge Function `toggle-results-visibility` performs the flip. Gated via the existing `requireAdmin` helper (Phase 11 verifies the helper is current; reused as-is if signature still fits). Takes `{ poll_id, hidden: boolean }`, validates, writes the new value + audit row, returns updated poll row.
 
-- [ ] **VIS-04**: The `vote_counts` SELECT RLS policy is rewritten to honor `results_hidden`. The policy grants SELECT iff: (a) `auth.uid()` has cast a vote on this poll AND (b) `polls.results_hidden = false`. Admin service-role bypass remains. The old policy is `DROP`'d before the new policy is `CREATE`'d (no OR-permissive combination). Non-voters never see results regardless of state (privacy boundary unchanged from v1.0).
+- [x] **VIS-04**: The `vote_counts` SELECT RLS policy is rewritten to honor `results_hidden`. The policy grants SELECT iff: (a) `auth.uid()` has cast a vote on this poll AND (b) `polls.results_hidden = false`. Admin service-role bypass remains. The old policy is `DROP`'d before the new policy is `CREATE`'d (no OR-permissive combination). Non-voters never see results regardless of state (privacy boundary unchanged from v1.0). *(Plan 11-01, 2026-05-11 — REVIEW-FIX-H3: no `is_current_user_admin()` OR-branch; service-role bypass only.)*
 
 - [ ] **VIS-05**: An RLS invariant test suite enforces the {voted: yes/no} × {hidden: true/false} × {auth: anon/authenticated/admin} cells. Every cell with non-voter or hidden=true returns 0 rows; only `voted + hidden=false + authenticated` returns vote counts; admin role bypass returns rows in all states. The test runs in `e2e/` against local Supabase and blocks merge if any cell fails.
 
@@ -24,7 +24,7 @@ This document tracks the v1.2 milestone requirements. After v1.0 (43 of 45 reqs)
 
 - [ ] **VIS-08**: User UI — `SuggestionCard` and the archive view show vote count breakouts only when the user has voted AND `results_hidden = false`. When `results_hidden = true`, voters who already voted see a "Results temporarily hidden by admin" message in place of the count display. Non-voters continue to see the vote form (unchanged from v1.0).
 
-- [ ] **VIS-09**: The `polls_effective` view is updated (`CREATE OR REPLACE VIEW`) to project `results_hidden` and `results_hidden_changed_at` from `polls` so the user-facing read path (`useSuggestions`, `useVoteCounts`, `SuggestionCard`) can branch on the policy without bypassing the view boundary. The `polls_effective` invariant test at `src/__tests__/admin/polls-effective-invariant.test.ts` continues to pass — no new direct `from('polls')` reads in `src/`. `security_invoker = on` re-applied after the view rewrite.
+- [x] **VIS-09**: The `polls_effective` view is updated (`CREATE OR REPLACE VIEW`) to project `results_hidden` and `results_hidden_changed_at` from `polls` so the user-facing read path (`useSuggestions`, `useVoteCounts`, `SuggestionCard`) can branch on the policy without bypassing the view boundary. The `polls_effective` invariant test at `src/__tests__/admin/polls-effective-invariant.test.ts` continues to pass — no new direct `from('polls')` reads in `src/`. `security_invoker = on` re-applied after the view rewrite. *(Plan 11-01, 2026-05-11 — pair re-applied 23 lines after CREATE OR REPLACE; invariant test passes 2/2.)*
 
 ### UI Polish Closure (carry-forward from v1.1 Path-3)
 
@@ -62,15 +62,15 @@ This document tracks the v1.2 milestone requirements. After v1.0 (43 of 45 reqs)
 
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| VIS-01 | Phase 11 | Pending |
+| VIS-01 | Phase 11 | Complete (Plan 11-01, 2026-05-11) |
 | VIS-02 | Phase 11 | Pending |
 | VIS-03 | Phase 11 | Pending |
-| VIS-04 | Phase 11 | Pending |
+| VIS-04 | Phase 11 | Complete (Plan 11-01, 2026-05-11) |
 | VIS-05 | Phase 11 | Pending |
 | VIS-06 | Phase 12 | Pending |
 | VIS-07 | Phase 12 | Pending |
 | VIS-08 | Phase 12 | Pending |
-| VIS-09 | Phase 11 | Pending |
+| VIS-09 | Phase 11 | Complete (Plan 11-01, 2026-05-11) |
 | UIDN-02 | Phase 13 | Pending |
 | UIDN-03 | Phase 12 | Pending |
 | TEST-11 | Phase 11 | Scaffold complete (Plan 11-00, 2026-05-11); bodies pending Plan 11-04 |

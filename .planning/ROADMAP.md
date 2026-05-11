@@ -68,7 +68,7 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
 
 **Plans**: 7 plans
 - [x] 11-00-PLAN.md — Wave 0 integration test fixtures (vitest config, helpers, scaffolds) — complete 2026-05-11
-- [ ] 11-01-PLAN.md — Migration 10 (polls columns + audit_log + view rewrite + vote_counts policy)
+- [x] 11-01-PLAN.md — Migration 10 (polls columns + audit_log + view rewrite + vote_counts policy) — complete 2026-05-11
 - [ ] 11-02-PLAN.md — Shared audit helper + toggle-results-visibility EF
 - [ ] 11-03-PLAN.md — Audit retrofit of 11 existing mutation admin EFs (excluding create-poll, planned in 11-03b)
 - [ ] 11-03b-PLAN.md — create-poll results_hidden extension + audit retrofit (Option A — post-RPC conditional UPDATE)
