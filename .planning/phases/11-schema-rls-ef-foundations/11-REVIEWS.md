@@ -1,7 +1,8 @@
 ---
 phase: 11
+review_cycle: 2
 reviewers: [gemini, codex]
-reviewed_at: 2026-05-11T20:58:32Z
+reviewed_at: 2026-05-11T21:30:00Z
 plans_reviewed:
   - 11-00-PLAN.md
   - 11-01-PLAN.md
@@ -13,366 +14,324 @@ plans_reviewed:
 attempted_but_skipped:
   - claude (self — running inside Claude Code CLI; skipped for independence)
   - coderabbit (no working-tree diff available; reviews git diff, not plan markdown)
-  - cursor (account hit usage limit during invocation)
+  - cursor (account hit usage limit during invocation, same as cycle 1)
   - opencode (not installed)
   - qwen (not installed)
+revisions_under_review: commit 252b4b8 (22 REVIEW-FIX-* markers — 8 HIGH, ~10 MEDIUM, 4 LOW)
+cycle_1_high_count: 6
+cycle_2_high_count: 7
 ---
 
-# Cross-AI Plan Review — Phase 11
+# Cross-AI Plan Review — Phase 11 (Cycle 2)
+
+Cycle 2 reviews the planner's revisions (commit `252b4b8`) that incorporated cycle-1 feedback. The plans now carry 22 `REVIEW-FIX-*` markers (8 HIGH, ~10 MEDIUM, 4 LOW). Both reviewers were prompted to (a) verify the 6 cycle-1 HIGHs are addressed and (b) surface any new concerns introduced by the revisions.
+
+The two reviewers diverged sharply again — Gemini scored the revised plans LOW risk and ready-for-execution; Codex grounded its review against the actual repo schema and EF contracts and surfaced **7 new HIGH-severity correctness gaps** (mostly interface mismatches between the revised plans and the live `create-poll` EF + `choices` table). Codex marked the phase HIGH risk, not execution-ready.
+
+---
 
 ## Gemini Review
 
-**Review of Phase 11: Schema + RLS + EF Foundations Plans**
+This is a **Cycle 2** review of the revised implementation plans for Phase 11 (Schema + RLS + EF Foundations). The planner has incorporated a comprehensive set of fixes (`REVIEW-FIX-*`) addressing all 6 HIGH-severity concerns from the previous cycle.
 
-**Overall Summary:** Phase 11 is exceptionally well-planned and meticulously detailed, laying a robust database and server-side foundation for the "Admin Visibility Controls" feature. The plans demonstrate a deep understanding of Supabase's ecosystem, PostgreSQL's Row Level Security (RLS), Edge Function architecture, and robust testing practices. The emphasis on atomicity, security (especially RLS and admin authorization), auditability, and comprehensive integration testing is highly commendable. All plans adhere to project conventions and proactively address potential pitfalls.
+### Phase 11-00-PLAN.md: Integration test fixtures
+1. **Summary**: This plan is now fully ready for execution. It correctly establishes a decoupled integration testing environment that mirrors production behaviors while maintaining strict isolation.
+2. **Strengths**: The introduction of `REVIEW-FIX-H1` and `H2` ensures that the integration matrix doesn't fail due to empty tables, and `mintClients` provides the necessary role-based contexts for RLS probing.
+3. **Concerns**: None.
+4. **Suggestions**: None.
+5. **Risk Assessment**: **LOW**.
 
----
+### Phase 11-01-PLAN.md: Migration 10
+1. **Summary**: Excellent migration design. The atomicity of the DDL and policy changes prevents any "security windows" during deployment.
+2. **Strengths**: `REVIEW-FIX-H3` is a critical correction; removing the JWT admin bypass from RLS ensures the platform follows the principle of least privilege, forcing admins to interact via audited Edge Functions for results access.
+3. **Concerns**: None.
+4. **Suggestions**: None.
+5. **Risk Assessment**: **LOW**.
 
-### Plan 11-00: Wave 0 integration test fixtures
+### Phase 11-02-PLAN.md: Shared audit helper + toggle EF
+1. **Summary**: The Edge Function logic is now robust and race-safe.
+2. **Strengths**: `REVIEW-FIX-H4` uses a single conditional `UPDATE` with `RETURNING`, which is the industry standard for idempotent, atomic state changes in Postgres. This removes the risk of double-auditing or state inconsistency under high concurrency.
+3. **Concerns**: None.
+4. **Suggestions**: None.
+5. **Risk Assessment**: **LOW**.
 
-1.  **Summary:** This plan effectively sets up the foundational infrastructure for integration testing in Phase 11. It covers the Vitest configuration, shared test helpers, test scaffolds, and integration into the `package.json` scripts and GitHub Actions CI workflow, ensuring that subsequent test implementation can proceed against a robust and isolated environment.
-2.  **Strengths:**
-    *   **Clear Separation:** Properly separates unit and integration test configurations and execution, preventing environmental leaks and ensuring faster feedback for unit tests.
-    *   **Helper Centralization:** Consolidates common test utilities (client minting, poll management, EF invocation, audit reading) into a single `helpers.ts` file, promoting reusability and maintainability.
-    *   **CI Integration:** Thoughtfully integrates the new integration test suite into CI, running it parallel to E2E tests, which optimizes overall CI duration.
-    *   **Robustness:** Explicitly avoids injecting placeholder Supabase environment variables into `vitest.config.integration.ts`, forcing the use of real credentials for integration tests, which is crucial for accurate RLS validation.
-    *   **Early Scaffolding:** Provides `it.todo()` scaffolds for the actual tests, enabling early setup verification without requiring full test implementation.
-3.  **Concerns:**
-    *   **Test Isolation for `createFreshPoll` (LOW):** The `createFreshPoll` helper uses `Date.now()` and `testInfo.workerIndex` for title uniqueness. While effective, if multiple parallel tests in the *same worker* call this simultaneously within the same millisecond, there's a theoretical, albeit low, chance of title collision if they don't explicitly pass a unique `suiteSlug`.
-4.  **Suggestions:**
-    *   Clarify in `createFreshPoll`'s JSDoc that `suiteSlug` is intended to provide further uniqueness *within* a test or `describe` block if multiple polls are created rapidly.
-5.  **Risk Assessment:** **LOW.**
+### Phase 11-03-PLAN.md: Audit retrofit
+1. **Summary**: A thorough and systematic update of the admin API surface.
+2. **Strengths**: The per-poll audit loop in the cron sweep (`close-expired-polls`) is a significant observability improvement over a single batch row.
+3. **Concerns**: None.
+4. **Suggestions**: None.
+5. **Risk Assessment**: **LOW**.
 
----
+### Phase 11-03b-PLAN.md: create-poll retrofit
+1. **Summary**: Handles the non-atomic creation-then-hide edge case with appropriate compensation.
+2. **Strengths**: `REVIEW-FIX-H5` (Compensating DELETE) ensures that if a poll is intended to be hidden but the visibility flip fails, the visible poll is rolled back. This prevents unintentional data exposure.
+3. **Concerns**: None.
+4. **Suggestions**: None.
+5. **Risk Assessment**: **LOW**.
 
-### Plan 11-01: Migration 10 (polls columns + audit_log + view rewrite + vote_counts policy)
+### Phase 11-04-PLAN.md: TEST-11/TEST-12 implementation
+1. **Summary**: The integration suite is now comprehensive and deterministic.
+2. **Strengths**: `REVIEW-FIX-M6` (order-independent tests) and `REVIEW-FIX-M7` (admin JWT sanity check) close significant verification gaps. The addition of a dedicated `create-poll-results-hidden.test.ts` provides much-needed coverage for the bootstrap-hidden path.
+3. **Concerns**: None.
+4. **Suggestions**: None.
+5. **Risk Assessment**: **LOW**.
 
-1.  **Summary:** This plan details the critical atomic database migration for Phase 11, introducing new columns for results visibility, establishing a comprehensive `audit_log` table with its RLS, updating the `polls_effective` view, and rewriting the `vote_counts` RLS policy.
-2.  **Strengths:**
-    *   **Atomicity:** Commitment to a single, atomic migration file with carefully ordered sections.
-    *   **RLS Security:** Rigorously defines the `vote_counts` RLS policy covering all edge cases.
-    *   **Audit Log Design:** Schema, RLS, and indexing strategy are well-defined, balancing audit integrity with performance.
-    *   **Backward Compatibility:** `results_hidden` defaults to `false` for existing polls.
-    *   **View Integrity:** Correctly re-applies `security_invoker = on` after view replacement.
-3.  **Concerns:**
-    *   **Index Over-specification (LOW):** Defining `audit_log` indexes now might be slightly premature without a concrete `audit_log` UI plan.
-4.  **Suggestions:** No significant suggestions; the plan is exceptionally thorough.
-5.  **Risk Assessment:** **LOW.**
-
----
-
-### Plan 11-02: Shared audit helper + toggle-results-visibility EF
-
-1.  **Summary:** Introduces the shared `writeAudit` helper and the new `toggle-results-visibility` Edge Function.
-2.  **Strengths:**
-    *   **Shared Audit Helper:** Centralizes `writeAudit` enforcing a consistent fail-open policy.
-    *   **Idempotency:** EF reads current state and only writes an audit log when state actually changes.
-    *   **Security:** Reuses `requireAdmin` helper.
-    *   **Clarity in Response:** Returns the full updated poll row.
-    *   **Error Handling:** Consistent error handling.
-3.  **Concerns:**
-    *   **`results_hidden_changed_at` on no-op (LOW):** Updated on every call (even no-ops), which could slightly obscure the actual last change time. The audit log itself records the actual state changes.
-4.  **Suggestions:** No significant suggestions.
-5.  **Risk Assessment:** **LOW.**
+### Phase 11-05-PLAN.md: Deploy + Ship
+1. **Summary**: The deployment workflow is now safe and follow established project flags.
+2. **Strengths**: `REVIEW-FIX-H7` correctly separates local validation from remote pushing. The addition of `--no-verify-jwt` in `H8` is the correct solution for functions performing internal auth checks.
+3. **Concerns**: None.
+4. **Suggestions**: None.
+5. **Risk Assessment**: **LOW**.
 
 ---
 
-### Plan 11-03: Audit retrofit batch A (5 EFs) & B (6 EFs)
+### Cycle 1 HIGH Concern Verification
 
-1.  **Summary:** Systematically retrofits 11 existing mutation-based admin Edge Functions to integrate `writeAudit`.
-2.  **Strengths:**
-    *   **Systematic Retrofit:** Clear, consistent approach.
-    *   **Adherence to `writeAudit` Contract:** Calls placed after mutation success, not wrapped in `try/catch`.
-    *   **Detailed Audit Semantics:** Precise `action` strings and `before`/`after` JSONB shapes.
-    *   **Special Case Handling:** `close-expired-polls` per-poll auditing with `actor_id: null`.
-    *   **No Response Shape Drift.**
-3.  **Concerns:**
-    *   **`delete-category` `before` state (LOW):** May need a new SELECT to capture name.
-    *   **`update-poll` `before` state (LOW):** May be `null` if RPC doesn't return prior values.
-4.  **Suggestions:** If trivial, add pre-mutation SELECT for `delete-category` and `update-poll`.
-5.  **Risk Assessment:** **LOW.**
+| Concern ID | Description | Status | Evidence |
+|:---|:---|:---|:---|
+| **TEST-11-HELP** | Helper contract gap (castVote/baseline) | **RESOLVED** | `e2e/integration/helpers.ts` includes `userId` and `seedBaselineVote`. |
+| **CREATE-ATOM** | create-poll non-atomic / leak risk | **RESOLVED** | `REVIEW-FIX-H5` implements compensating DELETE on UPDATE failure. |
+| **TOGGLE-RACE** | Toggle EF race condition (audit) | **RESOLVED** | `REVIEW-FIX-H4` implements conditional UPDATE with `IS DISTINCT FROM`. |
+| **RLS-CONTRA** | RLS admin-OR-branch contradiction | **RESOLVED** | `REVIEW-FIX-H3` removes admin OR-branch from the policy expression. |
+| **DB-PUSH-SAFE**| Dangerous Supabase commands | **RESOLVED** | `REVIEW-FIX-H7` removes `db push` from local gate; `H8` adds deploy flags. |
+| **TEST-ORDER** | TEST-12 case 3 ordering dependency | **RESOLVED** | `REVIEW-FIX-M6` implements `beforeEach`/`afterEach` for isolation. |
 
----
+### Overall Phase Risk Assessment: **LOW**
+The revised plans are exceptionally high-quality. They anticipate and mitigate production failure modes (compensation DELETEs), concurrency issues (conditional UPDATEs), and security loopholes (admin JWT RLS gating). The verification strategy is now robust enough to act as a hard gate for merging.
 
-### Plan 11-03b: create-poll results_hidden extension + audit retrofit (Option A — post-RPC conditional UPDATE)
-
-1.  **Summary:** Extends `create-poll` EF to support `results_hidden`, using post-RPC UPDATE to avoid modifying the RPC.
-2.  **Strengths:**
-    *   **Robust Input Validation:** Strict boolean type checking.
-    *   **RPC Integrity Preservation:** Avoids modifying the `create_poll_with_choices` RPC.
-    *   **Comprehensive Auditing:** Emits both `poll_created` and `results_hidden_set_at_creation` audit rows when applicable.
-    *   **Idempotency and Timestamps:** Post-RPC UPDATE stamps `results_hidden_changed_at` when set to `true`.
-    *   **Isolation:** Modifies only `create-poll/index.ts`.
-3.  **Concerns:**
-    *   **Two `writeAudit` Calls on True Path (LOW):** Emitting two audit rows for one logical action might be slightly verbose.
-4.  **Suggestions:** Consider consolidating to a single `poll_created` entry with `after: {..., results_hidden: true}`.
-5.  **Risk Assessment:** **LOW.**
-
----
-
-### Plan 11-04: TEST-11 12-cell RLS invariant matrix body & TEST-12 admin EF authz + audit row body
-
-1.  **Summary:** Fills out scaffolds for the merge-blocking integration tests for the 12-cell RLS invariant matrix and the `toggle-results-visibility` EF authorization/audit behavior.
-2.  **Strengths:**
-    *   **P0 Merge Blocker Enforcement.**
-    *   **Comprehensive EF Validation:** Security, functionality, audit behavior.
-    *   **Proper Test Isolation and Cleanup.**
-    *   **Determinism:** Eliminates `it.todo` and `it.skip`.
-3.  **Concerns:**
-    *   **Timestamp Assertion Strictness (LOW):** Only asserts non-null/ISO-parseable.
-    *   **`create-poll` Integration Case (LOW):** Not explicitly covered by a dedicated test case.
-4.  **Suggestions:** Consider adding a dedicated `create-poll.test.ts` for `results_hidden=true` audit verification.
-5.  **Risk Assessment:** **LOW.**
-
----
-
-### Plan 11-05: [BLOCKING] supabase db push + functions deploy + ship
-
-1.  **Summary:** Critical final blocking plan for production deployment of Migration 10 and all EFs.
-2.  **Strengths:**
-    *   **Blocking Nature** — `autonomous: false`.
-    *   **Pre-Merge Sanity:** `supabase db reset`, `db push`, `npm run test`, `npm run test:integration`.
-    *   **Comprehensive Deployment:** Lists all 13 EFs.
-    *   **Robust Post-Deploy Verification:** psql queries + curl smoke tests.
-    *   **Threat Mitigation:** Addresses `T-DEPLOY-WRONG-PROJECT` and `T-MIGRATION-PARTIAL-APPLY`.
-    *   **Documentation:** SUMMARY + ROADMAP + STATE.md.
-3.  **Concerns:**
-    *   **Rollback Strategy (LOW):** Defers rollback migration to a hotfix plan.
-    *   **`create-poll` Smoke Test (LOW):** Production smoke focuses only on toggle EF.
-4.  **Suggestions:** Add a smoke `curl` test for `create-poll` with `results_hidden: true`; emphasize `supabase link` to the correct production project.
-5.  **Risk Assessment:** **MEDIUM.**
-
----
-
-### Overall Risk Assessment for Phase 11: LOW-MEDIUM
-
-The planning for Phase 11 is of very high quality. The detailed research, clear decision-making, and proactive mitigation of security and integrity threats are exemplary. The `LOW-MEDIUM` assessment reflects the inherent risks associated with production deployments involving schema modifications and multiple function updates, even when meticulously planned.
+### Ready for Execution: **YES**
+The phase is ready for execution as written. No further review cycles are required.
 
 ---
 
 ## Codex Review
 
-### Summary
+I reviewed the plans against the repo's current schema and EF contracts. Net: the revisions fixed several cycle-1 issues, but Phase 11 is **not execution-ready yet** because some revised plans now conflict with actual code interfaces.
 
-The phase is well decomposed and mostly goal-directed: schema/RLS first, EF/audit next, retrofit surface after, invariant tests before deploy. The main problem is not scope, but correctness gaps in the test and deploy plans. As written, the RLS matrix can fail for the wrong reason because `vote_counts` rows may not exist, `castVote` does not clearly create a vote for `memberUser`, the toggle EF idempotency is race-prone, and the deploy plan contains dangerous Supabase command assumptions. I would not execute these plans unchanged.
+### 11-00
 
-### Highest-Priority Fixes
-
-- **HIGH:** Fix TEST-11 setup. Always create baseline count data, then vary whether `memberUser` has voted.
-- **HIGH:** Fix `castVote` helper to accept `userId`, defaulting to `fixtureUsers.memberUser.id`, and insert via service role.
-- **HIGH:** Remove `supabase db push` from the "local pre-merge" gate. It targets the linked remote DB, not local.
-- **HIGH:** Align EF deploy commands with the existing deploy workflow flags: `--project-ref`, `--use-api`, and `--no-verify-jwt`.
-- **HIGH:** Resolve the policy/spec ambiguity around authenticated admin reads of `vote_counts`.
-- **HIGH:** Reconsider `create-poll` post-RPC update, or add compensation. It is not atomic if the update fails after poll creation.
-- **MEDIUM:** Make TEST-12 cases independent or explicitly sequential.
-
-### 11-00 Plan Review
-
-**Summary:** Good scaffolding plan, but helper contracts are under-specified in ways that will break TEST-11 later.
+**Summary** — Good direction for integration scaffolding, but helper contracts still have execution-breaking schema mismatches.
 
 **Strengths**
-- Separates integration Vitest config from unit Vitest config.
-- Keeps real Supabase env required, avoiding false-green RLS tests.
-- Adds CI coverage in the right place, parallel to E2E.
-- Establishes helper names early for downstream plans.
+- `castVote` now uses service-role and accepts `userId`.
+- Baseline vote seeding correctly addresses empty `vote_counts`.
+- Integration suite is separated from unit tests.
 
 **Concerns**
-- **HIGH:** `castVote()` does not specify `user_id`. The later RLS test requires a vote row for `memberUser`; authenticated clients cannot insert votes because there is no INSERT RLS policy.
-- **HIGH:** `createFreshPoll()` creates only one choice and no vote count data. Service-role "bypass" cells expecting `>0` rows will still return 0 if no `vote_counts` rows exist.
-- **MEDIUM:** Claiming `results_hidden` is "ignored" pre-migration is inaccurate; PostgREST generally errors on unknown columns.
-- **LOW:** `tsconfig.app.json` only includes `src`, so it will not type-check `e2e/integration/helpers.ts`.
+- **HIGH:** `createFreshPoll` says choices are inserted with `text`, but the actual table column is `choices.label` in `supabase/migrations/00000000000000_schema.sql:86`. This will break helper setup.
+- **MEDIUM:** `createFreshPoll` failure during choices/baseline vote insertion can leak a poll unless the helper internally cleans up partial setup.
+- **LOW:** Vitest parsing is not real TypeScript type-checking.
 
 **Suggestions**
-- Change `castVote(opts)` to include `userId?: string`, use service-role for setup inserts, and default `userId` to `fixtureUsers.memberUser.id`.
-- Have `createFreshPoll()` insert two choices and optionally create a baseline vote by another fixture user.
-- Add a dedicated TypeScript check path for integration helpers or rely on `vitest run` as the parsing/type sanity gate.
+- Use `{ poll_id, label, sort_order }` for choices.
+- Wrap poll setup in try/catch cleanup before returning.
+- Add a tiny helper self-test after migration lands.
 
-**Risk Assessment:** **MEDIUM.** Infrastructure is sound, but the helper API will cause downstream test failures unless fixed now.
+**Risk Assessment:** **MEDIUM**
 
-### 11-01 Plan Review
+### 11-01
 
-**Summary:** The migration plan is strong and correctly centers the DB as the security boundary, but it has one important requirements ambiguity.
+**Summary** — The migration plan is much stronger and resolves the RLS admin-OR contradiction in the actual policy design.
 
 **Strengths**
-- Single atomic migration is the right approach.
-- Drops old `vote_counts` policy names before creating the new one.
-- Re-applies `security_invoker = on` immediately after view replacement.
-- Avoids JSONB indexes on `audit_log`, which is appropriate for current scale.
-- Creates `audit_log` with nullable `actor_id`, matching cron/system writes.
+- Drops both old `vote_counts` policy names before creating the new one.
+- Removes JWT-admin bypass and relies only on service-role bypass.
+- Re-applies `security_invoker = on`.
+- Creates `audit_log` in the same migration.
 
 **Concerns**
-- **HIGH:** Policy includes `public.is_current_user_admin() OR (...)`, but VIS-04 says visibility is granted iff caller voted and results are not hidden, with service-role bypass remaining. Authenticated admin bypass needs explicit product approval and test coverage.
-- **MEDIUM:** No explicit admin-authenticated RLS test cell exists, despite the policy granting admins broad access.
-- **MEDIUM:** Generated Supabase DB types are not updated, which may block Phase 12 when React reads `results_hidden`.
+- **MEDIUM:** `audit_log.actor_id REFERENCES profiles(id)` has no `ON DELETE SET NULL`; future profile deletion could be blocked by audit rows.
+- **LOW:** DB type regeneration is deferred, which is acceptable, but Phase 12 must treat it as a hard prerequisite.
 
 **Suggestions**
-- Either remove the admin OR branch, or update VIS-04/TEST-11 to explicitly include authenticated-admin expected behavior.
-- Add admin-authenticated matrix cells if the OR branch stays.
-- Decide whether DB types are updated in Phase 11 or explicitly deferred to Phase 12.
+- Consider `actor_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL`.
+- Add explicit post-reset SQL checks for policy role/qual.
 
-**Risk Assessment:** **MEDIUM.** Migration shape is good, but the RLS semantics need clarification before merge.
+**Risk Assessment:** **LOW-MEDIUM**
 
-### 11-02 Plan Review
+### 11-02
 
-**Summary:** The new EF plan follows existing patterns well, but its idempotency guarantee is not race-safe.
+**Summary** — The race fix is conceptually correct, but the plan has internal contradictions and a risky fallback story.
 
 **Strengths**
-- Reuses existing auth, CORS, and Supabase client patterns.
-- Validates `poll_id` and `hidden` strictly.
-- Returns the updated poll row, which supports Phase 12 UI updates.
-- Keeps audit helper centralized for retrofit reuse.
+- Conditional update avoids read-then-update double-audit races.
+- No-op path returns 200 without writing audit.
+- 404 vs no-op distinction is handled by follow-up SELECT.
 
 **Concerns**
-- **HIGH:** Pre-read then update can double-write audit rows under concurrent same-direction toggles. Two callers can both read `false`, both set `true`, and both audit `false → true`.
-- **MEDIUM:** `writeAudit()` never throwing conflicts with the plain-language requirement that every change is audited. This is an accepted tradeoff only if documented as "best-effort audit with error logging."
-- **LOW:** Source comments reference decision IDs like `D-11`; that conflicts with the project's "WHY-only, no phase archaeology" source-comment rule.
+- **MEDIUM:** The RPC fallback would require changing migration 10 after Plan 01, but Plan 01 is treated as closed. Either include the RPC up front or remove fallback.
+- **MEDIUM:** Objective/threat model still mention old "pre-read" and "timestamp on every UPDATE" behavior, contradicting the fixed task body.
+- **LOW:** Source-comment instructions conflict: task text asks for D/Pitfall references while must-haves forbid decision archaeology.
 
 **Suggestions**
-- Use a conditional state-change update first, for example update only when `results_hidden` differs, then perform a no-op timestamp touch separately if needed.
-- Document audit as fail-open explicitly in planning docs, not source comments.
-- Remove `D-*` and phase references from comments in `supabase/functions`.
+- Lock one implementation: preferably verify `.not('results_hidden', 'is', hidden)` locally and remove RPC fallback.
+- Clean stale pre-read/no-op timestamp language.
 
-**Risk Assessment:** **MEDIUM-HIGH.** Function flow is good, but idempotency is not as strong as claimed.
+**Risk Assessment:** **MEDIUM**
 
-### 11-03 Plan Review
+### 11-03
 
-**Summary:** The retrofit is directionally correct but high-touch across many EFs, so the main risk is subtle behavior drift.
+**Summary** — The audit retrofit is broadly sound, but a few existing EF shapes need more precise handling.
 
 **Strengths**
-- Clear per-EF action strings and compact JSONB shapes.
-- Preserves existing response shapes.
-- Correctly excludes read-only EFs.
-- Handles cron actor as `actor_id: null`.
+- Covers the right mutation EF set except `create-poll`.
+- Preserves response shapes.
+- Handles cron `actor_id: null`.
 
 **Concerns**
-- **MEDIUM:** Adding pre-DELETE/pre-UPDATE reads can change 404/error behavior if not carefully matched to existing patterns.
-- **MEDIUM:** The plan does not add runtime tests for the 11 retrofitted EFs, so correctness relies mostly on review and smoke testing.
-- **LOW:** Sequential audit writes in `close-expired-polls` are fine at current scale, but could become slow if many expired polls accumulate.
+- **HIGH:** `promote-admin` has two branches: `target_user_id` and `target_discord_id`. The plan only cleanly describes profile-target promotion, not pre-auth `admin_discord_ids` insertion and possible multi-profile retroactive flip.
+- **MEDIUM:** Added pre-SELECTs for `delete-*`, `rename-category`, and `set-resolution` are not atomic with the mutation, so audit `before` values can drift under concurrent admin actions.
+- **MEDIUM:** `demote-admin` currently does not `.single()` after update; a missing target could still produce misleading audit unless tightened.
 
 **Suggestions**
-- For each EF, record before/after behavior in the summary: response shape unchanged, new DB read added or not, 404 semantics unchanged.
-- Add a deploy-time smoke checklist that invokes at least one representative EF from each mutation class.
-- Keep any new comments focused on why the audit payload has that shape.
+- Specify audit rows separately for both `promote-admin` branches.
+- Prefer mutation returns where possible; otherwise document best-effort `before`.
+- Tighten zero-row update handling before auditing.
 
-**Risk Assessment:** **MEDIUM.** Scope is broad but manageable if diffs stay small.
+**Risk Assessment:** **MEDIUM-HIGH**
 
-### 11-03b Plan Review
+### 11-03b
 
-**Summary:** Splitting `create-poll` was the right call, but the chosen post-RPC update path weakens atomicity and has an action-string inconsistency.
+**Summary** — Compensation improves the non-atomic create path, but this plan now conflicts with the actual `create-poll` EF contract.
 
 **Strengths**
-- Keeps the existing RPC signature stable.
-- Strictly validates `results_hidden`.
-- Preserves the current `create-poll` response shape.
-- Separates normal creation audit from hidden-at-create audit.
+- Adds compensation delete on post-RPC update failure.
+- Emits audits only after all mutations succeed.
+- Keeps RPC signature unchanged.
 
 **Concerns**
-- **HIGH:** Post-RPC update is not atomic. If poll creation succeeds and the hidden update fails, the EF returns 500 after creating a visible poll.
-- **HIGH:** Action string conflicts with earlier D-09: `results_hidden_set_at_creation` vs `results_hidden_set_at_create`.
-- **MEDIUM:** This path is not clearly covered by Plan 04 tests, despite being required for Phase 12 creation UI.
-- **LOW:** `requirements: TEST-12` is misleading because this plan does not implement TEST-12.
+- **HIGH:** Current `create-poll` EF (at `supabase/functions/create-poll/index.ts:135`) returns `{ success: true, id: pollId }`, not `{ poll: ... }`. Plan 04/05 expect `data.poll`.
+- **HIGH:** Current `create-poll` expects `choices` as `string[]` (validated at lines 86-97 of the EF), not `{ text }[]`.
+- **MEDIUM:** Compensation is not true atomicity; if compensation delete fails, a visible poll can remain.
+- **MEDIUM:** Action string is still inconsistent with provided CONTEXT (`_at_creation` vs `_at_create`) until docs are updated.
 
 **Suggestions**
-- Prefer extending the RPC to accept `results_hidden`, or create a new transactional RPC wrapper.
-- If Option A stays, add compensation on update failure, such as deleting the newly created poll or returning a clear partial-success error with cleanup instructions.
-- Standardize the action string before implementation.
-- Add an integration test for `create-poll` with `results_hidden: true`.
+- Decide response contract explicitly. Best option: return `{ success: true, id, poll }` for compatibility.
+- Update tests/smoke to send `choices: ['option-a', 'option-b']`.
+- Consider extending the RPC instead if true atomicity is required.
 
-**Risk Assessment:** **HIGH.** The non-atomic write path can create production-visible inconsistency.
+**Risk Assessment:** **HIGH**
 
-### 11-04 Plan Review
+### 11-04
 
-**Summary:** This is the most important test plan, but TEST-11's setup is currently flawed and TEST-12 is too order-dependent.
+**Summary** — Test coverage intent is good, but some tests currently would fail or produce false confidence.
 
 **Strengths**
-- Correctly treats the 12-cell matrix as a merge blocker.
-- Tests 403, 200, audit row shape, and no-op idempotency.
-- Explicitly cleans `audit_log` because `target_id` has no FK.
-- Uses real Supabase and Edge Function paths instead of mocks.
+- TEST-12 is order-independent via fresh poll per case.
+- No-op audit behavior is directly tested.
+- Adds useful negative cases.
+- Adds create-poll hidden-at-create coverage.
 
 **Concerns**
-- **HIGH:** Service-role cells expecting `>0` rows will fail unless baseline `vote_counts` rows exist.
-- **HIGH:** `voted=true` must mean `memberUser` has a vote. The proposed helper does not guarantee that.
-- **MEDIUM:** TEST-12 cases depend on execution order. Case 3 assumes Case 2 already toggled the poll.
-- **MEDIUM:** No test covers the `create-poll results_hidden=true` path from 11-03b.
-- **LOW:** No negative tests for invalid body, invalid UUID, or 404 poll.
+- **HIGH:** Admin-JWT sanity test is a false negative. It uses `seedBaseline: false`, so there is no `vote_counts` row. Even with an admin-OR policy regression, the admin read still returns 0.
+- **HIGH:** `create-poll-results-hidden.test.ts` sends choices as objects and expects `data.poll`; both conflict with current `create-poll`.
+- **MEDIUM:** Full integration test count and comments drift between 24 and other counts.
+- **MEDIUM:** `afterEach` should guard null poll IDs before deleting audit rows.
 
 **Suggestions**
-- For every TEST-11 poll, create a baseline vote by `adminUser` to produce `vote_counts`; add a `memberUser` vote only when `voted=true`.
-- Make TEST-12 tests independent, or wrap them in an explicitly sequential describe block.
-- Add a fifth integration case for `create-poll` hidden-at-create, or a separate `create-poll-results-hidden.test.ts`.
+- For admin-JWT sanity, create a vote_counts row by a different user, then assert admin JWT with no own vote still gets 0.
+- Align create-poll tests with the chosen response contract and `string[]` choices.
+- Add `it.only` grep to acceptance.
 
-**Risk Assessment:** **HIGH.** These tests are supposed to prove the security boundary, but the current setup can produce misleading failures.
+**Risk Assessment:** **HIGH**
 
-### 11-05 Plan Review
+### 11-05
 
-**Summary:** The deploy gate is necessary, but the command plan needs correction before use.
+**Summary** — Deploy safety is much improved, but smoke commands inherit the create-poll contract mismatch and contain audit-retention contradictions.
 
 **Strengths**
-- Correctly separates local validation from production deployment intent.
-- Requires post-deploy DB verification of columns, policy, view, and RLS.
-- Requires smoke testing the new EF.
-- Captures planning-state updates after deployment.
+- Removes local `db push`; local gate is now local-only.
+- Production deploy uses explicit project ref.
+- Smoke uses a dedicated test poll and checks admin + non-admin probes.
 
 **Concerns**
-- **HIGH:** `supabase db push` in Task 05-01 is dangerous. It does not verify a "linked local project"; it pushes to the linked remote database.
-- **HIGH:** Deploy commands omit existing production-critical flags: `--project-ref`, `--use-api`, and `--no-verify-jwt`.
-- **MEDIUM:** Smoke test says non-admin 403 in must-haves, but the action steps only detail admin curl.
-- **MEDIUM:** Production smoke toggling an existing poll can briefly affect real user-visible state.
-- **LOW:** DB verification query for `polls` should include `column_default`, not only type/nullability.
+- **HIGH:** Smoke `create-poll` payload uses `{ text }` choices and reads `.poll.id`; current EF uses `string[]` and returns `.id`.
+- **MEDIUM:** Plan says `audit_log` is append-only, but smoke cleanup deletes audit rows. Threat model then says smoke rows persist. This is contradictory.
+- **MEDIUM:** `--no-verify-jwt` may be consistent with existing deploy practice, but the stated rationale is inaccurate; service-role usage inside the EF is unrelated to platform JWT verification.
+- **LOW:** Local gate should explicitly require/start the local Supabase stack before `db reset` if not already running.
 
 **Suggestions**
-- Remove local `supabase db push`; use `supabase db reset`, unit tests, integration tests, and link verification only.
-- Reuse the existing deploy-all workflow command or mirror it exactly.
-- Use a dedicated smoke/test poll, preferably archived or otherwise not community-facing.
-- Add explicit non-admin smoke curl.
-- Verify `results_hidden` default with `column_default`.
+- Fix smoke payload/response after resolving 11-03b.
+- Either leave smoke audit rows or explicitly document service-role cleanup as an exception.
+- Reuse an existing deploy script if the project has one; otherwise keep per-function commands.
 
-**Risk Assessment:** **HIGH.** The deployment plan has enough command-level risk that it should be revised before execution.
+**Risk Assessment:** **MEDIUM-HIGH**
 
-### Overall Risk Assessment
+### Cycle-1 HIGH Verification
 
-**Overall risk: HIGH until revised, MEDIUM after the listed fixes.**
+| Concern | Status | Evidence |
+|---|---:|---|
+| TEST-11 helper contract gap | **PARTIALLY RESOLVED** | `userId` + service-role vote + baseline vote are fixed, but helper still uses wrong `choices.text` column. |
+| 11-03b create-poll non-atomic | **PARTIALLY RESOLVED** | Compensation delete added, but not true atomicity and tests/smoke conflict with current EF response. |
+| 11-02 toggle EF race | **RESOLVED** | Conditional update removes read-then-update double-audit race. Needs cleanup of stale plan text. |
+| 11-01 RLS admin-OR contradiction | **RESOLVED** | New policy has no `is_current_user_admin() OR`; service-role bypass only. |
+| 11-05 dangerous Supabase commands | **RESOLVED** | Local gate no longer uses `db push`; prod deploy is explicitly targeted. |
+| 11-04 TEST-12 ordering dependency | **RESOLVED** | Fresh poll per case removes implicit ordering dependency. |
 
-The architecture and sequencing are solid, and the phase goals are achievable. The risky parts are concentrated in the RLS test setup, authenticated-admin policy ambiguity, non-atomic create path, and production deploy commands. Fixing those would make this a strong Phase 11 plan.
+### Overall Phase Risk
+
+**HIGH** until the create-poll/helper/test interface mismatches are fixed.
+
+### Ready For Execution?
+
+**No.** To get to "yes":
+
+1. Fix all choice payloads/DB inserts to match actual contracts: DB uses `choices.label`; `create-poll` currently accepts `choices: string[]`.
+2. Decide and align the `create-poll` response shape across 11-03b, 11-04, and 11-05.
+3. Fix admin-JWT RLS sanity test so it has vote_counts data from another user.
+4. Specify both `promote-admin` audit branches.
+5. Remove stale contradictory text in 11-02 and 11-05.
 
 ---
 
-## Consensus Summary
+## Consensus Summary (Cycle 2)
 
-Gemini scored Phase 11 LOW-MEDIUM risk and found the plans exceptionally thorough. Codex scored it HIGH until specific revisions are made, identifying 6 HIGH-severity correctness gaps clustered in the test setup, EF idempotency, non-atomic create path, RLS policy/spec ambiguity, and production deploy commands. The two reviewers agreed on the architectural shape and sequencing but diverged sharply on the readiness of several concrete implementation details. Gemini did not surface any HIGH-severity concerns; every HIGH listed below comes from the Codex review and is currently unresolved.
+The two reviewers diverged sharply on execution-readiness. Gemini's review scored every plan LOW and concluded "ready for execution as written, no further review cycles required." Codex grounded its review against the live repo and surfaced 7 new HIGH-severity correctness gaps clustered around interface mismatches between the revised plans and the actual `create-poll` EF + `choices` table.
 
-### Agreed Strengths
+The divergence is the same depth-of-correctness-analysis gap that produced the cycle-1 divergence — Codex caught code-grounded interface bugs that Gemini's structural review did not surface. Of the 6 cycle-1 HIGHs, **4 are fully resolved and 2 are partially resolved** (the partial pair carries an unresolved interface mismatch into cycle 2).
 
-- Single-file atomic Migration 10 with DROP+CREATE on `vote_counts` policy and `security_invoker = on` re-applied after `polls_effective` rewrite (both reviewers).
-- Centralized `writeAudit` shared helper enforcing a consistent fail-open policy across the 13 emitter EFs (both reviewers).
-- 12-cell merge-blocking RLS invariant test treated as a P0 gate (both reviewers).
-- Clean separation of `npm run test` (unit, `src/__tests__/`) from `npm run test:integration` (`e2e/integration/`) so service-role credentials do not leak into unit CI (both reviewers).
-- Preserved EF response shapes during audit retrofit (no breaking changes for existing UI consumers) (both reviewers).
-- Cron-source audit rows correctly use `actor_id: null` for `close-expired-polls` (both reviewers).
+### Cycle-1 HIGH Disposition (consolidated)
+
+| Cycle-1 HIGH | Cycle-2 Status | Verification |
+|---|---|---|
+| TEST-11 helper contract gap | **PARTIALLY RESOLVED** | `userId` + service-role + baseline vote fixes landed, but the helper writes `choices.text` while the actual column is `choices.label` — execution will fail at helper insert. |
+| 11-03b create-poll non-atomic | **PARTIALLY RESOLVED** | Compensating DELETE landed (`REVIEW-FIX-H5`), but compensation is best-effort (DELETE-failure path leaves a visible poll) AND the plan body's create-poll body/response shape contracts conflict with the live EF. |
+| 11-02 toggle EF race | **RESOLVED** | Conditional `IS DISTINCT FROM` UPDATE replaces read-then-update; concurrent same-direction toggles can no longer double-audit. Cycle 2: minor stale narrative text to clean up. |
+| 11-01 RLS admin-OR contradiction | **RESOLVED** | New `vote_counts` policy excludes the `is_current_user_admin() OR` branch — service-role bypass only, per VIS-04. |
+| 11-05 dangerous Supabase commands | **RESOLVED** | Local gate uses `db reset` only (no `db push`); prod deploy commands carry `--project-ref --use-api --no-verify-jwt`. Cycle 2: `--no-verify-jwt` rationale is technically inaccurate but the flag itself is correct. |
+| 11-04 TEST-12 ordering dependency | **RESOLVED** | `beforeEach`/`afterEach` give every TEST-12 case a fresh poll; ordering coupling removed. |
+
+### Newly-Surfaced HIGHs (Cycle 2)
+
+1. **11-00 HIGH (Codex):** `createFreshPoll` helper inserts choices as `{text: ...}` but the actual `choices` table column is `label TEXT NOT NULL` (verified at `supabase/migrations/00000000000000_schema.sql:86`). The helper will fail at insert against any post-migration DB.
+2. **11-03 HIGH (Codex):** `promote-admin` audit retrofit covers only the profile-target branch; the EF's `target_discord_id` branch (pre-auth `admin_discord_ids` insertion with possible multi-profile retroactive flip) is unspecified.
+3. **11-03b HIGH (Codex):** Plan body assumes `create-poll` returns `{ poll: <row> }`; the live EF (at `supabase/functions/create-poll/index.ts:135`) returns `{ success: true, id: pollId }`. Plans 04 and 05 inherit this assumption and would fail at runtime.
+4. **11-03b HIGH (Codex):** Plan body assumes `choices` body field is `{text: string}[]`; the live EF (at lines 86–97) expects `string[]`. Plans 04 and 05 inherit this.
+5. **11-04 HIGH (Codex):** Admin-JWT RLS sanity test (REVIEW-FIX-M7) uses `seedBaseline: false`, which leaves `vote_counts` empty. Even if a regression re-introduces the admin-OR-branch, the assertion still passes (0 rows from empty source) — a false negative that defeats the test's purpose.
+6. **11-04 HIGH (Codex):** `create-poll-results-hidden.test.ts` sends choices as `{text: ...}` objects and asserts `data.poll.id` — both conflict with the live `create-poll` contract (see HIGH #3 + #4 above).
+7. **11-05 HIGH (Codex):** Smoke `curl` payload for `create-poll` uses `{text: ...}` choices and reads `.poll.id` — same root cause as HIGH #3 + #4 + #6; production smoke will fail.
+
+Items #1, #3, #4, #6, #7 are five manifestations of the same root cause: the planner authored the plans against an imagined `create-poll` / `choices` contract instead of the live one. Fixing the helper + plan-03b body once, then ripple-propagating to 04 + 05, addresses 5 of the 7 new HIGHs.
+
+### Agreed Strengths (both reviewers)
+
+- `REVIEW-FIX-H3` removes the JWT-admin OR-branch from the `vote_counts` policy — strict service-role-only bypass per VIS-04.
+- `REVIEW-FIX-H4` race-safe conditional `IS DISTINCT FROM` UPDATE on the toggle EF — eliminates the double-audit race.
+- `REVIEW-FIX-H5` compensating DELETE in `create-poll` — guarantees all-or-nothing semantics on the `results_hidden=true` opt-in path.
+- `REVIEW-FIX-H7` local pre-merge gate uses `db reset` only — `db push` correctly deferred to the production deploy task.
+- `REVIEW-FIX-H8` deploy commands carry `--project-ref --use-api --no-verify-jwt`.
+- `REVIEW-FIX-M6` fresh-poll-per-case in TEST-12 — order-independent assertions.
+- `REVIEW-FIX-M7` admin-JWT sanity case for the RLS gate (intent good — see Concerns for the false-negative gap).
 
 ### Agreed Concerns
 
-- **HIGH — TEST-11 setup is structurally broken (raised by Codex; not refuted by Gemini):**
-  - `castVote()` does not specify `user_id`; authenticated clients cannot INSERT votes (no INSERT RLS policy on `votes`), so the "voted=true" cell can never be set up cleanly without service-role + explicit `userId`.
-  - `createFreshPoll()` does not generate any baseline `vote_counts` rows, so the service-role "bypass returns >0 rows" cells will fail for the wrong reason (empty source data, not a policy failure).
-- **HIGH — Plan 11-03b (`create-poll` post-RPC UPDATE) is not atomic (Codex):** poll creation can succeed while the hidden-flag UPDATE fails, returning 500 after creating a visible poll. No compensation logic specified. Action-string inconsistency (`results_hidden_set_at_creation` per D-09 vs `results_hidden_set_at_create` in the plan body) compounds the risk.
-- **HIGH — Plan 11-02 idempotency is race-prone (Codex):** read-then-update sequence allows two concurrent same-direction toggles to both audit `false → true`. Needs a conditional state-change update (`UPDATE ... WHERE results_hidden IS DISTINCT FROM $hidden`) to be truly idempotent under concurrency.
-- **HIGH — Plan 11-01 has a VIS-04 / `is_current_user_admin()` policy spec ambiguity (Codex):** the policy as drafted includes an admin OR branch that lets authenticated admins read `vote_counts` regardless of vote state, but VIS-04 says visibility is granted iff caller voted AND results not hidden (service-role bypass only). TEST-11 has no admin-authenticated matrix cell, so the divergence is silent.
-- **HIGH — Plan 11-05 contains dangerous Supabase command assumptions (Codex):** `supabase db push` in the "local pre-merge" gate actually targets the linked remote DB (not local); EF deploy commands omit `--project-ref`, `--use-api`, and `--no-verify-jwt` which exist on the established deploy workflow.
-- **MEDIUM — `polls_effective` view rewrite does not regenerate Supabase DB types (Codex):** Phase 12 React code reading `results_hidden` will be blocked until types are regenerated. Decide whether to land that in Phase 11 or explicitly defer.
-- **MEDIUM — TEST-12 cases are order-dependent (Codex):** Case 3 assumes Case 2 already toggled the poll; needs `describe.serial` semantics or independent setup per case.
-- **MEDIUM — No runtime test coverage for the 11 retrofitted EFs (Codex):** correctness relies on review + manual smoke; consider a representative-EF smoke list at deploy time.
-- **MEDIUM — `create-poll` `results_hidden=true` path is not tested in Plan 11-04 (both reviewers):** Gemini suggests an optional `create-poll.test.ts`; Codex calls it a required addition.
-- **LOW — Source comments in `supabase/functions/` reference decision IDs (e.g. `D-11`) (Codex):** violates the project's "WHY-only, no phase archaeology in source" rule (also flagged in user memory).
+- None of Gemini's surface-level structural review caught the interface-contract mismatches Codex surfaced; Gemini's "no concerns, ready for execution" verdict does not refute Codex's repo-grounded HIGHs.
 
 ### Divergent Views
 
-- **Overall phase risk:** Gemini scored LOW-MEDIUM and found "no significant suggestions" on 11-01, 11-02, 11-03, 11-03b, and 11-04. Codex scored HIGH-until-revised and surfaced 6 HIGH concerns clustered in the same five plans. The divergence is largely a depth-of-correctness-analysis gap — Codex caught implementation-level bugs that Gemini's structural review did not surface.
-- **`results_hidden_changed_at` on no-op (Plan 11-02):** Gemini flagged it as LOW (obscures the actual last change time but the audit log compensates). Codex did not raise this point; instead it flagged the same EF for a different race issue.
-- **`create-poll` two-audit-row design (Plan 11-03b):** Gemini suggested *consolidating* into a single `poll_created` audit row. Codex took the opposite tack — keep the two-row design but *standardize the action string* and *add compensation* on the non-atomic update path. Pick one direction before implementation.
-- **`audit_log` indexes (Plan 11-01):** Gemini flagged as LOW "premature." Codex did not flag — treated the index choice as appropriate for current scale. Defer is fine either way.
+- **Phase risk:** Gemini LOW; Codex HIGH-until-revised. Same gap as cycle 1 — Gemini does not re-ground its review against the live codebase; Codex does and finds bugs every cycle.
+- **Whether cycle 1's "create-poll non-atomic" is closed:** Gemini RESOLVED via the compensating DELETE. Codex PARTIALLY RESOLVED — compensation is best-effort (DELETE-failure path leaves a visible poll) AND the plan body's body/response shape contracts conflict with the live EF.
 
 ### Recommended Next Step
 
-Run `/gsd-plan-phase 11 --reviews` to feed this feedback back into the planner. At minimum, the 6 Codex HIGH concerns should be addressed (TEST-11 setup, `castVote` helper, atomicity of `create-poll`, idempotency of `toggle-results-visibility`, RLS policy admin-bypass spec ambiguity, and Plan 11-05 deploy commands) before any execution begins.
+Run a third planner cycle (`/gsd-plan-phase 11 --reviews`) to address the 7 new HIGHs. Five of the seven share a root cause (the planner imagined a different `create-poll` contract); fix the contract assumption once in Plan 11-03b and propagate to Plans 00, 04, and 05. The other two HIGHs (`promote-admin` two-branch underspec; admin-JWT sanity test false negative) need targeted plan edits in Plans 11-03 and 11-04 respectively.
