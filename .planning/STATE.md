@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Hygiene & Polish
-status: milestone_complete
-stopped_at: v1.1 milestone shipped (PR #25 merged fda6072); ready for v1.2 planning
-last_updated: "2026-05-11T06:40:14Z"
-last_activity: "2026-05-11 -- PR #25 merged (commit fda6072); v1.1 Hygiene & Polish milestone complete and shipped"
+status: milestone_archived
+stopped_at: v1.1 milestone archived (tag v1.1; artifacts moved to milestones/v1.1-*.md); ready for v1.2 planning
+last_updated: "2026-05-11T07:30:00Z"
+last_activity: "2026-05-11 -- v1.1 milestone archived via /gsd-complete-milestone; ROADMAP collapsed; REQUIREMENTS.md deleted (fresh one for v1.2 via /gsd-new-milestone)"
 progress:
   total_phases: 10
   completed_phases: 10

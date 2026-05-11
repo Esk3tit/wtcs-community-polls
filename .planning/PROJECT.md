@@ -22,24 +22,33 @@ This platform gathers community **opinions**, not binding votes. Nothing on the 
 
 ## Current State
 
-**Shipped:** v1.0 — Launch-Ready MVP (2026-04-28)
-**Production:** https://polls.wtcsmapban.com
-**Code:** 13,602 LOC across 141 .ts/.tsx files, 41 test files, 16 Edge Functions, 10 DB migrations, 378/378 unit tests, 47/50 UAT cases (3 second-human-gated)
+**Shipped:** v1.1 — Hygiene & Polish (2026-05-11)
+**Previous:** v1.0 — Launch-Ready MVP (2026-04-28)
+**Production:** https://polls.wtcsmapban.com (unchanged from v1.0 — v1.1 was hygiene/polish, no user-visible features)
+**Code:** 13,602 LOC + v1.1 delta (+1,148 / −575 LOC across 64 non-`.planning/` files); 16 Edge Functions; 10 DB migrations; 378/378 unit tests; 47/50 UAT cases passing
+**Tests:** Playwright E2E suite now `[E2E]`-scoped + lint-enforced (TEST-07/08/09); Sentry React 19 capture path live in production (OBSV-01/02); second-human UAT evidence captured (TEST-10)
+**v1.1 archives:** [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md) · [milestones/v1.1-REQUIREMENTS.md](milestones/v1.1-REQUIREMENTS.md) · [milestones/v1.1-MILESTONE-AUDIT.md](milestones/v1.1-MILESTONE-AUDIT.md)
 
-## Current Milestone: v1.1 Hygiene & Polish
+## Next Milestone: v1.2 — Admin Visibility Controls (planned)
 
-**Goal:** Close v1.0 carry-forward debt — UI polish closure evidence, observability robustness, E2E test hygiene, and planning artifact backfill — so the platform is audit-clean before v1.2 (Admin Visibility Controls — SEED-002) feature work begins.
+**Anchor feature:** Per-suggestion results-visibility toggle for admins ([SEED-002](seeds/SEED-002-admin-controlled-results-visibility.md), Tim's ask). Captured during v1.0 retrospective; kept out of v1.1 to preserve hygiene-only framing.
 
-**Target features:**
-- E2E test fixture/seed cleanup (3 Playwright spec bugs filed under #11, #12, #13)
-- Observability robustness — Sentry React 19 ErrorBoundary capture path (#17), Vite/Rolldown sourcemap function-name preservation (#19)
-- UI design polish closure — UIDN-02 mobile-first responsive evidence + UIDN-03 shadcn new-york/Neutral polish (#18)
-- Planning hygiene backfill — VALIDATION.md frontmatter on phases 01–04, Phase 03 VERIFICATION.md retrospective, 17 SUMMARY frontmatter `requirements-completed` declarations + retroactive Phase 04 UAT 6a evidence (passed off-record on second admin)
-- 1 deferred UAT item (Phase 03 tests 2+3 — non-member rejection + invite link, second human required)
+**Carry-forward from v1.1 (Path-3 deferred):**
+- **UIDN-02** — Mobile-first responsive design audit needs Lighthouse Perf rerun after v1.2 perf budget hit + Plan 02 harness hydration-wait fix. Evidence baseline at `.planning/closure/UIDN-02-mobile-evidence.md`.
+- **UIDN-03** — shadcn polish audit needs cleanup of 4 native-`<button>` drifts in `SearchBar.tsx`, `SuggestionForm.tsx`, `ImageInput.tsx` + authenticated Pass-A capture. Evidence baseline at `.planning/closure/UIDN-03-shadcn-audit.md`.
 
-**Key context:** Phase numbering continues from v1.0 (last phase 6) → v1.1 starts at Phase 7. Tim's ask for admin-controlled per-suggestion results visibility is captured in `.planning/seeds/SEED-002-admin-controlled-results-visibility.md` and scheduled for v1.2 — kept out of v1.1 to preserve the hygiene-only framing.
+**Out-of-scope tech debt from v1.0 audit (still open):**
+- Fake admin Discord IDs cleanup in production seed
+- Leftover `[E2E] Test:` polls in shared DB (data hygiene)
 
-GitHub milestone: https://github.com/Esk3tit/wtcs-community-polls/milestone/1
+**Open via:** `/gsd-new-milestone` will define v1.2 requirements + roadmap.
+
+<details>
+<summary>Previous milestone goals (v1.1)</summary>
+
+**v1.1 — Hygiene & Polish (shipped 2026-05-11):** Close v1.0 carry-forward debt — observability robustness (OBSV-01/02), E2E test hygiene (TEST-07/08/09/10), UI polish closure evidence (UIDN-02/03/04), and planning artifact backfill (DOCS-01/02/03/04). Phases 7–10, 16/16 plans, 4 PRs (#21/#22/#24/#25). 11/11 in-scope requirements satisfied (UIDN-02 + UIDN-03 deferred to v1.2 within Path-3 plan acceptance pattern). GitHub milestone: https://github.com/Esk3tit/wtcs-community-polls/milestone/1
+
+</details>
 
 ## Requirements
 
@@ -213,4 +222,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-07 — Phase 10 (Planning Hygiene Backfill) complete; DOCS-01..04 closed; v1.1 Hygiene & Polish milestone complete (Phases 7–10 all complete)*
+*Last updated: 2026-05-11 — v1.1 Hygiene & Polish milestone shipped (Phases 7–10, 16/16 plans, PRs #21/#22/#24/#25 merged); archived to `milestones/v1.1-*.md`. Next: `/gsd-new-milestone` for v1.2 (Admin Visibility Controls — SEED-002).*
