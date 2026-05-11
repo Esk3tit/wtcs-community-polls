@@ -3,6 +3,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { requireAdmin, adminCheckResponse } from '../_shared/admin-auth.ts'
+import { writeAudit } from '../_shared/audit.ts'
 
 function json(body: unknown, status: number, cors: HeadersInit) {
   const headers = new Headers(cors)
@@ -167,6 +168,19 @@ Deno.serve(async (req) => {
       console.error('update_poll_with_choices failed:', rpcError)
       return json({ error: 'Internal error' }, 500, corsHeaders)
     }
+
+    // D-07: compact `after` payload — only the fields the RPC mutated.
+    // `before` is null because the RPC does not return prior values and a
+    // pre-read SELECT would double the round-trip cost without changing the
+    // audit's forensic value (the RPC log captures the choices vector).
+    await writeAudit(supabaseAdmin, {
+      actor_id: user.id,
+      action: 'poll_updated',
+      target_type: 'poll',
+      target_id: poll_id,
+      before: null,
+      after: { title, description, category_id, image_url, closes_at, choices },
+    })
 
     return json({ success: true, id: updatedId }, 200, corsHeaders)
   } catch (err) {
