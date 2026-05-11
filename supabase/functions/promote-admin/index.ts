@@ -11,6 +11,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { requireAdmin, adminCheckResponse } from '../_shared/admin-auth.ts'
+import { writeAudit } from '../_shared/audit.ts'
 
 function json(body: unknown, status: number, cors: HeadersInit) {
   return new Response(JSON.stringify(body), {
@@ -80,6 +81,14 @@ Deno.serve(async (req) => {
         console.error('promote-admin profile update failed:', error)
         return json({ error: 'Internal error' }, 500, corsHeaders)
       }
+      await writeAudit(supabaseAdmin, {
+        actor_id: user.id,
+        action: 'admin_promoted',
+        target_type: 'profile',
+        target_id: target_user_id,
+        before: { is_admin: false },
+        after: { is_admin: true },
+      })
       return json({ success: true, mode: 'existing' }, 200, corsHeaders)
     }
 
@@ -97,6 +106,20 @@ Deno.serve(async (req) => {
       return json({ error: 'Internal error' }, 500, corsHeaders)
     }
 
+    // Skip the admin_preauthorized audit row on the 23505 idempotent no-op:
+    // the admin_discord_ids row already exists from a prior call (no state
+    // change to record). Mirrors the D-11 no-op-no-audit precedent.
+    if (insertError === null) {
+      await writeAudit(supabaseAdmin, {
+        actor_id: user.id,
+        action: 'admin_preauthorized',
+        target_type: 'admin_discord_ids',
+        target_id: target_discord_id,
+        before: null,
+        after: { discord_id: target_discord_id },
+      })
+    }
+
     // Retroactively flip any matching profile rows so a returning user is admin.
     const { data: promotedProfiles, error: flipError } = await supabaseAdmin
       .from('profiles')
@@ -106,6 +129,19 @@ Deno.serve(async (req) => {
     if (flipError) {
       console.error('promote-admin retroactive profile flip failed:', flipError)
       return json({ error: 'Internal error' }, 500, corsHeaders)
+    }
+
+    // Sequential await matches close-expired-polls cron loop discipline —
+    // ordering is stable and audit-write failures are isolated per row.
+    for (const profile of promotedProfiles ?? []) {
+      await writeAudit(supabaseAdmin, {
+        actor_id: user.id,
+        action: 'admin_promoted',
+        target_type: 'profile',
+        target_id: profile.id,
+        before: { is_admin: false },
+        after: { is_admin: true },
+      })
     }
 
     return json(
