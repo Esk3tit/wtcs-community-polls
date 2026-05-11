@@ -6,6 +6,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { requireAdmin, adminCheckResponse } from '../_shared/admin-auth.ts'
+import { writeAudit } from '../_shared/audit.ts'
 
 const ALLOWED_RESOLUTIONS = ['addressed', 'forwarded', 'closed'] as const
 
@@ -64,6 +65,16 @@ Deno.serve(async (req) => {
       return json({ error: 'Invalid resolution' }, 400, corsHeaders)
     }
 
+    // Best-effort capture of prior resolution for the audit `before` payload.
+    // maybeSingle() returns null on miss without erroring, so the subsequent
+    // UPDATE remains the canonical 404 source — the existing PGRST116 envelope
+    // is preserved.
+    const { data: priorRow } = await supabaseAdmin
+      .from('polls')
+      .select('resolution')
+      .eq('id', poll_id)
+      .maybeSingle()
+
     const { error } = await supabaseAdmin
       .from('polls')
       .update({ resolution })
@@ -78,6 +89,15 @@ Deno.serve(async (req) => {
       console.error('set-resolution update failed:', error)
       return json({ error: 'Internal error' }, 500, corsHeaders)
     }
+
+    await writeAudit(supabaseAdmin, {
+      actor_id: user.id,
+      action: 'resolution_set',
+      target_type: 'poll',
+      target_id: poll_id,
+      before: { resolution: priorRow?.resolution ?? null },
+      after: { resolution },
+    })
 
     return json({ success: true }, 200, corsHeaders)
   } catch (err) {
