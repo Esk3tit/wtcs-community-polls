@@ -9,7 +9,6 @@ files_modified:
 autonomous: true
 requirements:
   - VIS-02
-  - TEST-12
 tags:
   - edge-function
   - audit
@@ -23,8 +22,12 @@ must_haves:
     - "`create-poll` accepts an optional `results_hidden?: boolean` body field per D-08/D-10; default false; 400 when present-but-not-boolean"
     - "RPC signature `create_poll_with_choices` is UNCHANGED (Option A locked — see BLOCKER-2). The poll row INSERT uses the column DEFAULT (`results_hidden = false`) from migration 10"
     - "When the request body contains `results_hidden === true`, the EF runs a follow-up UPDATE against `polls` AFTER the RPC succeeds: `UPDATE polls SET results_hidden = true, results_hidden_changed_at = now() WHERE id = $1`. This UPDATE crosses RLS the same as any admin write (admin service-role client)."
-    - "`create-poll` writes exactly TWO `audit_log` rows on the `results_hidden === true` path: one `poll_created` (always) and one `results_hidden_set_at_create` (only on the true path) — D-09"
+    - "REVIEW-FIX-H5 (compensation on failure): If the post-RPC UPDATE returns an error, the EF runs a compensating DELETE: `DELETE FROM polls WHERE id = $newPollId`. The cascade in migration 0 takes care of `choices` and any `vote_counts` rows that may have been written. After the DELETE completes (success or error — log on error but continue), the EF returns HTTP 500 with `{ error: 'Failed to set results_hidden — poll creation rolled back. Retry.' }`. Rationale: returning 500 after creating a visible poll would leave production in an inconsistent state where the admin's intent (hidden) silently fails to a visible poll. Compensating DELETE preserves the all-or-nothing semantics the caller (UI + admin) expects, at the cost of one extra write on the rare failure path. Addresses Codex HIGH concern."
+    - "REVIEW-FIX-H5 (audit ordering on the true path): The two audit rows are emitted ONLY AFTER the post-RPC UPDATE succeeds. If the UPDATE fails and compensation triggers, NEITHER audit row is written (the poll never existed from the caller's perspective). This preserves the audit log as a reliable record of state transitions actually applied to production data."
+    - "REVIEW-FIX-H6 (action-string standardization): The hidden-at-create audit row uses the action string `results_hidden_set_at_create` EVERYWHERE — frontmatter, CONTEXT.md D-09, PATTERNS.md, plan body, source code, and TEST-04 assertions. Codex flagged D-09 in CONTEXT.md as `results_hidden_set_at_creation` vs the plan body as `results_hidden_set_at_create`. The plan body's version (`...at_create`) wins because (a) Plan 11-03b is the implementer-of-record for this action, (b) the shorter form matches the existing snake_case verb-phrase convention better, and (c) D-09's wording will be updated by the Phase 11 SUMMARY to align with the implementation. Plan 04 acceptance criteria assert the literal string `results_hidden_set_at_create` (not `_at_creation`). Addresses Codex HIGH concern."
+    - "`create-poll` writes exactly TWO `audit_log` rows on the `results_hidden === true` path: one `poll_created` (always) and one `results_hidden_set_at_create` (only on the true path, only after the post-RPC UPDATE succeeds) — D-09 + REVIEW-FIX-H6"
     - "`create-poll` writes exactly ONE `audit_log` row on the `results_hidden === false` (or absent) path: `poll_created` only"
+    - "REVIEW-FIX-M4: This plan does NOT implement TEST-12 (that is Plan 04's job). Removing `TEST-12` from the `requirements:` frontmatter to address Codex's correctness flag — the only requirement this plan implements is VIS-02 (audit retrofit for create-poll). TEST-12 stays in Plan 00 + Plan 04. Plan 04 also adds an integration test covering the `create-poll results_hidden=true` path (REVIEW-FIX-M5 below)."
     - "`create-poll`'s response shape is unchanged (still returns the existing `{ poll: <row> }` or equivalent shape from the RPC)"
     - "No migration delta — Plan 01's migration 10 file stays UNTOUCHED (BLOCKER-2 fix)"
   artifacts:
@@ -135,7 +138,7 @@ Request body extension:
 
     Step 4 — extract the new poll id from the existing RPC return path. The RPC currently returns the new poll row (or its id) — reuse the existing destructuring or response variable; do not add a separate SELECT.
 
-    Step 5 — conditional UPDATE on the `results_hidden === true` path. AFTER the existing RPC error check (the `if (rpcError) { return json(...) }`) and BEFORE the audit emissions in Step 6, add:
+    Step 5 — conditional UPDATE on the `results_hidden === true` path WITH compensation on failure (REVIEW-FIX-H5). AFTER the existing RPC error check (the `if (rpcError) { return json(...) }`) and BEFORE the audit emissions in Step 6, add:
       ```
       if (results_hidden === true) {
         const { error: updateError } = await supabaseAdmin
@@ -143,11 +146,22 @@ Request body extension:
           .update({ results_hidden: true, results_hidden_changed_at: new Date().toISOString() })
           .eq('id', newPollId);
         if (updateError) {
-          return json({ error: 'Failed to apply results_hidden at create' }, 500, corsHeaders);
+          // Compensating DELETE so the caller observes all-or-nothing semantics:
+          // returning 500 without the DELETE would leave a visible poll in production despite the admin's hidden intent.
+          // The CASCADE in migration 0 cleans up choices and any vote_counts rows that may have been pre-seeded.
+          const { error: deleteError } = await supabaseAdmin.from('polls').delete().eq('id', newPollId);
+          if (deleteError) {
+            // Best-effort: log and still return 500. The poll exists, but the caller is told the operation failed.
+            // Operator follow-up via audit log + Sentry alert can clean up orphaned visible polls if this branch fires.
+            console.error('create-poll compensation DELETE failed:', { newPollId, deleteError, originalUpdateError: updateError });
+          }
+          return json({ error: 'Failed to set results_hidden — poll creation rolled back. Retry.' }, 500, corsHeaders);
         }
       }
       ```
-      Use the EF's existing `supabaseAdmin` service-role client. Use `new Date().toISOString()` for the timestamp (deterministic from the EF; the column would also accept `now()` if passed via raw SQL, but the supabase-js update API does not interpret SQL functions in object values — ISO string is the correct shape). Do NOT change the response shape — only the polls row is mutated.
+      Use the EF's existing `supabaseAdmin` service-role client. Use `new Date().toISOString()` for the timestamp (deterministic from the EF; the column would also accept `now()` if passed via raw SQL, but the supabase-js update API does not interpret SQL functions in object values — ISO string is the correct shape). Do NOT change the success-path response shape — only the polls row is mutated. The 500 path's body is new but is gated on a real failure mode.
+
+      Source-comment policy: the inline comments above are pure WHY — they explain rationale (compensation preserves all-or-nothing semantics; best-effort log on failed compensation) without citing review tags (`REVIEW-FIX-*`), plan IDs, round numbers, or PR refs. This satisfies CLAUDE.md memory `feedback_no_review_archaeology_in_source.md`. Acceptance criterion below greps for forbidden patterns and asserts they are absent in the EF source.
 
     Step 6 — emit the audit rows. AFTER Step 5's conditional UPDATE (so the audit reflects the row's final state) and BEFORE the existing success `return json(...)`, insert:
       ```
@@ -189,7 +203,11 @@ Request body extension:
     - Migration 10 is UNTOUCHED: `git diff --name-only HEAD~1 -- supabase/migrations/00000000000010_results_hidden_audit.sql` returns an empty set (this plan introduces no migration delta)
     - Response shape is unchanged: `grep -c "json(" supabase/functions/create-poll/index.ts` returns the pre-change count + at most 1 (the 400 path for invalid results_hidden is the only new `json(` site)
     - No try/catch wraps either `writeAudit`: `grep -B 1 "writeAudit(" supabase/functions/create-poll/index.ts | grep -E "^\\s*try\\s*\\{$"` returns nothing
-    - No review-round / phase-ID archaeology in the diff: `grep -iE "(Round [0-9]|Plan [0-9]+-[0-9]+|PR #[0-9]+|review-round|BLOCKER-)" supabase/functions/create-poll/index.ts` returns nothing
+    - REVIEW-FIX-H5: The conditional UPDATE failure path includes a compensating DELETE — `grep -E "\\.from\\('polls'\\)\\.delete\\(\\)\\.eq\\('id', newPollId\\)" supabase/functions/create-poll/index.ts` returns ≥1 match
+    - REVIEW-FIX-H5: The compensation DELETE is gated on `updateError` (only runs when the UPDATE failed) — `awk '/if \\(updateError\\)/{capture=1} capture && /\\.delete\\(\\)/{ok=1; exit} END{exit ok?0:1}' supabase/functions/create-poll/index.ts` exits 0
+    - REVIEW-FIX-H5: The 500 response on the compensation path identifies the rollback — `grep -qE "poll creation rolled back" supabase/functions/create-poll/index.ts` exits 0
+    - REVIEW-FIX-H6: The hidden-at-create action string is `results_hidden_set_at_create` (NOT `..._at_creation`) — `grep -cE "results_hidden_set_at_creation" supabase/functions/create-poll/index.ts` returns 0
+    - No review-round / phase-ID archaeology in source — `grep -iE "//.*\\b(Round [0-9]|Plan [0-9]+-[0-9]+|PR #[0-9]+|review-round|BLOCKER-|REVIEW-FIX-|D-[0-9]+)\\b" supabase/functions/create-poll/index.ts` returns nothing (per CLAUDE.md memory)
     - `npm run lint` exits 0
     - `npm run test` (unit suite) exits 0
     - Integration test scaffold exists (or is in this plan's read_first dependency Plan 04 for runtime verification): a deferred TEST-12-style integration assertion that creates a poll with `{results_hidden: true}` and asserts the resulting polls row has `results_hidden = true` AND two audit_log rows exist for the poll_id. The runtime assertion can land in Plan 04 (TEST-12 surface) — flag in this plan's SUMMARY which test file owns the runtime evidence.
