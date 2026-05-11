@@ -38,7 +38,7 @@ Database + server-side foundation for admin-controlled results visibility (SEED-
     actor_id uuid REFERENCES public.profiles(id),  -- NULLABLE: cron writes with NULL
     action text NOT NULL,                          -- e.g. 'results_hidden_toggled', 'poll_closed'
     target_type text NOT NULL,                     -- e.g. 'poll', 'category', 'profile'
-    target_id uuid,                                -- nullable for non-row-targeted actions
+    target_id text,                                -- nullable; text (not uuid) to admit both UUIDs and Discord snowflakes per REVIEW-FIX-C3-H1 (Plan 11-01)
     before jsonb,                                  -- prior state (nullable for create actions)
     after jsonb,                                   -- new state (nullable for delete actions)
     created_at timestamptz NOT NULL DEFAULT now()
