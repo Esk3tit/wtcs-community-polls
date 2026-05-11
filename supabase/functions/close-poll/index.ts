@@ -6,6 +6,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { requireAdmin, adminCheckResponse } from '../_shared/admin-auth.ts'
+import { writeAudit } from '../_shared/audit.ts'
 
 const ALLOWED_RESOLUTIONS = ['addressed', 'forwarded', 'closed'] as const
 
@@ -84,6 +85,15 @@ Deno.serve(async (req) => {
       console.error('close-poll update failed:', error)
       return json({ error: 'Internal error' }, 500, corsHeaders)
     }
+
+    await writeAudit(supabaseAdmin, {
+      actor_id: user.id,
+      action: 'poll_closed',
+      target_type: 'poll',
+      target_id: poll_id,
+      before: { status: 'active' },
+      after: { status: 'closed', resolution },
+    })
 
     return json({ success: true }, 200, corsHeaders)
   } catch (err) {
