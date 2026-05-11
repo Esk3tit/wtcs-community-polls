@@ -1,8 +1,8 @@
 ---
 phase: 11
-review_cycle: 2
+review_cycle: 3
 reviewers: [gemini, codex]
-reviewed_at: 2026-05-11T21:30:00Z
+reviewed_at: 2026-05-11T22:30:00Z
 plans_reviewed:
   - 11-00-PLAN.md
   - 11-01-PLAN.md
@@ -14,324 +14,287 @@ plans_reviewed:
 attempted_but_skipped:
   - claude (self — running inside Claude Code CLI; skipped for independence)
   - coderabbit (no working-tree diff available; reviews git diff, not plan markdown)
-  - cursor (account hit usage limit during invocation, same as cycle 1)
+  - cursor (account hit usage limit on invocation — same as cycles 1 and 2)
   - opencode (not installed)
   - qwen (not installed)
-revisions_under_review: commit 252b4b8 (22 REVIEW-FIX-* markers — 8 HIGH, ~10 MEDIUM, 4 LOW)
+revisions_under_review: commit afc7875 (7 REVIEW-FIX-C2-* markers addressing the 7 cycle-2 HIGHs)
 cycle_1_high_count: 6
 cycle_2_high_count: 7
+cycle_3_high_count: 1
+cycle_3_new_high_count: 1
+cycle_2_highs_fully_resolved: 7
+cycle_2_highs_partially_resolved: 0
+cycle_2_highs_unresolved: 0
 ---
 
-# Cross-AI Plan Review — Phase 11 (Cycle 2)
+# Cross-AI Plan Review — Phase 11 (Cycle 3)
 
-Cycle 2 reviews the planner's revisions (commit `252b4b8`) that incorporated cycle-1 feedback. The plans now carry 22 `REVIEW-FIX-*` markers (8 HIGH, ~10 MEDIUM, 4 LOW). Both reviewers were prompted to (a) verify the 6 cycle-1 HIGHs are addressed and (b) surface any new concerns introduced by the revisions.
+Cycle 3 reviews the planner's revisions (commit `afc7875`) that incorporated the 7 cycle-2 HIGH-severity concerns flagged by Codex. The plans now carry 7 `REVIEW-FIX-C2-*` markers — one per cycle-2 HIGH — and the fixes are grounded against verifiable live-source line numbers in the repo (`supabase/migrations/00000000000000_schema.sql:86` for `choices.label`; `supabase/functions/create-poll/index.ts:135` for the `{success, id}` response shape; `supabase/functions/create-poll/index.ts:86-97` for `choices: string[]` validation; `supabase/functions/promote-admin/index.ts` for the two-branch retrofit shape).
 
-The two reviewers diverged sharply again — Gemini scored the revised plans LOW risk and ready-for-execution; Codex grounded its review against the actual repo schema and EF contracts and surfaced **7 new HIGH-severity correctness gaps** (mostly interface mismatches between the revised plans and the live `create-poll` EF + `choices` table). Codex marked the phase HIGH risk, not execution-ready.
+Both reviewers converged on the same verdict this cycle: the 7 cycle-2 HIGHs are FULLY RESOLVED — the interface mismatches that defeated the cycle-2 plans are now correctly aligned with the live repo. However, both reviewers also independently surfaced **one new HIGH-severity concern** introduced by the REVIEW-FIX-C2-H2 fix itself: the new `promote-admin` two-branch audit retrofit attempts to write a Discord snowflake into `audit_log.target_id`, but Plan 01 declares that column as `uuid` — a type mismatch that the live schema (`admin_discord_ids.discord_id TEXT PRIMARY KEY` at `supabase/migrations/00000000000000_schema.sql:16`) confirms is a real runtime failure mode.
 
 ---
 
 ## Gemini Review
 
-This is a **Cycle 2** review of the revised implementation plans for Phase 11 (Schema + RLS + EF Foundations). The planner has incorporated a comprehensive set of fixes (`REVIEW-FIX-*`) addressing all 6 HIGH-severity concerns from the previous cycle.
+This Cycle 3 review verifies that the planner has successfully addressed all 7 HIGH-severity concerns from Cycle 2 by grounding the implementation plans in the live repository. The revisions in `afc7875` (adding `REVIEW-FIX-C2-*` markers) demonstrate high fidelity to the actual database schema and Edge Function contracts.
 
-### Phase 11-00-PLAN.md: Integration test fixtures
-1. **Summary**: This plan is now fully ready for execution. It correctly establishes a decoupled integration testing environment that mirrors production behaviors while maintaining strict isolation.
-2. **Strengths**: The introduction of `REVIEW-FIX-H1` and `H2` ensures that the integration matrix doesn't fail due to empty tables, and `mintClients` provides the necessary role-based contexts for RLS probing.
-3. **Concerns**: None.
-4. **Suggestions**: None.
-5. **Risk Assessment**: **LOW**.
+### Cycle-2 HIGH Verification Table
 
-### Phase 11-01-PLAN.md: Migration 10
-1. **Summary**: Excellent migration design. The atomicity of the DDL and policy changes prevents any "security windows" during deployment.
-2. **Strengths**: `REVIEW-FIX-H3` is a critical correction; removing the JWT admin bypass from RLS ensures the platform follows the principle of least privilege, forcing admins to interact via audited Edge Functions for results access.
-3. **Concerns**: None.
-4. **Suggestions**: None.
-5. **Risk Assessment**: **LOW**.
+| Concern ID | Status | Evidence |
+|:---|:---|:---|
+| **11-00 HIGH (H1)** | **RESOLVED** | `11-00-PLAN.md` (H1) and `e2e/integration/helpers.ts` use the `label` column for `choices` (matching `00...schema.sql:86`). |
+| **11-03 HIGH (H2)** | **RESOLVED** | `11-03-PLAN.md` (H2) specifies a two-branch retrofit for `promote-admin` (profile-target and Discord-ID-target with retroactive flip). |
+| **11-03b HIGH (H3)** | **RESOLVED** | `11-03b-PLAN.md` (H3) preserves the `{success, id}` response shape (matching `create-poll/index.ts:135`). |
+| **11-03b HIGH (H4)** | **RESOLVED** | `11-03b-PLAN.md` (H4) correctly treats `choices` as `string[]` (matching `create-poll/index.ts:86-97`). |
+| **11-04 HIGH (H5)** | **RESOLVED** | `11-04-PLAN.md` (H5) correctly seeds a vote by `memberUser` for the admin-JWT RLS sanity test, creating a true regression sentinel. |
+| **11-04 HIGH (H6)** | **RESOLVED** | `11-04-PLAN.md` (H6) aligns integration tests with the `string[]` and `.id` contracts. |
+| **11-05 HIGH (H7)** | **RESOLVED** | `11-05-PLAN.md` (H7) aligns smoke `curl` payloads and `jq` parsing with the live contracts. |
 
-### Phase 11-02-PLAN.md: Shared audit helper + toggle EF
-1. **Summary**: The Edge Function logic is now robust and race-safe.
-2. **Strengths**: `REVIEW-FIX-H4` uses a single conditional `UPDATE` with `RETURNING`, which is the industry standard for idempotent, atomic state changes in Postgres. This removes the risk of double-auditing or state inconsistency under high concurrency.
-3. **Concerns**: None.
-4. **Suggestions**: None.
-5. **Risk Assessment**: **LOW**.
+### New HIGH-Severity Concerns
 
-### Phase 11-03-PLAN.md: Audit retrofit
-1. **Summary**: A thorough and systematic update of the admin API surface.
-2. **Strengths**: The per-poll audit loop in the cron sweep (`close-expired-polls`) is a significant observability improvement over a single batch row.
-3. **Concerns**: None.
-4. **Suggestions**: None.
-5. **Risk Assessment**: **LOW**.
+1. **11-01 / 11-03 NEW HIGH: Type Mismatch for `audit_log.target_id`**
+   - **Description:** `11-01-PLAN.md` (D-02) defines `audit_log.target_id` as type `uuid`. However, `11-03-PLAN.md` (promote-admin Branch 2) attempts to insert a Discord Snowflake (typically `text` or `bigint`) into this column for the `admin_preauthorized` action. This will cause a database error at runtime because a Discord ID is not a valid UUID.
+   - **Impact:** Admin promotion by Discord ID (pre-authorization) will fail to execute because the audit log write will crash the Edge Function or the DB transaction.
+   - **Recommendation:** Change `audit_log.target_id` to type `text` in Migration 10 to accommodate both UUIDs and Discord Snowflakes, or explicitly leave `target_id` NULL for Discord-target actions and store the snowflake only in the `after` JSONB payload.
 
-### Phase 11-03b-PLAN.md: create-poll retrofit
-1. **Summary**: Handles the non-atomic creation-then-hide edge case with appropriate compensation.
-2. **Strengths**: `REVIEW-FIX-H5` (Compensating DELETE) ensures that if a poll is intended to be hidden but the visibility flip fails, the visible poll is rolled back. This prevents unintentional data exposure.
-3. **Concerns**: None.
-4. **Suggestions**: None.
-5. **Risk Assessment**: **LOW**.
+### New MEDIUM-Severity Concerns
 
-### Phase 11-04-PLAN.md: TEST-11/TEST-12 implementation
-1. **Summary**: The integration suite is now comprehensive and deterministic.
-2. **Strengths**: `REVIEW-FIX-M6` (order-independent tests) and `REVIEW-FIX-M7` (admin JWT sanity check) close significant verification gaps. The addition of a dedicated `create-poll-results-hidden.test.ts` provides much-needed coverage for the bootstrap-hidden path.
-3. **Concerns**: None.
-4. **Suggestions**: None.
-5. **Risk Assessment**: **LOW**.
+1. **11-01 NEW MEDIUM: Missing `ON DELETE SET NULL` on `actor_id`**
+   - **Description:** The `audit_log.actor_id` foreign key (referencing `profiles(id)`) does not specify an `ON DELETE` clause. By default, this will prevent a profile from being deleted if any audit rows reference it. While profile deletion is rare, append-only logs should ideally not block record management.
+   - **Recommendation:** Add `ON DELETE SET NULL` to the `actor_id` column definition in Migration 10.
 
-### Phase 11-05-PLAN.md: Deploy + Ship
-1. **Summary**: The deployment workflow is now safe and follow established project flags.
-2. **Strengths**: `REVIEW-FIX-H7` correctly separates local validation from remote pushing. The addition of `--no-verify-jwt` in `H8` is the correct solution for functions performing internal auth checks.
-3. **Concerns**: None.
-4. **Suggestions**: None.
-5. **Risk Assessment**: **LOW**.
+### New LOW-Severity Concerns
 
----
+1. **11-03 NEW LOW: Omission of `before` state in `update-poll` audit**
+   - **Description:** `11-03-PLAN.md` notes that `update-poll` will have `before: null` if the RPC doesn't return prior values. This reduces the forensic utility of the log for poll edits compared to toggles.
+   - **Recommendation:** This is acceptable given the RPC constraints, but should be noted as a "best-effort" audit depth.
 
-### Cycle 1 HIGH Concern Verification
+### Overall Phase Risk Assessment
 
-| Concern ID | Description | Status | Evidence |
-|:---|:---|:---|:---|
-| **TEST-11-HELP** | Helper contract gap (castVote/baseline) | **RESOLVED** | `e2e/integration/helpers.ts` includes `userId` and `seedBaselineVote`. |
-| **CREATE-ATOM** | create-poll non-atomic / leak risk | **RESOLVED** | `REVIEW-FIX-H5` implements compensating DELETE on UPDATE failure. |
-| **TOGGLE-RACE** | Toggle EF race condition (audit) | **RESOLVED** | `REVIEW-FIX-H4` implements conditional UPDATE with `IS DISTINCT FROM`. |
-| **RLS-CONTRA** | RLS admin-OR-branch contradiction | **RESOLVED** | `REVIEW-FIX-H3` removes admin OR-branch from the policy expression. |
-| **DB-PUSH-SAFE**| Dangerous Supabase commands | **RESOLVED** | `REVIEW-FIX-H7` removes `db push` from local gate; `H8` adds deploy flags. |
-| **TEST-ORDER** | TEST-12 case 3 ordering dependency | **RESOLVED** | `REVIEW-FIX-M6` implements `beforeEach`/`afterEach` for isolation. |
+**MEDIUM** (Reduced from HIGH in Cycle 2). The interface alignment is now excellent, but the `target_id` UUID constraint is a logic-breaking mismatch that must be fixed before execution.
 
-### Overall Phase Risk Assessment: **LOW**
-The revised plans are exceptionally high-quality. They anticipate and mitigate production failure modes (compensation DELETEs), concurrency issues (conditional UPDATEs), and security loopholes (admin JWT RLS gating). The verification strategy is now robust enough to act as a hard gate for merging.
+### Ready for Execution
 
-### Ready for Execution: **YES**
-The phase is ready for execution as written. No further review cycles are required.
+**NO.** The `audit_log.target_id` type mismatch in Migration 10 will break the `promote-admin` Edge Function. Once `target_id` is changed to `text` or the audit payload is adjusted, the phase will be ready.
+
+### Suggested Action
+
+Apply a targeted fix to `11-01-PLAN.md` (Migration 10) changing `target_id uuid` to `target_id text`. This ensures the foundation can support the full audit surface planned in `11-03`.
 
 ---
 
 ## Codex Review
 
-I reviewed the plans against the repo's current schema and EF contracts. Net: the revisions fixed several cycle-1 issues, but Phase 11 is **not execution-ready yet** because some revised plans now conflict with actual code interfaces.
+I re-reviewed the plans against the live repo, focusing on whether the 7 cycle-2 HIGHs were resolved and whether the revisions introduced new HIGHs. Net: cycle-2 cluster fixed; one new HIGH emerges from REVIEW-FIX-C2-H2's `target_id` choice colliding with Plan 01's `audit_log.target_id uuid` declaration.
 
 ### 11-00
 
-**Summary** — Good direction for integration scaffolding, but helper contracts still have execution-breaking schema mismatches.
+**Summary** — The helper plan now matches the live `choices` schema.
 
 **Strengths**
-- `castVote` now uses service-role and accepts `userId`.
-- Baseline vote seeding correctly addresses empty `vote_counts`.
-- Integration suite is separated from unit tests.
+- `choices.label` is correctly used; live schema confirms `label TEXT NOT NULL` at `supabase/migrations/00000000000000_schema.sql:86`.
+- Baseline vote seeding and two-choice setup address the prior empty-`vote_counts` test gap.
+- Partial setup cleanup is now specified.
 
 **Concerns**
-- **HIGH:** `createFreshPoll` says choices are inserted with `text`, but the actual table column is `choices.label` in `supabase/migrations/00000000000000_schema.sql:86`. This will break helper setup.
-- **MEDIUM:** `createFreshPoll` failure during choices/baseline vote insertion can leak a poll unless the helper internally cleans up partial setup.
-- **LOW:** Vitest parsing is not real TypeScript type-checking.
+- None HIGH.
 
 **Suggestions**
-- Use `{ poll_id, label, sort_order }` for choices.
-- Wrap poll setup in try/catch cleanup before returning.
-- Add a tiny helper self-test after migration lands.
+- Keep the acceptance grep forbidding `text: 'option-*'`.
 
-**Risk Assessment:** **MEDIUM**
+**Risk Assessment** — LOW
 
 ### 11-01
 
-**Summary** — The migration plan is much stronger and resolves the RLS admin-OR contradiction in the actual policy design.
+**Summary** — Migration plan is mostly sound and correctly preserves the strict service-role-only bypass model for `vote_counts`.
 
 **Strengths**
-- Drops both old `vote_counts` policy names before creating the new one.
-- Removes JWT-admin bypass and relies only on service-role bypass.
-- Re-applies `security_invoker = on`.
-- Creates `audit_log` in the same migration.
+- `audit_log.target_id` is explicitly `uuid`, which is important for later review.
+- Drops both legacy `vote_counts` policies before creating the new one.
+- Re-applies `security_invoker = on` after the view rewrite.
 
 **Concerns**
-- **MEDIUM:** `audit_log.actor_id REFERENCES profiles(id)` has no `ON DELETE SET NULL`; future profile deletion could be blocked by audit rows.
-- **LOW:** DB type regeneration is deferred, which is acceptable, but Phase 12 must treat it as a hard prerequisite.
+- MEDIUM: `audit_log.actor_id` lacks `ON DELETE SET NULL`; future profile deletion could be blocked.
 
 **Suggestions**
 - Consider `actor_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL`.
-- Add explicit post-reset SQL checks for policy role/qual.
 
-**Risk Assessment:** **LOW-MEDIUM**
+**Risk Assessment** — LOW-MEDIUM
 
 ### 11-02
 
-**Summary** — The race fix is conceptually correct, but the plan has internal contradictions and a risky fallback story.
+**Summary** — The toggle EF plan's executable instructions are race-safe, but stale narrative remains.
 
 **Strengths**
-- Conditional update avoids read-then-update double-audit races.
-- No-op path returns 200 without writing audit.
-- 404 vs no-op distinction is handled by follow-up SELECT.
+- Conditional update replaces the prior read-then-update race.
+- No-op path returns 200 without writing an audit row.
+- 404 vs no-op distinguished via a follow-up SELECT.
 
 **Concerns**
-- **MEDIUM:** The RPC fallback would require changing migration 10 after Plan 01, but Plan 01 is treated as closed. Either include the RPC up front or remove fallback.
-- **MEDIUM:** Objective/threat model still mention old "pre-read" and "timestamp on every UPDATE" behavior, contradicting the fixed task body.
-- **LOW:** Source-comment instructions conflict: task text asks for D/Pitfall references while must-haves forbid decision archaeology.
+- LOW: Some narrative still references the prior "pre-read" / "timestamp on every UPDATE" design; the conditional UPDATE supersedes both. The executable instructions are correct.
 
 **Suggestions**
-- Lock one implementation: preferably verify `.not('results_hidden', 'is', hidden)` locally and remove RPC fallback.
-- Clean stale pre-read/no-op timestamp language.
+- Clean up the stale narrative for executor clarity.
 
-**Risk Assessment:** **MEDIUM**
+**Risk Assessment** — LOW
 
 ### 11-03
 
-**Summary** — The audit retrofit is broadly sound, but a few existing EF shapes need more precise handling.
+**Summary** — Two-branch `promote-admin` retrofit matches the live EF, but the `admin_preauthorized` row's `target_id` choice collides with Plan 01's `audit_log.target_id uuid` type.
 
 **Strengths**
-- Covers the right mutation EF set except `create-poll`.
-- Preserves response shapes.
-- Handles cron `actor_id: null`.
+- Branch 1 (`target_user_id`) emits one `admin_promoted` row keyed on the profile UUID — type-compatible with `audit_log.target_id uuid`.
+- Branch 2 retroactive flip iterates `promotedProfiles` and emits one `admin_promoted` per row — type-compatible.
+- 23505 idempotency guard correctly skips the `admin_preauthorized` row on the already-pre-authorized no-op path.
 
 **Concerns**
-- **HIGH:** `promote-admin` has two branches: `target_user_id` and `target_discord_id`. The plan only cleanly describes profile-target promotion, not pre-auth `admin_discord_ids` insertion and possible multi-profile retroactive flip.
-- **MEDIUM:** Added pre-SELECTs for `delete-*`, `rename-category`, and `set-resolution` are not atomic with the mutation, so audit `before` values can drift under concurrent admin actions.
-- **MEDIUM:** `demote-admin` currently does not `.single()` after update; a missing target could still produce misleading audit unless tightened.
+- HIGH: Plan 03 writes `target_id: target_discord_id` for `admin_preauthorized`, but Plan 01 defines `audit_log.target_id uuid`, while `admin_discord_ids.discord_id` is `TEXT` at `supabase/migrations/00000000000000_schema.sql:16`. A Discord snowflake (17–19 digit string) cannot insert into a UUID column. Because `writeAudit` never throws, the EF would return success while silently losing the `admin_preauthorized` audit row.
+- MEDIUM: "exactly one audit call per state-changing path" frontmatter language conflicts with Branch 2's `1 + N` audit rows.
 
 **Suggestions**
-- Specify audit rows separately for both `promote-admin` branches.
-- Prefer mutation returns where possible; otherwise document best-effort `before`.
-- Tighten zero-row update handling before auditing.
+- Option A: change Plan 01's `audit_log.target_id` to `text` (accommodates both UUIDs and snowflakes).
+- Option B: for `admin_preauthorized`, set `target_id: null` and store `{ discord_id: target_discord_id }` in `after` only (preserves the uuid column type).
+- Option C: leave `target_id: target_discord_id::uuid` is NOT a solution — snowflakes are 17–19 digit numbers, not valid UUIDs.
+- Add a runtime/integration or deploy smoke assertion for the pre-auth branch (currently no test exercises this branch end-to-end).
 
-**Risk Assessment:** **MEDIUM-HIGH**
+**Risk Assessment** — HIGH
 
 ### 11-03b
 
-**Summary** — Compensation improves the non-atomic create path, but this plan now conflicts with the actual `create-poll` EF contract.
+**Summary** — The create-poll contract mismatches are corrected against live source.
 
 **Strengths**
-- Adds compensation delete on post-RPC update failure.
-- Emits audits only after all mutations succeed.
-- Keeps RPC signature unchanged.
+- Live `choices` validation is `string[]` at `supabase/functions/create-poll/index.ts:86`.
+- Live success response is `{ success: true, id: pollId }` at `supabase/functions/create-poll/index.ts:135`.
+- Plan preserves RPC signature and adds post-RPC hidden update with compensation.
 
 **Concerns**
-- **HIGH:** Current `create-poll` EF (at `supabase/functions/create-poll/index.ts:135`) returns `{ success: true, id: pollId }`, not `{ poll: ... }`. Plan 04/05 expect `data.poll`.
-- **HIGH:** Current `create-poll` expects `choices` as `string[]` (validated at lines 86-97 of the EF), not `{ text }[]`.
-- **MEDIUM:** Compensation is not true atomicity; if compensation delete fails, a visible poll can remain.
-- **MEDIUM:** Action string is still inconsistent with provided CONTEXT (`_at_creation` vs `_at_create`) until docs are updated.
+- MEDIUM: The plan does not explicitly say to add `results_hidden?: unknown` to the local `body` type, although the current typed body lacks it at `supabase/functions/create-poll/index.ts:38`.
 
 **Suggestions**
-- Decide response contract explicitly. Best option: return `{ success: true, id, poll }` for compatibility.
-- Update tests/smoke to send `choices: ['option-a', 'option-b']`.
-- Consider extending the RPC instead if true atomicity is required.
+- Add the body type update explicitly in Step 2 acceptance.
 
-**Risk Assessment:** **HIGH**
+**Risk Assessment** — MEDIUM
 
 ### 11-04
 
-**Summary** — Test coverage intent is good, but some tests currently would fail or produce false confidence.
+**Summary** — The TEST-11/TEST-12 and create-poll hidden tests now align with live contracts, with one stale behavior block.
 
 **Strengths**
-- TEST-12 is order-independent via fresh poll per case.
-- No-op audit behavior is directly tested.
-- Adds useful negative cases.
-- Adds create-poll hidden-at-create coverage.
+- Admin-JWT sentinel now seeds a `memberUser` vote before admin reads, so it is a real admin-OR regression detector.
+- `create-poll-results-hidden` test sends `choices: ['option-a', 'option-b']` and reads `result.data.id`.
+- Acceptance criteria forbid `result.data.poll.*`.
 
 **Concerns**
-- **HIGH:** Admin-JWT sanity test is a false negative. It uses `seedBaseline: false`, so there is no `vote_counts` row. Even with an admin-OR policy regression, the admin read still returns 0.
-- **HIGH:** `create-poll-results-hidden.test.ts` sends choices as objects and expects `data.poll`; both conflict with current `create-poll`.
-- **MEDIUM:** Full integration test count and comments drift between 24 and other counts.
-- **MEDIUM:** `afterEach` should guard null poll IDs before deleting audit rows.
+- LOW: Task 04-03 behavior bullets still say `response.poll.results_hidden`; the action and acceptance criteria correctly override this.
 
 **Suggestions**
-- For admin-JWT sanity, create a vote_counts row by a different user, then assert admin JWT with no own vote still gets 0.
-- Align create-poll tests with the chosen response contract and `string[]` choices.
-- Add `it.only` grep to acceptance.
+- Remove those stale behavior bullets to avoid executor confusion.
 
-**Risk Assessment:** **HIGH**
+**Risk Assessment** — LOW-MEDIUM
 
 ### 11-05
 
-**Summary** — Deploy safety is much improved, but smoke commands inherit the create-poll contract mismatch and contain audit-retention contradictions.
+**Summary** — Deployment smoke is corrected for the live create-poll contract.
 
 **Strengths**
-- Removes local `db push`; local gate is now local-only.
-- Production deploy uses explicit project ref.
-- Smoke uses a dedicated test poll and checks admin + non-admin probes.
+- Smoke payload uses `"choices":["option-a","option-b"]`.
+- Smoke parses `.id`, not `.poll.id`.
+- Local gate correctly avoids `supabase db push`.
 
 **Concerns**
-- **HIGH:** Smoke `create-poll` payload uses `{ text }` choices and reads `.poll.id`; current EF uses `string[]` and returns `.id`.
-- **MEDIUM:** Plan says `audit_log` is append-only, but smoke cleanup deletes audit rows. Threat model then says smoke rows persist. This is contradictory.
-- **MEDIUM:** `--no-verify-jwt` may be consistent with existing deploy practice, but the stated rationale is inaccurate; service-role usage inside the EF is unrelated to platform JWT verification.
-- **LOW:** Local gate should explicitly require/start the local Supabase stack before `db reset` if not already running.
+- MEDIUM: Plan 03 says deploy-time verification smoke-invokes retrofitted EFs, but Plan 05 only meaningfully smokes `create-poll`, `toggle-results-visibility`, and `delete-poll`; it would not catch the new `promote-admin` pre-auth audit failure.
 
 **Suggestions**
-- Fix smoke payload/response after resolving 11-03b.
-- Either leave smoke audit rows or explicitly document service-role cleanup as an exception.
-- Reuse an existing deploy script if the project has one; otherwise keep per-function commands.
+- Add a pre-auth `promote-admin` smoke or integration assertion after fixing the `target_id` type mismatch.
 
-**Risk Assessment:** **MEDIUM-HIGH**
+**Risk Assessment** — MEDIUM
 
-### Cycle-1 HIGH Verification
+### Cycle-2 HIGH Verification Table
 
-| Concern | Status | Evidence |
-|---|---:|---|
-| TEST-11 helper contract gap | **PARTIALLY RESOLVED** | `userId` + service-role vote + baseline vote are fixed, but helper still uses wrong `choices.text` column. |
-| 11-03b create-poll non-atomic | **PARTIALLY RESOLVED** | Compensation delete added, but not true atomicity and tests/smoke conflict with current EF response. |
-| 11-02 toggle EF race | **RESOLVED** | Conditional update removes read-then-update double-audit race. Needs cleanup of stale plan text. |
-| 11-01 RLS admin-OR contradiction | **RESOLVED** | New policy has no `is_current_user_admin() OR`; service-role bypass only. |
-| 11-05 dangerous Supabase commands | **RESOLVED** | Local gate no longer uses `db push`; prod deploy is explicitly targeted. |
-| 11-04 TEST-12 ordering dependency | **RESOLVED** | Fresh poll per case removes implicit ordering dependency. |
+| Concern ID | Status | Evidence |
+|---|---|---|
+| REVIEW-FIX-C2-H1 | RESOLVED | Plan 00 uses `{ poll_id, label, sort_order }`; live `choices.label` confirmed at `supabase/migrations/00000000000000_schema.sql:86`. |
+| REVIEW-FIX-C2-H2 | RESOLVED (but introduces a new HIGH downstream) | Both `promote-admin` branches now covered, matching live source. New HIGH below tracks the `target_id` type mismatch this fix uncovered. |
+| REVIEW-FIX-C2-H3 | RESOLVED | Plan 03b preserves `{ success: true, id: pollId }`; live return at `supabase/functions/create-poll/index.ts:135`. |
+| REVIEW-FIX-C2-H4 | RESOLVED | Plan 03b documents `choices: string[]`; live validation at `supabase/functions/create-poll/index.ts:86-97`. |
+| REVIEW-FIX-C2-H5 | RESOLVED | Plan 04 now creates a real `vote_counts` row via `memberUser` before admin JWT reads. |
+| REVIEW-FIX-C2-H6 | RESOLVED | Plan 04 corrected create-poll tests to `choices: string[]`, `result.data.id`, and service-role `polls` SELECT. |
+| REVIEW-FIX-C2-H7 | RESOLVED | Plan 05 smoke uses string-array choices and `jq -r '.id'`. |
 
-### Overall Phase Risk
+### Overall Phase Risk Assessment
 
-**HIGH** until the create-poll/helper/test interface mismatches are fixed.
+HIGH, due to the new `promote-admin` pre-auth audit write mismatch against `audit_log.target_id uuid`.
 
 ### Ready For Execution?
 
-**No.** To get to "yes":
-
-1. Fix all choice payloads/DB inserts to match actual contracts: DB uses `choices.label`; `create-poll` currently accepts `choices: string[]`.
-2. Decide and align the `create-poll` response shape across 11-03b, 11-04, and 11-05.
-3. Fix admin-JWT RLS sanity test so it has vote_counts data from another user.
-4. Specify both `promote-admin` audit branches.
-5. Remove stale contradictory text in 11-02 and 11-05.
+NO. The cycle-2 create-poll/choices cluster is fixed, but Plan 03 (or Plan 01) must be revised so `admin_preauthorized` does not write a Discord snowflake into a UUID column.
 
 ---
 
-## Consensus Summary (Cycle 2)
+## Consensus Summary (Cycle 3)
 
-The two reviewers diverged sharply on execution-readiness. Gemini's review scored every plan LOW and concluded "ready for execution as written, no further review cycles required." Codex grounded its review against the live repo and surfaced 7 new HIGH-severity correctness gaps clustered around interface mismatches between the revised plans and the actual `create-poll` EF + `choices` table.
+The two reviewers converged this cycle — a notable change from cycles 1 and 2 where Gemini ran structural reviews and Codex ran code-grounded reviews and only Codex caught the interface bugs. In cycle 3, both reviewers independently surfaced the same NEW HIGH from independent angles (Gemini from cross-reading the plans; Codex from cross-checking against live source line numbers). The convergence is strong evidence that the cycle-2 fix to REVIEW-FIX-C2-H2 introduced a real type collision that the planner missed because the plans authored the `target_id` value in Plan 03 without re-checking Plan 01's column type declaration.
 
-The divergence is the same depth-of-correctness-analysis gap that produced the cycle-1 divergence — Codex caught code-grounded interface bugs that Gemini's structural review did not surface. Of the 6 cycle-1 HIGHs, **4 are fully resolved and 2 are partially resolved** (the partial pair carries an unresolved interface mismatch into cycle 2).
+### Cycle-2 HIGH Disposition (consolidated, both reviewers)
 
-### Cycle-1 HIGH Disposition (consolidated)
+All 7 cycle-2 HIGHs are FULLY RESOLVED:
 
-| Cycle-1 HIGH | Cycle-2 Status | Verification |
+| Cycle-2 HIGH | Cycle-3 Status | Verification |
 |---|---|---|
-| TEST-11 helper contract gap | **PARTIALLY RESOLVED** | `userId` + service-role + baseline vote fixes landed, but the helper writes `choices.text` while the actual column is `choices.label` — execution will fail at helper insert. |
-| 11-03b create-poll non-atomic | **PARTIALLY RESOLVED** | Compensating DELETE landed (`REVIEW-FIX-H5`), but compensation is best-effort (DELETE-failure path leaves a visible poll) AND the plan body's create-poll body/response shape contracts conflict with the live EF. |
-| 11-02 toggle EF race | **RESOLVED** | Conditional `IS DISTINCT FROM` UPDATE replaces read-then-update; concurrent same-direction toggles can no longer double-audit. Cycle 2: minor stale narrative text to clean up. |
-| 11-01 RLS admin-OR contradiction | **RESOLVED** | New `vote_counts` policy excludes the `is_current_user_admin() OR` branch — service-role bypass only, per VIS-04. |
-| 11-05 dangerous Supabase commands | **RESOLVED** | Local gate uses `db reset` only (no `db push`); prod deploy commands carry `--project-ref --use-api --no-verify-jwt`. Cycle 2: `--no-verify-jwt` rationale is technically inaccurate but the flag itself is correct. |
-| 11-04 TEST-12 ordering dependency | **RESOLVED** | `beforeEach`/`afterEach` give every TEST-12 case a fresh poll; ordering coupling removed. |
+| REVIEW-FIX-C2-H1 (helper choices column) | **RESOLVED** | Both reviewers: Plan 00 uses `label` not `text`; live schema confirms at `supabase/migrations/00000000000000_schema.sql:86`. |
+| REVIEW-FIX-C2-H2 (promote-admin two-branch retrofit) | **RESOLVED** | Both reviewers: two-branch retrofit matches live EF shape. Note: the fix surfaces a downstream type collision (new HIGH below) — the H2 concern itself is resolved; the downstream issue is a new problem. |
+| REVIEW-FIX-C2-H3 (create-poll response shape) | **RESOLVED** | Both reviewers: `{success, id}` preserved per live EF line 135. |
+| REVIEW-FIX-C2-H4 (create-poll choices contract) | **RESOLVED** | Both reviewers: `string[]` per live EF lines 86–97. |
+| REVIEW-FIX-C2-H5 (admin-JWT sentinel false negative) | **RESOLVED** | Both reviewers: Plan 04 seeds a memberUser-keyed vote_counts row before the admin JWT read — real regression sentinel. |
+| REVIEW-FIX-C2-H6 (test contract mismatch) | **RESOLVED** | Both reviewers: integration test sends `choices: string[]` and reads `result.data.id`; service-role SELECT verifies `results_hidden`. |
+| REVIEW-FIX-C2-H7 (smoke payload mismatch) | **RESOLVED** | Both reviewers: smoke `curl` uses string-array choices and `jq -r '.id'`. |
 
-### Newly-Surfaced HIGHs (Cycle 2)
+### Newly-Surfaced HIGH (Cycle 3)
 
-1. **11-00 HIGH (Codex):** `createFreshPoll` helper inserts choices as `{text: ...}` but the actual `choices` table column is `label TEXT NOT NULL` (verified at `supabase/migrations/00000000000000_schema.sql:86`). The helper will fail at insert against any post-migration DB.
-2. **11-03 HIGH (Codex):** `promote-admin` audit retrofit covers only the profile-target branch; the EF's `target_discord_id` branch (pre-auth `admin_discord_ids` insertion with possible multi-profile retroactive flip) is unspecified.
-3. **11-03b HIGH (Codex):** Plan body assumes `create-poll` returns `{ poll: <row> }`; the live EF (at `supabase/functions/create-poll/index.ts:135`) returns `{ success: true, id: pollId }`. Plans 04 and 05 inherit this assumption and would fail at runtime.
-4. **11-03b HIGH (Codex):** Plan body assumes `choices` body field is `{text: string}[]`; the live EF (at lines 86–97) expects `string[]`. Plans 04 and 05 inherit this.
-5. **11-04 HIGH (Codex):** Admin-JWT RLS sanity test (REVIEW-FIX-M7) uses `seedBaseline: false`, which leaves `vote_counts` empty. Even if a regression re-introduces the admin-OR-branch, the assertion still passes (0 rows from empty source) — a false negative that defeats the test's purpose.
-6. **11-04 HIGH (Codex):** `create-poll-results-hidden.test.ts` sends choices as `{text: ...}` objects and asserts `data.poll.id` — both conflict with the live `create-poll` contract (see HIGH #3 + #4 above).
-7. **11-05 HIGH (Codex):** Smoke `curl` payload for `create-poll` uses `{text: ...}` choices and reads `.poll.id` — same root cause as HIGH #3 + #4 + #6; production smoke will fail.
+**1. `audit_log.target_id uuid` vs `admin_preauthorized` row's snowflake `target_id` (both reviewers)**
 
-Items #1, #3, #4, #6, #7 are five manifestations of the same root cause: the planner authored the plans against an imagined `create-poll` / `choices` contract instead of the live one. Fixing the helper + plan-03b body once, then ripple-propagating to 04 + 05, addresses 5 of the 7 new HIGHs.
+- **Component:** Plans 11-01 + 11-03 (cross-plan contract collision)
+- **Description:** Plan 11-01 declares `audit_log.target_id uuid` (D-02, confirmed in Plan 01 truth blocks and `<interfaces>` block). Plan 11-03's REVIEW-FIX-C2-H2 instructs the `promote-admin` Branch 2 retrofit to emit one `admin_preauthorized` audit row with `target_id: target_discord_id` (target_type = 'admin_discord_ids'). However, Discord snowflakes are 17–19 digit numeric strings (live schema declares `admin_discord_ids.discord_id TEXT PRIMARY KEY` at `supabase/migrations/00000000000000_schema.sql:16`) — they are NOT valid UUIDs. INSERTing a snowflake into a `uuid` column will fail at the Postgres layer with `invalid input syntax for type uuid`.
+- **Why this is a HIGH (not a MEDIUM):** Combined with the `writeAudit` fail-open contract (Pitfall 3 — helper logs to console.error and never throws), the EF would return HTTP 200 success to the caller while silently dropping the `admin_preauthorized` audit row. This defeats the forensic purpose of the audit_log on the exact code path (pre-authorizing a Discord-only admin) that is most likely to be invoked by an operator and most likely to require an audit trail.
+- **Reachability:** The failure path is triggered by every call to `promote-admin` with `target_discord_id` set (Branch 2). The cycle-2 reviewer noted that the plan only covered Branch 1; the cycle-3 fix correctly adds Branch 2 coverage but inherits a column-type mismatch from Plan 01's D-02 schema baseline that pre-dates the H2 fix.
+- **Recommended fix (three options, both reviewers converged on A or B):**
+  - **Option A (Codex preferred):** Change Plan 01's `audit_log.target_id` column from `uuid` to `text`. This accommodates both UUIDs (profile IDs, poll IDs, category IDs) and snowflakes. Update Plan 01's D-02 truth block + acceptance criteria + the `<interfaces>` block in Plans 01/02/03/03b/04. Migration 10 has not been applied to production yet (Plan 05 is the deploy gate), so the column-type change is free.
+  - **Option B (Gemini preferred):** Leave `audit_log.target_id` as `uuid`. For the `admin_preauthorized` row, set `target_id: null` and store `{ discord_id: target_discord_id }` in `after` only. This requires updating Plan 03's REVIEW-FIX-C2-H2 instruction + the acceptance criterion `target_id = target_discord_id`.
+  - **Option C (NOT a solution):** A `target_discord_id::uuid` cast does not work — Discord snowflakes are 17–19 digit decimal strings, not UUID hex sequences.
+- **Add a deploy-time or integration assertion for the Branch 2 path (Codex):** Plan 05 currently does not smoke `promote-admin` Branch 2 against production. Even after the column-type fix, an integration test (or a deploy smoke `curl`) that pre-authorizes a fake Discord ID and asserts the `admin_preauthorized` audit row landed would catch any future drift.
 
-### Agreed Strengths (both reviewers)
+### Cycle-3 MEDIUM / LOW Concerns (informational, not blockers)
 
-- `REVIEW-FIX-H3` removes the JWT-admin OR-branch from the `vote_counts` policy — strict service-role-only bypass per VIS-04.
-- `REVIEW-FIX-H4` race-safe conditional `IS DISTINCT FROM` UPDATE on the toggle EF — eliminates the double-audit race.
-- `REVIEW-FIX-H5` compensating DELETE in `create-poll` — guarantees all-or-nothing semantics on the `results_hidden=true` opt-in path.
-- `REVIEW-FIX-H7` local pre-merge gate uses `db reset` only — `db push` correctly deferred to the production deploy task.
-- `REVIEW-FIX-H8` deploy commands carry `--project-ref --use-api --no-verify-jwt`.
-- `REVIEW-FIX-M6` fresh-poll-per-case in TEST-12 — order-independent assertions.
-- `REVIEW-FIX-M7` admin-JWT sanity case for the RLS gate (intent good — see Concerns for the false-negative gap).
+- **Plan 01 MEDIUM (both reviewers):** `audit_log.actor_id` lacks `ON DELETE SET NULL` — future profile deletion could be blocked by audit rows. Recommendation: `actor_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL`.
+- **Plan 02 LOW (Codex):** Stale narrative referencing the prior "pre-read" / "timestamp on every UPDATE" design remains; executable instructions are correct. Cleanup recommended for executor clarity.
+- **Plan 03 MEDIUM (Codex):** "Exactly one audit call per state-changing path" frontmatter language conflicts with Branch 2's `1 + N` audit rows. Reword the truth to "one audit row per state-changing emit; Branch 2 of `promote-admin` emits `1 + N` rows where N = `promotedExistingProfiles`."
+- **Plan 03 LOW (Gemini):** `update-poll` audit `before: null` if the RPC doesn't return prior values reduces forensic utility. Acceptable given RPC constraints; document as "best-effort audit depth."
+- **Plan 03b MEDIUM (Codex):** Plan does not explicitly say to update the local `body` type to include `results_hidden?: unknown` (current typed body lacks it at `supabase/functions/create-poll/index.ts:38`).
+- **Plan 04 LOW (Codex):** Task 04-03 behavior bullets still reference `response.poll.results_hidden` (the action body and acceptance criteria override this correctly, but the stale bullet may confuse executors).
+- **Plan 05 MEDIUM (Codex):** Smoke meaningfully exercises `create-poll`, `toggle-results-visibility`, and `delete-poll`, but not `promote-admin` Branch 2. Adding a pre-auth promote-admin smoke (after fixing the `target_id` type mismatch) would close this gap.
+
+### Agreed Strengths (both reviewers, cycle 3)
+
+- REVIEW-FIX-C2-H1: live-source-grounded helper schema fix (choices.label not text).
+- REVIEW-FIX-C2-H3 + H4 + H6 + H7: end-to-end create-poll contract alignment (response shape, choices type, test reads, smoke payload) — the cycle-2 root cluster is fully closed.
+- REVIEW-FIX-C2-H5: admin-JWT sentinel converted from a false negative into a real regression detector.
+- The convergence of two independent reviewers on the same NEW HIGH (target_id type mismatch) is strong evidence of the issue's severity.
 
 ### Agreed Concerns
 
-- None of Gemini's surface-level structural review caught the interface-contract mismatches Codex surfaced; Gemini's "no concerns, ready for execution" verdict does not refute Codex's repo-grounded HIGHs.
+- The new HIGH (Plan 01 vs Plan 03 `target_id` type collision) blocks execution-readiness. Both reviewers say NO to "Ready for Execution" pending fix.
 
 ### Divergent Views
 
-- **Phase risk:** Gemini LOW; Codex HIGH-until-revised. Same gap as cycle 1 — Gemini does not re-ground its review against the live codebase; Codex does and finds bugs every cycle.
-- **Whether cycle 1's "create-poll non-atomic" is closed:** Gemini RESOLVED via the compensating DELETE. Codex PARTIALLY RESOLVED — compensation is best-effort (DELETE-failure path leaves a visible poll) AND the plan body's body/response shape contracts conflict with the live EF.
+- **Severity scale of the new HIGH:** Gemini scored the phase MEDIUM overall (improvement from cycle-2 HIGH); Codex scored HIGH. Both flagged the same root cause and both say NOT execution-ready — the disagreement is on the headline severity adjective, not the disposition.
 
 ### Recommended Next Step
 
-Run a third planner cycle (`/gsd-plan-phase 11 --reviews`) to address the 7 new HIGHs. Five of the seven share a root cause (the planner imagined a different `create-poll` contract); fix the contract assumption once in Plan 11-03b and propagate to Plans 00, 04, and 05. The other two HIGHs (`promote-admin` two-branch underspec; admin-JWT sanity test false negative) need targeted plan edits in Plans 11-03 and 11-04 respectively.
+Run a fourth planner cycle (`/gsd-plan-phase 11 --reviews`) to address the one cycle-3 HIGH. The fix is targeted and small:
+
+- **Quickest path (Option A — Codex preferred):** Change Plan 01's `audit_log.target_id uuid` → `text` in three places: D-02 truth block, the SQL DDL in the migration plan body, and the `<interfaces>` block. Ripple the change to Plans 02/03/03b/04's `<interfaces>` blocks. No code changes; Plan 03's REVIEW-FIX-C2-H2 instructions stand as-is. Migration 10 has not yet been applied to production, so the column-type change is free.
+- **Alternative (Option B — Gemini preferred):** Leave the uuid column. Update Plan 03's REVIEW-FIX-C2-H2 to set `target_id: null` for the `admin_preauthorized` row and store `{ discord_id: target_discord_id }` in `after` only. Adjust the acceptance criterion `target_id: target_discord_id` accordingly.
+
+Both options resolve the HIGH; both reviewers expect either fix to clear the phase for execution. After the fix, the convergence loop should converge to `current_high=0` and `/gsd-execute-phase 11` becomes the next action.
