@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Hygiene & Polish
-status: milestone_archived
-stopped_at: v1.1 milestone archived (tag v1.1; artifacts moved to milestones/v1.1-*.md); ready for v1.2 planning
-last_updated: "2026-05-11T07:30:00Z"
-last_activity: "2026-05-11 -- v1.1 milestone archived via /gsd-complete-milestone; ROADMAP collapsed; REQUIREMENTS.md deleted (fresh one for v1.2 via /gsd-new-milestone)"
+milestone: v1.2
+milestone_name: Admin Visibility Controls
+status: planning
+last_updated: "2026-05-11T07:34:31.597Z"
+last_activity: 2026-05-11
 progress:
-  total_phases: 10
-  completed_phases: 10
-  total_plans: 48
-  completed_plans: 48
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -25,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-04-28 after v1.0 milestone)
 
 ## Current Position
 
-Phase: 10 (complete)
-Plan: 10-05 (final)
-Status: Milestone shipped — v1.1 Hygiene & Polish (Phases 7–10); PR #25 merged (fda6072)
-Last activity: 2026-05-11 -- PR #25 merged (fda6072); v1.1 milestone shipped
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-05-11 — Milestone v1.2 started
 
 ## Accumulated Context
 

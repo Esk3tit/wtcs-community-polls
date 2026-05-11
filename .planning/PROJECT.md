@@ -29,19 +29,27 @@ This platform gathers community **opinions**, not binding votes. Nothing on the 
 **Tests:** Playwright E2E suite now `[E2E]`-scoped + lint-enforced (TEST-07/08/09); Sentry React 19 capture path live in production (OBSV-01/02); second-human UAT evidence captured (TEST-10)
 **v1.1 archives:** [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md) · [milestones/v1.1-REQUIREMENTS.md](milestones/v1.1-REQUIREMENTS.md) · [milestones/v1.1-MILESTONE-AUDIT.md](milestones/v1.1-MILESTONE-AUDIT.md)
 
-## Next Milestone: v1.2 — Admin Visibility Controls (planned)
+## Current Milestone: v1.2 — Admin Visibility Controls
 
-**Anchor feature:** Per-suggestion results-visibility toggle for admins ([SEED-002](seeds/SEED-002-admin-controlled-results-visibility.md), Tim's ask). Captured during v1.0 retrospective; kept out of v1.1 to preserve hygiene-only framing.
+**Goal:** Give admins per-suggestion control over results visibility ([SEED-002](seeds/SEED-002-admin-controlled-results-visibility.md), Tim's ask), and close the v1.1 Path-3 carry-forward debt for mobile + shadcn so PROJECT.md Key Decision rows can flip ⚠️ Revisit → ✓ Good.
 
-**Carry-forward from v1.1 (Path-3 deferred):**
-- **UIDN-02** — Mobile-first responsive design audit needs Lighthouse Perf rerun after v1.2 perf budget hit + Plan 02 harness hydration-wait fix. Evidence baseline at `.planning/closure/UIDN-02-mobile-evidence.md`.
-- **UIDN-03** — shadcn polish audit needs cleanup of 4 native-`<button>` drifts in `SearchBar.tsx`, `SuggestionForm.tsx`, `ImageInput.tsx` + authenticated Pass-A capture. Evidence baseline at `.planning/closure/UIDN-03-shadcn-audit.md`.
+**Target features:**
+- **SEED-002 — Admin-controlled results visibility (per-suggestion):** New `polls.results_visibility` enum (`respondents_only` default / `public_during` / `public_after_close`); RLS rewrite on `vote_counts` to honor the new policy; new admin Edge Function for ad-hoc reveal; admin UI selector at creation + "Reveal results now" button on live admin card; user UI conditionally renders results pre-vote when policy allows; RLS invariant tests for each visibility × pre/post-vote × pre/post-close cell; admin UAT for happy paths and ad-hoc reveal.
+- **UIDN-02 closure (carry-forward from Phase 9):** Lighthouse mobile-perf rerun after v1.2 perf budget hit + Plan 02 harness hydration-wait fix; flip `Mobile-first responsive design` Key Decision row ⚠️ → ✓.
+- **UIDN-03 closure (carry-forward from Phase 9):** Cleanup of 4 native-`<button>` drifts in `SearchBar.tsx`, `SuggestionForm.tsx`, `ImageInput.tsx` + authenticated Pass-A screenshot capture; flip `shadcn/ui new-york + Tailwind CSS v4` Key Decision row ⚠️ → ✓.
 
-**Out-of-scope tech debt from v1.0 audit (still open):**
+**Key context:**
+- Phase numbering continues from v1.1 (last phase 10) → v1.2 starts at **Phase 11**.
+- SEED-002 spec is medium scope (schema + RLS + EF + 2 UIs + matrix tests) and has a fully detailed seed file with breadcrumbs to v1.0 RSLT-05 (becomes the *default* of three modes, not the only mode) and v1.0 PITFALLS Pitfall 10 (RLS leakage prevention must be re-validated).
+- One-way ad-hoc reveal recommended over toggle-back (UX surprise risk; voters who already saw results can't un-see).
+- Backwards compat: all v1.0/v1.1 suggestions default to `respondents_only` (zero behavior change for in-flight).
+- UIDN-02 and UIDN-03 evidence baselines from Phase 9 stay valid; v1.2 work re-runs the audits against the post-fix codebase rather than starting from scratch.
+
+**Out-of-scope tech debt from v1.0 audit (still open, not in v1.2):**
 - Fake admin Discord IDs cleanup in production seed
 - Leftover `[E2E] Test:` polls in shared DB (data hygiene)
 
-**Open via:** `/gsd-new-milestone` will define v1.2 requirements + roadmap.
+GitHub milestone: TBD on first push.
 
 <details>
 <summary>Previous milestone goals (v1.1)</summary>
@@ -222,4 +230,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-11 — v1.1 Hygiene & Polish milestone shipped (Phases 7–10, 16/16 plans, PRs #21/#22/#24/#25 merged); archived to `milestones/v1.1-*.md`. Next: `/gsd-new-milestone` for v1.2 (Admin Visibility Controls — SEED-002).*
+*Last updated: 2026-05-11 — v1.2 Admin Visibility Controls milestone opened (SEED-002 anchor + UIDN-02/03 carry-forward); v1.1 archived to `milestones/v1.1-*.md`.*
