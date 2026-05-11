@@ -73,6 +73,6 @@ This document tracks the v1.2 milestone requirements. After v1.0 (43 of 45 reqs)
 | VIS-09 | Phase 11 | Pending |
 | UIDN-02 | Phase 13 | Pending |
 | UIDN-03 | Phase 12 | Pending |
-| TEST-11 | Phase 11 | Pending |
-| TEST-12 | Phase 11 | Pending |
+| TEST-11 | Phase 11 | Scaffold complete (Plan 11-00, 2026-05-11); bodies pending Plan 11-04 |
+| TEST-12 | Phase 11 | Scaffold complete (Plan 11-00, 2026-05-11); bodies pending Plan 11-04 |
 | TEST-13 | Phase 12 | Pending |

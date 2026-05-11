@@ -67,7 +67,7 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
   5. `toggle-results-visibility` EF is deployed and reachable: calling it as a non-admin returns 403; calling it as an admin with a valid `{ poll_id, hidden: boolean }` body flips the value and writes the audit row
 
 **Plans**: 7 plans
-- [ ] 11-00-PLAN.md — Wave 0 integration test fixtures (vitest config, helpers, scaffolds)
+- [x] 11-00-PLAN.md — Wave 0 integration test fixtures (vitest config, helpers, scaffolds) — complete 2026-05-11
 - [ ] 11-01-PLAN.md — Migration 10 (polls columns + audit_log + view rewrite + vote_counts policy)
 - [ ] 11-02-PLAN.md — Shared audit helper + toggle-results-visibility EF
 - [ ] 11-03-PLAN.md — Audit retrofit of 11 existing mutation admin EFs (excluding create-poll, planned in 11-03b)
