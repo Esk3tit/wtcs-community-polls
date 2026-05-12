@@ -1,10 +1,11 @@
 ---
 phase: 12
 slug: admin-ui-user-ui-uidn-03-sweep
-status: draft
+status: approved
 shadcn_initialized: true
 preset: new-york / Neutral baseColor (per components.json)
 created: 2026-05-12
+reviewed_at: 2026-05-12
 ---
 
 # Phase 12 — UI Design Contract
