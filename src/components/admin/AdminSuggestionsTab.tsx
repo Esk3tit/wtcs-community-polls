@@ -91,42 +91,50 @@ export function AdminSuggestionsTab() {
     navigate({ to: '/admin', search: { tab: 'suggestions', filter: f } })
 
   // Optimistic pin: flip is_pinned locally and re-sort before firing the
-  // mutation. Revert on failure. Post-mutation refetch reconciles so server
-  // state always wins.
+  // mutation. Revert via functional setItems on failure so concurrent flips
+  // against different rows do not trample each other's optimistic state.
+  // Post-mutation refetch (success OR failure) is the canonical reconcile.
   const handleTogglePin = useCallback(
     async (pollId: string, nextPinned: boolean) => {
-      const prev = items
-      const optimistic = sortAdminSuggestions(
-        items.map((it) =>
-          it.id === pollId ? { ...it, is_pinned: nextPinned } : it,
+      setItems((cur) =>
+        sortAdminSuggestions(
+          cur.map((it) => (it.id === pollId ? { ...it, is_pinned: nextPinned } : it)),
         ),
       )
-      setItems(optimistic)
       const res = await pinPoll({ poll_id: pollId, is_pinned: nextPinned })
       if (!res.ok) {
-        // Revert to the pre-optimistic snapshot. The toast was already
+        // Diff-revert only the target row, then re-sort. Other rows'
+        // concurrent optimistic flips stay intact. The toast was already
         // surfaced by usePinPoll's error path.
-        setItems(prev)
+        setItems((cur) =>
+          sortAdminSuggestions(
+            cur.map((it) => (it.id === pollId ? { ...it, is_pinned: !nextPinned } : it)),
+          ),
+        )
+        // Reconcile against server too — guarantees convergence if a
+        // concurrent flip raced us.
+        void fetchAll()
         return
       }
-      // Reconciliation — fetch canonical state.
       void fetchAll()
     },
-    [items, pinPoll, fetchAll],
+    [pinPoll, fetchAll],
   )
 
   // Optimistic results-visibility flip: results_hidden does not affect list
-  // ordering, so no re-sort. Per-row pending Set lets multiple rows be
-  // in-flight independently. Toast is surfaced by useToggleResultsVisibility.
+  // ordering, so no re-sort. Functional setItems diffs only the target row
+  // so concurrent flips on other rows stay intact. Per-row pending Set lets
+  // multiple rows be in-flight independently. Toast surfaced by hook.
   const handleToggleResultsVisibility = useCallback(
     async (pollId: string, nextHidden: boolean) => {
-      const prev = items
-      const target = prev.find((it) => it.id === pollId)
-      const title = target?.title ?? 'this suggestion'
-      const optimistic = items.map((it) =>
-        it.id === pollId ? { ...it, results_hidden: nextHidden } : it,
-      )
-      setItems(optimistic)
+      let title = 'this suggestion'
+      setItems((cur) => {
+        const target = cur.find((it) => it.id === pollId)
+        if (target) title = target.title
+        return cur.map((it) =>
+          it.id === pollId ? { ...it, results_hidden: nextHidden } : it,
+        )
+      })
       setPendingVisibility((s) => {
         const n = new Set(s)
         n.add(pollId)
@@ -139,12 +147,21 @@ export function AdminSuggestionsTab() {
         return n
       })
       if (!res.ok) {
-        setItems(prev)
+        // Diff-revert only the target row so concurrent flips on other
+        // rows keep their optimistic state.
+        setItems((cur) =>
+          cur.map((it) =>
+            it.id === pollId ? { ...it, results_hidden: !nextHidden } : it,
+          ),
+        )
+        // Reconcile against server too — guarantees convergence if a
+        // concurrent flip raced us.
+        void fetchAll()
         return
       }
       void fetchAll()
     },
-    [items, toggleResultsVisibility, fetchAll],
+    [toggleResultsVisibility, fetchAll],
   )
 
   return (
