@@ -18,11 +18,11 @@ This document tracks the v1.2 milestone requirements. After v1.0 (43 of 45 reqs)
 
 - [x] **VIS-05**: An RLS invariant test suite enforces the {voted: yes/no} × {hidden: true/false} × {auth: anon/authenticated/admin} cells. Every cell with non-voter or hidden=true returns 0 rows; only `voted + hidden=false + authenticated` returns vote counts; admin role bypass returns rows in all states. The test runs in `e2e/` against local Supabase and blocks merge if any cell fails. *(Plan 11-04, 2026-05-11 — `e2e/integration/vote-counts-rls.test.ts` (12 describe.each cells + 1 admin-JWT regression sentinel); runtime PASS gated to Plan 11-05.)*
 
-- [ ] **VIS-06**: Admin UI — Suggestion creation form gains an optional "Hide results from voters" checkbox (default unchecked = visible). Setting it true at creation creates the poll with `results_hidden = true`. UI uses shadcn `Checkbox` (no new dependency).
+- [x] **VIS-06**: Admin UI — Suggestion creation form gains an optional "Hide results from voters" checkbox (default unchecked = visible). Setting it true at creation creates the poll with `results_hidden = true`. UI uses shadcn `Checkbox` (no new dependency). *(Plan 12-02, 2026-05-12)*
 
-- [ ] **VIS-07**: Admin UI — Live + archived admin suggestion cards gain an inline "Hide results" / "Show results" toggle (label flips per current state; mobile sub-`sm` shows a lucide `Eye`/`EyeOff` icon instead of the label). Uses shadcn `Switch` placed between the response-count and the kebab menu on `AdminSuggestionRow`. Click flips optimistically and calls the `toggle-results-visibility` EF in the background — sonner toast confirms ("Results hidden for: {title}" / "Results visible for: {title}"); on failure the Switch reverts and an error toast surfaces. Switch is `disabled` + a small `Loader2` adjacent while the EF is in-flight to suppress double-click no-op writes in `audit_log`. Matches the existing `usePinPoll` optimistic + revert precedent. _(Wording revised in Phase 12 Plan 00 per CONTEXT.md A1-D1: AlertDialog confirmation pattern replaced with optimistic Switch + sonner toast.)_
+- [x] **VIS-07**: Admin UI — Live + archived admin suggestion cards gain an inline "Hide results" / "Show results" toggle (label flips per current state; mobile sub-`sm` shows a lucide `Eye`/`EyeOff` icon instead of the label). Uses shadcn `Switch` placed between the response-count and the kebab menu on `AdminSuggestionRow`. Click flips optimistically and calls the `toggle-results-visibility` EF in the background — sonner toast confirms ("Results hidden for: {title}" / "Results visible for: {title}"); on failure the Switch reverts and an error toast surfaces. Switch is `disabled` + a small `Loader2` adjacent while the EF is in-flight to suppress double-click no-op writes in `audit_log`. Matches the existing `usePinPoll` optimistic + revert precedent. *(Plan 12-03, 2026-05-12; wording revised in Plan 12-00 per CONTEXT.md A1-D1: AlertDialog confirmation pattern replaced with optimistic Switch + sonner toast.)*
 
-- [ ] **VIS-08**: User UI — `SuggestionCard` and the archive view show vote count breakouts only when the user has voted AND `results_hidden = false`. When `results_hidden = true`, voters who already voted see a "Results temporarily hidden by admin" message in place of the count display. Non-voters continue to see the vote form (unchanged from v1.0).
+- [x] **VIS-08**: User UI — `SuggestionCard` and the archive view show vote count breakouts only when the user has voted AND `results_hidden = false`. When `results_hidden = true`, voters who already voted see a "Results temporarily hidden by admin" message in place of the count display. Non-voters continue to see the vote form (unchanged from v1.0). *(Plan 12-04, 2026-05-12)*
 
 - [x] **VIS-09**: The `polls_effective` view is updated (`CREATE OR REPLACE VIEW`) to project `results_hidden` and `results_hidden_changed_at` from `polls` so the user-facing read path (`useSuggestions`, `useVoteCounts`, `SuggestionCard`) can branch on the policy without bypassing the view boundary. The `polls_effective` invariant test at `src/__tests__/admin/polls-effective-invariant.test.ts` continues to pass — no new direct `from('polls')` reads in `src/`. `security_invoker = on` re-applied after the view rewrite. *(Plan 11-01, 2026-05-11 — pair re-applied 23 lines after CREATE OR REPLACE; invariant test passes 2/2.)*
 
@@ -31,7 +31,7 @@ This document tracks the v1.2 milestone requirements. After v1.0 (43 of 45 reqs)
 - [ ] **UIDN-02**: Mobile-first responsive design closure evidence captured — Lighthouse mobile audit + 6-width breakpoint matrix archived at `.planning/closure/UIDN-02-mobile-evidence.md` (v1.2 rerun). **v1.1 Phase 9 outcome:** Path-3 deferred; F2 hard gate failed (Perf 5/5 routes below 90 target). **v1.2 prerequisites:** (1) `audit-screenshots.mjs` hydration-wait fix (Plan 02 defect — `waitForLoadState('networkidle')` plus authenticated Pass-A for `/topics` and `/archive` using existing `loginAs` from `e2e/helpers/auth.ts`); (2) v1.2 production deploy stabilizes perf budget. After both: rerun audit; flip `Mobile-first responsive design` Key Decision row ⚠️ → ✓ if Perf 5/5 ≥ 90 hits.
   _Carry-forward from v1.1; baseline at `.planning/closure/UIDN-02-mobile-evidence.md` (status: deferred)._
 
-- [ ] **UIDN-03**: shadcn polish closure — cleanup of 4 native-`<button>` drifts identified in v1.1 Phase 9 audit and authenticated Pass-A screenshot capture. Replace native buttons with shadcn `Button` (correct `variant=` per drift site) at: `SearchBar.tsx:22` (search-clear-X — `variant="ghost"` icon button), `SuggestionForm.tsx:140` + `:163` (form-action buttons — `variant=` per role: primary/secondary), `ImageInput.tsx:108` (drop-zone trigger — programmatic via `useRef`, may stay native if button role isn't required). Preserve `type="submit"` / `type="button"` to avoid form-submit regressions. Re-run UIDN-03 audit; flip `shadcn/ui new-york + Tailwind CSS v4` Key Decision row ⚠️ → ✓ if 0 FAIL cells.
+- [x] **UIDN-03**: shadcn polish closure — cleanup of 4 native-`<button>` drifts identified in v1.1 Phase 9 audit and authenticated Pass-A screenshot capture. Replace native buttons with shadcn `Button` (correct `variant=` per drift site) at: `SearchBar.tsx:22` (search-clear-X — `variant="ghost"` icon button), `SuggestionForm.tsx:140` + `:163` (form-action buttons — `variant=` per role: primary/secondary), `ImageInput.tsx:108` (drop-zone trigger — programmatic via `useRef`, may stay native if button role isn't required). Preserve `type="submit"` / `type="button"` to avoid form-submit regressions. Re-run UIDN-03 audit; flip `shadcn/ui new-york + Tailwind CSS v4` Key Decision row ⚠️ → ✓ if 0 FAIL cells. *(Plans 12-01 + 12-02 + 12-05, 2026-05-12 — four-site sweep: SearchBar, SuggestionForm ×2, ImageInput DropZone refactor)*
   _Carry-forward from v1.1; baseline at `.planning/closure/UIDN-03-shadcn-audit.md` (status: deferred)._
 
 ### Testing & Validation
@@ -40,7 +40,7 @@ This document tracks the v1.2 milestone requirements. After v1.0 (43 of 45 reqs)
 
 - [x] **TEST-12**: Admin EF authorization test for `toggle-results-visibility` (covers VIS-03). Asserts: non-admin caller returns 403; admin caller returns 200 with updated poll; audit row written; `results_hidden_changed_at` timestamp set. *(Plan 11-04, 2026-05-11 — `e2e/integration/toggle-results-visibility.test.ts`: 7 cases (4 happy + 3 negative for 400/400/404); beforeEach/afterEach fresh-poll-per-case isolation. Plus `e2e/integration/create-poll-results-hidden.test.ts` (4 cases) for the Plan 11-03b results_hidden create path.)*
 
-- [ ] **TEST-13**: Playwright E2E spec covering the admin hide/show happy path. Admin creates a poll, casts a test vote (e.g., via `freshPoll` fixture from Phase 8), confirms results visible, clicks "Hide results" → confirms count display replaced with "hidden by admin" message, clicks "Show results" → confirms count returns. Uses existing `[E2E]`-scoped locators; passes ESLint E2E-SCOPE-1.
+- [x] **TEST-13**: Playwright E2E spec covering the admin hide/show happy path. Admin creates a poll, casts a test vote (e.g., via `freshPoll` fixture from Phase 8), confirms results visible, clicks "Hide results" → confirms count display replaced with "hidden by admin" message, clicks "Show results" → confirms count returns. Uses existing `[E2E]`-scoped locators; passes ESLint E2E-SCOPE-1. *(Plan 12-06, 2026-05-12)*
 
 ## Future Requirements (deferred to v1.3+)
 
@@ -67,12 +67,12 @@ This document tracks the v1.2 milestone requirements. After v1.0 (43 of 45 reqs)
 | VIS-03 | Phase 11 | Complete (Plan 11-02, 2026-05-11; deploy in Plan 11-05) |
 | VIS-04 | Phase 11 | Complete (Plan 11-01, 2026-05-11) |
 | VIS-05 | Phase 11 | Complete (Plan 11-04, 2026-05-11; runtime PASS gated to Plan 11-05) |
-| VIS-06 | Phase 12 | Pending |
-| VIS-07 | Phase 12 | Pending |
-| VIS-08 | Phase 12 | Pending |
+| VIS-06 | Phase 12 | Complete (Plan 12-02, 2026-05-12) |
+| VIS-07 | Phase 12 | Complete (Plan 12-03, 2026-05-12; wording revised in Plan 12-00) |
+| VIS-08 | Phase 12 | Complete (Plan 12-04, 2026-05-12) |
 | VIS-09 | Phase 11 | Complete (Plan 11-01, 2026-05-11) |
 | UIDN-02 | Phase 13 | Pending |
-| UIDN-03 | Phase 12 | Pending |
+| UIDN-03 | Phase 12 | Complete (Plans 12-01 + 12-02 + 12-05, 2026-05-12) |
 | TEST-11 | Phase 11 | Complete (Plan 11-04, 2026-05-11; runtime PASS gated to Plan 11-05) |
 | TEST-12 | Phase 11 | Complete (Plan 11-04, 2026-05-11; runtime PASS gated to Plan 11-05) |
-| TEST-13 | Phase 12 | Pending |
+| TEST-13 | Phase 12 | Complete (Plan 12-06, 2026-05-12) |
