@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { supabase } from '@/lib/supabase'
 import { usePinPoll } from '@/hooks/usePinPoll'
+import { useToggleResultsVisibility } from '@/hooks/useToggleResultsVisibility'
 import { AdminSuggestionRow, type AdminSuggestion } from './AdminSuggestionRow'
 
 type Filter = 'active' | 'closed' | 'all'
@@ -34,8 +35,10 @@ export function AdminSuggestionsTab() {
   const [voteCounts, setVoteCounts] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<Error | null>(null)
+  const [pendingVisibility, setPendingVisibility] = useState<Set<string>>(new Set())
 
   const { pinPoll } = usePinPoll()
+  const { toggleResultsVisibility } = useToggleResultsVisibility()
   const fetchIdRef = useRef(0)
 
   const fetchAll = useCallback(async () => {
@@ -110,6 +113,38 @@ export function AdminSuggestionsTab() {
       void fetchAll()
     },
     [items, pinPoll, fetchAll],
+  )
+
+  // Optimistic results-visibility flip: results_hidden does not affect list
+  // ordering, so no re-sort. Per-row pending Set lets multiple rows be
+  // in-flight independently. Toast is surfaced by useToggleResultsVisibility.
+  const handleToggleResultsVisibility = useCallback(
+    async (pollId: string, nextHidden: boolean) => {
+      const prev = items
+      const target = prev.find((it) => it.id === pollId)
+      const title = target?.title ?? 'this suggestion'
+      const optimistic = items.map((it) =>
+        it.id === pollId ? { ...it, results_hidden: nextHidden } : it,
+      )
+      setItems(optimistic)
+      setPendingVisibility((s) => {
+        const n = new Set(s)
+        n.add(pollId)
+        return n
+      })
+      const res = await toggleResultsVisibility({ poll_id: pollId, hidden: nextHidden, title })
+      setPendingVisibility((s) => {
+        const n = new Set(s)
+        n.delete(pollId)
+        return n
+      })
+      if (!res.ok) {
+        setItems(prev)
+        return
+      }
+      void fetchAll()
+    },
+    [items, toggleResultsVisibility, fetchAll],
   )
 
   return (
@@ -202,6 +237,10 @@ export function AdminSuggestionsTab() {
               voteCount={voteCounts[s.id] ?? 0}
               onChanged={fetchAll}
               onTogglePin={(pid, next) => void handleTogglePin(pid, next)}
+              onToggleResultsVisibility={(pid, next) =>
+                void handleToggleResultsVisibility(pid, next)
+              }
+              isPendingVisibility={pendingVisibility.has(s.id)}
             />
           ))}
         </div>
