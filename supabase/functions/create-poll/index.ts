@@ -148,6 +148,22 @@ Deno.serve(async (req) => {
       return json({ error: 'Internal error' }, 500, corsHeaders)
     }
 
+    // Audit the create BEFORE the optional results_hidden flip. If the
+    // flip+compensating-DELETE path falls through to the orphan branch
+    // below, this row is the only forensic breadcrumb tying the orphan
+    // back to its admin actor. `after.results_hidden` here reflects the
+    // RPC-default state (false); a successful flip emits a second row
+    // (`results_hidden_set_at_create`) so the audit timeline shows both
+    // events distinctly.
+    await writeAudit(supabaseAdmin, {
+      actor_id: user.id,
+      action: 'poll_created',
+      target_type: 'poll',
+      target_id: pollId,
+      before: null,
+      after: { title, category_id, results_hidden },
+    })
+
     if (results_hidden === true) {
       const { error: updateError } = await supabaseAdmin
         .from('polls')
@@ -159,23 +175,28 @@ Deno.serve(async (req) => {
         // The CASCADE on choices/vote_counts cleans up any pre-seeded rows.
         const { error: deleteError } = await supabaseAdmin.from('polls').delete().eq('id', pollId)
         if (deleteError) {
-          // Best-effort: log and still return 500. The poll exists, but the caller is told the operation failed.
-          // Operator follow-up via audit log + Sentry alert can clean up orphaned visible polls if this branch fires.
+          // Orphan branch: poll exists in `public.polls` with results_hidden=false
+          // (column DEFAULT) despite the admin's hidden=true intent. The
+          // compensating DELETE could not clean it up. Emit a distinct audit
+          // action so an operator searching audit_log by action can spot
+          // orphans without scanning every poll_created row.
           console.error('create-poll compensation DELETE failed:', { pollId, deleteError, originalUpdateError: updateError })
+          await writeAudit(supabaseAdmin, {
+            actor_id: user.id,
+            action: 'poll_created_orphaned',
+            target_type: 'poll',
+            target_id: pollId,
+            before: null,
+            after: {
+              results_hidden_intended: true,
+              results_hidden_actual: false,
+              reason: 'compensation_delete_failed',
+            },
+          })
         }
         return json({ error: 'Failed to set results_hidden — poll creation rolled back. Retry.' }, 500, corsHeaders)
       }
-    }
 
-    await writeAudit(supabaseAdmin, {
-      actor_id: user.id,
-      action: 'poll_created',
-      target_type: 'poll',
-      target_id: pollId,
-      before: null,
-      after: { title, category_id, results_hidden },
-    })
-    if (results_hidden === true) {
       await writeAudit(supabaseAdmin, {
         actor_id: user.id,
         action: 'results_hidden_set_at_create',
