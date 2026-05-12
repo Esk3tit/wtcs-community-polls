@@ -7,11 +7,17 @@ stopped_at: Phase 11 PR #26 ready to merge.
 last_updated: "2026-05-12T04:50:00.000Z"
 last_activity: 2026-05-12 -- final deploy alignment: create-poll v6→v7 + pin-poll v5→v6; all 13 PR review threads resolved; CI all green
 progress:
+  # Headline `percent` tracks v1.2 milestone phase completion
+  # (completed_phases / total_phases × 100) and matches the 33% visual
+  # progress bar below. The plan-level metrics (total_plans /
+  # completed_plans) are scoped to phases that have shipped — Phase 11
+  # closed at 9/9 (7 plans + 2 followup migrations); Phase 12 + 13 add
+  # their own plan totals once they begin planning.
   total_phases: 3
   completed_phases: 1
-  total_plans: 9
-  completed_plans: 9
-  percent: 100
+  percent: 33
+  plans_in_shipped_phases: 9
+  completed_plans_in_shipped_phases: 9
 ---
 
 # Project State
@@ -79,6 +85,6 @@ None. Phase 12 is unblocked: the EF and audit_log surface needed for the admin U
 
 ## Session Continuity
 
-Last session: 2026-05-11T23:59:59Z
-Stopped at: Phase 11 shipped (Plan 11-05 deploy gate complete — migration 10 + 13 EFs live; 8 schema gates verified via consolidated execute_sql)
+Last session: 2026-05-11T17:54Z → 2026-05-12T08:00Z (spanned both dates; phase shipped overnight after 5 rounds of PR review)
+Stopped at: Phase 11 PR #26 ready to merge — migration 13 (advisory-lock fix for demote_admin_guarded) applied to prod; 14 EFs deployed to latest branch source; 15 review threads addressed across 5 rounds.
 Resume action: `/gsd-plan-phase 12` to begin Phase 12 (Admin UI + User UI + UIDN-03 Sweep) planning. Requirements: VIS-06, VIS-07, VIS-08, UIDN-03, TEST-13.
