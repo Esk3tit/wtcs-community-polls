@@ -49,7 +49,7 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
 ### v1.2 — Admin Visibility Controls (Phases 11–13)
 
 - [x] **Phase 11: Schema + RLS + EF Foundations** — Migration 10 (`results_hidden` boolean + `results_hidden_changed_at` timestamptz on `polls`, `vote_counts` RLS DROP+CREATE, `polls_effective` view rewrite with `security_invoker = on`), `toggle-results-visibility` Edge Function, 12-cell RLS invariant test suite (TEST-11), admin EF authorization test (TEST-12) — shipped 2026-05-11
-- [ ] **Phase 12: Admin UI + User UI + UIDN-03 Sweep** — VisibilityCheckbox on creation form, "Hide/Show results" toggle button + AlertDialog on admin cards, `canSeeResults` gate in `SuggestionCard`, hidden-state message component, `useVoteCounts` extension, archive view fix, 4 native-button drift cleanup co-landing in `SuggestionForm.tsx`, `SearchBar.tsx`, `ImageInput.tsx`, Playwright E2E happy path (TEST-13)
+- [x] **Phase 12: Admin UI + User UI + UIDN-03 Sweep** — VisibilityCheckbox on creation form, "Hide/Show results" toggle button + AlertDialog on admin cards, `canSeeResults` gate in `SuggestionCard`, hidden-state message component, `useVoteCounts` extension, archive view fix, 4 native-button drift cleanup co-landing in `SuggestionForm.tsx`, `SearchBar.tsx`, `ImageInput.tsx`, Playwright E2E happy path (TEST-13) (completed 2026-05-12)
 - [ ] **Phase 13: UIDN-02 Mobile Audit Closure** — `audit-screenshots.mjs` hydration-wait fix (Plan 02 defect), Lighthouse mobile audit rerun with authenticated Pass-A evidence for `/topics` and `/archive`, Key Decision rows flipped ⚠️ → ✓
 
 ## Phase Details
@@ -103,7 +103,7 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
 - [x] 12-05-PLAN.md — UIDN-03 D-13: extract DropZone component, refactor ImageInput
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 12-06-PLAN.md — TEST-13 Playwright E2E spec + freshPoll fixture vote-cast helper + REQUIREMENTS.md traceability marks complete
+- [x] 12-06-PLAN.md — TEST-13 Playwright E2E spec + freshPoll fixture vote-cast helper + REQUIREMENTS.md traceability marks complete
 
 Cross-cutting constraints:
 - Zero direct `from('polls')` reads in `src/` (Phase 11 VIS-09 invariant — `polls-effective-invariant.test.ts` must continue to pass)
@@ -135,7 +135,7 @@ Cross-cutting constraints:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 11. Schema + RLS + EF Foundations | 7/7 | ✅ Shipped | 2026-05-11 |
-| 12. Admin UI + User UI + UIDN-03 Sweep | 6/7 | In Progress|  |
+| 12. Admin UI + User UI + UIDN-03 Sweep | 7/7 | Complete   | 2026-05-12 |
 | 13. UIDN-02 Mobile Audit Closure | 0/? | Not started | - |
 
 | Milestone | Phases | Plans | Status | Shipped |
