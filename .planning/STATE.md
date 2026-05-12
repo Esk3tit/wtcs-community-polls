@@ -4,7 +4,7 @@ milestone: v1.2
 milestone_name: Admin Visibility Controls
 status: executing
 stopped_at: Phase 12 UI-SPEC approved
-last_updated: "2026-05-12T09:31:54.407Z"
+last_updated: "2026-05-12T09:53:38.611Z"
 last_activity: 2026-05-12 -- Phase 12 planning complete
 progress:
   total_phases: 3
