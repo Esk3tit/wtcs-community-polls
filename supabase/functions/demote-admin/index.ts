@@ -82,8 +82,19 @@ Deno.serve(async (req) => {
       return json({ error: 'Internal error' }, 500, corsHeaders)
     }
 
-    const priorIsAdmin =
-      (rpcResult as { is_admin_before: boolean }[] | null)?.[0]?.is_admin_before ?? true
+    // Fail-fast on unexpected RPC shape rather than silently defaulting.
+    // demote_admin_guarded raises P0002 when the target was already non-admin,
+    // so any successful return MUST carry is_admin_before=true; a missing or
+    // non-boolean value means the function definition has drifted from this
+    // EF (e.g., post-migration that altered the RETURNS TABLE columns) and
+    // we should surface the integration bug instead of writing a fictional
+    // audit row.
+    const row = (rpcResult as { is_admin_before: boolean }[] | null)?.[0]
+    if (!row || typeof row.is_admin_before !== 'boolean') {
+      console.error('demote_admin_guarded returned unexpected shape:', rpcResult)
+      return json({ error: 'Internal error' }, 500, corsHeaders)
+    }
+    const priorIsAdmin = row.is_admin_before
 
     await writeAudit(supabaseAdmin, {
       actor_id: user.id,
