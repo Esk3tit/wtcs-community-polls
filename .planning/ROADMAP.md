@@ -124,5 +124,3 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
 | v1.0 | 1–6 | 32/32 | ✅ Shipped | 2026-04-28 |
 | v1.1 | 7–10 | 16/16 | ✅ Shipped | 2026-05-11 |
 | v1.2 | 11–13 | 7/? | 🔄 In progress (1/3 phases) | - |
-</content>
-</invoke>

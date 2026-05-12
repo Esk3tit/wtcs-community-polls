@@ -62,6 +62,23 @@ Deno.serve(async (req) => {
       return json({ error: 'Missing or invalid is_pinned' }, 400, corsHeaders)
     }
 
+    // Pre-fetch is_pinned so the audit `before` reflects DB state, not the
+    // inverse of the request payload. An idempotent call (pin an already-
+    // pinned poll, or unpin an already-unpinned one) would otherwise record
+    // a misleading false→true / true→false transition.
+    const { data: priorRow, error: priorError } = await supabaseAdmin
+      .from('polls')
+      .select('is_pinned')
+      .eq('id', poll_id)
+      .maybeSingle()
+    if (priorError) {
+      console.error('pin-poll prior select failed:', priorError)
+      return json({ error: 'Internal error' }, 500, corsHeaders)
+    }
+    if (priorRow === null) {
+      return json({ error: 'Poll not found' }, 404, corsHeaders)
+    }
+
     const { error } = await supabaseAdmin
       .from('polls')
       .update({ is_pinned: isPinned })
@@ -81,7 +98,7 @@ Deno.serve(async (req) => {
       action: isPinned ? 'poll_pinned' : 'poll_unpinned',
       target_type: 'poll',
       target_id: poll_id,
-      before: { is_pinned: !isPinned },
+      before: { is_pinned: priorRow.is_pinned },
       after: { is_pinned: isPinned },
     })
 

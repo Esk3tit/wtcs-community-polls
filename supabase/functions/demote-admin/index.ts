@@ -71,11 +71,20 @@ Deno.serve(async (req) => {
       return json({ error: 'Cannot demote: at least one admin must remain' }, 400, corsHeaders)
     }
 
-    const { error } = await supabaseAdmin
+    // .select().single() forces a match-or-PGRST116 outcome so we can
+    // distinguish a real demotion from a 0-row UPDATE against a missing
+    // target_user_id. Without it the EF would emit `admin_demoted` audit
+    // rows for users that never existed.
+    const { data: demotedRow, error } = await supabaseAdmin
       .from('profiles')
       .update({ is_admin: false })
       .eq('id', target_user_id)
+      .select('id')
+      .single()
     if (error) {
+      if (error.code === 'PGRST116') {
+        return json({ error: 'User not found' }, 404, corsHeaders)
+      }
       console.error('demote-admin update failed:', error)
       return json({ error: 'Internal error' }, 500, corsHeaders)
     }
@@ -84,7 +93,7 @@ Deno.serve(async (req) => {
       actor_id: user.id,
       action: 'admin_demoted',
       target_type: 'profile',
-      target_id: target_user_id,
+      target_id: demotedRow.id,
       before: { is_admin: true },
       after: { is_admin: false },
     })
