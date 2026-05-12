@@ -97,10 +97,10 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
 - [x] 12-01-PLAN.md — UIDN-03 D-15: SearchBar clear-X native button → shadcn Button (ghost icon)
 
 **Wave 2** *(blocked on Wave 1 completion — parallel within wave)*
-- [ ] 12-02-PLAN.md — VIS-06 checkbox on SuggestionForm + UIDN-03 D-14 ×2 TanStack Link back-link replacements
-- [ ] 12-03-PLAN.md — VIS-07 inline Switch on AdminSuggestionRow + new useToggleResultsVisibility hook + AdminSuggestionsTab optimistic wiring
-- [ ] 12-04-PLAN.md — VIS-08 hidden-state Alert in SuggestionCard + useVoteCounts extension polling results_hidden
-- [ ] 12-05-PLAN.md — UIDN-03 D-13: extract DropZone component, refactor ImageInput
+- [x] 12-02-PLAN.md — VIS-06 checkbox on SuggestionForm + UIDN-03 D-14 ×2 TanStack Link back-link replacements
+- [x] 12-03-PLAN.md — VIS-07 inline Switch on AdminSuggestionRow + new useToggleResultsVisibility hook + AdminSuggestionsTab optimistic wiring
+- [x] 12-04-PLAN.md — VIS-08 hidden-state Alert in SuggestionCard + useVoteCounts extension polling results_hidden
+- [x] 12-05-PLAN.md — UIDN-03 D-13: extract DropZone component, refactor ImageInput
 
 **Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 12-06-PLAN.md — TEST-13 Playwright E2E spec + freshPoll fixture vote-cast helper + REQUIREMENTS.md traceability marks complete
@@ -135,7 +135,7 @@ Cross-cutting constraints:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 11. Schema + RLS + EF Foundations | 7/7 | ✅ Shipped | 2026-05-11 |
-| 12. Admin UI + User UI + UIDN-03 Sweep | 2/7 | In Progress|  |
+| 12. Admin UI + User UI + UIDN-03 Sweep | 6/7 | In Progress|  |
 | 13. UIDN-02 Mobile Audit Closure | 0/? | Not started | - |
 
 | Milestone | Phases | Plans | Status | Shipped |
