@@ -3,16 +3,18 @@ import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { extractFunctionErrorMessage } from '@/lib/fn-error'
 
-// inflightRef + Switch disabled in caller — rapid-click guard prevents a
-// second EF invoke (and a duplicate audit row) for a single user intent.
+// Per-poll inflight Set + Switch disabled in caller — rapid-click guard
+// prevents a second EF invoke (and a duplicate audit row) for the SAME row
+// while letting different rows be in-flight independently. A singleton
+// inflight gate would silently swallow concurrent flips on other rows.
 export function useToggleResultsVisibility() {
   const [submitting, setSubmitting] = useState(false)
-  const inflightRef = useRef(false)
+  const inflightRef = useRef<Set<string>>(new Set())
 
   const toggleResultsVisibility = useCallback(
     async (input: { poll_id: string; hidden: boolean; title: string }) => {
-      if (inflightRef.current) return { ok: false as const }
-      inflightRef.current = true
+      if (inflightRef.current.has(input.poll_id)) return { ok: false as const }
+      inflightRef.current.add(input.poll_id)
       setSubmitting(true)
       try {
         const { error } = await supabase.functions.invoke('toggle-results-visibility', {
@@ -34,8 +36,8 @@ export function useToggleResultsVisibility() {
         toast.error('Could not update visibility. Try again.')
         return { ok: false as const }
       } finally {
-        inflightRef.current = false
-        setSubmitting(false)
+        inflightRef.current.delete(input.poll_id)
+        setSubmitting(inflightRef.current.size > 0)
       }
     },
     [],
