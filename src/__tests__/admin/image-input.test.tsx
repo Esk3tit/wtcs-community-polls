@@ -46,8 +46,8 @@ describe('ImageInput drag-and-drop dropzone', () => {
     // Headline copy is shortened — Browse Button now carries the click affordance
     expect(screen.getByText(/drop an image here/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /browse files/i })).toBeInTheDocument()
-    // Region MUST NOT also be a button (the dual-role anti-pattern is the
-    // bug UIDN-03 D-13 set out to fix).
+    // Region MUST NOT also be a button (dual-role anti-pattern: a single
+    // landing zone should not announce as both region AND button to AT).
     expect(
       screen.queryByRole('button', { name: /image upload/i }),
     ).toBeNull()
