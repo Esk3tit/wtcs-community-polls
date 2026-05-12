@@ -129,4 +129,22 @@ describe('validateSuggestionForm', () => {
       expect(r.value.image_url).toBeNull()
     }
   })
+
+  it('preserves results_hidden=true on the sanitized return', () => {
+    const r = validateSuggestionForm({ ...valid(), results_hidden: true })
+    expect(r.ok).toBe(true)
+    if (r.ok) expect(r.value.results_hidden).toBe(true)
+  })
+
+  it('coerces omitted results_hidden to false (strict-true)', () => {
+    const r = validateSuggestionForm(valid())
+    expect(r.ok).toBe(true)
+    if (r.ok) expect(r.value.results_hidden).toBe(false)
+  })
+
+  it('coerces results_hidden=false to false (strict-true)', () => {
+    const r = validateSuggestionForm({ ...valid(), results_hidden: false })
+    expect(r.ok).toBe(true)
+    if (r.ok) expect(r.value.results_hidden).toBe(false)
+  })
 })
