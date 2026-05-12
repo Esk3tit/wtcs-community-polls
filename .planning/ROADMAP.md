@@ -93,8 +93,8 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
 **Plans**: 7 plans
 
 **Wave 1** *(foundation — independent, parallel)*
-- [ ] 12-00-PLAN.md — Type regen + npm gen:types script + vendor shadcn Checkbox/Switch + REQUIREMENTS.md VIS-07 wording edit
-- [ ] 12-01-PLAN.md — UIDN-03 D-15: SearchBar clear-X native button → shadcn Button (ghost icon)
+- [x] 12-00-PLAN.md — Type regen + npm gen:types script + vendor shadcn Checkbox/Switch + REQUIREMENTS.md VIS-07 wording edit
+- [x] 12-01-PLAN.md — UIDN-03 D-15: SearchBar clear-X native button → shadcn Button (ghost icon)
 
 **Wave 2** *(blocked on Wave 1 completion — parallel within wave)*
 - [ ] 12-02-PLAN.md — VIS-06 checkbox on SuggestionForm + UIDN-03 D-14 ×2 TanStack Link back-link replacements
@@ -135,7 +135,7 @@ Cross-cutting constraints:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 11. Schema + RLS + EF Foundations | 7/7 | ✅ Shipped | 2026-05-11 |
-| 12. Admin UI + User UI + UIDN-03 Sweep | 0/? | Not started | - |
+| 12. Admin UI + User UI + UIDN-03 Sweep | 2/7 | In Progress|  |
 | 13. UIDN-02 Mobile Audit Closure | 0/? | Not started | - |
 
 | Milestone | Phases | Plans | Status | Shipped |
