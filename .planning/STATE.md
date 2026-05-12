@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Admin Visibility Controls
-status: Phase 11 PR #26 fully aligned with prod. 4 rounds of review comments addressed (gemini-code-assist + coderabbitai); 13 of 13 threads resolved. 14 Phase-11 EFs deployed to latest branch source; migrations 10/11/12 applied. CI all green (e2e + test-integration + lint-and-unit). Awaiting human merge.
-stopped_at: Phase 11 PR #26 ready to merge.
-last_updated: "2026-05-12T04:50:00.000Z"
-last_activity: 2026-05-12 -- final deploy alignment: create-poll v6→v7 + pin-poll v5→v6; all 13 PR review threads resolved; CI all green
+status: Phase 11 MERGED to main (PR #26, merge commit f6b35ab @ 2026-05-12T08:21Z). 5 rounds of review comments addressed (gemini-code-assist + coderabbitai + greptile-apps); 16 of 16 threads resolved. Prod fully aligned: migrations 10/11/12/13 applied; all 14 Phase-11 EFs at latest source. Phase 12 ready to plan.
+stopped_at: Phase 11 shipped + merged. Ready for /gsd-plan-phase 12.
+last_updated: "2026-05-12T08:25:00.000Z"
+last_activity: 2026-05-12 -- Phase 11 PR #26 merged to main; feature branch cleaned
 progress:
   # Headline `percent` tracks v1.2 milestone phase completion
   # (completed_phases / total_phases × 100) and matches the 33% visual
@@ -31,10 +31,10 @@ See: .planning/PROJECT.md (updated 2026-05-11 after v1.1 milestone)
 
 ## Current Position
 
-Phase: 12 — Admin UI + User UI + UIDN-03 Sweep (READY TO PLAN; can proceed in parallel with PR #26 review)
+Phase: 12 — Admin UI + User UI + UIDN-03 Sweep (READY TO PLAN)
 Plan: —
-Status: Phase 11 shipped via PR #26 (https://github.com/Esk3tit/wtcs-community-polls/pull/26). Awaiting PR review + merge. Production schema + EFs are already live (deployed during Plan 05 / Plan 06 followup), so Phase 12 can begin planning without waiting for merge — the admin UI has a working toggle-results-visibility EF + audit_log table + polls_effective.results_hidden surface to consume.
-Last activity: 2026-05-12 -- Phase 11 PR #26 opened (60 commits, 50 files, +8296/-45)
+Status: Phase 11 shipped via PR #26, merged at 2026-05-12T08:21Z (merge commit f6b35ab). Production schema + 14 EFs match main. The admin UI surface (toggle-results-visibility EF + audit_log table + polls_effective.results_hidden) is live and ready for Phase 12 to build on.
+Last activity: 2026-05-12 -- Phase 11 merged to main after 5 review rounds (16 threads resolved across gemini/coderabbit/greptile)
 
 ```
 v1.2 progress:  [██████░░░░░░░░░░░░░░] 33% (Phase 11 ✅ Shipped, Phase 12 next, Phase 13 last)
@@ -85,6 +85,6 @@ None. Phase 12 is unblocked: the EF and audit_log surface needed for the admin U
 
 ## Session Continuity
 
-Last session: 2026-05-11T17:54Z → 2026-05-12T08:00Z (spanned both dates; phase shipped overnight after 5 rounds of PR review)
-Stopped at: Phase 11 PR #26 ready to merge — migration 13 (advisory-lock fix for demote_admin_guarded) applied to prod; 14 EFs deployed to latest branch source; 15 review threads addressed across 5 rounds.
+Last session: 2026-05-11T17:54Z → 2026-05-12T08:25Z (spanned both dates; phase planned, shipped, reviewed across 5 rounds, and merged)
+Stopped at: Phase 11 merged to main (PR #26, merge commit f6b35ab). Migrations 10/11/12/13 applied to prod; 14 Phase-11 EFs deployed to latest source; 16 review threads resolved.
 Resume action: `/gsd-plan-phase 12` to begin Phase 12 (Admin UI + User UI + UIDN-03 Sweep) planning. Requirements: VIS-06, VIS-07, VIS-08, UIDN-03, TEST-13.
