@@ -98,10 +98,14 @@ describe('toggle-results-visibility (TEST-12)', () => {
     expect(data.poll.id).toBe(pollId)
     expect(data.poll.results_hidden).toBe(true)
     expect(data.poll.results_hidden_changed_at).not.toBeNull()
-    // Round-trip-through-Date proves the value is a parseable ISO string.
-    expect(new Date(data.poll.results_hidden_changed_at).toISOString()).toBe(
-      data.poll.results_hidden_changed_at,
-    )
+    // Parseable ISO timestamp within the last 10 seconds. PostgREST emits the
+    // timezone as `+00:00` and `Date.toISOString()` emits `Z`; both are UTC,
+    // but a byte-equality round-trip would falsely fail on that cosmetic
+    // difference. Assert the SAME-INSTANT property instead.
+    const ts = new Date(data.poll.results_hidden_changed_at).getTime()
+    expect(Number.isFinite(ts)).toBe(true)
+    expect(ts).toBeGreaterThan(Date.now() - 10_000)
+    expect(ts).toBeLessThanOrEqual(Date.now() + 1_000)
   })
 
   it('audit_log row written on state change', async () => {
