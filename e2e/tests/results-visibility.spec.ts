@@ -152,9 +152,14 @@ test('[@smoke] SC4: admin creates, voter votes, admin hide/show roundtrip end-to
       page.getByTestId(`results-hidden-alert-${createdPollId}`),
     ).toBeVisible({ timeout: 12_000 })
 
+    // Assert on the AlertTitle copy — the actual hide-state marker. The
+    // "Your response" line also renders inside the visible-result branch
+    // via ResultBars (highlights the voter's choice), so a future refactor
+    // that moves that copy into ResultBars would silently satisfy a text
+    // check on "Your response" even with the alert wrapper hidden.
     await expect(
       page.getByTestId(`results-hidden-alert-${createdPollId}`),
-    ).toContainText('Your response')
+    ).toContainText('Results temporarily hidden by admin')
 
     // ---- STEP 5: Admin flips the inline Switch back to SHOW ----
     await adminSwitch.click()
