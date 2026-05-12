@@ -127,6 +127,17 @@ export function AdminSuggestionsTab() {
   // multiple rows be in-flight independently. Toast surfaced by hook.
   const handleToggleResultsVisibility = useCallback(
     async (pollId: string, nextHidden: boolean) => {
+      // Short-circuit rapid double-click on the same row BEFORE any
+      // optimistic flip. The Switch's `disabled={pendingVisibility.has(s.id)}`
+      // guards the common case, but the window between the first click's
+      // setPendingVisibility and the next render is non-zero (and can
+      // stretch under React 19 concurrent-mode load). Without this guard
+      // the second handler ran the revert path on the hook's inflight
+      // rejection — flickering the Switch B→A→B — and its pending-delete
+      // step re-enabled the Switch while the first request was still in
+      // flight.
+      if (pendingVisibility.has(pollId)) return
+
       // Read title from current state OUTSIDE the setItems updater. The
       // row is guaranteed to exist because the user just clicked its
       // Switch. Mutating closure-scoped vars inside a setState updater
@@ -151,6 +162,11 @@ export function AdminSuggestionsTab() {
         return n
       })
       if (!res.ok) {
+        // Defense-in-depth: if the hook reported an inflight gate trip
+        // (caller-side guard above missed the window), the first click's
+        // flip is still pending — DO NOT revert the optimistic state.
+        // Only revert on real EF/network errors.
+        if (res.reason === 'inflight') return
         // Diff-revert only the target row so concurrent flips on other
         // rows keep their optimistic state.
         setItems((cur) =>
@@ -165,7 +181,7 @@ export function AdminSuggestionsTab() {
       }
       void fetchAll()
     },
-    [items, toggleResultsVisibility, fetchAll],
+    [items, pendingVisibility, toggleResultsVisibility, fetchAll],
   )
 
   return (

@@ -7,14 +7,20 @@ import { extractFunctionErrorMessage } from '@/lib/fn-error'
 // prevents a second EF invoke (and a duplicate audit row) for the SAME row
 // while letting different rows be in-flight independently. A singleton
 // inflight gate would silently swallow concurrent flips on other rows.
-// No `submitting` state is exposed: the caller tracks per-row pending
-// state via its own Set, which is the actual loading-state surface.
+// Returns a discriminated `reason` on the failure case so the caller can
+// distinguish a rapid-click gate trip (no revert needed — the first
+// click's flip is still in flight) from a real EF/network error
+// (revert + reconcile). Without that distinction the second click runs
+// the revert path identically to a real error and the Switch flickers
+// B→A→B with no toast — indistinguishable from a flaky network.
 export function useToggleResultsVisibility() {
   const inflightRef = useRef<Set<string>>(new Set())
 
   const toggleResultsVisibility = useCallback(
     async (input: { poll_id: string; hidden: boolean; title: string }) => {
-      if (inflightRef.current.has(input.poll_id)) return { ok: false as const }
+      if (inflightRef.current.has(input.poll_id)) {
+        return { ok: false as const, reason: 'inflight' as const }
+      }
       inflightRef.current.add(input.poll_id)
       try {
         const { error } = await supabase.functions.invoke('toggle-results-visibility', {
@@ -24,7 +30,7 @@ export function useToggleResultsVisibility() {
           toast.error(
             await extractFunctionErrorMessage(error, 'Could not update visibility. Try again.'),
           )
-          return { ok: false as const }
+          return { ok: false as const, reason: 'error' as const }
         }
         toast.success(
           input.hidden
@@ -34,7 +40,7 @@ export function useToggleResultsVisibility() {
         return { ok: true as const }
       } catch {
         toast.error('Could not update visibility. Try again.')
-        return { ok: false as const }
+        return { ok: false as const, reason: 'error' as const }
       } finally {
         inflightRef.current.delete(input.poll_id)
       }
