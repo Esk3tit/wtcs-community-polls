@@ -80,7 +80,7 @@ FROM public.polls;
 ALTER VIEW public.polls_effective SET (security_invoker = on);
 ```
 
-**RLS policy DROP+CREATE pattern (vote_counts) — DROP the v1.0 policy at `migrations/00000000000001_rls.sql:72` and the v1.0.5 admin-bypass policy in `migrations/00000000000005_admin_phase4.sql:75-88` (whichever is current). Use `is_current_user_admin()` defined in migration 9 — D-14, D-15, D-16:**
+**RLS policy DROP+CREATE pattern (vote_counts) — DROP the v1.0 policy at `migrations/00000000000001_rls.sql:72` and the v1.0.5 admin-bypass policy in `migrations/00000000000005_admin_phase4.sql:75-88` (whichever is current). The shipped policy has NO `is_current_user_admin()` OR-bypass — admin reads go through service-role-backed Edge Functions (which bypass RLS automatically) per the security review's VIS-04 / REVIEW-FIX-H3 decision. D-14, D-15, D-16:**
 
 ```sql
 DROP POLICY IF EXISTS "Vote counts visible to voters" ON public.vote_counts;
@@ -91,15 +91,12 @@ CREATE POLICY "Vote counts visible to voters when not hidden"
   FOR SELECT
   TO authenticated
   USING (
-    public.is_current_user_admin()
-    OR (
-      EXISTS (SELECT 1 FROM public.votes
-              WHERE votes.poll_id = vote_counts.poll_id
-                AND votes.user_id = auth.uid())
-      AND EXISTS (SELECT 1 FROM public.polls
-                  WHERE polls.id = vote_counts.poll_id
-                    AND polls.results_hidden = false)
-    )
+    EXISTS (SELECT 1 FROM public.votes
+            WHERE votes.poll_id = vote_counts.poll_id
+              AND votes.user_id = auth.uid())
+    AND EXISTS (SELECT 1 FROM public.polls
+                WHERE polls.id = vote_counts.poll_id
+                  AND polls.results_hidden = false)
   );
 ```
 
@@ -648,11 +645,11 @@ Outer try/catch with `console.error('<ef-name> error:', err)` log + 500 response
 
 One `await writeAudit(supabaseAdmin, {...})` call per EF, placed AFTER the mutation success check, BEFORE the response. The helper itself never throws — failures log to `console.error` (Supabase Function Logs surface them). The retrofit must NOT add try/catch around the `writeAudit` call (Pitfall 3).
 
-### Timestamp written by EF (not trigger) — D-13
+### Timestamp written by EF (not trigger) — D-13 (refined to race-safe form)
 
 **Source:** `close-poll/index.ts:73` — `closed_at: new Date().toISOString()`
 
-`toggle-results-visibility` writes `results_hidden_changed_at: new Date().toISOString()` on every UPDATE (D-11 — written even on no-ops; audit is gated on state change but the timestamp is not).
+`toggle-results-visibility` writes `results_hidden_changed_at: new Date().toISOString()` as part of the same UPDATE statement that flips `results_hidden`. The shipped form uses a conditional UPDATE (`.neq('results_hidden', hidden)`) so the timestamp is only written when the column value actually changes — no-ops match 0 rows and write no timestamp. This is a deliberate refinement of the initial D-13 "write on every UPDATE" spec: the conditional UPDATE both serialises concurrent same-direction flips (race-safe) and avoids redundant timestamp churn. The audit row is also gated on the state change; both fall out of the same matched-rows count.
 
 ### Vitest test setup (apply to: TEST-11 + TEST-12)
 
