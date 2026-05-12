@@ -61,8 +61,13 @@ ALTER TABLE public.audit_log
 -- empty strings, junk) would silently pollute the column.
 --
 -- The CHECK admits exactly two shapes:
---   * standard 8-4-4-4-12 lowercase UUID (poll, profile, category ids)
---   * Discord snowflake, 17-19 digits (admin_discord_ids.discord_id)
+--   * standard 8-4-4-4-12 UUID, case-insensitive (poll, profile,
+--     category ids). The EF UUID validators all use the JS `/i` flag
+--     and the `uuid` Postgres type compares case-insensitively, so a
+--     case-sensitive CHECK would silently drop audit rows for any
+--     uppercase-UUID writer (writeAudit is fail-open by design).
+--   * Discord snowflake, 17-19 digits (admin_discord_ids.discord_id).
+--     Digits-only, so case is irrelevant — left on plain `~`.
 -- NULL is admitted because cron-actor writes (close-expired-polls
 -- variant where the target is the sweep itself, not a single poll)
 -- could in principle pass target_id=null. Today only per-row writes
@@ -74,7 +79,7 @@ ALTER TABLE public.audit_log
 ALTER TABLE public.audit_log
   ADD CONSTRAINT audit_log_target_id_shape CHECK (
     target_id IS NULL
-    OR target_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+    OR target_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
     OR target_id ~ '^\d{17,19}$'
   );
 
