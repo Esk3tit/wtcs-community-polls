@@ -5,6 +5,7 @@ export type SuggestionFormInput = {
   category_id: string | null
   image_url: string | null
   closes_at: string // ISO8601
+  results_hidden?: boolean
 }
 
 export type ValidationResult =
@@ -68,6 +69,11 @@ export function validateSuggestionForm(input: SuggestionFormInput): ValidationRe
     }
   }
 
+  // Strict-true coercion collapses undefined, false, and Radix Checkbox's
+  // 'indeterminate' state into a deterministic boolean so the EF body always
+  // carries an explicit value (the create-poll EF default-falses undefined).
+  const resultsHidden = input.results_hidden === true
+
   if (Object.keys(errors).length > 0) return { ok: false, errors }
   return {
     ok: true,
@@ -78,6 +84,7 @@ export function validateSuggestionForm(input: SuggestionFormInput): ValidationRe
       category_id: categoryId,
       image_url: imageUrl,
       closes_at: input.closes_at,
+      results_hidden: resultsHidden,
     },
   }
 }
