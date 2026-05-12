@@ -1,6 +1,6 @@
-// REVIEW-FIX-M5 — create-poll EF `results_hidden` path end-to-end coverage.
+// create-poll EF `results_hidden` path end-to-end coverage.
 //
-// Runtime evidence for Plan 11-03b's extensions to create-poll:
+// Locks in four behaviours of the EF:
 //   * results_hidden=true persists via post-RPC UPDATE and emits 2 audit
 //     rows (poll_created + results_hidden_set_at_create).
 //   * results_hidden=false skips the UPDATE and emits 1 audit row.
@@ -22,7 +22,7 @@ import {
   type IntegrationClients,
 } from './helpers'
 
-describe('create-poll results_hidden path (REVIEW-FIX-M5)', () => {
+describe('create-poll results_hidden path', () => {
   let adminClients: IntegrationClients
   let createdPollId: string | null = null
 
@@ -150,10 +150,9 @@ describe('create-poll results_hidden path (REVIEW-FIX-M5)', () => {
     expect(result.status).toBe(400)
   })
 
-  // REVIEW-FIX-H5 sanity (manual fault-injection deferred): if the
-  // post-RPC UPDATE fails when results_hidden=true, the compensating
-  // DELETE means NO poll row appears in `polls` AND NO audit rows are
-  // written. Asserting this requires injecting an UPDATE failure
-  // (network drop, RLS reject, etc.) which is out of scope here —
-  // flagged in the SUMMARY for the deploy-gate plan.
+  // Manual fault-injection deferred: if the post-RPC UPDATE fails when
+  // results_hidden=true, the compensating DELETE means NO poll row appears
+  // in `polls` AND NO audit rows are written. Asserting this requires
+  // injecting an UPDATE failure (network drop, RLS reject, etc.) which is
+  // out of scope for this suite.
 })

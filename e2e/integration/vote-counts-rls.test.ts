@@ -117,12 +117,12 @@ describe('vote_counts RLS 12-cell matrix (TEST-11)', () => {
     })
   })
 
-  // Regression sentinel for REVIEW-FIX-H3 (no admin-OR-bypass in the
-  // vote_counts policy). The sentinel pattern: seed a vote_counts row keyed
-  // on memberUser.id, then read via an admin JWT. The voter-EXISTS clause
-  // matches `votes.user_id = auth.uid()` — auth.uid() is adminUser.id and
-  // no votes row exists for them on this poll, so the clause is false and
-  // the read returns 0 rows. If a regression re-introduces
+  // Regression sentinel: the vote_counts policy must NOT carry an
+  // admin-OR-bypass. Seed a vote_counts row keyed on memberUser.id, then
+  // read via an admin JWT. The voter-EXISTS clause matches
+  // `votes.user_id = auth.uid()` — auth.uid() is adminUser.id and no votes
+  // row exists for them on this poll, so the clause is false and the read
+  // returns 0 rows. If a regression re-introduces
   // `is_current_user_admin() OR ...`, admin would see memberUser's row and
   // this assertion fails. seedBaseline=false here is deliberate AND paired
   // with an explicit castVote keyed on memberUser — without that pairing
