@@ -91,15 +91,19 @@ describe('ImageInput drag-and-drop dropzone', () => {
 
   it('Browse Button is keyboard-reachable and activates with Enter (regression)', async () => {
     const user = userEvent.setup()
-    render(<ImageInput value={null} onChange={() => {}} />)
+    const { container } = render(<ImageInput value={null} onChange={() => {}} />)
+    const hiddenInput = container.querySelector('input[type="file"]') as HTMLInputElement
+    expect(hiddenInput).not.toBeNull()
+    const clickSpy = vi.spyOn(hiddenInput, 'click')
     const browse = screen.getByRole('button', { name: /browse files/i })
     browse.focus()
     expect(browse).toHaveFocus()
-    // Just assert the Browse Button activates on Enter; the actual file
-    // picker open cannot be observed in jsdom but Enter on a native button
-    // dispatches the click event.
     await user.keyboard('{Enter}')
-    expect(browse).toBeInTheDocument()
+    // Enter on a focused native button dispatches click, which fires the
+    // Browse Button's onClick, which calls fileRef.current.click() — the
+    // actual regression contract. The OS file picker itself cannot be
+    // observed in jsdom but the hidden-input click is the proxy.
+    expect(clickSpy).toHaveBeenCalled()
   })
 
   it('clicking Browse Button triggers the hidden file input (regression)', async () => {
