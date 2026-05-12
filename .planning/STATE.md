@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Admin Visibility Controls
-status: Phase 11 shipped — PR #26 opened against main (https://github.com/Esk3tit/wtcs-community-polls/pull/26). Local + prod fully aligned; VERIFICATION.md status=pass; UAT 9/9 in-scope pass. Awaiting PR review + merge.
-stopped_at: Phase 11 PR open (#26). Ready to plan Phase 12 in parallel or wait for merge.
-last_updated: "2026-05-12T01:00:00.000Z"
-last_activity: 2026-05-12 -- Phase 11 PR #26 opened (60 commits, 50 files, +8296/-45 against main); branch pushed to origin
+status: Phase 11 PR #26 fully aligned with prod. 4 rounds of review comments addressed (gemini-code-assist + coderabbitai); 13 of 13 threads resolved. 14 Phase-11 EFs deployed to latest branch source; migrations 10/11/12 applied. CI all green (e2e + test-integration + lint-and-unit). Awaiting human merge.
+stopped_at: Phase 11 PR #26 ready to merge.
+last_updated: "2026-05-12T04:50:00.000Z"
+last_activity: 2026-05-12 -- final deploy alignment: create-poll v6→v7 + pin-poll v5→v6; all 13 PR review threads resolved; CI all green
 progress:
   total_phases: 3
   completed_phases: 1
