@@ -6,6 +6,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { requireAdmin, adminCheckResponse } from '../_shared/admin-auth.ts'
+import { writeAudit } from '../_shared/audit.ts'
 
 const ALLOWED_RESOLUTIONS = ['addressed', 'forwarded', 'closed'] as const
 
@@ -66,11 +67,14 @@ Deno.serve(async (req) => {
     // overwrite closed_at/resolution. PGRST116 here means either the poll
     // doesn't exist OR it is already closed — both are safe no-ops from the
     // audit-trail perspective, so we return a clearer collapsed message.
+    // closed_at is hoisted into a local const so the UPDATE and the audit
+    // `after` payload share the same timestamp (forensic self-containment).
+    const closedAt = new Date().toISOString()
     const { error } = await supabaseAdmin
       .from('polls')
       .update({
         status: 'closed',
-        closed_at: new Date().toISOString(),
+        closed_at: closedAt,
         resolution,
       })
       .eq('id', poll_id)
@@ -84,6 +88,15 @@ Deno.serve(async (req) => {
       console.error('close-poll update failed:', error)
       return json({ error: 'Internal error' }, 500, corsHeaders)
     }
+
+    await writeAudit(supabaseAdmin, {
+      actor_id: user.id,
+      action: 'poll_closed',
+      target_type: 'poll',
+      target_id: poll_id,
+      before: { status: 'active' },
+      after: { status: 'closed', resolution, closed_at: closedAt },
+    })
 
     return json({ success: true }, 200, corsHeaders)
   } catch (err) {

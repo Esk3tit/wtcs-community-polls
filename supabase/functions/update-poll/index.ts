@@ -3,6 +3,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { requireAdmin, adminCheckResponse } from '../_shared/admin-auth.ts'
+import { writeAudit } from '../_shared/audit.ts'
 
 function json(body: unknown, status: number, cors: HeadersInit) {
   const headers = new Headers(cors)
@@ -141,6 +142,19 @@ Deno.serve(async (req) => {
       return json({ error: 'Cannot edit: responses already received' }, 409, corsHeaders)
     }
 
+    // Best-effort pre-fetch of the editable columns so the audit row carries
+    // a forensic `before` snapshot. Harmonises this EF with the rest of the
+    // retrofit shape (rename-category, set-resolution, delete-poll all
+    // pre-fetch). The round-trip cost is ~ms-scale on free tier, and we are
+    // already on the admin gate so it is not on a hot path. maybeSingle()
+    // returns null without erroring on miss; the RPC below remains the
+    // canonical 404 source.
+    const { data: priorRow } = await supabaseAdmin
+      .from('polls')
+      .select('title, description, category_id, image_url, closes_at')
+      .eq('id', poll_id)
+      .maybeSingle()
+
     // Choice replacement delegated to RPC (single transaction).
     const { data: updatedId, error: rpcError } = await supabaseAdmin.rpc('update_poll_with_choices', {
       p_poll_id: poll_id,
@@ -167,6 +181,28 @@ Deno.serve(async (req) => {
       console.error('update_poll_with_choices failed:', rpcError)
       return json({ error: 'Internal error' }, 500, corsHeaders)
     }
+
+    // Compact `after` payload mirrors the RPC's effective input. `before`
+    // carries the pre-fetched snapshot when available so the audit row is
+    // grep-friendly for diff reconstruction; choices were not pre-fetched
+    // (the RPC already logs them in its plpgsql trace) so they only appear
+    // in `after`.
+    await writeAudit(supabaseAdmin, {
+      actor_id: user.id,
+      action: 'poll_updated',
+      target_type: 'poll',
+      target_id: poll_id,
+      before: priorRow
+        ? {
+            title: priorRow.title,
+            description: priorRow.description,
+            category_id: priorRow.category_id,
+            image_url: priorRow.image_url,
+            closes_at: priorRow.closes_at,
+          }
+        : null,
+      after: { title, description, category_id, image_url, closes_at, choices },
+    })
 
     return json({ success: true, id: updatedId }, 200, corsHeaders)
   } catch (err) {

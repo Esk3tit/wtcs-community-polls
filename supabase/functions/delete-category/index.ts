@@ -7,6 +7,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { requireAdmin, adminCheckResponse } from '../_shared/admin-auth.ts'
+import { writeAudit } from '../_shared/audit.ts'
 
 function json(body: unknown, status: number, cors: HeadersInit) {
   return new Response(JSON.stringify(body), {
@@ -52,6 +53,16 @@ Deno.serve(async (req) => {
       return json({ error: 'Missing category_id' }, 400, corsHeaders)
     }
 
+    // Best-effort capture of pre-DELETE name for the audit `before` payload.
+    // maybeSingle() returns null on miss without erroring, so the subsequent
+    // DELETE remains the canonical 404 source — the existing PGRST116 envelope
+    // is preserved.
+    const { data: priorRow } = await supabaseAdmin
+      .from('categories')
+      .select('name')
+      .eq('id', category_id)
+      .maybeSingle()
+
     const { error } = await supabaseAdmin
       .from('categories')
       .delete()
@@ -65,6 +76,23 @@ Deno.serve(async (req) => {
       console.error('delete-category failed:', error)
       return json({ error: 'Internal error' }, 500, corsHeaders)
     }
+
+    // priorRow is unconditional here: the DELETE above with .single()
+    // already 404s via PGRST116 when the row does not exist, so by this
+    // line we're guaranteed the row was present pre-DELETE. If the
+    // best-effort pre-fetch transiently failed without erroring (PostgREST
+    // returning no row for a row that *did* exist), priorRow is null and
+    // we record null in `before` so the audit shape stays uniform across
+    // emitters — better than synthesising a fake { id } payload that the
+    // admin UI would have to special-case.
+    await writeAudit(supabaseAdmin, {
+      actor_id: user.id,
+      action: 'category_deleted',
+      target_type: 'category',
+      target_id: category_id,
+      before: priorRow ? { name: priorRow.name } : null,
+      after: null,
+    })
 
     return json({ success: true }, 200, corsHeaders)
   } catch (err) {

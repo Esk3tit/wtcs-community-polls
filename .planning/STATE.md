@@ -2,15 +2,22 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Admin Visibility Controls
-status: planning
-last_updated: "2026-05-11T00:00:00.000Z"
-last_activity: 2026-05-11
+status: Phase 11 PR #26 fully aligned with prod. 4 rounds of review comments addressed (gemini-code-assist + coderabbitai); 13 of 13 threads resolved. 14 Phase-11 EFs deployed to latest branch source; migrations 10/11/12 applied. CI all green (e2e + test-integration + lint-and-unit). Awaiting human merge.
+stopped_at: Phase 11 PR #26 ready to merge.
+last_updated: "2026-05-12T04:50:00.000Z"
+last_activity: 2026-05-12 -- final deploy alignment: create-poll v6→v7 + pin-poll v5→v6; all 13 PR review threads resolved; CI all green
 progress:
+  # Headline `percent` tracks v1.2 milestone phase completion
+  # (completed_phases / total_phases × 100) and matches the 33% visual
+  # progress bar below. The plan-level metrics (total_plans /
+  # completed_plans) are scoped to phases that have shipped — Phase 11
+  # closed at 9/9 (7 plans + 2 followup migrations); Phase 12 + 13 add
+  # their own plan totals once they begin planning.
   total_phases: 3
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  percent: 33
+  plans_in_shipped_phases: 9
+  completed_plans_in_shipped_phases: 9
 ---
 
 # Project State
@@ -20,17 +27,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-11 after v1.1 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** v1.2 — Admin Visibility Controls — Phase 11 ready to plan
+**Current focus:** v1.2 — Admin Visibility Controls — Phase 11 shipped (database + Edge Function foundations). Phase 12 (Admin UI + User UI + UIDN-03 Sweep) ready to plan.
 
 ## Current Position
 
-Phase: 11 — Schema + RLS + EF Foundations
+Phase: 12 — Admin UI + User UI + UIDN-03 Sweep (READY TO PLAN; can proceed in parallel with PR #26 review)
 Plan: —
-Status: Ready to plan (roadmap written; `/gsd-plan-phase 11` is the next action)
-Last activity: 2026-05-11 — v1.2 roadmap created (Phases 11–13)
+Status: Phase 11 shipped via PR #26 (https://github.com/Esk3tit/wtcs-community-polls/pull/26). Awaiting PR review + merge. Production schema + EFs are already live (deployed during Plan 05 / Plan 06 followup), so Phase 12 can begin planning without waiting for merge — the admin UI has a working toggle-results-visibility EF + audit_log table + polls_effective.results_hidden surface to consume.
+Last activity: 2026-05-12 -- Phase 11 PR #26 opened (60 commits, 50 files, +8296/-45)
 
 ```
-v1.2 progress:  [░░░░░░░░░░░░░░░░░░░░]  0% (0/3 phases)
+v1.2 progress:  [██████░░░░░░░░░░░░░░] 33% (Phase 11 ✅ Shipped, Phase 12 next, Phase 13 last)
 ```
 
 ## Accumulated Context
@@ -49,24 +56,35 @@ v1.1 phase-level context lives in:
 Recent decisions are in PROJECT.md Key Decisions table with outcomes (✓ Good / ⚠️ Revisit / — Pending).
 
 Two Key Decision rows remain ⚠️ pending v1.2 closure:
+
 - `Mobile-first responsive design` — UIDN-02 closure (Phase 13)
 - `shadcn/ui new-york + Tailwind CSS v4` — UIDN-03 closure (Phase 12)
 
-### v1.2 Open Questions (resolve before Phase 11 plan-phase)
+### Phase 11 — Decisions Landed (2026-05-11)
 
-Per research SUMMARY gaps section:
-1. Does the anon role (unauthenticated visitors) see results when `results_hidden = false`, or only authenticated voters? REQUIREMENTS.md VIS-04 specifies voters-only — the `vote_counts` RLS policy grants SELECT iff `auth.uid()` has cast a vote AND `results_hidden = false`. Non-voters never see results regardless of state. Confirm this holds for anon role at Phase 11 plan start.
-2. Does `requireAdmin` in `_shared/admin-auth.ts` call the updated `is_current_user_admin()` (migration 9 guild_member gate)? Read at Phase 11 start; flag if stale.
-3. Does `polls_effective` in the current migration use explicit columns or `SELECT *`? Read migration DDL at Phase 11 start before writing migration 10.
+(Summary across all 7 plans; full details in each `11-NN-SUMMARY.md`.)
+
+- **REVIEW-FIX-H3:** `vote_counts` policy has no `is_current_user_admin()` OR-branch — VIS-04 mandates service-role bypass only. Confirmed on prod via `execute_sql` qual check.
+- **REVIEW-FIX-H4:** toggle-results-visibility uses race-safe conditional UPDATE (`.not('results_hidden','is',hidden)`). Postgres row-locking serializes concurrent flips; loser writes no audit row. Eliminates phantom-audit race.
+- **REVIEW-FIX-H7:** Plan 05's local pre-merge gate uses `supabase db reset` ONLY (not `db push`). Production push runs in Task 05-02 step 2 after local-green.
+- **REVIEW-FIX-H8:** All 13 EFs deploy with `verify_jwt: false` (matches existing prod pattern; EFs verify JWTs themselves via `requireAdmin`).
+- **REVIEW-FIX-C3-H1:** `audit_log.target_id` declared `TEXT` (not `uuid`) — admits Discord snowflakes for `promote-admin` Branch 2; avoids `writeAudit` fail-open silent drop.
+- **Pitfall 2:** `ALTER VIEW … SET (security_invoker = on)` re-applied in the same migration file immediately after `CREATE OR REPLACE VIEW`.
+- **Migration version drift:** prod stamps via MCP-assigned timestamp; local file keeps sequential `00000000000010_results_hidden_audit.sql`. Matches the pre-existing migrations 5-9 pattern (local sequential vs prod timestamp).
+- **Plan 05 deploy routing:** routed prod deploy through Supabase MCP (`apply_migration` + `deploy_edge_function`) rather than local `supabase` CLI. Eliminated `SUPABASE_ACCESS_TOKEN` and project-link prep steps.
+
+### Tech Debt Surfaced (Not Phase 11 Caused)
+
+- **Local supabase-edge-runtime ES256 verification bug** — 1.73.x rejects auth-service-issued ES256 JWTs ("Legacy token type detected, attempting HS256 verification"). Affects `npm run test:integration` against the local stack. Production runtime is unaffected (JWKS discovery). Plan 05 task 05-01 ran with partial pass; full Plan 04 test suite runs against prod via Phase 12 UAT.
+- **7 pre-Phase-11 SECURITY DEFINER advisor warnings** on `update_profile_after_auth`, `handle_new_user`, `validate_vote_choice`, `increment_vote_count`, `is_current_user_admin`, `profile_self_update_allowed`, `rls_auto_enable`. WARN-level, predates v1.0. Track for v1.3+ hygiene phase.
+- **PATTERNS.md drift:** `11-PATTERNS.md` still carries the legacy admin-OR-bypass form for the `vote_counts` policy skeleton. Plan body's REVIEW-FIX-H3 form is what shipped. Align in a future cleanup.
 
 ### Blockers/Concerns
 
-None. All three v1.2 phases have sufficient research detail to proceed directly to plan-phase without additional `/gsd-research-phase` runs (confirmed by all 4 research agents).
-
-**P0 callout for Phase 11:** The 12-cell RLS invariant matrix test suite is a hard merge blocker. No room for "fix in Phase 12." RLS leakage at the `vote_counts` layer would expose pre-aggregated vote counts to non-voters through the Supabase anon key.
+None. Phase 12 is unblocked: the EF and audit_log surface needed for the admin UI is now live in prod.
 
 ## Session Continuity
 
-Last session: 2026-05-11
-Stopped at: v1.2 roadmap written — Phases 11, 12, 13 defined with goals, success criteria, and requirement mappings
-Resume action: `/gsd-plan-phase 11` to begin Phase 11 implementation planning
+Last session: 2026-05-11T17:54Z → 2026-05-12T08:00Z (spanned both dates; phase shipped overnight after 5 rounds of PR review)
+Stopped at: Phase 11 PR #26 ready to merge — migration 13 (advisory-lock fix for demote_admin_guarded) applied to prod; 14 EFs deployed to latest branch source; 15 review threads addressed across 5 rounds.
+Resume action: `/gsd-plan-phase 12` to begin Phase 12 (Admin UI + User UI + UIDN-03 Sweep) planning. Requirements: VIS-06, VIS-07, VIS-08, UIDN-03, TEST-13.

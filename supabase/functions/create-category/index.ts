@@ -6,6 +6,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { requireAdmin, adminCheckResponse } from '../_shared/admin-auth.ts'
+import { writeAudit } from '../_shared/audit.ts'
 
 function json(body: unknown, status: number, cors: HeadersInit) {
   return new Response(JSON.stringify(body), {
@@ -73,6 +74,15 @@ Deno.serve(async (req) => {
       console.error('create-category insert failed:', error)
       return json({ error: 'Internal error' }, 500, corsHeaders)
     }
+
+    await writeAudit(supabaseAdmin, {
+      actor_id: user.id,
+      action: 'category_created',
+      target_type: 'category',
+      target_id: data.id,
+      before: null,
+      after: { name },
+    })
 
     return json(data, 200, corsHeaders)
   } catch (err) {

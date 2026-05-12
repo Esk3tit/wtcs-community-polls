@@ -35,25 +35,34 @@ describe('demote-admin Edge Function source analysis', () => {
     )
   })
 
-  it('last-admin guard fails closed on null adminCount', () => {
-    // The guard must use `adminCount === null || adminCount <= 1` (fail-closed)
-    // not `adminCount !== null && adminCount <= 1` (fail-open on null).
-    expect(src).toMatch(/adminCount\s*===\s*null\s*\|\|\s*adminCount\s*<=\s*1/)
-    expect(src).not.toMatch(/adminCount\s*!==\s*null\s*&&\s*adminCount\s*<=\s*1/)
+  it('last-admin guard delegated to demote_admin_guarded RPC with P0003 mapping', () => {
+    // The guard now lives in the migration-12 SQL function (atomic with row
+    // locks — closes the prior count-then-update race). The EF must call
+    // that RPC and map its P0003 error code to the "at least one admin must
+    // remain" message so non-admin observers still see the same 400.
+    expect(src).toMatch(/\.rpc\(\s*['"]demote_admin_guarded['"]/)
+    expect(src).toMatch(/P0003/)
+    expect(src).toMatch(/at least one admin must remain/)
   })
 
-  it('updates profiles SET is_admin=false', () => {
-    expect(src).toMatch(/from\(\s*['"]profiles['"]\s*\)/)
-    expect(src).toMatch(/\.update\(/)
-    expect(src).toMatch(/is_admin/)
-    expect(src).toMatch(/false/)
+  it('demotion goes through demote_admin_guarded RPC, not direct profiles.update()', () => {
+    // Profile UPDATE happens inside the RPC under row locks. A direct
+    // `from('profiles').update(...)` in the EF would reintroduce the race.
+    expect(src).toMatch(/\.rpc\(\s*['"]demote_admin_guarded['"]/)
+    expect(src).not.toMatch(/from\(\s*['"]profiles['"]\s*\)\s*\.\s*update\(/)
   })
 
-  it('self-demote guard appears BEFORE the profiles.update() call', () => {
+  it('self-demote guard appears BEFORE the RPC call', () => {
     const guardIdx = src.search(/target_user_id\s*===\s*user\.id/)
-    const updateIdx = src.search(/from\(\s*['"]profiles['"]\s*\)\s*\.\s*update/)
+    const rpcIdx = src.search(/\.rpc\(\s*['"]demote_admin_guarded['"]/)
     expect(guardIdx).toBeGreaterThan(-1)
-    expect(updateIdx).toBeGreaterThan(-1)
-    expect(guardIdx).toBeLessThan(updateIdx)
+    expect(rpcIdx).toBeGreaterThan(-1)
+    expect(guardIdx).toBeLessThan(rpcIdx)
+  })
+
+  it('maps RPC error codes P0001/P0002/P0003 to 404/409/400', () => {
+    expect(src).toMatch(/P0001[\s\S]{0,200}404/)
+    expect(src).toMatch(/P0002[\s\S]{0,200}409/)
+    expect(src).toMatch(/P0003[\s\S]{0,200}400/)
   })
 })

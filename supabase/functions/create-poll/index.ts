@@ -3,6 +3,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { requireAdmin, adminCheckResponse } from '../_shared/admin-auth.ts'
+import { writeAudit } from '../_shared/audit.ts'
 
 function json(body: unknown, status: number, cors: HeadersInit) {
   const headers = new Headers(cors)
@@ -42,6 +43,7 @@ Deno.serve(async (req) => {
       image_url?: unknown
       closes_at?: unknown
       choices?: unknown
+      results_hidden?: unknown
     }
     try {
       const parsed = await req.json()
@@ -118,6 +120,20 @@ Deno.serve(async (req) => {
       return json({ error: 'closes_at must be at least 1 minute in the future' }, 400, corsHeaders)
     }
 
+    // Strict boolean validation: never coerce 'true'/1/null. Default-false admin-bootstrap polls
+    // get the column DEFAULT from the polls schema; the rare opt-in (true) is applied via a
+    // post-RPC UPDATE below so the RPC contract stays unchanged.
+    const results_hidden =
+      body.results_hidden === undefined
+        ? false
+        : typeof body.results_hidden === 'boolean'
+          ? body.results_hidden
+          : null
+    if (results_hidden === null) {
+      return json({ error: 'Invalid results_hidden' }, 400, corsHeaders)
+    }
+
+    // RPC signature unchanged — results_hidden uses column DEFAULT; rare opt-in flip happens via post-RPC UPDATE below.
     const { data: pollId, error: rpcError } = await supabaseAdmin.rpc('create_poll_with_choices', {
       p_title: title,
       p_description: description,
@@ -130,6 +146,68 @@ Deno.serve(async (req) => {
     if (rpcError) {
       console.error('create_poll_with_choices failed:', rpcError)
       return json({ error: 'Internal error' }, 500, corsHeaders)
+    }
+
+    // Audit the create BEFORE the optional results_hidden flip. RPC just
+    // inserted with the column DEFAULT (results_hidden=false), so the audit
+    // row records the ACTUAL post-insert state — never the user's intent.
+    // Recording intent would lie when the flip below fails and the
+    // compensating DELETE rolls the row back: the audit log would claim a
+    // hidden poll was created when none ever existed. The successful-flip
+    // path emits a second row (`results_hidden_set_at_create`) carrying the
+    // transition false→true, and the failed-compensation path emits a
+    // `poll_created_orphaned` row — so the audit timeline always reflects
+    // realized state, not intent.
+    await writeAudit(supabaseAdmin, {
+      actor_id: user.id,
+      action: 'poll_created',
+      target_type: 'poll',
+      target_id: pollId,
+      before: null,
+      after: { title, category_id, results_hidden: false },
+    })
+
+    if (results_hidden === true) {
+      const { error: updateError } = await supabaseAdmin
+        .from('polls')
+        .update({ results_hidden: true, results_hidden_changed_at: new Date().toISOString() })
+        .eq('id', pollId)
+      if (updateError) {
+        // Compensating DELETE so the caller observes all-or-nothing semantics:
+        // returning 500 without the DELETE would leave a visible poll in production despite the admin's hidden intent.
+        // The CASCADE on choices/vote_counts cleans up any pre-seeded rows.
+        const { error: deleteError } = await supabaseAdmin.from('polls').delete().eq('id', pollId)
+        if (deleteError) {
+          // Orphan branch: poll exists in `public.polls` with results_hidden=false
+          // (column DEFAULT) despite the admin's hidden=true intent. The
+          // compensating DELETE could not clean it up. Emit a distinct audit
+          // action so an operator searching audit_log by action can spot
+          // orphans without scanning every poll_created row.
+          console.error('create-poll compensation DELETE failed:', { pollId, deleteError, originalUpdateError: updateError })
+          await writeAudit(supabaseAdmin, {
+            actor_id: user.id,
+            action: 'poll_created_orphaned',
+            target_type: 'poll',
+            target_id: pollId,
+            before: null,
+            after: {
+              results_hidden_intended: true,
+              results_hidden_actual: false,
+              reason: 'compensation_delete_failed',
+            },
+          })
+        }
+        return json({ error: 'Failed to set results_hidden — poll creation rolled back. Retry.' }, 500, corsHeaders)
+      }
+
+      await writeAudit(supabaseAdmin, {
+        actor_id: user.id,
+        action: 'results_hidden_set_at_create',
+        target_type: 'poll',
+        target_id: pollId,
+        before: null,
+        after: { results_hidden: true },
+      })
     }
 
     return json({ success: true, id: pollId }, 200, corsHeaders)

@@ -7,6 +7,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { requireAdmin, adminCheckResponse } from '../_shared/admin-auth.ts'
+import { writeAudit } from '../_shared/audit.ts'
 
 function json(body: unknown, status: number, cors: HeadersInit) {
   return new Response(JSON.stringify(body), {
@@ -74,6 +75,16 @@ Deno.serve(async (req) => {
       return json({ error: 'Cannot delete: responses already received' }, 409, corsHeaders)
     }
 
+    // Best-effort capture of pre-DELETE snapshot for the audit `before` payload.
+    // maybeSingle() returns null on miss without erroring, so the subsequent
+    // DELETE remains the canonical 404 source — the existing PGRST116 envelope
+    // is preserved.
+    const { data: priorRow } = await supabaseAdmin
+      .from('polls')
+      .select('title, status')
+      .eq('id', poll_id)
+      .maybeSingle()
+
     const { error } = await supabaseAdmin
       .from('polls')
       .delete()
@@ -87,6 +98,20 @@ Deno.serve(async (req) => {
       console.error('delete-poll failed:', error)
       return json({ error: 'Internal error' }, 500, corsHeaders)
     }
+
+    // priorRow is effectively unconditional here: the DELETE above with
+    // .single() already 404s via PGRST116 when the row does not exist, so
+    // by this line we're guaranteed the row was present pre-DELETE.
+    // Record null in `before` on the rare transient miss rather than
+    // a synthesised { id } payload — keeps the audit shape uniform.
+    await writeAudit(supabaseAdmin, {
+      actor_id: user.id,
+      action: 'poll_deleted',
+      target_type: 'poll',
+      target_id: poll_id,
+      before: priorRow ? { title: priorRow.title, status: priorRow.status } : null,
+      after: null,
+    })
 
     return json({ success: true }, 200, corsHeaders)
   } catch (err) {
