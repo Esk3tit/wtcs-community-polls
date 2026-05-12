@@ -78,7 +78,7 @@ export function AdminSuggestionRow({
             </span>
           )}
         </div>
-        <p className="text-sm font-medium mt-1 truncate">{s.title}</p>
+        <p className="text-sm font-medium mt-1 truncate" title={s.title}>{s.title}</p>
         <p className="text-xs text-muted-foreground mt-0.5">
           {voteCount} response{voteCount === 1 ? '' : 's'}
         </p>
@@ -90,7 +90,7 @@ export function AdminSuggestionRow({
             onCheckedChange={(v) => onToggleResultsVisibility(s.id, !v)}
             disabled={isPendingVisibility}
             aria-busy={isPendingVisibility}
-            aria-label={resultsHidden ? 'Results currently hidden' : 'Results currently visible'}
+            aria-label="Toggle results visibility"
             data-testid={`visibility-switch-${s.id}`}
           />
           <span className="hidden sm:inline text-sm font-medium">
