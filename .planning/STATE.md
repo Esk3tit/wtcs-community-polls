@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Admin Visibility Controls
-status: Phase 11 fully closed — original ship (migration 10 + 13 EFs) + code-review followup (migration 11 + 8 EF redeploys) all landed on prod. audit_log now has ON DELETE SET NULL on actor_id FK + CHECK constraint on target_id (UUID case-insensitive | snowflake | NULL). Code-review loop converged in 3 iterations (0 critical, 5 warning, 8 info; 14 closed, 1 deferred-by-design).
-stopped_at: Phase 11 + code-review-fix deploy complete. Ready to plan Phase 12.
-last_updated: "2026-05-12T00:30:00.000Z"
-last_activity: 2026-05-12 -- Phase 11 code-review fix deploy: migration 11 applied + 8 EFs redeployed to prod; all gates green; zero new advisor findings
+status: Phase 11 shipped — PR #26 opened against main (https://github.com/Esk3tit/wtcs-community-polls/pull/26). Local + prod fully aligned; VERIFICATION.md status=pass; UAT 9/9 in-scope pass. Awaiting PR review + merge.
+stopped_at: Phase 11 PR open (#26). Ready to plan Phase 12 in parallel or wait for merge.
+last_updated: "2026-05-12T01:00:00.000Z"
+last_activity: 2026-05-12 -- Phase 11 PR #26 opened (60 commits, 50 files, +8296/-45 against main); branch pushed to origin
 progress:
   total_phases: 3
   completed_phases: 1
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-05-11 after v1.1 milestone)
 
 ## Current Position
 
-Phase: 12 — Admin UI + User UI + UIDN-03 Sweep (READY TO PLAN)
+Phase: 12 — Admin UI + User UI + UIDN-03 Sweep (READY TO PLAN; can proceed in parallel with PR #26 review)
 Plan: —
-Status: Phase 11 shipped 2026-05-11. The admin UI now has a deployed toggle-results-visibility EF + audit_log table to write into, plus polls_effective.results_hidden to read. Phase 12 builds the UI surface on top.
-Last activity: 2026-05-11 -- Phase 11 shipped (migration 10 + 13 EFs live in prod via MCP-driven deploy)
+Status: Phase 11 shipped via PR #26 (https://github.com/Esk3tit/wtcs-community-polls/pull/26). Awaiting PR review + merge. Production schema + EFs are already live (deployed during Plan 05 / Plan 06 followup), so Phase 12 can begin planning without waiting for merge — the admin UI has a working toggle-results-visibility EF + audit_log table + polls_effective.results_hidden surface to consume.
+Last activity: 2026-05-12 -- Phase 11 PR #26 opened (60 commits, 50 files, +8296/-45)
 
 ```
 v1.2 progress:  [██████░░░░░░░░░░░░░░] 33% (Phase 11 ✅ Shipped, Phase 12 next, Phase 13 last)
