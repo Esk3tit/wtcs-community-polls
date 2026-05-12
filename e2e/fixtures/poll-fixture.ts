@@ -135,4 +135,32 @@ function normalizeError(e: unknown): Error {
   return new Error(`Non-Error throw: ${String(e)}`)
 }
 
+/**
+ * deletePollById — best-effort teardown for polls created through the UI in
+ * specs that don't use the `freshPoll` fixture (e.g. specs that drive the
+ * admin SuggestionForm + voter SuggestionCard end-to-end and need to delete
+ * the row they just created).
+ *
+ * Service-role is acceptable here ONLY because this is teardown: cleanup
+ * must succeed even if the Playwright browser contexts have already closed
+ * or if a setup step partially failed. Setup paths in specs that use this
+ * helper still go through the production EFs (create-poll, submit-vote) so
+ * the spec exercises the same auth/RLS surface a real user would. The
+ * polls.id → choices/votes/vote_counts FK cascade collapses the row tree to
+ * a single DELETE statement (mirrors the `freshPoll` fixture teardown).
+ *
+ * No-throw: cleanup errors are logged and swallowed. A stuck row only leaks
+ * one `[E2E]`-prefixed entry which `e2e/global-setup.ts` sweeps on the next
+ * run.
+ */
+export async function deletePollById(pollId: string): Promise<void> {
+  const admin = getAdminClient()
+  const { error } = await admin.from('polls').delete().eq('id', pollId)
+  if (error) {
+    // Logged (not rethrown) so a teardown failure does not mask the actual
+    // test failure that may have already been reported by Playwright.
+    console.error('deletePollById:', error)
+  }
+}
+
 export { expect }
