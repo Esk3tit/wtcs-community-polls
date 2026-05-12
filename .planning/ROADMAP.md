@@ -90,7 +90,26 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
   4. The Playwright E2E spec (TEST-13) passes end-to-end: admin creates a poll, a test vote is cast, admin hides results, the voter UI shows the hidden message, admin shows results, the voter UI shows count bars again
   5. ESLint and `tsc -b` pass with zero errors after the 4 native-button replacements in `SearchBar.tsx`, `SuggestionForm.tsx` (×2), and `ImageInput.tsx`; `type="submit"` is preserved where applicable; no existing form-submission behavior regresses
 
-**Plans**: TBD
+**Plans**: 7 plans
+
+**Wave 1** *(foundation — independent, parallel)*
+- [ ] 12-00-PLAN.md — Type regen + npm gen:types script + vendor shadcn Checkbox/Switch + REQUIREMENTS.md VIS-07 wording edit
+- [ ] 12-01-PLAN.md — UIDN-03 D-15: SearchBar clear-X native button → shadcn Button (ghost icon)
+
+**Wave 2** *(blocked on Wave 1 completion — parallel within wave)*
+- [ ] 12-02-PLAN.md — VIS-06 checkbox on SuggestionForm + UIDN-03 D-14 ×2 TanStack Link back-link replacements
+- [ ] 12-03-PLAN.md — VIS-07 inline Switch on AdminSuggestionRow + new useToggleResultsVisibility hook + AdminSuggestionsTab optimistic wiring
+- [ ] 12-04-PLAN.md — VIS-08 hidden-state Alert in SuggestionCard + useVoteCounts extension polling results_hidden
+- [ ] 12-05-PLAN.md — UIDN-03 D-13: extract DropZone component, refactor ImageInput
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 12-06-PLAN.md — TEST-13 Playwright E2E spec + freshPoll fixture vote-cast helper + REQUIREMENTS.md traceability marks complete
+
+Cross-cutting constraints:
+- Zero direct `from('polls')` reads in `src/` (Phase 11 VIS-09 invariant — `polls-effective-invariant.test.ts` must continue to pass)
+- All plans run `npm run lint` and `tsc -b` in verify
+- Plan 00's REQUIREMENTS.md VIS-07 wording edit (drops AlertDialog, adopts Switch + toast per CONTEXT D-01) supersedes the Phase 12 ROADMAP SC2 mention of "AlertDialog" — SC2 stays as the original phase contract for historical traceability; the implementation matches the CONTEXT/REQUIREMENTS wording
+
 **UI hint**: yes
 
 ---

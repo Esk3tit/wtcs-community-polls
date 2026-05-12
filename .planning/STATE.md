@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Admin Visibility Controls
-status: "Phase 11 shipped via PR #26, merged at 2026-05-12T08:21Z (merge commit f6b35ab). Production schema + 14 EFs match main. The admin UI surface (toggle-results-visibility EF + audit_log table + polls_effective.results_hidden) is live and ready for Phase 12 to build on."
-stopped_at: Phase 12 context gathered
-last_updated: "2026-05-12T08:55:21.299Z"
-last_activity: 2026-05-12 -- Phase 11 merged to main after 5 review rounds (16 threads resolved across gemini/coderabbit/greptile)
+status: executing
+stopped_at: Phase 12 UI-SPEC approved
+last_updated: "2026-05-12T09:31:54.407Z"
+last_activity: 2026-05-12 -- Phase 12 planning complete
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 7
+  total_plans: 14
   completed_plans: 7
-  percent: 100
+  percent: 50
 ---
 
 # Project State
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-05-11 after v1.1 milestone)
 
 Phase: 12 — Admin UI + User UI + UIDN-03 Sweep (READY TO PLAN)
 Plan: —
-Status: Phase 11 shipped via PR #26, merged at 2026-05-12T08:21Z (merge commit f6b35ab). Production schema + 14 EFs match main. The admin UI surface (toggle-results-visibility EF + audit_log table + polls_effective.results_hidden) is live and ready for Phase 12 to build on.
-Last activity: 2026-05-12 -- Phase 11 merged to main after 5 review rounds (16 threads resolved across gemini/coderabbit/greptile)
+Status: Ready to execute
+Last activity: 2026-05-12 -- Phase 12 planning complete
 
 ```
 v1.2 progress:  [██████░░░░░░░░░░░░░░] 33% (Phase 11 ✅ Shipped, Phase 12 next, Phase 13 last)
@@ -79,6 +79,6 @@ None. Phase 12 is unblocked: the EF and audit_log surface needed for the admin U
 
 ## Session Continuity
 
-Last session: 2026-05-12T08:55:21.293Z
-Stopped at: Phase 12 context gathered
+Last session: 2026-05-12T09:09:57.593Z
+Stopped at: Phase 12 UI-SPEC approved
 Resume action: `/gsd-plan-phase 12` to begin Phase 12 (Admin UI + User UI + UIDN-03 Sweep) planning. Requirements: VIS-06, VIS-07, VIS-08, UIDN-03, TEST-13.
