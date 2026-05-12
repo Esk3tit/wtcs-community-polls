@@ -213,11 +213,19 @@ export async function seedBaselineVote(opts: {
   choiceId: string
   serviceRole: SupabaseClient
 }): Promise<void> {
-  const { error } = await opts.serviceRole.from('votes').insert({
-    poll_id: opts.pollId,
-    user_id: opts.userId,
-    choice_id: opts.choiceId,
-  })
+  // upsert with ignoreDuplicates: a prior test run that crashed mid-cleanup
+  // could leave the (poll_id, user_id) row behind. The plain INSERT would
+  // surface 23505 (unique violation on the natural key) and trip the test
+  // with a useful-but-confusing error. Treat seed as idempotent — mirrors
+  // the ON CONFLICT DO NOTHING discipline already used in supabase/seed.sql.
+  const { error } = await opts.serviceRole.from('votes').upsert(
+    {
+      poll_id: opts.pollId,
+      user_id: opts.userId,
+      choice_id: opts.choiceId,
+    },
+    { onConflict: 'poll_id,user_id', ignoreDuplicates: true },
+  )
   if (error) {
     throw new Error(
       `seedBaselineVote insert failed for poll=${opts.pollId} user=${opts.userId}: ${error.message}`,
