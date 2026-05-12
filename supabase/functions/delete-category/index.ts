@@ -77,12 +77,20 @@ Deno.serve(async (req) => {
       return json({ error: 'Internal error' }, 500, corsHeaders)
     }
 
+    // priorRow is unconditional here: the DELETE above with .single()
+    // already 404s via PGRST116 when the row does not exist, so by this
+    // line we're guaranteed the row was present pre-DELETE. If the
+    // best-effort pre-fetch transiently failed without erroring (PostgREST
+    // returning no row for a row that *did* exist), priorRow is null and
+    // we record null in `before` so the audit shape stays uniform across
+    // emitters — better than synthesising a fake { id } payload that the
+    // admin UI would have to special-case.
     await writeAudit(supabaseAdmin, {
       actor_id: user.id,
       action: 'category_deleted',
       target_type: 'category',
       target_id: category_id,
-      before: priorRow ? { name: priorRow.name } : { id: category_id },
+      before: priorRow ? { name: priorRow.name } : null,
       after: null,
     })
 
