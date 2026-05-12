@@ -142,6 +142,19 @@ Deno.serve(async (req) => {
       return json({ error: 'Cannot edit: responses already received' }, 409, corsHeaders)
     }
 
+    // Best-effort pre-fetch of the editable columns so the audit row carries
+    // a forensic `before` snapshot. Harmonises this EF with the rest of the
+    // retrofit shape (rename-category, set-resolution, delete-poll all
+    // pre-fetch). The round-trip cost is ~ms-scale on free tier, and we are
+    // already on the admin gate so it is not on a hot path. maybeSingle()
+    // returns null without erroring on miss; the RPC below remains the
+    // canonical 404 source.
+    const { data: priorRow } = await supabaseAdmin
+      .from('polls')
+      .select('title, description, category_id, image_url, closes_at')
+      .eq('id', poll_id)
+      .maybeSingle()
+
     // Choice replacement delegated to RPC (single transaction).
     const { data: updatedId, error: rpcError } = await supabaseAdmin.rpc('update_poll_with_choices', {
       p_poll_id: poll_id,
@@ -169,16 +182,25 @@ Deno.serve(async (req) => {
       return json({ error: 'Internal error' }, 500, corsHeaders)
     }
 
-    // D-07: compact `after` payload — only the fields the RPC mutated.
-    // `before` is null because the RPC does not return prior values and a
-    // pre-read SELECT would double the round-trip cost without changing the
-    // audit's forensic value (the RPC log captures the choices vector).
+    // Compact `after` payload mirrors the RPC's effective input. `before`
+    // carries the pre-fetched snapshot when available so the audit row is
+    // grep-friendly for diff reconstruction; choices were not pre-fetched
+    // (the RPC already logs them in its plpgsql trace) so they only appear
+    // in `after`.
     await writeAudit(supabaseAdmin, {
       actor_id: user.id,
       action: 'poll_updated',
       target_type: 'poll',
       target_id: poll_id,
-      before: null,
+      before: priorRow
+        ? {
+            title: priorRow.title,
+            description: priorRow.description,
+            category_id: priorRow.category_id,
+            image_url: priorRow.image_url,
+            closes_at: priorRow.closes_at,
+          }
+        : null,
       after: { title, description, category_id, image_url, closes_at, choices },
     })
 
