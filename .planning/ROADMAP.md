@@ -48,7 +48,7 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
 
 ### v1.2 — Admin Visibility Controls (Phases 11–13)
 
-- [ ] **Phase 11: Schema + RLS + EF Foundations** — Migration 10 (`results_hidden` boolean + `results_hidden_changed_at` timestamptz on `polls`, `vote_counts` RLS DROP+CREATE, `polls_effective` view rewrite with `security_invoker = on`), `toggle-results-visibility` Edge Function, 12-cell RLS invariant test suite (TEST-11), admin EF authorization test (TEST-12)
+- [x] **Phase 11: Schema + RLS + EF Foundations** — Migration 10 (`results_hidden` boolean + `results_hidden_changed_at` timestamptz on `polls`, `vote_counts` RLS DROP+CREATE, `polls_effective` view rewrite with `security_invoker = on`), `toggle-results-visibility` Edge Function, 12-cell RLS invariant test suite (TEST-11), admin EF authorization test (TEST-12) — shipped 2026-05-11
 - [ ] **Phase 12: Admin UI + User UI + UIDN-03 Sweep** — VisibilityCheckbox on creation form, "Hide/Show results" toggle button + AlertDialog on admin cards, `canSeeResults` gate in `SuggestionCard`, hidden-state message component, `useVoteCounts` extension, archive view fix, 4 native-button drift cleanup co-landing in `SuggestionForm.tsx`, `SearchBar.tsx`, `ImageInput.tsx`, Playwright E2E happy path (TEST-13)
 - [ ] **Phase 13: UIDN-02 Mobile Audit Closure** — `audit-screenshots.mjs` hydration-wait fix (Plan 02 defect), Lighthouse mobile audit rerun with authenticated Pass-A evidence for `/topics` and `/archive`, Key Decision rows flipped ⚠️ → ✓
 
@@ -60,7 +60,7 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
 **Requirements**: VIS-01, VIS-02, VIS-03, VIS-04, VIS-05, VIS-09, TEST-11, TEST-12
 
 **Success Criteria** (what must be TRUE):
-  1. Migration 10 applies cleanly: `polls.results_hidden boolean NOT NULL DEFAULT false` and `polls.results_hidden_changed_at timestamptz` columns exist; all 14 pre-existing migrations continue to pass
+  1. Migration 10 applies cleanly: `polls.results_hidden boolean NOT NULL DEFAULT false` and `polls.results_hidden_changed_at timestamptz` columns exist; all 10 pre-existing migrations (00–09) continue to pass
   2. The 12-cell RLS invariant test suite passes in full: every cell where `results_hidden = true` OR the caller has not voted returns 0 rows from `vote_counts`; only `voted + results_hidden = false + authenticated` returns count data; service-role bypasses the policy in all states — **no cell may be skipped; this is a merge blocker**
   3. Admin EF authorization test confirms: non-admin caller receives HTTP 403; admin caller receives HTTP 200 with updated poll row including the new `results_hidden` value and a non-null `results_hidden_changed_at`; an `audit_log` row is written for every toggle
   4. The `polls_effective` view exposes `results_hidden` and `results_hidden_changed_at` to all callers (including the React client via the existing public read path); `security_invoker = on` re-applied; the `polls-effective-invariant.test.ts` continues to pass with zero new `from('polls')` direct reads introduced
@@ -73,7 +73,7 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
 - [x] 11-03-PLAN.md — Audit retrofit of 11 existing mutation admin EFs (excluding create-poll, planned in 11-03b) — complete 2026-05-11
 - [x] 11-03b-PLAN.md — create-poll results_hidden extension + audit retrofit (Option A — post-RPC conditional UPDATE) — complete 2026-05-11
 - [x] 11-04-PLAN.md — TEST-11 12-cell RLS matrix + TEST-12 admin EF authz tests + create-poll results_hidden 4-case suite — complete 2026-05-11 (runtime PASS gated to Plan 11-05)
-- [ ] 11-05-PLAN.md — [BLOCKING] supabase db push + functions deploy + ship
+- [x] 11-05-PLAN.md — [BLOCKING] migration 10 push + 13 EFs deployed via MCP — shipped 2026-05-11
 **UI hint**: no
 
 ---
@@ -115,7 +115,7 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 11. Schema + RLS + EF Foundations | 0/7 | Planned | - |
+| 11. Schema + RLS + EF Foundations | 7/7 | ✅ Shipped | 2026-05-11 |
 | 12. Admin UI + User UI + UIDN-03 Sweep | 0/? | Not started | - |
 | 13. UIDN-02 Mobile Audit Closure | 0/? | Not started | - |
 
@@ -123,6 +123,6 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
 |-----------|--------|-------|--------|---------|
 | v1.0 | 1–6 | 32/32 | ✅ Shipped | 2026-04-28 |
 | v1.1 | 7–10 | 16/16 | ✅ Shipped | 2026-05-11 |
-| v1.2 | 11–13 | 0/? | 🔄 In progress | - |
+| v1.2 | 11–13 | 7/? | 🔄 In progress (1/3 phases) | - |
 </content>
 </invoke>
