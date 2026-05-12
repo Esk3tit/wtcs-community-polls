@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, EyeOff } from 'lucide-react'
 import {
   Collapsible,
   CollapsibleContent,
 } from '@/components/ui/collapsible'
+import { Alert, AlertTitle } from '@/components/ui/alert'
 import { CategoryBadge, ResolutionBadge } from '@/components/suggestions/StatusBadge'
 import { PinnedBanner } from '@/components/suggestions/PinnedBanner'
 import { ChoiceButtons } from '@/components/suggestions/ChoiceButtons'
@@ -16,6 +17,7 @@ export function SuggestionCard({
   suggestion,
   categoryIndex,
   userChoiceId,
+  resultsHidden,
   onVote,
   voteCounts,
   submittingPollId,
@@ -24,6 +26,7 @@ export function SuggestionCard({
   suggestion: SuggestionWithChoices
   categoryIndex: number
   userChoiceId: string | undefined
+  resultsHidden: boolean
   onVote: (pollId: string, choiceId: string) => void
   voteCounts: Map<string, number> | undefined
   submittingPollId: string | null
@@ -121,8 +124,27 @@ export function SuggestionCard({
             )}
 
             {/* Choices / Results area */}
+            {/* VIS-08: hidden state precedes the visible branch; admin policy +
+                voter-status both required for the placeholder. RLS additionally
+                enforces zero count leakage at the DB layer. */}
             <div className="mt-4">
-              {userChoiceId ? (
+              {userChoiceId && resultsHidden ? (
+                <div
+                  className="space-y-3"
+                  data-testid={`results-hidden-alert-${suggestion.id}`}
+                >
+                  <p className="text-sm text-muted-foreground">
+                    Your response:{' '}
+                    <span className="text-foreground font-medium">
+                      {suggestion.choices.find((c) => c.id === userChoiceId)?.label ?? '(unknown)'}
+                    </span>
+                  </p>
+                  <Alert>
+                    <EyeOff className="h-4 w-4" aria-hidden="true" />
+                    <AlertTitle>Results temporarily hidden by admin</AlertTitle>
+                  </Alert>
+                </div>
+              ) : userChoiceId ? (
                 <ResultBars
                   choices={suggestion.choices}
                   voteCounts={voteCounts ?? new Map()}

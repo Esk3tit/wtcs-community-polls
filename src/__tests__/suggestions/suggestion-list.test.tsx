@@ -20,6 +20,7 @@ vi.mock('@/hooks/useAuth', () => ({
 vi.mock('@/hooks/useVoteCounts', () => ({
   useVoteCounts: () => ({
     voteCounts: new Map(),
+    resultsHidden: new Map(),
     refetchVoteCounts: vi.fn(),
   }),
 }))
@@ -54,6 +55,7 @@ vi.mock('lucide-react', () => ({
   SearchX: () => <span data-testid="search-x-icon" />,
   Inbox: () => <span data-testid="inbox-icon" />,
   Archive: () => <span data-testid="archive-icon" />,
+  EyeOff: () => <span data-testid="eye-off-icon" />,
 }))
 
 // Mock UI components
