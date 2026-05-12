@@ -151,8 +151,10 @@ describe('create-poll results_hidden path', () => {
   })
 
   // Manual fault-injection deferred: if the post-RPC UPDATE fails when
-  // results_hidden=true, the compensating DELETE means NO poll row appears
-  // in `polls` AND NO audit rows are written. Asserting this requires
-  // injecting an UPDATE failure (network drop, RLS reject, etc.) which is
-  // out of scope for this suite.
+  // results_hidden=true, the EF still emits the poll_created audit row
+  // (written BEFORE the UPDATE attempt — see create-poll/index.ts:158).
+  // If the compensating DELETE also fails, a poll_created_orphaned row
+  // is emitted alongside. Asserting either branch requires injecting an
+  // UPDATE failure (network drop, RLS reject, etc.) which is out of
+  // scope for this suite.
 })
