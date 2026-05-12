@@ -36,7 +36,9 @@ export function SuggestionList({ status, focusId }: SuggestionListProps) {
   )
   // Polling enabled only for active suggestions. Closed suggestions fetch once on mount.
   const enablePolling = status === 'active'
-  const { voteCounts } = useVoteCounts(votedPollIds, enablePolling)
+  // VIS-08: results_hidden polled at the useVoteCounts cadence; map-miss defaults
+  // to visible (RLS enforces no-leak independently).
+  const { voteCounts, resultsHidden } = useVoteCounts(votedPollIds, enablePolling)
   const { submitVote, submittingPollId, submittingChoiceId } = useVoteSubmit(addOptimisticVote)
 
   const hasActiveFilters = activeCategoryId !== null || debouncedSearch.length > 0
@@ -146,6 +148,7 @@ export function SuggestionList({ status, focusId }: SuggestionListProps) {
                     suggestion={suggestion}
                     categoryIndex={categoryIndex >= 0 ? categoryIndex : 0}
                     userChoiceId={userVotes.get(suggestion.id)}
+                    resultsHidden={resultsHidden.get(suggestion.id) ?? false}
                     onVote={submitVote}
                     voteCounts={voteCounts.get(suggestion.id)}
                     submittingPollId={submittingPollId}
