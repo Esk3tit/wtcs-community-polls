@@ -63,6 +63,9 @@ Deno.serve(async (req) => {
     }
     // D-03 cron-actor exception: actor_id=null. Sequential await — cron is not
     // latency-bound; serial writes match the EF style and keep ordering stable.
+    // closed_at is the same nowIso used in the UPDATE above so the audit row
+    // is self-contained for forensic timeline reconstruction (no need to
+    // cross-join polls.closed_at to read the timestamp).
     for (const row of data ?? []) {
       await writeAudit(supabaseAdmin, {
         actor_id: null,
@@ -70,7 +73,7 @@ Deno.serve(async (req) => {
         target_type: 'poll',
         target_id: row.id,
         before: { status: 'active' },
-        after: { status: 'closed' },
+        after: { status: 'closed', closed_at: nowIso },
       })
     }
     return json(
