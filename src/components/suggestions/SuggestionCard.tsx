@@ -124,9 +124,10 @@ export function SuggestionCard({
             )}
 
             {/* Choices / Results area */}
-            {/* VIS-08: hidden state precedes the visible branch; admin policy +
-                voter-status both required for the placeholder. RLS additionally
-                enforces zero count leakage at the DB layer. */}
+            {/* Hidden-state branch precedes the visible branch: BOTH admin
+                hide-policy AND voter-has-voted are required to render the
+                placeholder. RLS additionally enforces zero count leakage at
+                the DB layer (defense-in-depth). */}
             <div className="mt-4">
               {userChoiceId && resultsHidden ? (
                 <div

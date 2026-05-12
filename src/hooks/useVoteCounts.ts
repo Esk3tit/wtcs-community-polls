@@ -3,7 +3,10 @@ import { supabase } from '@/lib/supabase'
 import { usePolling } from '@/hooks/usePolling'
 import { deferSetState } from '@/lib/deferSetState'
 
-const POLL_INTERVAL = 8000 // 8 seconds (within RSLT-04 5-10s range)
+// 8s polling cadence balances perceived freshness against the free-tier
+// connection budget. Below ~5s pressures the connection pool; above ~10s
+// makes admin hide/show flips feel laggy.
+const POLL_INTERVAL = 8000
 
 export function useVoteCounts(
   votedPollIds: string[],
@@ -11,9 +14,10 @@ export function useVoteCounts(
 ) {
   // Map<pollId, Map<choiceId, count>>
   const [voteCounts, setVoteCounts] = useState<Map<string, Map<string, number>>>(new Map())
-  // VIS-08 D-11: results_hidden polled on the same 8s cadence so voter UI auto-updates
-  // within ~8s of an admin flip. Targets the polls_effective view (never the base
-  // polls table directly) to preserve the polls_effective invariant.
+  // results_hidden is polled on the same 8s cadence as vote_counts so the
+  // voter UI auto-updates within ~8s of an admin flip. Query targets the
+  // polls_effective view (never the base polls table) to preserve the
+  // single-read-path invariant enforced by polls-effective-invariant.test.ts.
   const [resultsHidden, setResultsHidden] = useState<Map<string, boolean>>(new Map())
 
   // Stabilize dependency: serialize to a sorted, pipe-joined key so the SET
@@ -48,7 +52,8 @@ export function useVoteCounts(
     // Batch both reads into a single round-trip via Promise.all to keep the
     // free-tier connection load flat. RLS enforces respondent-only visibility on
     // vote_counts: that query only returns rows for polls the current user has
-    // voted on AND that are not currently hidden (DB defense layer for VIS-08).
+    // voted on AND that are not currently hidden (DB-layer defense against
+    // count leakage when admin hide-policy is set).
     const [vcResult, hiddenResult] = await Promise.all([
       supabase
         .from('vote_counts')

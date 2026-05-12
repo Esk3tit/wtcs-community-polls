@@ -1,4 +1,7 @@
-// UIDN-03 D-13: separates drag-region (outer div with role="region") from the keyboard-Browse entry (inner shadcn Button). Closes the dual-role accessibility footnote [c] in the v1.1 audit.
+// Drag-region (outer div with role="region") and keyboard-Browse entry
+// (inner shadcn Button) are split so screen readers don't announce a
+// dual-role landing zone — see DESIGN-SYSTEM.md for the accessibility
+// rationale.
 import { ImagePlus, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'

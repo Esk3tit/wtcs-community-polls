@@ -33,7 +33,7 @@ export function ImageInput({ value, onChange, disabled }: Props) {
     }
   }
 
-  // LR-07: validate a dropped file inline before handing off to uploadImage.
+  // Validate a dropped file inline before handing off to uploadImage.
   // uploadImage also validates and throws, but surfacing an inline error in
   // the dropzone gives screen-reader users live feedback and avoids a bare
   // toast for drops.
@@ -98,7 +98,9 @@ export function ImageInput({ value, onChange, disabled }: Props) {
                 input.value = ''
               }}
             />
-            {/* UIDN-03 D-13: dropzone region is a region, not a button; inner Browse Button (in DropZone) is the keyboard entry point. */}
+            {/* Dropzone wrapper is role="region", not a button; the inner
+                Browse Button (in DropZone) is the keyboard entry point.
+                See DropZone.tsx for the dual-role-avoidance rationale. */}
             <div className="space-y-2">
               <DropZone
                 disabled={disabled}
