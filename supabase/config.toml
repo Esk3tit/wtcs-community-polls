@@ -20,3 +20,49 @@ additional_redirect_urls = ["http://localhost:5173/auth/callback"]
 enabled = true
 client_id = "env(SUPABASE_AUTH_DISCORD_CLIENT_ID)"
 secret = "env(SUPABASE_AUTH_DISCORD_SECRET)"
+
+# Every EF performs its own JWT validation (requireAdmin in admin-auth.ts,
+# getUser for non-admin callers; cron-secret for close-expired-polls). The
+# platform-layer JWT check is redundant — and worse, the local edge runtime
+# falls back to HS256 verification on user tokens that the auth service
+# issued as ES256, returning 401 before the EF can run its own check. The
+# production deploys all pass --no-verify-jwt; these entries align the local
+# stack so `npm run test:integration` exercises the same auth path as prod.
+[functions.toggle-results-visibility]
+verify_jwt = false
+
+[functions.create-poll]
+verify_jwt = false
+
+[functions.update-poll]
+verify_jwt = false
+
+[functions.delete-poll]
+verify_jwt = false
+
+[functions.close-poll]
+verify_jwt = false
+
+[functions.close-expired-polls]
+verify_jwt = false
+
+[functions.pin-poll]
+verify_jwt = false
+
+[functions.set-resolution]
+verify_jwt = false
+
+[functions.create-category]
+verify_jwt = false
+
+[functions.rename-category]
+verify_jwt = false
+
+[functions.delete-category]
+verify_jwt = false
+
+[functions.promote-admin]
+verify_jwt = false
+
+[functions.demote-admin]
+verify_jwt = false
