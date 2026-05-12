@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { usePolling } from '@/hooks/usePolling'
 import { deferSetState } from '@/lib/deferSetState'
@@ -32,7 +32,15 @@ export function useVoteCounts(
     [votedPollIds],
   )
 
+  // Monotonic fetch ID — when two fetches overlap (e.g. a slow initial
+  // fetch followed by a polling tick, or a pollIdsKey change while a
+  // previous fetch is still in flight), the stale fetch's setState
+  // arrives last and would clobber the fresh result. Mirrors the same
+  // pattern in AdminSuggestionsTab.fetchAll.
+  const fetchIdRef = useRef(0)
+
   const fetchCounts = useCallback(async () => {
+    const id = ++fetchIdRef.current
     // Derive ids from the stable key inside the callback rather than
     // closing over the array reference — avoids render-time ref mutation
     // (React 19 concurrent-mode hazard) and keeps the source of truth
@@ -44,6 +52,7 @@ export function useVoteCounts(
       // briefly passes [] mid-refetch, that's a useSuggestions concern —
       // see SuggestionList.tsx where votedPollIds is derived only from
       // already-loaded userVotes.)
+      if (id !== fetchIdRef.current) return
       setVoteCounts(new Map())
       setResultsHidden(new Map())
       return
@@ -64,6 +73,10 @@ export function useVoteCounts(
         .select('id, results_hidden')
         .in('id', ids),
     ])
+
+    // Drop stale results: a newer fetch superseded this one while the
+    // round-trip was in flight.
+    if (id !== fetchIdRef.current) return
 
     const { data: counts, error } = vcResult
     if (error) {
