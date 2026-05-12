@@ -87,7 +87,7 @@ export function AdminSuggestionRow({
         <label className="inline-flex items-center gap-2 min-h-[44px] cursor-pointer select-none">
           <Switch
             checked={!resultsHidden}
-            onCheckedChange={(v) => onToggleResultsVisibility(s.id, v === true ? false : true)}
+            onCheckedChange={(v) => onToggleResultsVisibility(s.id, !v)}
             disabled={isPendingVisibility}
             aria-busy={isPendingVisibility}
             aria-label={resultsHidden ? 'Results currently hidden' : 'Results currently visible'}
