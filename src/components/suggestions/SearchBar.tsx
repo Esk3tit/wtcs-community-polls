@@ -1,4 +1,5 @@
 import { Search, X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 export function SearchBar({
@@ -19,14 +20,16 @@ export function SearchBar({
         className="h-10 pl-9 pr-9 bg-card shadow-sm dark:shadow-none"
       />
       {value && (
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={() => onChange('')}
           aria-label="Clear search"
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 size-8"
         >
           <X className="size-4" />
-        </button>
+        </Button>
       )}
     </div>
   )
