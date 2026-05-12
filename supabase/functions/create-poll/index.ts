@@ -148,22 +148,23 @@ Deno.serve(async (req) => {
       return json({ error: 'Internal error' }, 500, corsHeaders)
     }
 
-    // Audit the create BEFORE the optional results_hidden flip. If the
-    // flip+compensating-DELETE path falls through to the orphan branch
-    // below, this row is the only forensic breadcrumb tying the orphan
-    // back to its admin actor. RPC has just inserted with the column
-    // DEFAULT (results_hidden=false). The audit row's
-    // `after.results_hidden` carries the user's INTENT (which may be
-    // true or false); a successful post-RPC flip emits a second row
-    // (`results_hidden_set_at_create`) so the audit timeline shows both
-    // the intent and the realization distinctly.
+    // Audit the create BEFORE the optional results_hidden flip. RPC just
+    // inserted with the column DEFAULT (results_hidden=false), so the audit
+    // row records the ACTUAL post-insert state — never the user's intent.
+    // Recording intent would lie when the flip below fails and the
+    // compensating DELETE rolls the row back: the audit log would claim a
+    // hidden poll was created when none ever existed. The successful-flip
+    // path emits a second row (`results_hidden_set_at_create`) carrying the
+    // transition false→true, and the failed-compensation path emits a
+    // `poll_created_orphaned` row — so the audit timeline always reflects
+    // realized state, not intent.
     await writeAudit(supabaseAdmin, {
       actor_id: user.id,
       action: 'poll_created',
       target_type: 'poll',
       target_id: pollId,
       before: null,
-      after: { title, category_id, results_hidden },
+      after: { title, category_id, results_hidden: false },
     })
 
     if (results_hidden === true) {

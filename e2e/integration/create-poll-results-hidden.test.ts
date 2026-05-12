@@ -86,7 +86,10 @@ describe('create-poll results_hidden path', () => {
     const setHidden = rows.find((r) => r.action === 'results_hidden_set_at_create')
     expect(created).toBeDefined()
     expect(setHidden).toBeDefined()
-    expect(created!.after).toMatchObject({ results_hidden: true })
+    // poll_created records ACTUAL post-insert state (column DEFAULT=false),
+    // never user intent. The transition to true is captured by the second
+    // row so the timeline reflects realized state, not aspirational state.
+    expect(created!.after).toMatchObject({ results_hidden: false })
     expect(setHidden!.after).toEqual({ results_hidden: true })
   })
 

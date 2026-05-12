@@ -16,11 +16,14 @@
 -- v1.0/v1.1 RSLT-05 behavior (results visible to voters on closed polls).
 -- The timestamp is written by the toggle EF directly (mirrors closed_at
 -- precedent in close-poll), not via a DB trigger.
+-- IF NOT EXISTS so the migration is replay-safe: Supabase's registry
+-- normally guarantees a single apply, but a manually-recovered DB or a
+-- partial-apply transaction rollback shouldn't require operator surgery.
 ALTER TABLE public.polls
-  ADD COLUMN results_hidden BOOLEAN NOT NULL DEFAULT FALSE;
+  ADD COLUMN IF NOT EXISTS results_hidden BOOLEAN NOT NULL DEFAULT FALSE;
 
 ALTER TABLE public.polls
-  ADD COLUMN results_hidden_changed_at TIMESTAMPTZ;
+  ADD COLUMN IF NOT EXISTS results_hidden_changed_at TIMESTAMPTZ;
 
 COMMENT ON COLUMN public.polls.results_hidden IS
   'When true, the vote_counts RLS policy returns 0 rows even for voters. Flipped by the toggle-results-visibility EF; audit row written on every state change.';
@@ -59,8 +62,8 @@ COMMENT ON TABLE public.audit_log IS
 -- target (e.g., all rows for a given poll) and lookup by actor over time.
 -- Do NOT index before/after JSONB -- it would balloon free-tier storage
 -- with little query benefit at v1.2 scale.
-CREATE INDEX idx_audit_log_target ON public.audit_log(target_type, target_id);
-CREATE INDEX idx_audit_log_actor_created ON public.audit_log(actor_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_log_target ON public.audit_log(target_type, target_id);
+CREATE INDEX IF NOT EXISTS idx_audit_log_actor_created ON public.audit_log(actor_id, created_at DESC);
 
 ALTER TABLE public.audit_log ENABLE ROW LEVEL SECURITY;
 
