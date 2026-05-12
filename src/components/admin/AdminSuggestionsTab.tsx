@@ -127,14 +127,18 @@ export function AdminSuggestionsTab() {
   // multiple rows be in-flight independently. Toast surfaced by hook.
   const handleToggleResultsVisibility = useCallback(
     async (pollId: string, nextHidden: boolean) => {
-      let title = 'this suggestion'
-      setItems((cur) => {
-        const target = cur.find((it) => it.id === pollId)
-        if (target) title = target.title
-        return cur.map((it) =>
+      // Read title from current state OUTSIDE the setItems updater. The
+      // row is guaranteed to exist because the user just clicked its
+      // Switch. Mutating closure-scoped vars inside a setState updater
+      // violates React's purity contract (StrictMode double-invokes
+      // updaters in dev to surface this).
+      const target = items.find((it) => it.id === pollId)
+      const title = target?.title ?? 'this suggestion'
+      setItems((cur) =>
+        cur.map((it) =>
           it.id === pollId ? { ...it, results_hidden: nextHidden } : it,
-        )
-      })
+        ),
+      )
       setPendingVisibility((s) => {
         const n = new Set(s)
         n.add(pollId)
@@ -161,7 +165,7 @@ export function AdminSuggestionsTab() {
       }
       void fetchAll()
     },
-    [toggleResultsVisibility, fetchAll],
+    [items, toggleResultsVisibility, fetchAll],
   )
 
   return (
