@@ -29,6 +29,47 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          after: Json | null
+          before: Json | null
+          created_at: string
+          id: string
+          target_id: string | null
+          target_type: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          id?: string
+          target_id?: string | null
+          target_type: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          id?: string
+          target_id?: string | null
+          target_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
@@ -97,6 +138,8 @@ export type Database = {
           image_url: string | null
           is_pinned: boolean
           resolution: string | null
+          results_hidden: boolean
+          results_hidden_changed_at: string | null
           status: string
           title: string
           updated_at: string
@@ -112,6 +155,8 @@ export type Database = {
           image_url?: string | null
           is_pinned?: boolean
           resolution?: string | null
+          results_hidden?: boolean
+          results_hidden_changed_at?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -127,6 +172,8 @@ export type Database = {
           image_url?: string | null
           is_pinned?: boolean
           resolution?: string | null
+          results_hidden?: boolean
+          results_hidden_changed_at?: string | null
           status?: string
           title?: string
           updated_at?: string
@@ -281,6 +328,8 @@ export type Database = {
           is_pinned: boolean
           raw_status: string
           resolution: string | null
+          results_hidden: boolean
+          results_hidden_changed_at: string | null
           status: string
           title: string
           updated_at: string
@@ -297,6 +346,8 @@ export type Database = {
           is_pinned?: never
           raw_status?: never
           resolution?: never
+          results_hidden?: never
+          results_hidden_changed_at?: never
           status?: never
           title?: never
           updated_at?: never
@@ -313,6 +364,8 @@ export type Database = {
           is_pinned?: never
           raw_status?: never
           resolution?: never
+          results_hidden?: never
+          results_hidden_changed_at?: never
           status?: never
           title?: never
           updated_at?: never

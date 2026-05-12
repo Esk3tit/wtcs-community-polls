@@ -7,6 +7,7 @@
     "dev": "vite",
     "e2e": "playwright test --config e2e/playwright.config.ts",
     "generate": "tsr generate",
+    "gen:types": "supabase gen types typescript --linked > src/lib/types/database.types.ts",
     "build": "tsr generate && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
