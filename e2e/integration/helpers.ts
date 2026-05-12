@@ -87,25 +87,23 @@ export async function mintClients(opts?: {
     auth: { autoRefreshToken: false, persistSession: false },
   })
 
-  // Mint the authed client by signing the fixture user in via the public
-  // signInWithPassword path (lifted from e2e/helpers/auth.ts:86-95), then
-  // attach the resulting access_token as the Authorization header so EFs
-  // and RLS see a real user. autoRefreshToken/persistSession are both off
-  // to keep the test deterministic.
-  const signInClient = createClient(SUPABASE_URL, anonKey, {
+  // Sign the fixture user in directly on the authed client so it carries an
+  // in-memory session. invokeEF reads the access_token via getSession();
+  // splitting the sign-in across a separate signInClient leaves authed with
+  // no session, getSession() returns null, and invokeEF falls back to the
+  // anon key — silently flipping every EF call into the "no authenticated
+  // user" path. autoRefreshToken/persistSession are both off so the session
+  // lives only for the duration of the test.
+  const authed = createClient(SUPABASE_URL, anonKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   })
-  const { data, error } = await signInClient.auth.signInWithPassword({
+  const { data, error } = await authed.auth.signInWithPassword({
     email: user.email,
     password: FIXTURE_PASSWORD,
   })
   if (error || !data.session) {
     throw error ?? new Error(`signInWithPassword returned no session for ${user.email}`)
   }
-  const authed = createClient(SUPABASE_URL, anonKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-    global: { headers: { Authorization: `Bearer ${data.session.access_token}` } },
-  })
 
   return { anon, authed, serviceRole: getServiceRoleClient() }
 }
