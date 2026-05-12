@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Admin Visibility Controls
-status: Phase 11 shipped — migration 10 + 13 EFs deployed to production Supabase (cbjspmwgyoxxqukcccjr). audit_log table live, vote_counts RLS hardened (no admin-OR), polls_effective re-projects results_hidden columns, toggle-results-visibility EF reachable. v1.2 milestone advances 0/3 → 1/3 phases.
-stopped_at: Phase 11 complete — Plan 11-05 deploy gate landed (migration via MCP apply_migration; 13 EFs via MCP deploy_edge_function). Ready to plan Phase 12.
-last_updated: "2026-05-11T23:59:59.000Z"
-last_activity: 2026-05-11 -- Phase 11 shipped (migration 10 + 13 EFs live in prod; 8 schema gates verified; smoke audit_log INSERT/SELECT round-trip green)
+status: Phase 11 fully closed — original ship (migration 10 + 13 EFs) + code-review followup (migration 11 + 8 EF redeploys) all landed on prod. audit_log now has ON DELETE SET NULL on actor_id FK + CHECK constraint on target_id (UUID case-insensitive | snowflake | NULL). Code-review loop converged in 3 iterations (0 critical, 5 warning, 8 info; 14 closed, 1 deferred-by-design).
+stopped_at: Phase 11 + code-review-fix deploy complete. Ready to plan Phase 12.
+last_updated: "2026-05-12T00:30:00.000Z"
+last_activity: 2026-05-12 -- Phase 11 code-review fix deploy: migration 11 applied + 8 EFs redeployed to prod; all gates green; zero new advisor findings
 progress:
   total_phases: 3
   completed_phases: 1
