@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from '@tanstack/react-router'
-import { ChevronLeft, Loader2, AlertCircle } from 'lucide-react'
+import { useNavigate, Link } from '@tanstack/react-router'
+import { ChevronLeft, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { supabase } from '@/lib/supabase'
 import { ChoicesEditor } from './ChoicesEditor'
@@ -33,6 +34,7 @@ export function SuggestionForm({ mode, pollId }: Props) {
     new Date(Date.now() + 7 * 86400_000).toISOString(),
   )
   const [categoryId, setCategoryId] = useState<string | null>(null)
+  const [resultsHidden, setResultsHidden] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [voteCount, setVoteCount] = useState(0)
   const [loaded, setLoaded] = useState(mode === 'create')
@@ -82,6 +84,7 @@ export function SuggestionForm({ mode, pollId }: Props) {
             : new Date(Date.now() + 7 * 86400_000).toISOString(),
         )
         setCategoryId(poll.category_id ?? null)
+        setResultsHidden(Boolean(poll.results_hidden))
       }
       if (ch && ch.length > 0) setChoices(ch.map((c: { label: string }) => c.label))
       if (vc)
@@ -112,6 +115,7 @@ export function SuggestionForm({ mode, pollId }: Props) {
       image_url: imageUrl,
       closes_at: closesAt,
       category_id: categoryId,
+      results_hidden: resultsHidden,
     })
     if (!result.ok) {
       setErrors(result.errors)
@@ -137,13 +141,12 @@ export function SuggestionForm({ mode, pollId }: Props) {
   if (loadError) {
     return (
       <div className="max-w-2xl mx-auto px-4 md:px-6 py-6">
-        <button
-          type="button"
-          onClick={() => navigate({ to: '/admin' })}
+        <Link
+          to="/admin"
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
         >
           <ChevronLeft className="h-4 w-4 mr-1" /> Back to admin
-        </button>
+        </Link>
         <Alert variant="destructive" role="alert">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Couldn't load this suggestion</AlertTitle>
@@ -160,13 +163,12 @@ export function SuggestionForm({ mode, pollId }: Props) {
 
   return (
     <div className="max-w-2xl mx-auto px-4 md:px-6 py-6">
-      <button
-        type="button"
-        onClick={() => navigate({ to: '/admin' })}
+      <Link
+        to="/admin"
         className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
       >
         <ChevronLeft className="h-4 w-4 mr-1" /> Back to admin
-      </button>
+      </Link>
       <h1 className="text-2xl font-semibold mb-6">
         {mode === 'create' ? 'New suggestion' : 'Edit suggestion'}
       </h1>
@@ -218,6 +220,58 @@ export function SuggestionForm({ mode, pollId }: Props) {
           error={errors.closes_at}
         />
         <CategoryPicker value={categoryId} onChange={setCategoryId} disabled={locked} />
+
+        {/* Create-mode renders the editable checkbox; edit-mode renders a read-only
+            status row because update-poll EF does not persist results_hidden — admins
+            flip it from the admin-list Switch (toggle-results-visibility EF). */}
+        <div className="space-y-2">
+          {mode === 'create' ? (
+            <>
+              <div className="flex items-start gap-2 min-h-[44px]">
+                <Checkbox
+                  id="results-hidden"
+                  data-testid="visibility-checkbox"
+                  checked={resultsHidden}
+                  onCheckedChange={(v) => setResultsHidden(v === true)}
+                />
+                <Label
+                  htmlFor="results-hidden"
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  Hide results from voters
+                </Label>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Voters with responses will see a placeholder instead of counts. Toggle anytime from the admin list.
+              </p>
+            </>
+          ) : (
+            <>
+              <div
+                className="flex items-start gap-2 min-h-[44px]"
+                data-testid="visibility-status"
+              >
+                {resultsHidden ? (
+                  <EyeOff
+                    className="h-4 w-4 text-muted-foreground mt-0.5"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <Eye
+                    className="h-4 w-4 text-foreground mt-0.5"
+                    aria-hidden="true"
+                  />
+                )}
+                <span className="text-sm font-medium">
+                  {resultsHidden ? 'Results currently hidden' : 'Results currently visible'}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Toggle from the admin list to change visibility.
+              </p>
+            </>
+          )}
+        </div>
 
         <div className="sticky bottom-0 bg-background border-t py-4 px-4 -mx-4 md:static md:mx-0 md:px-0 md:border-0 md:pt-6 flex items-center justify-end gap-2">
           <Button type="button" variant="ghost" onClick={() => navigate({ to: '/admin' })}>

@@ -31,6 +31,15 @@ vi.mock('@/hooks/useUploadImage', () => ({
 const navigateMock = vi.fn()
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => navigateMock,
+  Link: ({
+    children,
+    to,
+    ...props
+  }: { children: React.ReactNode; to: string } & Record<string, unknown>) => (
+    <a href={to} data-to={to} {...props}>
+      {children}
+    </a>
+  ),
 }))
 
 // --- Supabase mock (per-test configurable) ------------------------------
