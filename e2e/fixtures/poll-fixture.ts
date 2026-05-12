@@ -61,6 +61,13 @@ export const test = base.extend<PollFixtures>({
     // hasText: freshPoll.title })` would match BOTH cards and `.first()`
     // becomes non-deterministic. workerIndex is stable per worker
     // process and effectively zero-cost.
+    //
+    // NOTE: Some specs (e.g. results-visibility.spec.ts) build their own
+    // `[E2E] ... ${Date.now()}` title outside the fixture because they
+    // need the poll-creation path to go through the production EF UI,
+    // not the service-role insert here. If a future refactor unifies
+    // title generation, prefer extracting a shared `buildE2eTitle()`
+    // helper over duplicating the slugger here.
     const title = `[E2E] ${slug} ${Date.now()}-${testInfo.workerIndex}`
 
     const { data, error } = await admin
