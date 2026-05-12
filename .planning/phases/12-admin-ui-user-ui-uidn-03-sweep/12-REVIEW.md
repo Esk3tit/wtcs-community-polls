@@ -1,6 +1,6 @@
 ---
 phase: 12-admin-ui-user-ui-uidn-03-sweep
-reviewed: 2026-05-12T00:00:00Z
+reviewed: 2026-05-12T16:47:00Z
 depth: deep
 files_reviewed: 16
 files_reviewed_list:
@@ -21,200 +21,225 @@ files_reviewed_list:
   - src/hooks/useVoteCounts.ts
   - src/lib/types/database.types.ts
 findings:
-  critical: 2
-  warning: 6
-  info: 5
-  total: 13
+  critical: 0
+  warning: 1
+  info: 4
+  total: 5
 status: issues_found
 ---
 
-# Phase 12: Code Review Report
+# Phase 12: Code Review Report (Iteration 2)
 
-**Reviewed:** 2026-05-12T00:00:00Z
+**Reviewed:** 2026-05-12T16:47:00Z
 **Depth:** deep
 **Files Reviewed:** 16
 **Status:** issues_found
 
 ## Summary
 
-Phase 12 ships VIS-06 (admin Checkbox at create), VIS-07 (admin Switch + optimistic toast on `AdminSuggestionRow`), VIS-08 (voter hidden-state Alert + 8s polling on `polls_effective`), UIDN-03 (shadcn cleanup), and TEST-13 (Playwright happy-path). The `polls_effective` read invariant is preserved across the changed files (`useVoteCounts.ts` and `AdminSuggestionsTab.tsx` both go through the view; the lint-time regex guard in `polls-effective-invariant.test.ts` remains satisfied for the new code).
+Iteration 2 re-review of the auto-fix loop. Iteration 1's BLOCKER fixes (CR-01 per-poll inflight `Set`, CR-02 functional `setItems`) and WARNING fixes (WR-01..05) are correctly implemented and verified through trace analysis of the optimistic-flip + polling paths. Gate replay (lint 0, tsc 0, vitest 14/14 on the touched specs) reproduces clean.
 
-Cross-file analysis surfaced two **BLOCKER** correctness defects:
+WR-06 (rot-tag removal from `src/`) is **incomplete**: six rot-tag comments still live under `src/__tests__/`. The CR/WR/IN tag taxonomy is in scope of CLAUDE.md's "no review-round / phase-ID archaeology in `src/`" rule — `src/__tests__/` is unambiguously `src/`. This is the only outstanding WARNING.
 
-1. The `useToggleResultsVisibility` hook holds a *singleton* `inflightRef` gate. The caller (`AdminSuggestionsTab`) advertises **per-row** independence via a `pendingVisibility: Set<string>` and disables only the originating row's `Switch` — but a second row's flip submitted while the first is in flight is **silently swallowed** by the hook's early return. The optimistic UI flips back when no EF call is ever made, with no toast and no recovery path. This breaks the "multiple rows in-flight independently" contract written into the inline comment.
+Four INFO-level concerns are net-new (not present in iteration 1) — three are minor quality regressions introduced by the iteration-1 rewrites, one is a pre-existing trivial-assertion test that the iteration-1 audit missed.
 
-2. The `handleToggleResultsVisibility` (and `handleTogglePin`) optimistic-update closure captures `items` lexically and rolls back to `prev = items`. Two concurrent flips against different rows race: the second flip's `prev` snapshot already contains the first flip's optimistic mutation, and on first-flip failure the revert path restores the *combined* state, masking the second flip's effect. Functional `setItems` (or per-poll diff-revert) is required.
-
-The remaining warnings concern stale-closure / render-phase mutation in `useVoteCounts`, an out-of-scope WHY-only-comment policy breach across six source files, and an E2E spec assertion that does not match the production hidden-alert markup. Findings below are ordered by severity.
-
-## Critical Issues
-
-### CR-01: `useToggleResultsVisibility` global inflight gate silently drops concurrent per-row flips
-
-**File:** `src/hooks/useToggleResultsVisibility.ts:14-15`
-**Issue:** The hook returns one closure with one `inflightRef`. The early-return `if (inflightRef.current) return { ok: false as const }` blocks the EF invoke for *any* second call while another is in flight — regardless of `poll_id`. But the consumer in `AdminSuggestionsTab` (line 121) optimistically flips `results_hidden` for the second row, sets a per-row pending entry, then receives `{ ok: false }` *without* a toast (the hook's error toasts only fire after a real `error` or `catch`, never on the inflight bail-out). The result: the row's `results_hidden` is reverted via `setItems(prev)` (which itself is buggy — see CR-02), no user-facing feedback is given, and the admin has no idea the second click was ignored. The inline header comment explicitly claims "Per-row pending Set lets multiple rows be in-flight independently" — the hook breaks that contract.
-
-**Fix:** Move the inflight guard from a hook-singleton to a per-poll key, or drop it entirely (the caller already disables the originating row's Switch via `isPendingVisibility`, which is the actual rapid-double-click guard for a single row). Minimal patch:
-
-```typescript
-const inflightRef = useRef<Set<string>>(new Set())
-
-const toggleResultsVisibility = useCallback(
-  async (input: { poll_id: string; hidden: boolean; title: string }) => {
-    if (inflightRef.current.has(input.poll_id)) return { ok: false as const }
-    inflightRef.current.add(input.poll_id)
-    setSubmitting(true)
-    try {
-      // ...existing body...
-    } finally {
-      inflightRef.current.delete(input.poll_id)
-      setSubmitting(inflightRef.current.size > 0)
-    }
-  },
-  [],
-)
-```
-
-### CR-02: Optimistic-revert closures in `AdminSuggestionsTab` race on concurrent flips and restore stale state
-
-**File:** `src/components/admin/AdminSuggestionsTab.tsx:97-115, 121-148`
-**Issue:** Both `handleTogglePin` and `handleToggleResultsVisibility` capture `items` lexically and use `prev = items` as the revert snapshot. The closures are recreated whenever `items` changes (it's in the dep list), but a click handler that has *already started awaiting* the EF call holds the **pre-await** `items` value. If a second flip lands between (a) the first flip's `setItems(optimistic)` and (b) the first flip's await resolution, the second handler's `prev = items` is now the post-first-flip optimistic state. On first-flip *failure*, `setItems(prev)` restores the snapshot that **already contains the second flip's mutation only as a base** — but the second flip's `target` lookup also reads from a stale list, so its own optimistic mutation may layer atop pre-first-flip state. Net effect: a failed flip can either (1) overwrite a successful sibling flip's optimistic state, or (2) leak the failed-flip's mutation into the post-revert tree. The `fetchAll()` reconciliation eventually corrects this, but only on success — *failed* paths return without reconciliation (lines 109-110 and 141-143).
-
-**Fix:** Use functional `setItems` updates that diff only the target row, so concurrent flips never trample each other:
-
-```typescript
-// Apply
-setItems((cur) =>
-  cur.map((it) => (it.id === pollId ? { ...it, results_hidden: nextHidden } : it)),
-)
-// Revert (on EF failure)
-setItems((cur) =>
-  cur.map((it) => (it.id === pollId ? { ...it, results_hidden: !nextHidden } : it)),
-)
-```
-
-The same fix applies to `handleTogglePin` — and because pin affects ordering, the revert path there must also re-sort. Alternative: trigger `fetchAll()` on the failure path too, accepting one extra round-trip in exchange for guaranteed convergence.
+No new BLOCKER-class defects were introduced. The fix commits did not regress any verified behavior in the e2e or unit specs that exercise these surfaces.
 
 ## Warnings
 
-### WR-01: `useVoteCounts` writes `pollIdsRef.current` during render (React 19 concurrent-mode hazard)
+### WR-01: Residual rot tags in `src/__tests__/` violate CLAUDE.md "no archaeology in src/" rule
 
-**File:** `src/hooks/useVoteCounts.ts:21-22`
-**Issue:** `pollIdsRef.current = votedPollIds` executes on every render of the consumer (`SuggestionList`). Ref mutation during render is explicitly called out as an anti-pattern in the React 19 docs because concurrent rendering may run a render that is later discarded — leaving the ref pointing at the discarded snapshot while the surviving render's `fetchCounts` reads it. The `pollIdsKey` dependency on `useCallback` (line 78) does the right thing only because `pollIdsRef` is mutated *before* `fetchCounts` reruns, but the assignment is order-fragile and StrictMode double-invocation in development can mask the race.
+**Files:**
+- `src/__tests__/admin/image-input.test.tsx:50` — `// bug UIDN-03 D-13 set out to fix).`
+- `src/__tests__/suggestions/suggestion-list.test.tsx:153` — `// Test 1: CATG-02 -- displays active suggestions from server-filtered query`
+- `src/__tests__/suggestions/suggestion-list.test.tsx:174` — `// Test 2: CATG-03 -- filters by category when pill is clicked`
+- `src/__tests__/suggestions/suggestion-list.test.tsx:214` — `// Test 3: CATG-04 -- searches by text with debounced input`
+- `src/__tests__/suggestions/suggestion-list.test.tsx:243` — `// Test 4: CATG-04 -- shows no-matches empty state when filters exclude all`
+- `src/__tests__/suggestions/suggestion-list.test.tsx:265` — `// Test 5: CATG-02 -- shows no-active empty state when no suggestions exist`
 
-**Fix:** Either thread `votedPollIds` directly into `fetchCounts` via dependency, or move the ref assignment into `useEffect`:
+**Issue:** The phase context for WR-06 enumerated `UIDN-03, VIS-08, MR-06, LR-07, RSLT-04, D-NN` as rot tags to remove. The iteration-1 sweep (commit `ac3e861`) cleared production source files but left six rot tags in test files. Two distinct violations are present:
 
-```typescript
-useEffect(() => {
-  pollIdsRef.current = votedPollIds
-}, [pollIdsKey])
+1. `image-input.test.tsx:50` carries `UIDN-03 D-13` — directly named in the WR-06 spec.
+2. `suggestion-list.test.tsx` carries five `CATG-NN` rot tags — not literally listed in WR-06's enumeration but unambiguously the same anti-pattern per CLAUDE.md (`feedback_no_review_archaeology_in_source.md`: "source comments WHY-only, never cite plan/round/phase IDs").
+
+The CLAUDE.md rule and the linked user memory both target `src/` as a whole, with no `__tests__/` exception. Leaving plan/phase IDs in tests rots identically once the planning artifacts are pruned — the test comment becomes a dangling reference to a phase ID with no surviving context.
+
+**Fix:** Replace the rot-tag prefixes with the actual behavioral description the test exercises. Both the test name string and the human comment already describe the behavior; the `CATG-02` / `UIDN-03 D-13` prefixes carry zero semantic weight to a future reader.
+
+```ts
+// src/__tests__/admin/image-input.test.tsx:50
+// Region MUST NOT also be a button (dual-role anti-pattern: a single
+// landing zone should not announce as both region AND button to AT).
+expect(
+  screen.queryByRole('button', { name: /image upload/i }),
+).toBeNull()
 ```
 
-Better still: drop the ref entirely. `pollIdsKey` is already a stable serialization; reconstruct `ids` from it inside `fetchCounts`:
-
-```typescript
-const fetchCounts = useCallback(async () => {
-  const ids = pollIdsKey ? pollIdsKey.split(',') : []
-  // ...
-}, [pollIdsKey])
+```ts
+// src/__tests__/suggestions/suggestion-list.test.tsx — replace each tagged comment
+// Test 1: displays active suggestions from server-filtered query
+// Test 2: filters by category when pill is clicked
+// Test 3: searches by text with debounced input
+// Test 4: shows no-matches empty state when filters exclude all
+// Test 5: shows no-active empty state when no suggestions exist
 ```
-
-### WR-02: `useVoteCounts` `pollIdsKey` is order-sensitive — reorderings cause spurious refetches and key collisions on commas
-
-**File:** `src/hooks/useVoteCounts.ts:20`
-**Issue:** `votedPollIds.join(',')` produces different strings for `['a','b']` vs `['b','a']`, even though the set of polls is identical. If `votedPollIds` ever surfaces with a different iteration order (e.g., after a Map mutation that changes insertion order — `userVotes` is a Map in `useSuggestions.ts:19`), `fetchCounts` is rebuilt and the polling timer in `usePolling` is reset (see `usePolling.ts:38` — the effect deps are `[delay]` only, but `fetchCounts` is re-passed each render and `savedCallback.current` updates do not reset the timer; however, the *initial-fetch* effect at `useVoteCounts.ts:81-83` does refire on every `fetchCounts` identity change). Additionally, `','` is not a separator that any UUID or text-id will contain today, but a future ID format with commas (unlikely but unguarded) would cause a key collision.
-
-**Fix:** Sort before joining, or use a Set-equality check:
-
-```typescript
-const pollIdsKey = useMemo(() => [...votedPollIds].sort().join('|'), [votedPollIds])
-```
-
-### WR-03: `useVoteCounts` `error` branch comments lie about "Keep previous counts" — code still drops to empty when `votedPollIds.length === 0` on subsequent ticks
-
-**File:** `src/hooks/useVoteCounts.ts:26-30`
-**Issue:** Lines 26-30 unconditionally call `setVoteCounts(new Map())` / `setResultsHidden(new Map())` when `ids.length === 0`. This is the correct behavior for the "user logged out / no votes" transition. But the comment at line 50 ("Keep previous counts rather than resetting to empty") implies the hook is robust to transient blips — it is *not* robust when the consumer momentarily passes an empty `votedPollIds` (which can happen during `useSuggestions` refetch if `userVotes` is initialized to `new Map()` and the `votedPollIds` derivation at `SuggestionList.tsx:33-36` runs before votes load). The result: voter-side UI briefly flips from "hidden-alert" to "ChoiceButtons" mid-poll when `userVotes` clears for a tick.
-
-**Fix:** Either (a) guard the reset behind a "we explicitly saw an empty list, not loading" signal from the caller, or (b) only reset when the previous tick also had zero ids. Lower-risk option: have `useSuggestions` not clobber `userVotes` mid-refetch — keep the previous Map until the new one arrives.
-
-### WR-04: `AdminSuggestionRow` `onCheckedChange` boolean conversion is needlessly contorted
-
-**File:** `src/components/admin/AdminSuggestionRow.tsx:90`
-**Issue:** `(v) => onToggleResultsVisibility(s.id, v === true ? false : true)` is the inverse of `v`, but written as a ternary on `v === true` it (a) suggests a non-boolean third state that does not exist in Radix `Switch.onCheckedChange` (which emits `boolean`), and (b) trips static analysis tools that flag tautology-style ternaries. If a future Radix release ever passed something other than `true`/`false` (it won't, by contract), the current expression collapses the third value to `true`, which silently *hides* results — the more dangerous direction.
-
-**Fix:** `onCheckedChange={(v) => onToggleResultsVisibility(s.id, !v)}`. Same semantics, far more obvious, and trivially correct for the entire boolean domain.
-
-### WR-05: E2E spec `results-visibility.spec.ts` asserts hidden-alert text "Your response" — but visible-result branch also renders results, and there is no negative assertion that the hidden Alert is in the alert subtree
-
-**File:** `e2e/tests/results-visibility.spec.ts:154-157`
-**Issue:** The assertion `expect(...).toContainText('Your response')` (line 156) is scoped to the hidden-alert wrapper testid, which is correct. But the wrapper testid `results-hidden-alert-${pollId}` (`SuggestionCard.tsx:134`) wraps **both** the "Your response: ..." line **and** the actual `<Alert>` with `<AlertTitle>Results temporarily hidden by admin</AlertTitle>`. The "Your response" text alone is also rendered by the *visible* branch via `ResultBars` (which highlights the user's vote with the choice label). A future refactor that moves the "Your response" copy into `ResultBars` would silently satisfy this assertion even with the alert wrapper hidden. The strong post-unhide assertion at line 176 (`[role="meter"]`) is properly stable; the hidden-state assertion should mirror it by targeting the Alert title.
-
-**Fix:** Replace the text assertion with the actual hide-state marker:
-
-```typescript
-await expect(
-  page.getByTestId(`results-hidden-alert-${createdPollId}`)
-).toContainText('Results temporarily hidden by admin')
-```
-
-### WR-06: WHY-only / no-rot-tag comment policy violated in six source files (MEMORY.md `feedback_no_review_archaeology_in_source`)
-
-**File:** multiple — see locations below
-**Issue:** Project policy (CLAUDE.md "Comments" + MEMORY.md `feedback_no_review_archaeology_in_source.md`) is explicit: "source comments WHY-only, never cite plan/round/phase IDs (rot tags); plan refs belong in PR/commit, not src/". The changed files introduce or retain the following rot tags:
-
-- `src/components/suggestions/form/DropZone.tsx:1` — `UIDN-03 D-13`, "v1.1 audit"
-- `src/components/suggestions/form/ImageInput.tsx:36, 101` — `LR-07`, `UIDN-03 D-13`
-- `src/components/suggestions/SuggestionList.tsx:16, 39, 66` — `MR-06`, `VIS-08`
-- `src/components/suggestions/SuggestionCard.tsx:127-129` — `VIS-08`
-- `src/hooks/useVoteCounts.ts:5, 13-15, 35` — `RSLT-04`, `VIS-08 D-11`
-- `src/components/admin/AdminSuggestionRow.tsx` — clean (no rot tags) — verified
-
-These are not "what does this code do" comments — they're plan-ID archaeology that becomes stale the moment ROADMAP changes. The TEST-13 spec header (`e2e/tests/results-visibility.spec.ts:6`) is borderline since spec headers in this project routinely cite tickets and live outside `src/`; flag is **info-tier** there (see IN-04).
-
-**Fix:** Rewrite each comment to explain the WHY without the ID. Example for `DropZone.tsx:1`:
-
-```typescript
-// Drag-region (outer div with role="region") and keyboard-Browse entry
-// (inner shadcn Button) are split so screen readers don't announce a
-// dual-role landing zone — see DESIGN-SYSTEM.md for the rationale.
-```
-
-The plan-ID is preserved in git history; the source comment should survive a `ROADMAP.md` rename.
 
 ## Info
 
-### IN-01: `AdminSuggestionRow` truncated title risks information loss without title-attribute fallback
+### IN-01: Closure-captured `title` mutated inside `setItems` updater (React purity violation)
 
-**File:** `src/components/admin/AdminSuggestionRow.tsx:81`
-**Issue:** `<p className="text-sm font-medium mt-1 truncate">{s.title}</p>` truncates with CSS but does not surface the full title via `title={s.title}` or an `aria-label`. Admins reviewing a list with similar titles ("Remove MiG-29 12-3..." × 5 variants) cannot disambiguate without clicking through.
-**Fix:** Add `title={s.title}` to the `<p>` so hover surfaces the full text and assistive tech can fall back to it.
+**File:** `src/components/admin/AdminSuggestionsTab.tsx:128-143`
 
-### IN-02: `AdminSuggestionRow` Switch `aria-label` reads current state, not the action it performs
+**Issue:** The iteration-1 functional-setItems fix introduced a side effect inside the state updater function. `title` is declared outside the updater (line 130), then reassigned inside the `setItems((cur) => { ... })` callback (line 133), then read after the updater completes (line 143).
 
-**File:** `src/components/admin/AdminSuggestionRow.tsx:93`
-**Issue:** `aria-label={resultsHidden ? 'Results currently hidden' : 'Results currently visible'}` describes the present state. Switch best-practice (W3C ARIA APG) is to label the toggle by the *control's purpose* and let `aria-checked` (which Radix sets via `data-state`) carry the current state. Screen readers will currently announce both: "Results currently visible, switch, on" which is mildly redundant. More importantly, the visible label next to the Switch (line 96-98) reads `resultsHidden ? 'Show results' : 'Hide results'` — describing the *action*, which is the opposite framing. Sighted and screen-reader users see/hear contradictory phrasings.
-**Fix:** Use a static action-oriented label: `aria-label="Toggle results visibility"`. Let `aria-checked` carry state.
+```ts
+let title = 'this suggestion'
+setItems((cur) => {
+  const target = cur.find((it) => it.id === pollId)
+  if (target) title = target.title          // <-- side effect inside pure updater
+  return cur.map((it) => ...)
+})
+...
+const res = await toggleResultsVisibility({ poll_id: pollId, hidden: nextHidden, title })
+```
 
-### IN-03: `useToggleResultsVisibility` `submitting` state is exported but unused by the caller
+React 19 in `StrictMode` (active per `src/main.tsx`) intentionally double-invokes state updaters in development to surface impure updaters. The reassignment is idempotent (`title` ends up with the same value either way), so the current behavior is correct — but the pattern silently violates the documented React contract and trains future readers that updaters can have side effects. If a future refactor changes the lookup to anything that can vary across invocations (e.g., a `Date.now()` stamp, a counter), the StrictMode-only second invocation will quietly desync the value.
 
-**File:** `src/hooks/useToggleResultsVisibility.ts:9, 44`
-**Issue:** `submitting` is returned (line 44) but `AdminSuggestionsTab` never destructures it (line 41 only takes `toggleResultsVisibility`). The per-row `pendingVisibility` Set is the actual loading-state surface. The unused `submitting` state still triggers re-renders of any future consumer that subscribes — and pairs awkwardly with the singleton inflight gate flagged in CR-01.
-**Fix:** Once CR-01 is fixed and the gate is per-poll, derive `submitting` from `inflightRef.current.size > 0` or remove it. Either way, drop unused returns.
+The pattern was unnecessary — the row was already in state when the user clicked the Switch on it, so `items.find(...)` outside the updater reads the same data without breaching the updater contract.
 
-### IN-04: TEST-13 spec header retains plan-ID archaeology (`VIS-06 + VIS-07 + VIS-08`, "ROADMAP SC4", "D-10", "D-16", "M7")
+**Fix:**
+```ts
+const handleToggleResultsVisibility = useCallback(
+  async (pollId: string, nextHidden: boolean) => {
+    // Read title from current state OUTSIDE the updater. The row is
+    // guaranteed to exist because the user just clicked its Switch.
+    const target = items.find((it) => it.id === pollId)
+    const title = target?.title ?? 'this suggestion'
 
-**File:** `e2e/tests/results-visibility.spec.ts:6-37`
-**Issue:** The spec header is dense with ROADMAP/plan IDs. Specs live outside `src/`, so the MEMORY.md prohibition is softer here, but the same drift risk applies: the IDs will become opaque the moment ROADMAP shifts. Mitigation is fine for now (per-project tolerance for test-tier IDs); flagging for parity with WR-06.
-**Fix:** Optional — paraphrase the cross-references to behavior ("admin checkbox at create time", "admin Switch with optimistic toast", "voter hidden-state alert with 8s polling") and let git blame surface the requirement ID.
+    setItems((cur) =>
+      cur.map((it) =>
+        it.id === pollId ? { ...it, results_hidden: nextHidden } : it,
+      ),
+    )
+    // ... rest unchanged
+  },
+  [items, toggleResultsVisibility, fetchAll],
+)
+```
 
-### IN-05: `poll-fixture.ts` references `[__smoke]` route and grep-tag stripping that is now unused by this spec
+Adding `items` to the dep array does not break the CR-02 correctness argument — that argument is about the `setItems` UPDATER not capturing stale state, which the functional form already handles. The `title` lookup is read-only and reading stale `items` is harmless (`title` is cosmetic toast copy only).
 
-**File:** `e2e/fixtures/poll-fixture.ts:52-57`
-**Issue:** The fixture sanitizes `[@grep-tag]` markers from `testInfo.title` for cosmetic readability in the rendered card title. `results-visibility.spec.ts` is the only consumer here and *does* carry `[@smoke]`, so the sanitization is exercised — but the spec also uses `Date.now()` to compose its title outside the fixture (line 46), so the fixture's title-uniqueness logic is duplicated. Not a defect — minor coupling cost.
-**Fix:** No action required. Note in case a future refactor consolidates title-generation.
+### IN-02: `useVoteCounts` lacks stale-response guard; concurrent `fetchCounts` can race
+
+**File:** `src/hooks/useVoteCounts.ts:35-99`
+
+**Issue:** Iteration 1 added the `pollIdsKey` `useMemo` to stabilize the dep, and the initial fetch is deferred via `deferSetState`. However, `fetchCounts` itself has no fetch-ID guard like the one in `AdminSuggestionsTab.tsx:42-83` (`fetchIdRef`).
+
+Two concurrent invocations are possible:
+1. The deferred initial-fetch macrotask (`useEffect` line 103-108) fires AFTER `usePolling` has already scheduled the first tick (line 32 of `usePolling.ts`: `timeoutId = setTimeout(tick, delay)`). Both setTimeouts can be in flight if `delay` is short or the initial fetch is slow.
+2. When `pollIdsKey` changes, the effect cleanup cancels the pending macrotask, BUT does not cancel an already-in-flight `fetchCounts` call from the previous `pollIdsKey`. The new effect schedules a fresh `fetchCounts`; both writes land via `setVoteCounts`/`setResultsHidden` in arrival order. The earlier (stale) result wins if it arrives last.
+
+The race is benign in steady state (8 s cadence, sub-second responses) but not impossible — e.g., a slow first response after sign-in followed by a rapid `userVotes` update yields the stale data displayed.
+
+`AdminSuggestionsTab` solved the same class of race with a `fetchIdRef` (line 45 increment + line 57/71/78/82 compare). For parity and defense-in-depth, `useVoteCounts` should adopt the same pattern.
+
+**Fix:** Add a monotonic ID and compare before each setState:
+```ts
+const fetchIdRef = useRef(0)
+const fetchCounts = useCallback(async () => {
+  const id = ++fetchIdRef.current
+  const ids = pollIdsKey ? pollIdsKey.split('|') : []
+  if (ids.length === 0) {
+    if (id !== fetchIdRef.current) return
+    setVoteCounts(new Map())
+    setResultsHidden(new Map())
+    return
+  }
+  const [vcResult, hiddenResult] = await Promise.all([...])
+  if (id !== fetchIdRef.current) return // stale
+  // ... setState calls
+}, [pollIdsKey])
+```
+
+### IN-03: Test `Browse Button is keyboard-reachable and activates with Enter` makes a tautological assertion
+
+**File:** `src/__tests__/admin/image-input.test.tsx:92-103`
+
+**Issue:** The test focuses the Browse button, asserts it has focus, sends `{Enter}`, then asserts:
+```ts
+expect(browse).toBeInTheDocument()
+```
+
+This assertion is true regardless of whether Enter did anything — the button never unmounts in this scenario. The test's title claims it verifies a keyboard regression but the body verifies nothing the focus/in-document checks didn't already prove. The companion test at lines 105-113 (`clicking Browse Button triggers the hidden file input`) DOES correctly use a click-spy on the hidden input; the Enter test should mirror that pattern.
+
+The test's own comment acknowledges the gap ("the actual file picker open cannot be observed in jsdom"), but the right response is to spy on the hidden input's `.click()` and assert it fired on Enter — that's exactly the regression the test claims to guard.
+
+**Fix:**
+```ts
+it('Browse Button is keyboard-reachable and activates with Enter (regression)', async () => {
+  const user = userEvent.setup()
+  const { container } = render(<ImageInput value={null} onChange={() => {}} />)
+  const hiddenInput = container.querySelector('input[type="file"]') as HTMLInputElement
+  const clickSpy = vi.spyOn(hiddenInput, 'click')
+  const browse = screen.getByRole('button', { name: /browse files/i })
+  browse.focus()
+  expect(browse).toHaveFocus()
+  await user.keyboard('{Enter}')
+  // Enter on a focused native button dispatches click, which calls openPicker(),
+  // which calls fileRef.current.click() — the actual regression contract.
+  expect(clickSpy).toHaveBeenCalled()
+})
+```
+
+### IN-04: Rapid double-click on same row's Switch creates a UX flicker without explanation
+
+**Files:**
+- `src/hooks/useToggleResultsVisibility.ts:17`
+- `src/components/admin/AdminSuggestionsTab.tsx:128-165`
+
+**Issue:** When the inflight gate (`inflightRef.current.has(input.poll_id)`) trips on a rapid second click on the SAME row, the hook returns `{ ok: false as const }` without toasting and without distinguishing this case from a real EF failure. The caller sees `!res.ok` and runs the revert + `fetchAll()` path identical to a real network error. The user sees the Switch flip-flicker (B→A→B) with no toast, no console warning, no aria-live status. This is indistinguishable from a flaky network from the user's perspective.
+
+The Switch's `disabled={isPendingVisibility}` prop guards against this in practice, but the window between the first click's event handler running (`setPendingVisibility` queued) and the next React render (Switch becomes disabled) is non-zero. In React 19 concurrent mode the gap can stretch under load.
+
+Additionally, after the second click hits the gate, the second handler's pending-removal step (line 144-148) DELETES the pollId from `pendingVisibility` while the FIRST request is still in flight — re-enabling the Switch prematurely. A third click in that window will hit the gate again.
+
+This is not a correctness bug — `fetchAll` reconciles eventually — but it is a UX defect introduced by the iteration-1 inflight-Set design.
+
+**Fix (one option):** Treat the inflight-gate trip as a distinct return shape and skip the optimistic-flip on the caller side:
+```ts
+// useToggleResultsVisibility.ts
+if (inflightRef.current.has(input.poll_id)) {
+  return { ok: false as const, reason: 'inflight' as const }
+}
+// ...
+return { ok: false as const, reason: 'error' as const }
+```
+```ts
+// AdminSuggestionsTab.tsx — short-circuit before optimistic state change
+if (pendingVisibility.has(pollId)) return
+```
+
+Alternative: track pending count per-pollId so the second click's delete doesn't decrement below the first click's lifetime. The fundamental design (separate inflight state in hook vs pending state in caller) duplicates the same concept in two places, which is the root cause of the desync.
 
 ---
 
-_Reviewed: 2026-05-12T00:00:00Z_
+## Reviewer Verification Notes
+
+The following iteration-1 fixes were verified through trace analysis:
+
+- **CR-01** (`useToggleResultsVisibility.ts:13-43`) — per-poll `Set` correctly admits concurrent flips on different rows. Confirmed via reading the gate-check at line 17 and the `finally` cleanup at line 39.
+- **CR-02** (`AdminSuggestionsTab.tsx:97-122, 128-165`) — both `handleTogglePin` and `handleToggleResultsVisibility` use functional `setItems((cur) => ...)`. No stale lexical capture of `items`.
+- **WR-01** (`useVoteCounts.ts:30-33`) — `pollIdsRef` mutation in render is gone; `pollIdsKey` is a `useMemo`-stabilized derived string.
+- **WR-02** (`useVoteCounts.ts:31`) — `[...votedPollIds].sort().join('|')` is order-insensitive.
+- **WR-03** (`useVoteCounts.ts:68-72, 84-89`) — transient fetch errors keep previous counts/`resultsHidden` rather than resetting. Note: the zero-ids path (line 41-50) intentionally RESETS (sign-out clears stale results); the "preserve prior counts" claim applies specifically to the network-error blip, not the zero-ids input. Verified consistent with the inline comments.
+- **WR-04** (`AdminSuggestionRow.tsx:90`) — `(v) => onToggleResultsVisibility(s.id, !v)`. Tautology removed.
+- **WR-05** (`results-visibility.spec.ts:163-165`) — `toContainText('Results temporarily hidden by admin')` asserts the AlertTitle copy directly.
+- **WR-06** — production source files clean; test files retain rot tags (see WR-01 above).
+
+Gates: Vitest passes on the touched specs (14/14). ESLint clean across all 15 files.
+
+---
+
+_Reviewed: 2026-05-12T16:47:00Z_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: deep_
