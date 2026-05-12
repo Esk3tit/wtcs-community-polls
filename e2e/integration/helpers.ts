@@ -14,7 +14,13 @@ import { fixtureUsers, FIXTURE_PASSWORD, type FixtureUser } from '../fixtures/te
 // SUPABASE_SERVICE_ROLE_KEY MUST be a loud failure, not a silent
 // false-green RLS test.
 
-const SUPABASE_URL = process.env.SUPABASE_URL ?? 'http://localhost:54321'
+// Accept either SUPABASE_URL (canonical name in supabase docs) or
+// VITE_SUPABASE_URL (the name vite.config.ts injects for the unit
+// suite, and the name the CI test-integration job exports). Falling
+// through to the localhost default keeps `npm run test:integration`
+// working out of the box for the local Supabase stack.
+const SUPABASE_URL =
+  process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? 'http://localhost:54321'
 
 function getAnonKey(): string {
   const k = process.env.VITE_SUPABASE_ANON_KEY
