@@ -69,11 +69,13 @@ Deno.serve(async (req) => {
     // Race-safe conditional UPDATE: matches only rows where the current
     // value differs from the target. Postgres row-locking serializes two
     // concurrent flips — the loser sees 0 rows and emits no audit row.
+    // .neq() is the idiomatic PostgREST "not equal" filter; the column is
+    // NOT NULL so no IS DISTINCT FROM nuance applies.
     const { data: changed, error: updErr } = await supabaseAdmin
       .from('polls')
       .update({ results_hidden: hidden, results_hidden_changed_at: new Date().toISOString() })
       .eq('id', poll_id)
-      .not('results_hidden', 'is', hidden)
+      .neq('results_hidden', hidden)
       .select('*')
       .maybeSingle()
     if (updErr) {
