@@ -1,8 +1,9 @@
 ---
 phase: 12
+cycle: 2
 reviewers: [gemini, codex]
 attempted_but_failed: [coderabbit, cursor]
-reviewed_at: 2026-05-12T09:43:27Z
+reviewed_at: 2026-05-12T10:04:44Z
 plans_reviewed:
   - 12-00-PLAN.md
   - 12-01-PLAN.md
@@ -13,50 +14,58 @@ plans_reviewed:
   - 12-06-PLAN.md
 ---
 
-# Cross-AI Plan Review — Phase 12
+# Cross-AI Plan Review — Phase 12 (Cycle 2)
 
 **Phase**: Admin UI + User UI + UIDN-03 Sweep
-**Reviewed at**: 2026-05-12T09:43:27Z
+**Reviewed at**: 2026-05-12T10:04:44Z
 **Reviewers invoked**: Gemini CLI, Codex CLI
 **Skipped**: Claude CLI (current runtime — independence)
-**Failed**: CodeRabbit (reviews git diff only, no working-tree changes for plan files), Cursor (usage limit hit)
+**Failed**: CodeRabbit (reviews git diff only, not phase plan files), Cursor (usage limit hit — same failure as cycle 1)
+
+**Cycle context**: Cycle 1 review (`b37296b`) surfaced 6 HIGH-severity concerns. Plans were replanned via `5686ff5` to address them. This cycle 2 review evaluates whether the cycle 1 HIGHs are now resolved and whether the replan introduced any new HIGH-severity concerns.
 
 ---
 
 ## Gemini Review
 
-# Phase 12 Plan Review: Admin UI + User UI + UIDN-03 Sweep
+This review evaluates implementation plans for Phase 12 of the WTCS Community Polls project. This is **cycle 2** of the review loop. The plans were revised in commit `5686ff5` to address 6 HIGH-severity concerns from cycle 1.
 
-This review covers the 7 execution plans (`12-00` through `12-06`) for the integration of admin visibility controls and the final cleanup of native button drifts.
+### Summary
 
-## 1. Summary
-The plans for Phase 12 are exceptionally well-structured, demonstrating a deep understanding of the existing codebase and architectural patterns. The strategy of breaking the work into three waves—foundation, implementation, and verification—is logical and minimizes dependency risks. The transition from the original `AlertDialog` requirement to a modern, optimistic `Switch + Toast` pattern is handled correctly at the documentation level (Plan 00) and implementation level (Plan 03). Security (RLS invariants) and accessibility (ARIA roles, touch targets) are treated as first-class citizens throughout the plans.
+The cycle 2 plans are of exceptional quality, demonstrating a deep understanding of the project's architectural constraints and the specific feedback from the previous round. All 6 cycle 1 HIGH concerns have been **FULLY RESOLVED**. The plans provide surgical instructions for complex UI state management, accessibility-first refactoring, and high-fidelity E2E testing using isolated browser contexts. The dependency ordering is correct, and the success criteria for Phase 12 are fully covered.
 
-## 2. Strengths
-*   **Foundation First:** Plan 00 ensures that type safety (`database.types.ts`) and UI primitives (`Checkbox`, `Switch`) are in place before feature work begins, preventing compile-time friction.
-*   **Pattern Consistency:** The new admin mutation hook (`useToggleResultsVisibility`) and its optimistic wiring in `AdminSuggestionsTab` perfectly mirror the established `usePinPoll` pattern.
-*   **Efficient Polling:** The extension of `useVoteCounts` to fetch `results_hidden` via `Promise.all` minimizes network round-trips while ensuring the voter UI stays reactive to admin changes.
-*   **A11y-First Refactoring:** The `DropZone` extraction in Plan 05 is a textbook example of resolving dual-role accessibility issues by separating pointer-based drag targets from keyboard-based button triggers.
-*   **Robust E2E Strategy:** The multi-context approach in `results-visibility.spec.ts` (Plan 06) and the 12s polling tolerance show high maturity in handling distributed state testing.
+### Cycle 1 HIGH Triage
 
-## 3. Concerns
+| Concern | Status | Evidence / Rationale |
+|:---|:---|:---|
+| **1. VIS-06 validator pass-through** | **FULLY RESOLVED** | **Plan 12-02 Task 12-02-01 Step 2:** Explicitly instructs to update `validateSuggestionForm` to include `results_hidden` in the sanitized return object, preventing silent stripping. |
+| **2. Edit-mode VIS-06 checkbox** | **FULLY RESOLVED** | **Plan 12-02 Task 12-02-02:** Implements a branch in `SuggestionForm.tsx` where the checkbox is editable only in `mode === 'create'`. In `edit` mode, it renders a read-only status row, avoiding no-ops against the `update-poll` EF. |
+| **3. TEST-13 happy-path coverage** | **FULLY RESOLVED** | **Plan 12-06 Task 12-06-02:** The spec is rewritten to use real UI flows for both admin-create and voter-submit. It explicitly removes the service-role bypass for the happy path. |
+| **4. TEST-13 final assertion strength** | **FULLY RESOLVED** | **Plan 12-06 Task 12-06-02 (Assertion B):** Mandates a "strong post-unhide check" (e.g., verifying `role="meter"` or response count text) to prove the visible results actually returned. |
+| **5. Plan 12-04 call-site coverage** | **FULLY RESOLVED** | **Plan 12-04 Task 12-04-02:** Includes `SuggestionList.tsx` in `files_modified` and correctly wires the `resultsHidden` map from the extended hook to the card props. |
+| **6. Verify-command masking** | **FULLY RESOLVED** | **All Plans:** The `||` masking issue is gone; plans now use `&&` or sequential commands (e.g., `npm run lint && npx tsc -b`) ensuring failures block the gate. |
 
-*   **UI/UX State Desync (Low Severity):** 
-    In `useVoteCounts.ts` (Plan 04), if the `polls_effective` query fails or lags behind the `vote_counts` query, there is a window where a voter might see an empty results bar (due to RLS returning 0 rows) before the "Results Hidden" Alert appears.
-    *   *Mitigation:* This is already acknowledged in the Plan 04 threat model (T-12-04-01). Since RLS protects the data, the risk is a minor UX "flicker," not an information leak.
+### New HIGH/MEDIUM Concerns
 
-*   **Test Selector Regression (Low Severity):**
-    The refactor of `ImageInput.tsx` (Plan 05) removes an outer `div role="region"` wrapper. If existing image-upload tests (unit or E2E) relied on that specific DOM nesting or the `role="region"` being on that specific element, they may need updates.
-    *   *Mitigation:* Plan 05 explicitly includes a task to re-run image-upload tests to confirm zero regressions.
+None identified. The replan is robust and avoids common pitfalls.
 
-## 4. Suggestions
-*   **Search Param Consistency:** In Plan 02, for the `Back to admin` links, while the current behavior routes correctly by default, explicitly adding `search={{ tab: 'suggestions' }}` to the `Link` component would ensure the user returns to the exact view they likely came from, even if defaults change in the future.
-*   **Loading Feedback on Create:** When an admin creates a poll with `results_hidden = true`, the `create-poll` EF (as of Phase 11) performs a post-RPC update and emits two audit rows. Plan 02 correctly passes the flag, but ensuring the "Saving..." spinner covers the duration of both operations (which it should, as the EF waits for both) is crucial for UX.
+### Strengths
 
-## 5. Risk Assessment
-**Overall Risk: LOW**
+- **E2E Realism:** Plan 12-06 uses separate Playwright browser contexts for the admin and the voter, perfectly simulating real-world cross-user interaction and polling behavior.
+- **State Granularity:** Plan 12-03 uses a `Set<string>` in `AdminSuggestionsTab` to track `pendingVisibility` per poll ID, allowing for independent in-flight states in a list view.
+- **A11y-First Refactor:** The `DropZone` refactor in Plan 12-05 correctly identifies and fixes a dual-role accessibility anti-pattern (drag target vs. click target) using a region/button split.
+- **Traceability:** Plan 12-06 includes detailed instructions for updating `REQUIREMENTS.md` with specific plan IDs and dates, maintaining a high standard of documentation.
 
-The backend foundations (RLS, Edge Functions, Schema) were successfully shipped and verified in Phase 11. Phase 12 is primarily a "wiring" phase. The plans include comprehensive validation steps (`tsc -b`, `npm run lint`, `npm run test`) at every stage and conclude with a full-loop E2E integration test. The use of optimistic updates with revert logic significantly lowers the risk of UI/Server state divergence.
+### Suggestions
+
+- **Test Mock Locations:** In Plan 12-04, the executor is asked to update `useVoteCounts` mocks. The plan correctly suggests searching via `grep`, which is the right approach given the ambiguity of where the mock might reside (unit vs component test folders).
+- **Date Consistency:** As noted in Plan 12-06, the executor should ensure the `2026-MM-DD` placeholders are updated to the actual system date during execution.
+
+### Risk Assessment: LOW
+
+The plans are exhaustive, use standard project idioms (`usePinPoll` as precedent), and include defensive programming (e.g., `Boolean` coercion in maps, strict type regeneration). The risk of regression or failure is minimal.
+
+**Phase 12 is ready for execution.**
 
 ---
 *Reviewer: Gemini CLI*
@@ -66,109 +75,120 @@ The backend foundations (RLS, Edge Functions, Schema) were successfully shipped 
 
 ## Codex Review
 
-## Summary
+### Summary
 
-The plans are thorough and mostly well-sequenced, but I would not approve them as-is. The architecture is sound: Phase 11 owns schema/RLS/EF, Phase 12 wires UI, and the Switch-over-AlertDialog drift is explicitly reconciled. The main risk is that several plans contain internal contradictions or stale assumptions against the current repo, especially VIS-06 form pass-through, `SuggestionCard` call-site wiring, E2E coverage, and verification commands that can mask failing tests.
+Cycle 2 is materially stronger than cycle 1. The plans now address the main VIS-06 pass-through, edit-mode no-op, `SuggestionList` call-site, and TEST-13 assertion gaps. I do still see one HIGH concern around the TEST-13 implementation skeleton being brittle/non-executable as written, plus several MEDIUM issues that will likely surface during `npm run test` or E2E implementation.
 
-## Strengths
+### Cycle 1 HIGH Triage
 
-- Clear wave ordering: foundation first, independent UI slices in Wave 2, E2E/traceability last.
-- Good security posture: mutation goes through the admin-gated EF; voter aggregate visibility still relies on RLS, not React branching.
-- Strong UI specificity: Switch behavior, mobile label/icon treatment, hidden-state copy, and DropZone semantics are well-defined.
-- Good recognition of the canonical spec drift: Plan 00 correctly updates VIS-07 from AlertDialog/Button to Switch/toast.
-- UIDN-03 scope is mostly disciplined and avoids pulling deferred list-card cleanup into Phase 12.
-- Test IDs are planned for the new cross-surface E2E path, which is the right move for brittle admin/voter flows.
+| # | Concern | Status | Evidence |
+|---|---|---|---|
+| 1 | VIS-06 validator drops `results_hidden` | **FULLY RESOLVED** | Plan 12-02 now says `validateSuggestionForm` "MUST be updated to include `results_hidden: input.results_hidden === true`" and adds true/omitted validator tests. |
+| 2 | Edit-mode checkbox silently no-ops | **FULLY RESOLVED** | Plan 12-02 makes the editable checkbox create-only and says edit mode renders a read-only status row: "Toggle from the admin list to change visibility." |
+| 3 | TEST-13 bypasses real admin/voter flows | **PARTIALLY RESOLVED** | The must-have now requires "REAL UI flows" and "NO service-role `votes` INSERT bypass," but Plan 12-06 still has stale objective/threat-model text about "freshPoll fixture extension that adds a vote-cast helper" and "Playwright service-role insert into `votes`." Clean this contradiction. |
+| 4 | TEST-13 final assertion too weak | **FULLY RESOLVED** | Plan 12-06 now requires hidden alert disappearance **and** a restored result marker: response footer, `role="meter"`, or `100%`. |
+| 5 | Plan 12-04 missed `SuggestionList` call site | **FULLY RESOLVED** | Plan 12-04 includes `src/components/suggestions/SuggestionList.tsx` in `files_modified` and explicitly wires `resultsHidden={resultsHidden.get(suggestion.id) ?? false}`. |
+| 6 | Verify command masking with `\|\| npx tsc -b` | **FULLY RESOLVED** | Current verification uses `&&` / separate commands; no masked `test \|\| tsc` gate remains. |
 
-## Concerns
+### New Concerns
 
-- **HIGH: VIS-06 pass-through is likely broken.** `validateSuggestionForm` currently returns an explicit sanitized object and would drop `results_hidden` unless the return value is updated. Plan 12-02 says the validator can remain unchanged, which conflicts with the must-have that it “accepts and passes it through.”
+#### HIGH: TEST-13 skeleton is still brittle as written
 
-- **HIGH: Edit-mode visibility checkbox conflicts with current EF behavior.** `update-poll` does not accept or persist `results_hidden`. If the checkbox is enabled in edit mode for no-vote polls, admins can change it, save successfully, and see no actual visibility change. Either hide/disable this checkbox outside create mode or route edit-mode visibility changes through `toggle-results-visibility`.
+Plan 12-06 has the right intent, but the provided skeleton is likely to fail or flake:
 
-- **HIGH: TEST-13 does not actually cover the promised happy path.** Plan 12-06 says “admin creates poll” and “voter casts vote,” but the proposed spec uses `freshPoll` plus a service-role vote insert. That bypasses the admin creation UI, the VIS-06 default field, and the voter submit flow.
+- `await adminPage.waitForURL(/\/admin/)` can match `/admin/suggestions/new`, the same issue already fixed in `admin-create.spec.ts`.
+- The switch ID capture uses `.filter({ has: adminPage.locator('xpath=ancestor::*[...]') })`; `has` should match within the candidate subtree, so ancestor filtering from the switch is unreliable.
+- The choice selector ignores the existing stable `data-testid="choice-button"` pattern and uses a broad `.first()` without the existing E2E-SCOPE escape-hatch comments.
 
-- **HIGH: TEST-13 final assertion is too weak.** It only checks that the hidden alert disappears after “show,” not that result bars/counts return. A blank/incorrect branch would pass.
+This is fixable, but TEST-13 is the phase integration sentinel, so the plan should be concrete and copy the known-good `admin-create.spec.ts` / `browse-respond.spec.ts` selector patterns.
 
-- **HIGH: Plan 12-04 omits the actual call-site file.** `SuggestionCard` is rendered by `src/components/suggestions/SuggestionList.tsx`, not directly by route files. That file must be in `files_modified`, and its tests/mocks need updates.
+#### MEDIUM: Unit-test mocks are still underplanned
 
-- **HIGH: Several verify commands can mask test failures.** Patterns like `npm run test ... || npx tsc -b` allow a failing test command to be treated as success if typecheck passes. That defeats the verification gate.
+Plan 04 handles `useVoteCounts` mocks, but other mock breakages are likely:
 
-- **MEDIUM: Hook-level inflight guard conflicts with per-row pending state.** `useToggleResultsVisibility` has a single `inflightRef`, so one pending row blocks toggles on every other row, despite Plan 12-03 adding a per-row `pendingVisibility` set. Use either per-row guarding or remove the hook-global guard.
+- `src/__tests__/admin/suggestion-form.test.tsx` mocks `@tanstack/react-router` with only `useNavigate`; Plan 12-02 adds `Link`.
+- `src/__tests__/suggestions/suggestion-list.test.tsx` mocks `lucide-react` without `EyeOff`; Plan 12-04 imports it.
+- Admin suggestion mocks should include `results_hidden` to keep fixtures representative.
 
-- **MEDIUM: Hidden results may still show misleading “0 responses” footer.** When `results_hidden=true`, `vote_counts` returns zero rows. `SuggestionCard` currently derives footer totals from `voteCounts`, so the hidden alert branch may still show `0 responses`, which undermines the hidden-results UX.
+`npm run test` will catch this, but the plans should explicitly include these edits.
 
-- **MEDIUM: Unit test mocks will break.** `SuggestionForm` tests mock `@tanstack/react-router` without `Link`; `SuggestionList` mocks `useVoteCounts` without `resultsHidden`; lucide mocks may need `EyeOff`. The plans do not include test fixture/mock updates.
+#### MEDIUM: Admin response counts may be incompatible with Phase 11 RLS
 
-- **MEDIUM: E2E command is wrong.** `npx playwright test e2e/tests/results-visibility.spec.ts` does not necessarily load `e2e/playwright.config.ts`, so `baseURL`, global setup, and webServer behavior may be missing. Use `npm run e2e -- e2e/tests/results-visibility.spec.ts`.
+`AdminSuggestionsTab.tsx` still reads `vote_counts` directly from the browser client. Migration 10 says `vote_counts` is visible only to users who voted and when results are not hidden, and notes admin reads should go through service-role-backed paths. That means admin-list response counts can show `0` for admins who have not voted, especially hidden polls. Since Plan 03 touches this area, it should either fix the admin count path or document the accepted regression.
 
-- **LOW: Source-comment guidance is inconsistent.** Several plans propose comments containing `VIS-06`, `D-13`, `Phase 11`, etc., despite the project rule against phase/plan archaeology in `src/`.
+#### MEDIUM: Archive live-update promise is overstated
 
-- **LOW: Plan 00 frontmatter omits `package-lock.json`.** The shadcn command will likely update it; include it explicitly.
+Plan 12-04 says voter UI auto-updates within ~8s after admin flips, but `SuggestionList` currently sets `enablePolling = status === 'active'`. Archive pages fetch once. Initial archive render will be correct, but live hidden/show flips on archived suggestions will not update within 8s unless polling is enabled there too.
 
-## Suggestions
+### Strengths
 
-- Update Plan 12-02 so `validateSuggestionForm` returns `results_hidden: input.results_hidden === true`, and add unit tests for checked and unchecked create submissions.
+- The VIS-06 validator fix is precise and test-backed.
+- The edit-mode VIS-06 no-op is handled pragmatically with a read-only status row.
+- `polls_effective` remains the planned read boundary, with invariant tests preserved.
+- Plan 12-04 correctly puts `SuggestionList` in the write set.
+- TEST-13 now aims at real UI flows and a strong post-unhide assertion.
+- UIDN-03 scope stays tight and does not pull in deferred list-card work.
 
-- Make VIS-06 create-only unless there is a deliberate edit-mode implementation. If shown in edit mode, it should be read-only or clearly delegated to the admin-list Switch.
+### Suggestions
 
-- Add `src/components/suggestions/SuggestionList.tsx` and relevant tests to Plan 12-04’s file list.
+- Clean Plan 12-06 stale objective/threat-model references to `castVoteOnFreshPoll` and service-role vote inserts.
+- Rewrite TEST-13 selectors using existing stable patterns: `admin-create-suggestion`, `suggestion-form-submit`, `suggestion-card` filtered by title, and `choice-button`.
+- Capture the UI-created poll ID by querying service role by unique title during cleanup/setup, or add a row-level testid on `AdminSuggestionRow`; avoid ancestor XPath through `has`.
+- Add a small automated create-checked assertion for VIS-06, since TEST-13 leaves the checkbox unchecked.
+- Add explicit test mock updates for `Link`, `EyeOff`, and `results_hidden` fixtures.
 
-- In hidden mode, suppress footer aggregate text or derive a hidden-safe footer state so voters do not see fake `0 responses`.
+### Risk Assessment
 
-- Replace every `test || tsc` verification command with strict `&&` chains or separate required commands.
+**Overall risk: MEDIUM.** The cycle 1 architectural gaps are mostly fixed, but Plan 12-06 still needs tightening before execution, and there are predictable unit-test/mock failures. No remaining security-boundary issue stands out in the Phase 12 plans, but the admin count/RLS mismatch deserves a decision before shipping.
 
-- Rework `useToggleResultsVisibility` so the inflight guard is keyed by poll ID, or rely on row-level disabled state only.
-
-- Make TEST-13 either truly perform admin creation and voter vote, or rename/scope it honestly and add a second UI test for VIS-06. The current version is a useful integration test, but it does not satisfy the stated success criteria.
-
-- Strengthen TEST-13’s final visible-state assertion with card-scoped `role="meter"` or `"1 total response"` checks after unhiding.
-
-- Update Vitest mocks as part of the relevant plans, not as incidental fallout.
-
-## Risk Assessment
-
-**Overall risk: HIGH** until the issues above are fixed. The core design is viable, and the security model is mostly solid because RLS/EF boundaries remain intact. The risk is execution quality: the current plans can produce a build/test failure, a silently nonfunctional VIS-06 path, and an E2E test that passes without proving the actual Phase 12 success criteria.
+---
+*Reviewer: Codex CLI*
+*Date: 2026-05-12*
 
 ---
 
 ## Consensus Summary
 
-Two reviewers (Gemini, Codex) examined the 7 plans plus CONTEXT and UI-SPEC. They agree the architecture is sound — Phase 11 owns schema/RLS/Edge Functions, Phase 12 is the UI wiring — and that the Switch+toast drift from the original AlertDialog requirement is properly reconciled in Plan 00. They diverge sharply on overall risk: Gemini rates the phase LOW risk (a "wiring phase" with solid backend foundations), while Codex rates it HIGH risk citing six specific contradictions between the plans and the current repo that could yield a silently nonfunctional VIS-06 path or an E2E test that passes without proving the success criteria.
+Two reviewers (Gemini, Codex) examined the cycle 2 plans plus CONTEXT and UI-SPEC. They **agree** that cycle 1's 5 of 6 HIGH concerns are fully resolved (validator pass-through, edit-mode no-op, TEST-13 final assertion strength, Plan 12-04 call-site coverage, verify-command masking). They **diverge** on:
+
+- **Cycle 1 #3 (TEST-13 happy-path coverage)** — Gemini marks FULLY RESOLVED ("The spec is rewritten to use real UI flows"). Codex marks PARTIALLY RESOLVED, flagging that Plan 12-06 still contains stale objective/threat-model prose referencing the old `castVoteOnFreshPoll` helper and service-role vote inserts even though the must-have section has been corrected. The contradiction is documentation hygiene, not a functional gap — but Codex's finding is verifiable against the plan text and should be addressed before execution.
+- **One NEW HIGH from Codex** — TEST-13 skeleton brittleness (waitForURL regex matches `/admin/suggestions/new`; `has` filter with ancestor XPath unreliable; choice selector ignores stable `data-testid="choice-button"` pattern). Gemini did not raise this.
+- **Overall risk** — Gemini LOW, Codex MEDIUM. The MEDIUM rating is driven entirely by execution-quality concerns in Plan 12-06 (TEST-13) plus three MEDIUM concerns (mock updates, admin count RLS mismatch, archive polling promise).
 
 ### Agreed Strengths
 
-- **Wave ordering is sound**: Wave 1 foundation (types + primitives), Wave 2 parallel UI slices, Wave 3 E2E + traceability — both reviewers approve.
-- **Pattern consistency**: New `useToggleResultsVisibility` hook mirrors the established `usePinPoll` optimistic pattern (both reviewers).
-- **Security posture intact**: Mutations go through the admin-gated Edge Function; voter aggregate visibility stays on RLS, not React branching (both reviewers).
-- **Plan 00 correctly handles canonical drift**: Updates VIS-07 wording from AlertDialog/Button to Switch/toast per CONTEXT D-01 (both reviewers).
-- **A11y/UI specificity is strong**: DropZone separation in Plan 05, Switch mobile treatment, hidden-state copy all well-defined (Gemini explicit; Codex implicit).
+- All cycle 1 HIGHs except TEST-13 stale prose are confirmed resolved by both reviewers.
+- Plan 12-04 `SuggestionList.tsx` call-site coverage is correct (both reviewers).
+- Plan 12-02 validator pass-through fix with create-only checkbox + edit-mode read-only row is sound (both reviewers).
+- TEST-13 now aims at real UI flows and a strong post-unhide assertion (both reviewers — Codex says intent is right even if skeleton is brittle).
+- Verify commands no longer mask test failures (both reviewers).
+- UIDN-03 scope stays tight; list-cards deferral to v1.3 is honored (both reviewers).
 
 ### Agreed Concerns
 
-The two reviews have minimal overlap in concerns — Gemini found only LOW issues (UI desync flicker, test selector regression), while Codex surfaced execution-quality gaps that Gemini did not catch. There is no concern raised by BOTH reviewers at HIGH severity. However, Codex's HIGH list (below) is highly specific and load-bearing — these are not stylistic objections but concrete contradictions between the plan text and the current codebase state.
+No HIGH-severity concerns are raised by both reviewers at HIGH severity. However, Codex's new HIGH (TEST-13 skeleton brittleness) and partial-resolution call on cycle 1 #3 (TEST-13 stale prose) are concrete and verifiable. Both touch Plan 12-06 specifically.
 
 ### Divergent Views
 
-- **Overall risk**: Gemini LOW vs. Codex HIGH. Resolution: Codex's HIGH concerns are concrete and verifiable against the repo (validator return shape, `update-poll` EF surface, call-site files). They should be treated as gating until verified.
-- **VIS-06 validator pass-through**: Gemini did not raise this. Codex flagged HIGH — `validateSuggestionForm` returns a sanitized explicit object and would drop `results_hidden` unless Plan 12-02's "validator unchanged" claim is wrong. **Action**: verify against `src/lib/validation/suggestionForm.ts` (or equivalent).
-- **Edit-mode visibility checkbox**: Gemini did not raise this. Codex flagged HIGH — `update-poll` EF does not persist `results_hidden`, so an edit-mode checkbox would silently no-op. **Action**: scope VIS-06 checkbox to create-only OR extend `update-poll` EF.
-- **TEST-13 happy-path coverage**: Gemini approved the multi-context E2E approach. Codex flagged HIGH — the `freshPoll` + service-role insert bypasses the admin-creation UI and voter submit flow that the SC4 contract names explicitly. **Action**: either route the test through real UI flows or scope SC4 honestly and add a second test.
-- **TEST-13 final assertion strength**: Gemini did not raise. Codex flagged HIGH — checking only that the hidden alert disappears can pass on a blank branch. **Action**: assert count bars/total response footer return.
-- **Plan 12-04 call-site coverage**: Gemini did not raise. Codex flagged HIGH — `SuggestionCard` is mounted via `SuggestionList.tsx`, which must appear in `files_modified` with its tests/mocks. **Action**: audit Plan 12-04 `files_modified`.
-- **Verify-command masking**: Gemini did not raise. Codex flagged HIGH — `npm run test ... || npx tsc -b` lets a failing test still pass the gate. **Action**: replace `||` with `&&` or split into required steps across all plans.
+- **TEST-13 stale prose in Plan 12-06**: Gemini approved end-to-end. Codex flagged PARTIAL with specific pointers to leftover `castVoteOnFreshPoll` / service-role insert text. **Action**: scrub Plan 12-06 objective + threat-model sections for the contradiction.
+- **TEST-13 skeleton selectors (NEW HIGH from Codex only)**: Codex argues `waitForURL(/\/admin/)` over-matches, ancestor XPath via `has:` is unreliable, and choice selector ignores stable `data-testid`. Gemini did not surface these. **Action**: rewrite TEST-13 skeleton to use existing `admin-create.spec.ts` / `browse-respond.spec.ts` selector patterns (`data-testid="admin-create-suggestion"`, `data-testid="suggestion-form-submit"`, `data-testid="choice-button"`).
+- **Admin count RLS mismatch (Codex MEDIUM only)**: `AdminSuggestionsTab` reads `vote_counts` from the browser client; Migration 10 says admin reads should use service-role. Could result in admin-list response counts showing `0` for non-voting admins, especially on hidden polls. Gemini did not raise. **Action**: decide explicitly (fix the admin count path OR document the regression in CONTEXT as a known limitation).
+- **Archive polling (Codex MEDIUM only)**: `SuggestionList` sets `enablePolling = status === 'active'`; archive polls won't get ~8s live updates after an admin flip. Gemini did not raise. **Action**: either enable polling for archive or scope the "8s auto-update" promise in CONTEXT/REQUIREMENTS to live polls only.
+- **Test mock updates (Codex MEDIUM only)**: `Link` mock missing in `suggestion-form.test.tsx`; `EyeOff` mock missing in `suggestion-list.test.tsx`; admin fixtures missing `results_hidden`. Gemini noted Plan 12-04 grep approach but didn't enumerate the other two. **Action**: explicitly add these mock updates to Plans 12-02 and 12-04.
 
 ### Recommended Triage
 
-Block Wave 2 execution until the six Codex HIGH items are either fixed in the plans or explicitly waived with rationale captured in CONTEXT.md:
+The cycle 1 → cycle 2 transition successfully resolved 5 of 6 architectural HIGHs. **One HIGH remains** (Codex-only, TEST-13 skeleton brittleness) and **one PARTIAL** (Codex-only, TEST-13 stale prose contradicting the must-have). Both live in Plan 12-06.
 
-1. VIS-06 validator return shape (Plan 12-02)
-2. Edit-mode VIS-06 checkbox scope (Plan 12-02)
-3. TEST-13 admin-create + voter-submit path (Plan 12-06)
-4. TEST-13 post-unhide visible-state assertion (Plan 12-06)
-5. Plan 12-04 `SuggestionList.tsx` call-site and mock updates
-6. Plan-level verify commands using `||` between test and typecheck (audit all 7 plans)
+**Before Wave 3 execution, fix Plan 12-06:**
+1. Scrub stale `castVoteOnFreshPoll` + service-role vote insert references from objective and threat-model sections to match the cycle 2 must-have ("REAL UI flows; NO service-role votes INSERT bypass").
+2. Rewrite the TEST-13 skeleton to use existing stable `data-testid` patterns (`admin-create-suggestion`, `suggestion-form-submit`, `choice-button`, `suggestion-card` filtered by title) and replace `waitForURL(/\/admin/)` with a tighter regex or pathname check.
+3. Capture the UI-created poll ID via service-role title lookup or a new row-level testid on `AdminSuggestionRow` — avoid ancestor XPath through `has:`.
 
-Medium and low items (hook inflight guard granularity, hidden-mode footer copy, mock fixture updates, E2E command form, source-comment archaeology, Plan 00 lockfile entry) can be addressed alongside the HIGH fixes or queued for execution-time follow-up.
+**Address before merge (MEDIUM):**
+- Decide admin count RLS path (fix or document).
+- Decide archive polling promise (enable or scope to live).
+- Add `Link`, `EyeOff`, and `results_hidden` test-mock updates to Plans 12-02 and 12-04.
 
 ---
 
@@ -180,4 +200,4 @@ Incorporate findings into planning:
 /gsd-plan-phase 12 --reviews
 ```
 
-Or address the HIGH items manually by editing the affected PLAN.md files and re-running `/gsd-review --phase 12 --all` to confirm convergence.
+Or address the HIGH item manually by editing Plan 12-06 and re-running `/gsd-review --phase 12 --all` to confirm convergence.
