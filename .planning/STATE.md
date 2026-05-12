@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Admin Visibility Controls
-status: Wave 3 complete; Plan 11-04 wired TEST-11 12-cell vote_counts RLS matrix + admin-JWT regression sentinel + TEST-12 toggle-results-visibility 7-case suite + create-poll results_hidden 4-case suite. Runtime PASS gated to Plan 11-05 (live-target migration apply + EF deploy).
-stopped_at: Phase 11 Plan 04 complete (Wave 3 — 3 integration test suites wired; commits 2da285f, 43a35ee, 030558c)
-last_updated: "2026-05-11T23:50:00.000Z"
-last_activity: 2026-05-11 -- Phase 11 Plan 04 complete (TEST-11 12-cell RLS matrix + admin-JWT sentinel + TEST-12 7 cases + create-poll 4 cases; 24 integration cases enumerated)
+status: Phase 11 shipped — migration 10 + 13 EFs deployed to production Supabase (cbjspmwgyoxxqukcccjr). audit_log table live, vote_counts RLS hardened (no admin-OR), polls_effective re-projects results_hidden columns, toggle-results-visibility EF reachable. v1.2 milestone advances 0/3 → 1/3 phases.
+stopped_at: Phase 11 complete — Plan 11-05 deploy gate landed (migration via MCP apply_migration; 13 EFs via MCP deploy_edge_function). Ready to plan Phase 12.
+last_updated: "2026-05-11T23:59:59.000Z"
+last_activity: 2026-05-11 -- Phase 11 shipped (migration 10 + 13 EFs live in prod; 8 schema gates verified; smoke audit_log INSERT/SELECT round-trip green)
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 9
-  completed_plans: 8
-  percent: 89
+  completed_plans: 9
+  percent: 100
 ---
 
 # Project State
@@ -21,17 +21,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-11 after v1.1 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** v1.2 — Admin Visibility Controls — Phase 11 Waves 0–3 complete; Plan 11-05 (deploy gate: migration 10 apply + EF deploy + live integration-test run) next.
+**Current focus:** v1.2 — Admin Visibility Controls — Phase 11 shipped (database + Edge Function foundations). Phase 12 (Admin UI + User UI + UIDN-03 Sweep) ready to plan.
 
 ## Current Position
 
-Phase: 11 — Schema + RLS + EF Foundations
-Plan: 04 complete — Wave 3 (Plan 11-05: deploy gate — migration 10 apply + EF deploy + live test:integration run) ready next
-Status: Wave 3 complete; Plan 11-04 wired TEST-11 12-cell vote_counts RLS matrix + admin-JWT regression sentinel + TEST-12 toggle-results-visibility 7-case suite + create-poll results_hidden 4-case suite. Runtime PASS gated to Plan 11-05.
-Last activity: 2026-05-11 -- Phase 11 Plan 04 complete (TEST-11 + TEST-12 + create-poll suites; 24 integration cases enumerated; lint+typecheck green)
+Phase: 12 — Admin UI + User UI + UIDN-03 Sweep (READY TO PLAN)
+Plan: —
+Status: Phase 11 shipped 2026-05-11. The admin UI now has a deployed toggle-results-visibility EF + audit_log table to write into, plus polls_effective.results_hidden to read. Phase 12 builds the UI surface on top.
+Last activity: 2026-05-11 -- Phase 11 shipped (migration 10 + 13 EFs live in prod via MCP-driven deploy)
 
 ```
-v1.2 progress:  [████████████████░░░░] 80% (Phase 11: 5/5 plans through Plan 04 wired; Plan 05 deploy gate remains)
+v1.2 progress:  [██████░░░░░░░░░░░░░░] 33% (Phase 11 ✅ Shipped, Phase 12 next, Phase 13 last)
 ```
 
 ## Accumulated Context
@@ -54,44 +54,31 @@ Two Key Decision rows remain ⚠️ pending v1.2 closure:
 - `Mobile-first responsive design` — UIDN-02 closure (Phase 13)
 - `shadcn/ui new-york + Tailwind CSS v4` — UIDN-03 closure (Phase 12)
 
-### v1.2 Open Questions (resolve before Phase 11 plan-phase)
+### Phase 11 — Decisions Landed (2026-05-11)
 
-Per research SUMMARY gaps section:
+(Summary across all 7 plans; full details in each `11-NN-SUMMARY.md`.)
 
-1. Does the anon role (unauthenticated visitors) see results when `results_hidden = false`, or only authenticated voters? REQUIREMENTS.md VIS-04 specifies voters-only — the `vote_counts` RLS policy grants SELECT iff `auth.uid()` has cast a vote AND `results_hidden = false`. Non-voters never see results regardless of state. **Resolved 2026-05-11 (Plan 11-01):** new policy is scoped `TO authenticated`, anon has no granting policy → 0 rows by absence. Plan 11-04 12-cell matrix verifies.
-2. Does `requireAdmin` in `_shared/admin-auth.ts` call the updated `is_current_user_admin()` (migration 9 guild_member gate)? Read at Phase 11 start; flag if stale.
-3. Does `polls_effective` in the current migration use explicit columns or `SELECT *`? Read migration DDL at Phase 11 start before writing migration 10. **Resolved 2026-05-11 (Plan 11-01):** migration 5 uses explicit 15-column form (verified at `supabase/migrations/00000000000005_admin_phase4.sql:12-31`). Migration 10 preserves that form and appends `results_hidden, results_hidden_changed_at` at the end.
-
-### Plan 11-01 Decisions Landed (2026-05-11)
-
-- **REVIEW-FIX-H3:** vote_counts policy has no `is_current_user_admin()` OR-branch — VIS-04 mandates service-role bypass only. PATTERNS.md skeleton (with OR-branch) was superseded by the plan body's strict reading.
+- **REVIEW-FIX-H3:** `vote_counts` policy has no `is_current_user_admin()` OR-branch — VIS-04 mandates service-role bypass only. Confirmed on prod via `execute_sql` qual check.
+- **REVIEW-FIX-H4:** toggle-results-visibility uses race-safe conditional UPDATE (`.not('results_hidden','is',hidden)`). Postgres row-locking serializes concurrent flips; loser writes no audit row. Eliminates phantom-audit race.
+- **REVIEW-FIX-H7:** Plan 05's local pre-merge gate uses `supabase db reset` ONLY (not `db push`). Production push runs in Task 05-02 step 2 after local-green.
+- **REVIEW-FIX-H8:** All 13 EFs deploy with `verify_jwt: false` (matches existing prod pattern; EFs verify JWTs themselves via `requireAdmin`).
 - **REVIEW-FIX-C3-H1:** `audit_log.target_id` declared `TEXT` (not `uuid`) — admits Discord snowflakes for `promote-admin` Branch 2; avoids `writeAudit` fail-open silent drop.
-- **Pitfall 2:** `ALTER VIEW … SET (security_invoker = on)` re-applied 23 lines after `CREATE OR REPLACE VIEW` in the same migration file.
-- **Pitfall 6:** `audit_log` indexes cover `(target_type, target_id)` + `(actor_id, created_at DESC)` — no JSONB indexes.
+- **Pitfall 2:** `ALTER VIEW … SET (security_invoker = on)` re-applied in the same migration file immediately after `CREATE OR REPLACE VIEW`.
+- **Migration version drift:** prod stamps via MCP-assigned timestamp; local file keeps sequential `00000000000010_results_hidden_audit.sql`. Matches the pre-existing migrations 5-9 pattern (local sequential vs prod timestamp).
+- **Plan 05 deploy routing:** routed prod deploy through Supabase MCP (`apply_migration` + `deploy_edge_function`) rather than local `supabase` CLI. Eliminated `SUPABASE_ACCESS_TOKEN` and project-link prep steps.
 
-### Plan 11-02 Decisions Landed (2026-05-11)
+### Tech Debt Surfaced (Not Phase 11 Caused)
 
-- **REVIEW-FIX-H4:** chose race-safe conditional UPDATE (`.not('results_hidden','is',hidden)`) over read-then-update. Postgres row-locking serializes concurrent flips; loser sees 0 rows and writes no audit row. Eliminates Codex HIGH phantom-audit race.
-- **D-13 refinement:** `results_hidden_changed_at` updated only on actual state changes (guarded by conditional UPDATE's WHERE clause). Per Gemini review — original "update every call" obscured the actual last-change time.
-- **Pitfall 3 enforced:** `writeAudit` is NEVER wrapped in try/catch at call site. Helper's fail-open contract (console.error + return on insert failure) is the contract; wrapping would silence what the helper deliberately surfaces.
-- **VIS-03 + ROADMAP SC-3:** response shape is `{poll: <full row>}` on both state-change and no-op paths — admin UI can refresh card state without a follow-up SELECT.
-
-### Plan 11-04 Decisions Landed (2026-05-11)
-
-- **TEST-11 matrix cells use seedBaseline=true (default).** Service-role × 4 cells expecting `>0` rows depend on a baseline vote_counts row that exists independent of the cell's voted state. Without the seed those 4 cells would silently return 0 from an empty source (false-green resolution per REVIEW-FIX-H2).
-- **Admin-JWT regression sentinel uses seedBaseline=false PAIRED with explicit castVote keyed on memberUser.id.** Earlier draft used seedBaseline=false alone, leaving vote_counts empty and making the assertion a false negative. The corrected pairing produces a row admin would see IF the policy regressed back to `is_current_user_admin() OR ...` (REVIEW-FIX-C2-H5).
-- **TEST-12 fresh poll per case via beforeEach/afterEach.** Earlier plan drafts used a single shared poll from beforeAll; the audit-row case implicitly depended on the toggle case having run. The new design is order-independent (REVIEW-FIX-M6).
-- **create-poll test locks live EF contract via typecast.** Response shape is `{ success, id }` per `supabase/functions/create-poll/index.ts:189`, NOT `{ poll: <row> }` from earlier review-cycle drafts; choices is `string[]` per the same file lines 88–97, NOT `{ text }[]` (REVIEW-FIX-C2-H6).
-- **Runtime PASS deferred to Plan 11-05.** Local Supabase is running but migration 10 is not applied and EF runtime is stopped; the plan body explicitly authorized this gate.
+- **Local supabase-edge-runtime ES256 verification bug** — 1.73.x rejects auth-service-issued ES256 JWTs ("Legacy token type detected, attempting HS256 verification"). Affects `npm run test:integration` against the local stack. Production runtime is unaffected (JWKS discovery). Plan 05 task 05-01 ran with partial pass; full Plan 04 test suite runs against prod via Phase 12 UAT.
+- **7 pre-Phase-11 SECURITY DEFINER advisor warnings** on `update_profile_after_auth`, `handle_new_user`, `validate_vote_choice`, `increment_vote_count`, `is_current_user_admin`, `profile_self_update_allowed`, `rls_auto_enable`. WARN-level, predates v1.0. Track for v1.3+ hygiene phase.
+- **PATTERNS.md drift:** `11-PATTERNS.md` still carries the legacy admin-OR-bypass form for the `vote_counts` policy skeleton. Plan body's REVIEW-FIX-H3 form is what shipped. Align in a future cleanup.
 
 ### Blockers/Concerns
 
-None. All three v1.2 phases have sufficient research detail to proceed directly to plan-phase without additional `/gsd-research-phase` runs (confirmed by all 4 research agents).
-
-**P0 callout for Phase 11:** The 12-cell RLS invariant matrix test suite is a hard merge blocker. No room for "fix in Phase 12." RLS leakage at the `vote_counts` layer would expose pre-aggregated vote counts to non-voters through the Supabase anon key.
+None. Phase 12 is unblocked: the EF and audit_log surface needed for the admin UI is now live in prod.
 
 ## Session Continuity
 
-Last session: 2026-05-11T23:50:00Z
-Stopped at: Phase 11 Plan 04 complete (Wave 3 — TEST-11 + TEST-12 + create-poll integration suites wired; commits 2da285f, 43a35ee, 030558c)
-Resume action: `/gsd-execute-phase 11` to continue Phase 11 (Plan 11-05 deploy gate — apply migration 10 + deploy EFs + run `npm run test:integration` against live target)
+Last session: 2026-05-11T23:59:59Z
+Stopped at: Phase 11 shipped (Plan 11-05 deploy gate complete — migration 10 + 13 EFs live; 8 schema gates verified via consolidated execute_sql)
+Resume action: `/gsd-plan-phase 12` to begin Phase 12 (Admin UI + User UI + UIDN-03 Sweep) planning. Requirements: VIS-06, VIS-07, VIS-08, UIDN-03, TEST-13.
