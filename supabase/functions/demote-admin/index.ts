@@ -58,43 +58,39 @@ Deno.serve(async (req) => {
       return json({ error: 'Cannot demote yourself' }, 400, corsHeaders)
     }
 
-    // Last-admin guard: ensure at least one admin remains after demotion.
-    const { count: adminCount, error: countError } = await supabaseAdmin
-      .from('profiles')
-      .select('*', { count: 'exact', head: true })
-      .eq('is_admin', true)
-    if (countError) {
-      console.error('demote-admin count check failed:', countError)
-      return json({ error: 'Internal error' }, 500, corsHeaders)
-    }
-    if (adminCount === null || adminCount <= 1) {
-      return json({ error: 'Cannot demote: at least one admin must remain' }, 400, corsHeaders)
-    }
-
-    // .select().single() forces a match-or-PGRST116 outcome so we can
-    // distinguish a real demotion from a 0-row UPDATE against a missing
-    // target_user_id. Without it the EF would emit `admin_demoted` audit
-    // rows for users that never existed.
-    const { data: demotedRow, error } = await supabaseAdmin
-      .from('profiles')
-      .update({ is_admin: false })
-      .eq('id', target_user_id)
-      .select('id')
-      .single()
-    if (error) {
-      if (error.code === 'PGRST116') {
+    // demote_admin_guarded RPC performs the last-admin check + UPDATE in a
+    // single transaction with row locks (migration 12). Replaces the prior
+    // racy two-step pattern where two concurrent demotions could each pass
+    // their independent count check and leave zero admins. RPC returns the
+    // prior is_admin state so the audit row carries truth instead of a
+    // hardcoded `true`.
+    const { data: rpcResult, error: rpcError } = await supabaseAdmin.rpc(
+      'demote_admin_guarded',
+      { p_target_user_id: target_user_id },
+    )
+    if (rpcError) {
+      if (rpcError.code === 'P0001') {
         return json({ error: 'User not found' }, 404, corsHeaders)
       }
-      console.error('demote-admin update failed:', error)
+      if (rpcError.code === 'P0002') {
+        return json({ error: 'User is not an admin' }, 409, corsHeaders)
+      }
+      if (rpcError.code === 'P0003') {
+        return json({ error: 'Cannot demote: at least one admin must remain' }, 400, corsHeaders)
+      }
+      console.error('demote_admin_guarded RPC failed:', rpcError)
       return json({ error: 'Internal error' }, 500, corsHeaders)
     }
+
+    const priorIsAdmin =
+      (rpcResult as { is_admin_before: boolean }[] | null)?.[0]?.is_admin_before ?? true
 
     await writeAudit(supabaseAdmin, {
       actor_id: user.id,
       action: 'admin_demoted',
       target_type: 'profile',
-      target_id: demotedRow.id,
-      before: { is_admin: true },
+      target_id: target_user_id,
+      before: { is_admin: priorIsAdmin },
       after: { is_admin: false },
     })
 
