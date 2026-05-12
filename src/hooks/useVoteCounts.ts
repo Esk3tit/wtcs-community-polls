@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import { usePolling } from '@/hooks/usePolling'
+import { deferSetState } from '@/lib/deferSetState'
 
 const POLL_INTERVAL = 8000 // 8 seconds (within RSLT-04 5-10s range)
 
@@ -15,15 +16,30 @@ export function useVoteCounts(
   // polls table directly) to preserve the polls_effective invariant.
   const [resultsHidden, setResultsHidden] = useState<Map<string, boolean>>(new Map())
 
-  // Stabilize dependency: use serialized string key instead of array reference
-  // to prevent unnecessary refetches when the array has the same content but a new reference
-  const pollIdsKey = votedPollIds.join(',')
-  const pollIdsRef = useRef(votedPollIds)
-  pollIdsRef.current = votedPollIds
+  // Stabilize dependency: serialize to a sorted, pipe-joined key so the SET
+  // of poll IDs drives refetches — not their iteration order. `userVotes`
+  // is a Map whose iteration order can shift across refetches in
+  // useSuggestions; an order-sensitive join here would rebuild
+  // fetchCounts on every reorder and reset the polling timer. The `|`
+  // separator avoids any collision risk with future ID formats (UUIDs
+  // never contain `|`).
+  const pollIdsKey = useMemo(
+    () => [...votedPollIds].sort().join('|'),
+    [votedPollIds],
+  )
 
   const fetchCounts = useCallback(async () => {
-    const ids = pollIdsRef.current
+    // Derive ids from the stable key inside the callback rather than
+    // closing over the array reference — avoids render-time ref mutation
+    // (React 19 concurrent-mode hazard) and keeps the source of truth
+    // single (the key).
+    const ids = pollIdsKey ? pollIdsKey.split('|') : []
     if (ids.length === 0) {
+      // Empty input is the logged-out / no-votes path. Reset both maps so
+      // a sign-out clears stale results from the UI. (If the caller
+      // briefly passes [] mid-refetch, that's a useSuggestions concern —
+      // see SuggestionList.tsx where votedPollIds is derived only from
+      // already-loaded userVotes.)
       setVoteCounts(new Map())
       setResultsHidden(new Map())
       return
@@ -47,7 +63,8 @@ export function useVoteCounts(
     const { data: counts, error } = vcResult
     if (error) {
       console.error('Failed to fetch vote counts:', error)
-      // Keep previous counts rather than resetting to empty
+      // Keep previous counts rather than resetting to empty: a transient
+      // network blip should not blank the UI mid-poll.
     } else if (counts) {
       const map = new Map<string, Map<string, number>>()
       for (const row of counts) {
@@ -74,12 +91,15 @@ export function useVoteCounts(
       }
       setResultsHidden(hMap)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pollIdsKey])
 
-  // Initial fetch
+  // Initial fetch — defer so the effect body itself doesn't call setState
+  // synchronously (satisfies react-hooks/set-state-in-effect).
   useEffect(() => {
-    fetchCounts()
+    const handle = deferSetState(() => {
+      void fetchCounts()
+    })
+    return handle.cancel
   }, [fetchCounts])
 
   // Poll every 8 seconds if enabled (active suggestions only).
