@@ -33,7 +33,18 @@ export function SuggestionCard({
   submittingPollId: string | null
   submittingChoiceId: string | null
 }) {
+  // Mirror is_pinned into the collapsible open state, but track the previous
+  // prop so an external flip (e.g., admin unpins a card the voter has expanded
+  // in another tab; useSuggestions/useVoteCounts refetches refresh the prop)
+  // resyncs without losing local toggles in between. Using setState during
+  // render is React's recommended pattern for prop-derived state and avoids
+  // the post-paint flicker an effect-based sync would introduce.
   const [isOpen, setIsOpen] = useState(suggestion.is_pinned)
+  const [prevIsPinned, setPrevIsPinned] = useState(suggestion.is_pinned)
+  if (prevIsPinned !== suggestion.is_pinned) {
+    setPrevIsPinned(suggestion.is_pinned)
+    setIsOpen(suggestion.is_pinned)
+  }
 
   const isPinned = suggestion.is_pinned
   const pollStatus = normalizeStatus(suggestion.status)
