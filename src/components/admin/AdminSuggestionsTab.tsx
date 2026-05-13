@@ -69,6 +69,10 @@ export function AdminSuggestionsTab() {
           .in('poll_id', pollIds)
         if (vcErr) throw vcErr
         if (id !== fetchIdRef.current) return // stale response
+        // The generated `vote_counts.count` type is non-null at the table
+        // level, but the view-level aggregation can still surface NULL on
+        // edge cases (e.g., aggregate functions over empty partitions),
+        // so we widen the row type and coalesce to 0 defensively.
         for (const r of (vcData ?? []) as Array<{ poll_id: string; count: number | null }>) {
           counts[r.poll_id] = (counts[r.poll_id] ?? 0) + (r.count ?? 0)
         }
