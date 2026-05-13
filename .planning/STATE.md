@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: — Admin Visibility Controls
-status: executing
+status: "Phase 13 shipped — PR #29 open"
 stopped_at: Phase 13 context gathered
-last_updated: "2026-05-13T19:32:13.487Z"
-last_activity: 2026-05-13 -- Phase 13 execution started
+last_updated: "2026-05-13T22:46:10.104Z"
+last_activity: "2026-05-13 -- Phase 13 shipped — PR #29"
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 17
-  completed_plans: 15
-  percent: 88
+  completed_plans: 17
+  percent: 100
 ---
 
 # Project State
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-05-11 after v1.1 milestone)
 
 Phase: 13 (uidn-02-mobile-audit-closure) — EXECUTING
 Plan: 1 of 2
-Status: Executing Phase 13
-Last activity: 2026-05-13 -- Phase 13 execution started
+Status: Phase 13 shipped — PR #29 open
+Last activity: 2026-05-13 -- Phase 13 shipped — PR #29
 
 ```
 v1.2 progress:  [█████████████░░░░░░░] 67% (Phase 11 ✅ Shipped, Phase 12 ✅ Shipped, Phase 13 next)
