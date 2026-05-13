@@ -2,7 +2,7 @@ import { Eye, EyeOff, Loader2, Pin } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Switch } from '@/components/ui/switch'
 import { SuggestionKebabMenu } from './SuggestionKebabMenu'
-import type { Resolution } from '@/hooks/useClosePoll'
+import { normalizeResolution } from '@/lib/poll-status'
 
 export type AdminSuggestion = {
   id: string
@@ -24,13 +24,6 @@ interface Props {
   onTogglePin: (pollId: string, nextPinned: boolean) => void
   onToggleResultsVisibility: (pollId: string, nextHidden: boolean) => void
   isPendingVisibility?: boolean
-}
-
-const VALID_RESOLUTIONS: Resolution[] = ['addressed', 'forwarded', 'closed']
-
-function normalizeResolution(raw: string | null): Resolution | null {
-  if (raw === null) return null
-  return VALID_RESOLUTIONS.includes(raw as Resolution) ? (raw as Resolution) : null
 }
 
 export function AdminSuggestionRow({

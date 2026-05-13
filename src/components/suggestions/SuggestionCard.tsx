@@ -11,7 +11,8 @@ import { ChoiceButtons } from '@/components/suggestions/ChoiceButtons'
 import { ResultBars } from '@/components/suggestions/ResultBars'
 import { formatTimeRemaining } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import type { SuggestionWithChoices, ResolutionStatus } from '@/lib/types/suggestions'
+import { normalizeResolution } from '@/lib/poll-status'
+import type { SuggestionWithChoices } from '@/lib/types/suggestions'
 
 export function SuggestionCard({
   suggestion,
@@ -36,7 +37,8 @@ export function SuggestionCard({
 
   const isPinned = suggestion.is_pinned
   const isClosed = suggestion.status !== 'active'
-  const hasResolution = isClosed && suggestion.resolution
+  const resolution = isClosed ? normalizeResolution(suggestion.resolution) : null
+  const hasResolution = resolution !== null
 
   // Calculate total response count from voteCounts if available
   const totalResponses = voteCounts
@@ -59,9 +61,7 @@ export function SuggestionCard({
         )}
         <div className="flex items-center gap-2">
           {hasResolution && (
-            <ResolutionBadge
-              resolution={suggestion.resolution as ResolutionStatus}
-            />
+            <ResolutionBadge resolution={resolution} />
           )}
           {!isClosed && (
             <span className="text-xs text-muted-foreground">
