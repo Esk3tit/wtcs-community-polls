@@ -1,181 +1,369 @@
 ---
 phase: 12-admin-ui-user-ui-uidn-03-sweep
-reviewed: 2026-05-13T00:24:26Z
+reviewed: 2026-05-12T19:15:00Z
 depth: deep
-files_reviewed: 16
+files_reviewed: 2
 files_reviewed_list:
-  - e2e/fixtures/poll-fixture.ts
-  - e2e/tests/results-visibility.spec.ts
-  - src/__tests__/admin/image-input.test.tsx
-  - src/__tests__/suggestions/suggestion-list.test.tsx
   - src/components/admin/AdminSuggestionRow.tsx
-  - src/components/admin/AdminSuggestionsTab.tsx
-  - src/components/suggestions/form/DropZone.tsx
-  - src/components/suggestions/form/ImageInput.tsx
-  - src/components/suggestions/SearchBar.tsx
   - src/components/suggestions/SuggestionCard.tsx
-  - src/components/suggestions/SuggestionList.tsx
-  - src/components/ui/checkbox.tsx
-  - src/components/ui/switch.tsx
-  - src/hooks/useToggleResultsVisibility.ts
-  - src/hooks/useVoteCounts.ts
-  - src/lib/types/database.types.ts
 findings:
-  critical: 0
-  warning: 0
-  info: 2
-  total: 2
+  critical: 1
+  warning: 4
+  info: 3
+  total: 8
 status: issues_found
 ---
 
-# Phase 12: Code Review Report (iter-4 / WR-01-residual verification)
+# Phase 12 — Code Review (Scoped Re-Review)
 
-**Reviewed:** 2026-05-13T00:24:26Z
-**Depth:** deep
-**Files Reviewed:** 16
-**Status:** issues_found (Info-tier only; matches iter-2/iter-3 precedent — info findings keep `issues_found` per project taxonomy)
+**Reviewed:** 2026-05-12
+**Depth:** deep (with cross-file analysis against `src/components/ui/alert.tsx`, `src/components/admin/SuggestionKebabMenu.tsx`, and `12-UI-SPEC.md`)
+**Scope:** 2 files re-reviewed at the orchestrator's direction. Verifies the 3 known findings from `12-UI-REVIEW.md` (commit b5ddc42) and scans for additional code-quality defects a pure UI auditor would miss.
+**Status:** issues_found
 
 ## Summary
 
-Plain re-review checkpoint after commit `860c241` (the iter-3 follow-up fix
-that closes WR-01 residual via Option A reorder). Verdict on the four
-targeted checks from the orchestrator prompt:
+All 3 known UI-REVIEW findings are reproduced in the current source and remain unfixed. In addition, the deep scan surfaced 5 new defects: 2 WARNING (loose status type-narrowing patterns that propagate unsafe `as` casts) and 3 lower-severity correctness / consistency issues. The BLOCKER is unchanged: a contract-locked accessibility ARIA label is still a generic toggle phrase.
 
-**1. WR-01 residual is genuinely closed.** The reorder in
-`handleToggleResultsVisibility` (AdminSuggestionsTab.tsx:158-169) moves the
-`if (!res.ok && res.reason === 'inflight') return` guard ABOVE the
-unconditional `setPendingVisibility` delete. Traced through all three return
-paths (success, real error, inflight gate trip) and through the
-rapid-double-click race against the same row. On inflight gate trip,
-handler 2 now early-returns BEFORE touching `pendingVisibility`, so
-handler 1's pending marker AND optimistic items flip both remain
-authoritative until handler 1's EF resolves. No tampering by handler 2.
-The exact failure mode the prior WR-01 documented ("its pending-delete
-step re-enabled the Switch while the first request was still in flight")
-is eliminated.
-
-**2. `handleTogglePin` was not touched.**
-`git diff 860c241^..860c241 -- src/components/admin/AdminSuggestionsTab.tsx`
-shows the iter-3 commit modified only lines inside
-`handleToggleResultsVisibility` (lines 128-186). `handleTogglePin`
-(lines 97-122) is byte-identical to its iter-1 form. Re-read in full to
-confirm.
-
-**3. Inline comments are WHY-only with no rot tags.** Scanned all 16
-in-scope files for plan/round/phase/iter IDs (`WR-`, `CR-`, `IN-`, `HI-`,
-`LR-`, `ME-`, `VIS-`, `phase N`, `round N`, `iter-N`, `review-round`). The
-only ID-shaped matches are `E2E-SCOPE-1` in `poll-fixture.ts:14` and
-`results-visibility.spec.ts:44,115` — these are PROJECT LINT CONVENTION
-IDs referenced by name in the comments themselves ("the project's
-E2E-SCOPE-1 lint convention"), NOT review/plan archaeology. Allowed per
-`feedback_no_review_archaeology_in_source.md` ("plan refs belong in
-PR/commit, not src/"). The new comments inserted by commit `860c241`
-(lines 158-163, 171-172) explain WHY (inflight ownership, source of
-truth) without mentioning plan IDs.
-
-**4. No regressions introduced by the reorder.** Per-path trace:
-
-| Path | Behaviour | Identical to pre-reorder? |
-|---|---|---|
-| Success (`res.ok === true`) | Line 164 guard's `!res.ok` is false → skipped. Pending cleared at 165-169. `!res.ok` block at 170 skipped. `fetchAll` at 183 runs. | yes |
-| Real error (`res.ok === false`, `reason === 'error'`) | Line 164 guard's `reason === 'inflight'` is false → NOT taken. Pending cleared at 165-169. Revert + `fetchAll` at 170-181 runs. | yes |
-| Inflight gate trip (`res.ok === false`, `reason === 'inflight'`) | NEW: early return at 164 BEFORE pending-delete. Pending stays set (handler 1 still owns it). Items stay flipped (handler 1's flip is source of truth). | new — this is the fix |
-| Rapid double-click same row | Handler 2's caller-side `pendingVisibility.has` guard misses (stale closure); handler 2 still calls `setItems` and `setPendingVisibility` idempotently (no-ops on already-flipped row and already-added set), then awaits the hook, gets synchronous inflight rejection, early-returns at 164. Net: zero state change from handler 2. | net no-op |
-| Three rapid clicks (restoration on click 3) | Either caller-side guard catches click 3 (pending set committed) or hook-side gate catches it (pending not committed). Either way, handler 1's `fetchAll` reconciles to server truth. Two-flip UI wobble is acceptable for genuine 3-click input. | acceptable |
-
-**Cross-file deep checks (depth=deep):**
-
-- `useToggleResultsVisibility` discriminated-union return shape
-  (`{ok: true} | {ok: false, reason: 'inflight'} | {ok: false, reason: 'error'}`)
-  narrows correctly at the AdminSuggestionsTab call site. TS check
-  `!res.ok && res.reason === 'inflight'` narrows `res` to the inflight
-  variant without `as` casts.
-- `useToggleResultsVisibility`'s inflight gate is per-poll-id (`Set`), and
-  the gate's `inflightRef.delete` runs in the `try`/`finally` regardless
-  of the EF outcome. Confirmed that synchronous-inflight-branch early
-  return (hook line 21-22) does NOT enter the `try` block and therefore
-  does NOT remove the gate that handler 1 still owns.
-- `useVoteCounts` stale-fetch guard (line 79) precedes BOTH
-  `setVoteCounts` (94) and `setResultsHidden` (110); no async work
-  separates them so a single guard at line 79 covers the paired writes
-  atomically per fetch generation. Empty-path also guarded at line 55.
-- `SuggestionCard` hidden-state branch (line 132-147) preserves the
-  voter's-choice context inside the same alert wrapper — matches the e2e
-  spec's STEP 4 assertion against `results-hidden-alert-${pollId}`
-  testid (line 142). STEP 6 post-unhide check targets `role="meter"`
-  inside `ResultBars`, the documented stable marker.
-- `database.types.ts` schema reports `vote_counts.count: number` (NOT
-  NULL); `AdminSuggestionsTab.tsx:72` defensively casts to
-  `Array<{count: number | null}>` and coalesces with `?? 0`. The
-  defensive code is correct regardless of which type is right — see
-  IN-01 below.
-- e2e `poll-fixture` ↔ `results-visibility.spec.ts`: spec generates its
-  own `[E2E] results-visibility ${Date.now()}` title (line 47) for the
-  EF-driven create; fixture's `Date.now()-${testInfo.workerIndex}` slug
-  is intentionally unused by this spec. No contamination. The spec's
-  service-role `eq('title', title).single()` is deterministic per run
-  because `Date.now()` is millisecond-unique.
-- `poll-fixture.ts` setup/teardown error handling: `setupErr` and
-  `deleteErr` correctly preserved through `try`/`catch`/`finally`;
-  `AggregateError` constructor used to surface both when both fail.
-  Re-throw logic at lines 117-124 runs after `finally` to satisfy
-  `no-unsafe-finally`. Comment at lines 102-105 correctly documents that
-  `provide()` resolves normally on test-body failure (Playwright fixture
-  semantic), so test-body failures don't flow through `catch`.
-
-No new bugs found. Two Info-tier items remain.
-
-## Critical Issues
-
-_(none)_
-
-## Warnings
-
-_(none)_
-
-## Info
-
-### IN-01: vote_counts.count schema-widening type cast (iter-3 IN-01 carryover, still open)
-
-**File:** `src/components/admin/AdminSuggestionsTab.tsx:72`
-**Issue:** The cast `(vcData ?? []) as Array<{ poll_id: string; count: number | null }>` widens `vote_counts.count` from the typegen-declared `number` (`src/lib/types/database.types.ts:237`) to nullable. The downstream `(r.count ?? 0)` coalesce works regardless, so this is correctness-neutral, but the assertion lies about the schema — either the typegen is wrong (column is actually nullable at the view level), or the assertion is wrong (column is non-null and the coalesce is defensive against a non-existent case).
-**Carryover note:** Open intentionally. The phase_context confirms the user ran `--fix` only on the WR-01 residual, not `--all`. Listed here for tracking continuity with iter-3 review.
-**Fix:** Two options:
-  1. If `count` truly cannot be null (matches schema), drop the wider type assertion and the `?? 0`:
-     ```typescript
-     for (const r of (vcData ?? []) as Array<{ poll_id: string; count: number }>) {
-       counts[r.poll_id] = (counts[r.poll_id] ?? 0) + r.count
-     }
-     ```
-     Or simply import the generated `Tables<'vote_counts'>` row type to avoid restating the shape inline.
-  2. If view-level nullability genuinely exists, regenerate types from the live DB (`supabase gen types typescript`) so the schema reflects reality and the wider cast becomes redundant rather than contradictory.
-
-### IN-02: handleTogglePin has a structurally similar latent race that the iter-3 WR-01 fix did not address (intentional per phase_context — surfaced for visibility)
-
-**File:** `src/components/admin/AdminSuggestionsTab.tsx:97-122` (caller) and `src/hooks/usePinPoll.ts:8-13` (hook)
-**Issue:** `usePinPoll` uses a SINGLETON boolean `inflightRef` (`useRef(false)` at line 8) and returns plain `{ ok: false }` with no `reason` discriminant on the inflight branch (line 12). Consequently `handleTogglePin` CANNOT distinguish "rapid double-click on same row" (handler 2 saw handler 1's inflight) from "real EF/network error". On the second handler's `{ok: false}` return, `handleTogglePin` (lines 105-117) reverts items unconditionally — overwriting handler 1's still-pending optimistic flip. Handler 1's eventual `fetchAll` reconciles to server truth, so this is a UI-flicker concern (pin → unpin → pin), not a data correctness bug. Same SHAPE as the WR-01 residual that was just fixed in `handleToggleResultsVisibility`, with two key differences making it worse:
-  - The singleton inflight gate in `usePinPoll` also blocks pin-flips on DIFFERENT rows while any one is in flight (a separate, pre-existing issue).
-  - `handleTogglePin` has no caller-side pending-set guard at all (no `pendingPin` equivalent to `pendingVisibility`).
-**Carryover note:** phase_context explicitly asked to verify `handleTogglePin` "wasn't accidentally touched" — confirmed it was not. The latent issue here is OUT of scope for the iter-3 fix and is surfaced as Info only so a future phase planner can decide whether to harmonize the two handlers. Not a regression; pre-existing as of iter-1.
-**Fix (if a future phase wants to harmonize):**
-  1. Change `usePinPoll` to a per-poll `Set<string>` like `useToggleResultsVisibility` (the singleton gate also blocks legitimate concurrent pin-flips on different rows — a separate, latent bug).
-  2. Add a `reason: 'inflight' | 'error'` discriminant to the failure return.
-  3. Apply the Option A reorder in `handleTogglePin` (early-return on `res.reason === 'inflight'` before any revert):
-     ```tsx
-     const res = await pinPoll({ poll_id: pollId, is_pinned: nextPinned })
-     if (!res.ok && res.reason === 'inflight') return
-     if (!res.ok) {
-       setItems((cur) => sortAdminSuggestions(
-         cur.map((it) => (it.id === pollId ? { ...it, is_pinned: !nextPinned } : it)),
-       ))
-       void fetchAll()
-       return
-     }
-     void fetchAll()
-     ```
+The two files are tightly coupled to the `12-UI-SPEC.md` contract; most of the new issues cluster around inconsistent treatment of `suggestion.status` across the two components (whitelist-by-inclusion in admin, whitelist-by-exclusion in voter) and unchecked type assertions on `suggestion.resolution` / `suggestion.status` in `SuggestionCard` that would silently mis-render for any unrecognized future enum value.
 
 ---
 
-_Reviewed: 2026-05-13T00:24:26Z_
+## Critical Issues
+
+### CR-01: AdminSuggestionRow Switch `aria-label` is a static generic string — contract breach
+
+**File:** `src/components/admin/AdminSuggestionRow.tsx:93`
+**Confirms:** UI-REVIEW BLOCKER #1 (still unfixed)
+
+**Issue:**
+Line 93 reads `aria-label="Toggle results visibility"`. UI-SPEC §VIS-07 row "Switch primitive" and §Accessibility Contract both lock a state-mirroring pattern (Radix convention so screen readers announce what is currently true, not the action that will fire):
+
+> `aria-label={'Results currently ' + (resultsHidden ? 'hidden' : 'visible')}` — D-06 mirrors current state
+
+The visible action label (lines 96-98) already follows the locked action-form pattern ("Hide results" / "Show results"), but the ARIA label does not mirror the current state. Screen-reader admins hear the same generic phrase regardless of state and cannot tell from the announcement alone whether results are currently hidden or visible — they would have to infer from the hidden-on-`sm` Eye/EyeOff icon, which is `aria-hidden`. That is exactly the inference step the locked spec was written to remove.
+
+This is a written-contract breach against a locked accessibility spec, and the spec calls the convention out twice by name (VIS-07 + Accessibility Contract).
+
+**Fix recipe (exact line replacement):**
+
+Line 93 currently:
+```tsx
+            aria-label="Toggle results visibility"
+```
+
+Replace with:
+```tsx
+            aria-label={resultsHidden ? 'Results currently hidden' : 'Results currently visible'}
+```
+
+No other lines change. TEST-13 Playwright spec targets `[data-testid="visibility-switch-${s.id}"]` (line 94), not the ARIA label, so this is test-churn-free.
+
+---
+
+## Warnings
+
+### WR-01: VIS-08 EyeOff icon inherits Alert `text-current`, not `text-muted-foreground`
+
+**File:** `src/components/suggestions/SuggestionCard.tsx:144`
+**Cross-file evidence:** `src/components/ui/alert.tsx:7` cva includes `[&>svg]:text-current`
+**Confirms:** UI-REVIEW WARNING #2 (still unfixed)
+
+**Issue:**
+Line 144 renders `<EyeOff className="h-4 w-4" aria-hidden="true" />` with no color class. The parent `Alert` primitive's cva (`alert.tsx:7`) forces `[&>svg]:text-current` on every direct SVG child. With the `default` Alert variant (line 11: `bg-card text-card-foreground`), the icon therefore takes `text-card-foreground` — full-contrast foreground, not the muted treatment.
+
+UI-SPEC §Color table row "VIS-08 EyeOff icon" promises `text-muted-foreground` ("neutral, not destructive — the hidden state is admin policy, not an error"). Currently the icon visually competes with the Alert title at the same color weight, weakening the hierarchy the spec explicitly designed.
+
+Cascade order: Tailwind's specificity-via-merge plus the fact that an explicit `text-muted-foreground` on the `<EyeOff>` will override `[&>svg]:text-current` (more-specific direct-element class vs descendant-pseudo selector). Verified override path works.
+
+**Fix recipe (exact line replacement):**
+
+Line 144 currently:
+```tsx
+                    <EyeOff className="h-4 w-4" aria-hidden="true" />
+```
+
+Replace with:
+```tsx
+                    <EyeOff className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+```
+
+One token added (`text-muted-foreground`). No other lines change.
+
+---
+
+### WR-02: AdminSuggestionRow right cluster — Switch wrap vs kebab baseline asymmetry on `< sm`
+
+**Files:** `src/components/admin/AdminSuggestionRow.tsx:87` (Switch `<label>` wrap), `src/components/admin/SuggestionKebabMenu.tsx:65` (kebab `Button` `h-11 w-11`)
+**Confirms:** UI-REVIEW WARNING #3 (still unfixed — visual; needs human verification at < 640px)
+
+**Issue:**
+Right cluster pairs:
+- A `min-h-[44px]` flex `<label>` that wraps `Switch + (label OR Eye/EyeOff icon) + optional Loader2`. No fixed width — collapses to the natural content width.
+- A fixed `h-11 w-11` (44×44 square) icon Button for the kebab.
+
+Both meet WCAG 2.5.8 (≥ 44×44 touch target), so the spec contract is not breached. The concern is purely visual: on `< sm` viewports the Switch wrap loses the textual label (line 96 `hidden sm:inline`) and shrinks to roughly `Switch (h-5 w-9 shadcn default ≈ 36px) + 8px gap + EyeOff 16px ≈ 60px wide × variable height` while the kebab stays 44×44. The visual asymmetry is "narrow control + 44×44 square block" on small viewports.
+
+This was flagged as needs-human-verify in the UI-REVIEW because Phase 12 surfaces sit behind Discord OAuth and the screenshot harness cannot reach them.
+
+Code-review verdict (independent of visual confirmation): class composition in source matches the UI-REVIEW description exactly. The `min-h-[44px]` on the `<label>` does NOT enforce a minimum *width*, so on `< sm` the cluster has a real width delta.
+
+**Fix recipe (one of two):**
+
+Option A — enforce mobile minimum width on the Switch wrap:
+
+Line 87 currently:
+```tsx
+        <label className="inline-flex items-center gap-2 min-h-[44px] cursor-pointer select-none">
+```
+
+Replace with:
+```tsx
+        <label className="inline-flex items-center gap-2 min-h-[44px] min-w-11 sm:min-w-0 cursor-pointer select-none">
+```
+
+(`min-w-11` = 44px in Tailwind v4; pairs with kebab's `w-11` for visual width parity on `< sm` only.)
+
+Option B — accept asymmetry, document the decision:
+
+Add a WHY comment above line 86 (the right-cluster `<div>`):
+```tsx
+        {/* Right cluster: Switch+label wrap (variable width) + 44×44 kebab. */}
+        {/* Visual width asymmetry on < sm is accepted — both elements meet */}
+        {/* WCAG 2.5.8 ≥ 44px touch target via min-h-[44px] (label) and h-11 w-11 (kebab). */}
+```
+
+Pick A if you want visual parity; pick B if the team accepts the asymmetry. Either resolves the finding. The UI-REVIEW called the user impact "minor polish, not contract-breaking."
+
+---
+
+### WR-03: SuggestionCard uses unchecked type assertion on `suggestion.status` — silent mis-narrow risk
+
+**File:** `src/components/suggestions/SuggestionCard.tsx:159`
+**Severity:** WARNING (new finding — not in UI-REVIEW)
+
+**Issue:**
+Line 159 passes `suggestion.status as 'active' | 'closed'` to `<ChoiceButtons>`'s `pollStatus` prop. This is a bare type assertion with no runtime guard. If `suggestion.status` is anything other than `'active'` or `'closed'` (e.g., a future `'archived'`, `'draft'`, `'cancelled'`, or any DB drift), the assertion lies to the downstream consumer. `ChoiceButtons` will then branch on `pollStatus === 'active'` / `'closed'` and silently take the wrong branch.
+
+This is inconsistent with the sibling component `AdminSuggestionRow.tsx:31-34`, which uses a defensive `normalizeResolution` helper to map unknown raw strings to `null` rather than blindly casting. Apply the same discipline here.
+
+Compounding issue: at line 38 the *same component* derives `isClosed = suggestion.status !== 'active'` (whitelist-by-exclusion). So inside `SuggestionCard`, `status='archived'` would be treated as "closed" by `isClosed` but would still be passed through to `<ChoiceButtons>` by the line-159 cast as if it were `'active' | 'closed'`. The two derived values disagree on the same input.
+
+Cross-file evidence of inconsistency:
+- `AdminSuggestionRow.tsx:45`: `const isClosed = s.status === 'closed'` (whitelist-by-inclusion — unknown statuses are "active")
+- `SuggestionCard.tsx:38`: `const isClosed = suggestion.status !== 'active'` (whitelist-by-exclusion — unknown statuses are "closed")
+
+The two surfaces classify the same DB value differently. For the v1.0 schema where `status ∈ {'active', 'closed'}`, this is a no-op. The moment a third status is introduced (audit_log already exists for forensic states; `archived` is plausible), the surfaces diverge.
+
+**Fix recipe (minimal — match AdminSuggestionRow's pattern):**
+
+Add a narrowing helper near the top of `SuggestionCard.tsx` (after line 14):
+```tsx
+const VALID_POLL_STATUSES = ['active', 'closed'] as const
+type PollStatus = (typeof VALID_POLL_STATUSES)[number]
+
+function normalizeStatus(raw: string): PollStatus {
+  return VALID_POLL_STATUSES.includes(raw as PollStatus) ? (raw as PollStatus) : 'closed'
+}
+```
+
+Replace line 38:
+```tsx
+  const isClosed = suggestion.status !== 'active'
+```
+with:
+```tsx
+  const pollStatus = normalizeStatus(suggestion.status)
+  const isClosed = pollStatus === 'closed'
+```
+
+Replace line 159:
+```tsx
+                  pollStatus={suggestion.status as 'active' | 'closed'}
+```
+with:
+```tsx
+                  pollStatus={pollStatus}
+```
+
+After this change, `<ChoiceButtons>` receives a validated narrow value, the `isClosed` derivation is internally consistent, and unknown future statuses fall safely into "closed" (read-only, no voting affordance) — defensive default for an open list of values.
+
+---
+
+### WR-04: SuggestionCard casts `suggestion.resolution` to `ResolutionStatus` without narrowing
+
+**File:** `src/components/suggestions/SuggestionCard.tsx:63`
+**Severity:** WARNING (new finding — not in UI-REVIEW)
+
+**Issue:**
+Line 63 reads `<ResolutionBadge resolution={suggestion.resolution as ResolutionStatus} />`. Same pattern problem as WR-03: a bare `as` assertion with no runtime check. `suggestion.resolution` is typed as `string | null` (line 14 type chain: `SuggestionWithChoices` → DB row → nullable text), but `ResolutionBadge` expects a constrained enum.
+
+The conditional `hasResolution` at line 39 (`isClosed && suggestion.resolution`) guards against `null` and empty string — but does NOT guard against unknown values. Any DB row with `resolution='wontfix'` or `resolution='deferred'` (future enum additions) would be passed to `ResolutionBadge` as if it were a valid `ResolutionStatus`, and `ResolutionBadge` would either render incorrectly or fall to whatever default branch it has.
+
+Compare to `AdminSuggestionRow.tsx:31-34`, which has the `normalizeResolution` helper that maps unknown raws to `null`. SuggestionCard should reuse that helper or implement its own.
+
+Coupling observation: the `normalizeResolution` helper currently lives privately inside `AdminSuggestionRow.tsx`. If it is shared (which is now justified by this finding), promote it to a utility module like `src/lib/poll-status.ts` and import in both files.
+
+**Fix recipe:**
+
+Option A — promote `normalizeResolution` to a shared util.
+
+Create `src/lib/poll-status.ts`:
+```ts
+import type { Resolution } from '@/hooks/useClosePoll'
+
+const VALID_RESOLUTIONS: Resolution[] = ['addressed', 'forwarded', 'closed']
+
+export function normalizeResolution(raw: string | null): Resolution | null {
+  if (raw === null) return null
+  return VALID_RESOLUTIONS.includes(raw as Resolution) ? (raw as Resolution) : null
+}
+```
+
+In `AdminSuggestionRow.tsx`, replace lines 29-34 (the local declarations) with an import:
+```tsx
+import { normalizeResolution } from '@/lib/poll-status'
+```
+
+In `SuggestionCard.tsx`, import the helper and update line 39 + line 63:
+
+After line 14, add:
+```tsx
+import { normalizeResolution } from '@/lib/poll-status'
+```
+
+Line 39 currently:
+```tsx
+  const hasResolution = isClosed && suggestion.resolution
+```
+Replace with:
+```tsx
+  const resolution = isClosed ? normalizeResolution(suggestion.resolution) : null
+  const hasResolution = resolution !== null
+```
+
+Line 63 currently:
+```tsx
+              resolution={suggestion.resolution as ResolutionStatus}
+```
+Replace with:
+```tsx
+              resolution={resolution as ResolutionStatus}
+```
+
+(`resolution` is narrowed to `Resolution | null`; the `as ResolutionStatus` is now safe because `hasResolution` guarantees non-null at this branch. Better still: if `Resolution` and `ResolutionStatus` share members, drop the cast entirely by aligning the two types.)
+
+Option B — inline the narrow in SuggestionCard only (smaller blast radius):
+
+In `SuggestionCard.tsx`, add a local function above the component definition, and use it the same way as Option A but without touching `AdminSuggestionRow.tsx`. Acceptable interim; do Option A in a follow-up.
+
+---
+
+## Info
+
+### IN-01: SuggestionCard `isOpen` initializer becomes stale if `is_pinned` changes after mount
+
+**File:** `src/components/suggestions/SuggestionCard.tsx:35`
+**Severity:** Info (correctness — narrow blast radius)
+
+**Issue:**
+`useState(suggestion.is_pinned)` initializes `isOpen` from the prop on mount only. If the admin unpins a card via the kebab menu while the voter has it open in another tab, the prop `suggestion.is_pinned` will eventually update via the next `useVoteCounts` poll cycle (or `useSuggestions` re-fetch), but the local `isOpen` state will NOT react — it stays at whatever the user last set. Worst case: a card that was pinned-on-mount stays expanded with no chevron affordance (line 185 hides ChevronDown when `!isPinned` is false) until the user collapses it through… nothing, because the outer click handler at line 95 is also conditionally not attached when the card was originally pinned.
+
+In practice the card will likely re-mount when the list re-orders (pinned cards move to the top), so the prop change usually coincides with a remount. Not provable without testing the keying behavior of the parent list.
+
+**Fix recipe (optional — defensive sync):**
+
+Replace line 35:
+```tsx
+  const [isOpen, setIsOpen] = useState(suggestion.is_pinned)
+```
+
+with a more defensive pattern that syncs on prop change:
+```tsx
+  const [isOpen, setIsOpen] = useState(suggestion.is_pinned)
+  // Sync open state when pin state flips externally (admin unpinned while card was open).
+  useEffect(() => {
+    setIsOpen(suggestion.is_pinned)
+  }, [suggestion.is_pinned])
+```
+
+Plus update line 1 to `import { useEffect, useState } from 'react'`.
+
+Trade-off: this also forces the card closed if a voter expanded a non-pinned card and then the admin pins it — which is probably fine behavior. Evaluate against UX intent before applying. Logged as Info because in v1.0 the parent list likely keys cards on `suggestion.id` and the issue may not manifest.
+
+---
+
+### IN-02: `'(unknown)'` fallback string for missing choice label
+
+**File:** `src/components/suggestions/SuggestionCard.tsx:140`
+**Severity:** Info
+
+**Issue:**
+Line 140 displays `'(unknown)'` if `userChoiceId` doesn't resolve against `suggestion.choices`. The UI-REVIEW called this a "defensive correctness win" — agreed, defensive is good. But the user-facing string `'(unknown)'` is engineer-speak. If this branch ever fires for a real voter (e.g., a choice was deleted concurrently with the voter's session), they'll see literal parentheses around a generic word.
+
+Lower-friction alternative: `'your response'` (lowercase, descriptive) or fall back to the `userChoiceId` truncated. Or — given this represents a real data inconsistency — log to Sentry as a breadcrumb so the team learns when it fires.
+
+**Fix recipe (optional polish):**
+
+Line 140 currently:
+```tsx
+                      {suggestion.choices.find((c) => c.id === userChoiceId)?.label ?? '(unknown)'}
+```
+
+Replace with:
+```tsx
+                      {suggestion.choices.find((c) => c.id === userChoiceId)?.label ?? 'your response'}
+```
+
+Or, to make the fallback observable:
+```tsx
+                      {(() => {
+                        const choice = suggestion.choices.find((c) => c.id === userChoiceId)
+                        if (!choice) {
+                          // Choice was deleted concurrent with voter's session — defensive label.
+                          return 'your response'
+                        }
+                        return choice.label
+                      })()}
+```
+
+Not a contract item — copy is not locked in UI-SPEC for this fallback branch. Logged as Info because it's a low-frequency edge case.
+
+---
+
+### IN-03: `hasResolution` is boolean-coerced from a falsy/truthy string
+
+**File:** `src/components/suggestions/SuggestionCard.tsx:39`
+**Severity:** Info (style / typing precision)
+
+**Issue:**
+Line 39: `const hasResolution = isClosed && suggestion.resolution`. The right operand is `string | null`, so the result type is `boolean | string | null` (TS infers the union). Used at line 61 as `{hasResolution && (...)}`, which still works — JS sees the union as truthy/falsy correctly. The issue is the name lies about the type: `hasResolution` reads as boolean but is actually `string | boolean | null`.
+
+If `suggestion.resolution` happens to be the empty string `''` (which the DB CHECK constraint may or may not permit; uncertain without consulting migration files), `hasResolution` evaluates to `''` — still falsy in `&&`, so the conditional render works. Minor.
+
+WR-04's fix supersedes this finding: after `normalizeResolution` narrows the value, `const hasResolution = resolution !== null` is genuinely boolean. So this is implicitly resolved by adopting WR-04's fix.
+
+**Fix recipe (subsumed by WR-04):** see WR-04 fix recipe; this issue disappears.
+
+If WR-04 is deferred, narrow inline:
+```tsx
+  const hasResolution = Boolean(isClosed && suggestion.resolution)
+```
+
+---
+
+## Notes for the orchestrator
+
+- **All 3 UI-REVIEW findings are reproduced** in the current source. CR-01 (BLOCKER) is a one-line ARIA fix; WR-01 is a one-token Tailwind class addition; WR-02 needs either a one-line class addition or a 3-line WHY comment depending on the team's call.
+- **WR-03 and WR-04 cluster around the same root cause**: unchecked `as` assertions on `suggestion.status` / `suggestion.resolution` in `SuggestionCard.tsx`. The fix-recipe in WR-04 (promote `normalizeResolution` to `src/lib/poll-status.ts` and reuse) is the cleanest path; WR-03 reuses the same module pattern. Doing both together is one PR.
+- **No security findings** — these are pure presentational components consuming pre-validated data via hooks. No user input flows through them.
+- **No dead code, no commented-out code, no debug artifacts** (no `console.log`, no `debugger`, no leftover TODOs in either file beyond the `// Creator avatar placeholder` WHY-comment on `SuggestionCard.tsx:173`, which is legitimate).
+- **Lint and typecheck pass** per the upstream UI-REVIEW note (not re-run in this scoped review — orchestrator can re-run if desired).
+- **TEST-13 Playwright spec** targets `data-testid` locators, not ARIA labels or color classes, so CR-01 / WR-01 fixes are test-churn-free.
+
+---
+
+_Reviewed: 2026-05-12T19:15:00Z_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: deep_
+_Files reviewed: 2_
