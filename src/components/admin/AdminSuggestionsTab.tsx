@@ -40,6 +40,14 @@ export function AdminSuggestionsTab() {
   const { pinPoll } = usePinPoll()
   const { toggleResultsVisibility } = useToggleResultsVisibility()
   const fetchIdRef = useRef(0)
+  // Per-poll inflight gate for pin toggles, read synchronously inside the
+  // handler so a rapid double-click cannot slip between handler-1's "I am
+  // taking ownership" mark and React committing that mark. usePinPoll's
+  // hook-side gate is a singleton boolean and returns ok:false without a
+  // reason discriminant, so caller-side dedup is the only way to keep
+  // handler-2 from running the revert path against handler-1's still-
+  // pending optimistic flip.
+  const pendingPinRef = useRef<Set<string>>(new Set())
 
   const fetchAll = useCallback(async () => {
     const id = ++fetchIdRef.current
@@ -100,27 +108,41 @@ export function AdminSuggestionsTab() {
   // Post-mutation refetch (success OR failure) is the canonical reconcile.
   const handleTogglePin = useCallback(
     async (pollId: string, nextPinned: boolean) => {
+      // Short-circuit rapid double-click on the same row BEFORE any
+      // optimistic flip. usePinPoll's hook-side gate is a singleton
+      // boolean without a reason discriminant, so without this guard
+      // handler-2 cannot distinguish "I lost the inflight race" from
+      // "real EF/network error" and would run the revert path against
+      // handler-1's still-pending optimistic flip. A ref-backed Set is
+      // read synchronously and avoids the React commit window that a
+      // useState-backed gate would expose.
+      if (pendingPinRef.current.has(pollId)) return
+      pendingPinRef.current.add(pollId)
       setItems((cur) =>
         sortAdminSuggestions(
           cur.map((it) => (it.id === pollId ? { ...it, is_pinned: nextPinned } : it)),
         ),
       )
-      const res = await pinPoll({ poll_id: pollId, is_pinned: nextPinned })
-      if (!res.ok) {
-        // Diff-revert only the target row, then re-sort. Other rows'
-        // concurrent optimistic flips stay intact. The toast was already
-        // surfaced by usePinPoll's error path.
-        setItems((cur) =>
-          sortAdminSuggestions(
-            cur.map((it) => (it.id === pollId ? { ...it, is_pinned: !nextPinned } : it)),
-          ),
-        )
-        // Reconcile against server too — guarantees convergence if a
-        // concurrent flip raced us.
+      try {
+        const res = await pinPoll({ poll_id: pollId, is_pinned: nextPinned })
+        if (!res.ok) {
+          // Diff-revert only the target row, then re-sort. Other rows'
+          // concurrent optimistic flips stay intact. The toast was already
+          // surfaced by usePinPoll's error path.
+          setItems((cur) =>
+            sortAdminSuggestions(
+              cur.map((it) => (it.id === pollId ? { ...it, is_pinned: !nextPinned } : it)),
+            ),
+          )
+          // Reconcile against server too — guarantees convergence if a
+          // concurrent flip raced us.
+          void fetchAll()
+          return
+        }
         void fetchAll()
-        return
+      } finally {
+        pendingPinRef.current.delete(pollId)
       }
-      void fetchAll()
     },
     [pinPoll, fetchAll],
   )
