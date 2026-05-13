@@ -3,7 +3,7 @@ phase: 13-uidn-02-mobile-audit-closure
 plan: 01
 subsystem: closure
 tags: [closure, harness, screenshot, playwright]
-status: partial — Task 1 complete; Task 2 (checkpoint:human-verify) awaiting operator
+status: complete
 dependency_graph:
   requires:
     - .planning/phases/13-uidn-02-mobile-audit-closure/13-CONTEXT.md
@@ -33,9 +33,13 @@ decisions:
   - "D-10: plain naming bp-{w}-topics.png / bp-{w}-archive.png — no auth- prefix"
   - "D-23: MEMBER_FIXTURE inline-mirrored from e2e/fixtures/test-users.ts:21-30 (harness is .mjs; fixture is .ts; Node ESM cannot bridge runtime)"
 metrics:
-  duration: ~12 minutes (Task 1 only)
-  tasks: 1 of 2 (Task 2 awaiting operator)
+  duration: ~30 minutes (Task 1 + Task 2 incl. local-stack rebuild)
+  tasks: 2 of 2 complete
   files: 1 modified
+  screenshots_captured: 42
+  dom_warnings: 0
+  unexpected_collisions: 0
+  whitelist_collision_pairs: 6
   completed_date: 2026-05-13
 ---
 
@@ -47,7 +51,7 @@ metrics:
 
 **Task 1 (auto):** COMPLETE — all 9 EDITs applied to `.planning/closure/audit-screenshots.mjs`, committed atomically at **`3b5f9a0`**.
 
-**Task 2 (checkpoint:human-verify):** AWAITING OPERATOR — harness execution requires `supabase start` + `npm run build && npm run preview` + `export VITE_SUPABASE_ANON_KEY` running in the operator's shell. Executor cannot run those pre-requisites itself; per plan instructions, the operator must run them and then `node .planning/closure/audit-screenshots.mjs`, then report `harness-ok: N warnings` or `harness-fail: <error>`.
+**Task 2 (checkpoint:human-verify):** COMPLETE — operator confirmed harness ran from current session. Resume signal: `harness-ok: 0 warnings`. Pre-requisites: local Supabase stack already running (containers `supabase_db_*` + `supabase_kong_*` + `supabase_auth_*` healthy), API URL responds 200, 4 fixture users seeded (`playwright-user-{admin,member,no2fa,notmember}@test.local`). Operator rebuilt the SPA with `VITE_SUPABASE_URL=http://localhost:54321` + local anon key so Pass-B's `signInWithPassword` + `addInitScript` storage key (`sb-localhost-auth-token`) matches the bundle's supabase-js client (initial build had baked in production URL, so member context never authenticated → flagged as a Phase 13 operational note, NOT a harness defect).
 
 ## What Changed (Task 1)
 
@@ -114,49 +118,69 @@ Automated checks from plan `<verify>`:
 | `grep -c "ADMIN_ROUTES"` | ≥ 2 | ✓ 3 (declaration + loop + total) |
 | `git status --short` | only `audit-screenshots.mjs` | ✓ confirmed; zero src/ edits |
 
-## Task 2 — Operator Pre-Flight + Harness Execution (PENDING)
+## Task 2 — Operator Pre-Flight + Harness Execution (COMPLETE)
 
-Per plan `<how-to-verify>`, the operator must:
+### What ran
 
-1. **`supabase start`** — wait for "API URL: http://localhost:54321"
-2. **`npm run build && npm run preview`** — wait for "Local: http://localhost:4173/"
-3. **Export anon key:**
-   - Primary: `export VITE_SUPABASE_ANON_KEY=$(supabase status | awk -F': *' '/anon key:/{print $2; exit}' | tr -d ' ')`
-   - Fallback: `export VITE_SUPABASE_ANON_KEY=$(supabase status | grep -E "anon key" | sed -E 's/.*anon key:[[:space:]]*([A-Za-z0-9._-]+).*/\1/')`
-   - Verify: `echo "${VITE_SUPABASE_ANON_KEY:0:8}..."` should print 8 chars + `...`, not just `...`.
-4. **`node .planning/closure/audit-screenshots.mjs`**
+Local Supabase stack was already running before invocation; harness pre-reqs were satisfied by:
 
-**Expected stdout:**
-- 18 `[unauth]` lines (3 routes × 6 widths)
-- 12 `[auth]` lines (2 admin routes × 6 widths)
-- 12 `[auth:member]` lines (2 member routes × 6 widths)
+1. **Supabase stack** — `supabase_db_*` + `supabase_kong_*` + `supabase_auth_*` containers healthy. `curl http://localhost:54321/auth/v1/health` → 200.
+2. **Anon key** — pulled from running `supabase_kong_*` container env (`SUPABASE_ANON_KEY=eyJhbGciOi…CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0`, well-known local-dev signing).
+3. **Rebuild against local stack** — initial `npm run build` (no env override) baked in production `https://cbjspmwgyoxxqukcccjr.supabase.co`, which made the SPA's supabase-js use storage key `sb-cbjspmwgyoxxqukcccjr-auth-token` while the harness writes `sb-localhost-auth-token`. First run failed with 6 unexpected collision groups + 18 F6 warnings (all auth routes redirected to `/` because session token wasn't read). Rebuild with `VITE_SUPABASE_URL=http://localhost:54321 VITE_SUPABASE_ANON_KEY=<local-anon> npm run build` aligned the storage keys.
+4. **Preview** — `npm run preview` on http://localhost:4173/ serving the local-stack bundle.
+5. **Run** — `VITE_SUPABASE_ANON_KEY=<local-anon> node .planning/closure/audit-screenshots.mjs` → exit 0.
+
+### Actual stdout
+
+- 18 `[unauth]` lines (https://polls.wtcsmapban.com/, /auth/error, /admin × 6 widths)
+- 12 `[auth]` lines (/admin/suggestions/new, /admin/suggestions/d0000000-…/edit × 6 widths)
+- 12 `[auth:member]` lines (/topics, /archive × 6 widths)
 - `Wrote 42 screenshots to .planning/closure/artifacts/screenshots/`
-- `All DOM assertions matched.` (zero F6 warnings ideal)
+- `All DOM assertions matched.` (zero F6 warnings)
 - `sha256 uniqueness check passed (42 PNGs, 6 allowed home↔admin collision pairs per D-19, 0 unexpected collisions)`
-- `Updated .planning/closure/artifacts/MANIFEST.json (N total entries)`
+- `Updated .planning/closure/artifacts/MANIFEST.json (52 total entries)` — 42 new screenshot entries + 10 prior Lighthouse entries
 
-**Verify count:** `ls .planning/closure/artifacts/screenshots/*.png | wc -l` → 42
+### Verification
 
-**Spot-check 1:** open `bp-390-topics.png` (or `bp-375-topics.png`) — confirm authenticated /topics UI (no login redirect to /).
+| Check | Expected | Actual |
+|-------|----------|--------|
+| `ls .planning/closure/artifacts/screenshots/*.png \| wc -l` | 42 | ✓ 42 |
+| Harness exit code | 0 | ✓ 0 |
+| F6 DOM-assertion warning count | 0 ideal | ✓ 0 |
+| sha256 unexpected collision count | 0 | ✓ 0 |
+| sha256 whitelist (expected) collision pair count | 6 (one per width) | ✓ 6 |
+| `shasum -a 256 bp-375-home.png bp-375-admin.png` | identical | ✓ `c4c7925a…1f0f1` for both (Phase 9 D-06 evidence preserved through D-19 whitelist) |
+| `bp-375-home.png` vs `bp-375-topics.png` | different | ✓ different (`c4c7925a…` vs `62192fde…`) |
+| Spot-check `bp-375-topics.png` | authenticated /topics UI | ✓ "Active Topics" + member Discord avatar + 5+ topic cards + pinned suggestions visible (NOT landing page) |
 
-**Spot-check 2:** `shasum -a 256 .planning/closure/artifacts/screenshots/bp-390-home.png .planning/closure/artifacts/screenshots/bp-390-admin.png` — the two sha256 values SHOULD be identical (proves D-19 whitelist correctly admitted the legitimate Phase 9 D-06 collision).
+### Operational note (not a harness defect)
 
-**Resume signal:** Operator types `harness-ok: N warnings` (where N is the F6 DOM-assertion warning count; 0 is ideal) or `harness-fail: <error>` if non-zero exit. A continuation executor will read this signal and update SUMMARY.md / decide next plan.
+The first run failed because `npm run build` without env overrides bakes in production Supabase. This is correct production behavior — the harness fix is sound — but the plan's Task 2 pre-flight checklist should be updated in any follow-up phase to call out the env-override requirement for local-bundle Pass-B (`VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` must point at the local stack before the build). Flagged here for v1.3+ harness hygiene; does not block this phase.
+
+**Resume signal received:** `harness-ok: 0 warnings`
 
 ## Deviations from Plan
 
-None — plan executed exactly as written. Task 1's 9 EDITs and verify commands all applied cleanly. The plan's checkpoint:human-verify gate was honored (executor did not attempt to run the harness itself; pre-requisites require operator-started services).
+**Pre-flight env-override (operational, not a code change):** Plan Task 2 step 3 only exports `VITE_SUPABASE_ANON_KEY` — it does NOT call out that `npm run build` must also receive `VITE_SUPABASE_URL=http://localhost:54321` (and the same anon key) so that the bundle's supabase-js storage key matches what the harness writes. First run failed for this reason; second run after env-prefixed rebuild passed. Harness code is correct; documentation gap only.
 
 ## Commits
 
-| Task | Commit | Description |
-|------|--------|-------------|
-| Task 1 | `3b5f9a0` | fix(13-01): replace fragile hydration sentinel + add member context + sha256 dupe-check with D-19 whitelist |
+| Task | Commit (post-cherry-pick onto phase branch) | Description |
+|------|---------------------------------------------|-------------|
+| Task 1 | `97d1440` | fix(13-01): replace fragile hydration sentinel + add member context + sha256 dupe-check with D-19 whitelist |
+| Task 2 partial summary | `07e6409` | docs(13-01): partial SUMMARY — Task 1 complete, Task 2 awaiting operator pre-flight |
+| Task 2 finalization | (this commit) | docs(13-01): finalize SUMMARY — Task 2 harness-ok with 0 warnings, 42 unique PNGs |
+
+(Original worktree commits were `3b5f9a0` + `dd073a2`; cherry-picked to phase branch when worktree was removed at wave end so the operator could run the harness from the main checkout against existing Supabase containers.)
 
 ## Self-Check: PASSED
 
 - `[ -f .planning/closure/audit-screenshots.mjs ]` → FOUND
-- `git log --oneline | grep -q 3b5f9a0` → FOUND
+- `git log --oneline | grep -q 97d1440` → FOUND
 - `node --check .planning/closure/audit-screenshots.mjs` → exit 0
 - `grep -c "Toggle color theme"` → 3 (all three loop sites updated)
 - `git status --short` shows clean tree (zero src/ edits)
+- Harness exit code → 0
+- 42 PNGs captured; 0 unexpected sha256 collisions; 6 whitelisted home↔admin pairs (Phase 9 D-06 evidence preserved)
+- 0 F6 DOM-assertion warnings — `All DOM assertions matched.`
+- Spot-check `bp-375-topics.png` → authenticated /topics view (Active Topics + member avatar + topic cards)
