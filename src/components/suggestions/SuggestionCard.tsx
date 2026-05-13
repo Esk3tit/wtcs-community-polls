@@ -1,21 +1,24 @@
 import { useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, EyeOff } from 'lucide-react'
 import {
   Collapsible,
   CollapsibleContent,
 } from '@/components/ui/collapsible'
+import { Alert, AlertTitle } from '@/components/ui/alert'
 import { CategoryBadge, ResolutionBadge } from '@/components/suggestions/StatusBadge'
 import { PinnedBanner } from '@/components/suggestions/PinnedBanner'
 import { ChoiceButtons } from '@/components/suggestions/ChoiceButtons'
 import { ResultBars } from '@/components/suggestions/ResultBars'
 import { formatTimeRemaining } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import type { SuggestionWithChoices, ResolutionStatus } from '@/lib/types/suggestions'
+import { normalizeResolution, normalizeStatus } from '@/lib/poll-status'
+import type { SuggestionWithChoices } from '@/lib/types/suggestions'
 
 export function SuggestionCard({
   suggestion,
   categoryIndex,
   userChoiceId,
+  resultsHidden,
   onVote,
   voteCounts,
   submittingPollId,
@@ -24,16 +27,30 @@ export function SuggestionCard({
   suggestion: SuggestionWithChoices
   categoryIndex: number
   userChoiceId: string | undefined
+  resultsHidden: boolean
   onVote: (pollId: string, choiceId: string) => void
   voteCounts: Map<string, number> | undefined
   submittingPollId: string | null
   submittingChoiceId: string | null
 }) {
+  // Mirror is_pinned into the collapsible open state, but track the previous
+  // prop so an external flip (e.g., admin unpins a card the voter has expanded
+  // in another tab; useSuggestions/useVoteCounts refetches refresh the prop)
+  // resyncs without losing local toggles in between. Using setState during
+  // render is React's recommended pattern for prop-derived state and avoids
+  // the post-paint flicker an effect-based sync would introduce.
   const [isOpen, setIsOpen] = useState(suggestion.is_pinned)
+  const [prevIsPinned, setPrevIsPinned] = useState(suggestion.is_pinned)
+  if (prevIsPinned !== suggestion.is_pinned) {
+    setPrevIsPinned(suggestion.is_pinned)
+    setIsOpen(suggestion.is_pinned)
+  }
 
   const isPinned = suggestion.is_pinned
-  const isClosed = suggestion.status !== 'active'
-  const hasResolution = isClosed && suggestion.resolution
+  const pollStatus = normalizeStatus(suggestion.status)
+  const isClosed = pollStatus === 'closed'
+  const resolution = isClosed ? normalizeResolution(suggestion.resolution) : null
+  const hasResolution = resolution !== null
 
   // Calculate total response count from voteCounts if available
   const totalResponses = voteCounts
@@ -56,9 +73,7 @@ export function SuggestionCard({
         )}
         <div className="flex items-center gap-2">
           {hasResolution && (
-            <ResolutionBadge
-              resolution={suggestion.resolution as ResolutionStatus}
-            />
+            <ResolutionBadge resolution={resolution} />
           )}
           {!isClosed && (
             <span className="text-xs text-muted-foreground">
@@ -121,8 +136,28 @@ export function SuggestionCard({
             )}
 
             {/* Choices / Results area */}
+            {/* Hidden-state branch precedes the visible branch: BOTH admin
+                hide-policy AND voter-has-voted are required to render the
+                placeholder. RLS additionally enforces zero count leakage at
+                the DB layer (defense-in-depth). */}
             <div className="mt-4">
-              {userChoiceId ? (
+              {userChoiceId && resultsHidden ? (
+                <div
+                  className="space-y-3"
+                  data-testid={`results-hidden-alert-${suggestion.id}`}
+                >
+                  <p className="text-sm text-muted-foreground">
+                    Your response:{' '}
+                    <span className="text-foreground font-medium">
+                      {suggestion.choices.find((c) => c.id === userChoiceId)?.label ?? 'an option no longer available'}
+                    </span>
+                  </p>
+                  <Alert>
+                    <EyeOff className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    <AlertTitle>Results temporarily hidden by admin</AlertTitle>
+                  </Alert>
+                </div>
+              ) : userChoiceId ? (
                 <ResultBars
                   choices={suggestion.choices}
                   voteCounts={voteCounts ?? new Map()}
@@ -133,7 +168,7 @@ export function SuggestionCard({
                 <ChoiceButtons
                   choices={suggestion.choices}
                   pollId={suggestion.id}
-                  pollStatus={suggestion.status as 'active' | 'closed'}
+                  pollStatus={pollStatus}
                   hasVoted={false}
                   onVote={onVote}
                   submittingPollId={submittingPollId}

@@ -40,22 +40,25 @@ describe('ImageInput drag-and-drop dropzone', () => {
     uploadImageMock.mockReset().mockResolvedValue('https://example.com/ok.jpg')
   })
 
-  it('renders the dropzone with region semantics and visible copy', () => {
+  it('renders the dropzone with region semantics + headline + Browse Button', () => {
     render(<ImageInput value={null} onChange={() => {}} />)
     expect(screen.getByRole('region', { name: /image upload/i })).toBeInTheDocument()
+    // Headline copy is shortened — Browse Button now carries the click affordance
+    expect(screen.getByText(/drop an image here/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /browse files/i })).toBeInTheDocument()
+    // Region MUST NOT also be a button (dual-role anti-pattern: a single
+    // landing zone should not announce as both region AND button to AT).
     expect(
-      screen.getByRole('button', { name: /drop an image here, or click to browse/i }),
-    ).toBeInTheDocument()
+      screen.queryByRole('button', { name: /image upload/i }),
+    ).toBeNull()
   })
 
   it('accepts a valid image drop and calls uploadImage + onChange', async () => {
     const onChange = vi.fn()
     render(<ImageInput value={null} onChange={onChange} />)
     const file = makeFile('ok.jpg', 'image/jpeg', 1024)
-    const button = screen.getByRole('button', {
-      name: /drop an image here, or click to browse/i,
-    })
-    fireEvent.drop(button, { dataTransfer: buildDataTransfer([file]) })
+    const region = screen.getByRole('region', { name: /image upload/i })
+    fireEvent.drop(region, { dataTransfer: buildDataTransfer([file]) })
     await waitFor(() => expect(uploadImageMock).toHaveBeenCalledWith(file))
     await waitFor(() =>
       expect(onChange).toHaveBeenCalledWith('https://example.com/ok.jpg'),
@@ -66,10 +69,8 @@ describe('ImageInput drag-and-drop dropzone', () => {
     const onChange = vi.fn()
     render(<ImageInput value={null} onChange={onChange} />)
     const big = makeFile('big.jpg', 'image/jpeg', 5 * 1024 * 1024)
-    const button = screen.getByRole('button', {
-      name: /drop an image here, or click to browse/i,
-    })
-    fireEvent.drop(button, { dataTransfer: buildDataTransfer([big]) })
+    const region = screen.getByRole('region', { name: /image upload/i })
+    fireEvent.drop(region, { dataTransfer: buildDataTransfer([big]) })
     expect(await screen.findByText(/image too large\. max 2 mb\./i)).toBeInTheDocument()
     expect(uploadImageMock).not.toHaveBeenCalled()
     expect(onChange).not.toHaveBeenCalled()
@@ -79,10 +80,8 @@ describe('ImageInput drag-and-drop dropzone', () => {
     const onChange = vi.fn()
     render(<ImageInput value={null} onChange={onChange} />)
     const pdf = makeFile('nope.pdf', 'application/pdf', 1024)
-    const button = screen.getByRole('button', {
-      name: /drop an image here, or click to browse/i,
-    })
-    fireEvent.drop(button, { dataTransfer: buildDataTransfer([pdf]) })
+    const region = screen.getByRole('region', { name: /image upload/i })
+    fireEvent.drop(region, { dataTransfer: buildDataTransfer([pdf]) })
     expect(
       await screen.findByText(/unsupported format\. use jpg, png, or webp\./i),
     ).toBeInTheDocument()
@@ -90,30 +89,30 @@ describe('ImageInput drag-and-drop dropzone', () => {
     expect(onChange).not.toHaveBeenCalled()
   })
 
-  it('click-to-browse path: Enter on dropzone still opens the picker (regression)', async () => {
-    const user = userEvent.setup()
-    render(<ImageInput value={null} onChange={() => {}} />)
-    const button = screen.getByRole('button', {
-      name: /drop an image here, or click to browse/i,
-    })
-    button.focus()
-    // Just assert the dropzone button is keyboard-reachable; the actual
-    // file picker open cannot be observed in jsdom, but clicking the
-    // button is equivalent to the Enter keybinding on a native button.
-    await user.keyboard('{Enter}')
-    // No throw, still in document
-    expect(button).toBeInTheDocument()
-  })
-
-  it('click-to-browse path: clicking the dropzone triggers a hidden file input (regression)', async () => {
+  it('Browse Button is keyboard-reachable and activates with Enter (regression)', async () => {
     const user = userEvent.setup()
     const { container } = render(<ImageInput value={null} onChange={() => {}} />)
     const hiddenInput = container.querySelector('input[type="file"]') as HTMLInputElement
     expect(hiddenInput).not.toBeNull()
     const clickSpy = vi.spyOn(hiddenInput, 'click')
-    await user.click(
-      screen.getByRole('button', { name: /drop an image here, or click to browse/i }),
-    )
+    const browse = screen.getByRole('button', { name: /browse files/i })
+    browse.focus()
+    expect(browse).toHaveFocus()
+    await user.keyboard('{Enter}')
+    // Enter on a focused native button dispatches click, which fires the
+    // Browse Button's onClick, which calls fileRef.current.click() — the
+    // actual regression contract. The OS file picker itself cannot be
+    // observed in jsdom but the hidden-input click is the proxy.
+    expect(clickSpy).toHaveBeenCalled()
+  })
+
+  it('clicking Browse Button triggers the hidden file input (regression)', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<ImageInput value={null} onChange={() => {}} />)
+    const hiddenInput = container.querySelector('input[type="file"]') as HTMLInputElement
+    expect(hiddenInput).not.toBeNull()
+    const clickSpy = vi.spyOn(hiddenInput, 'click')
+    await user.click(screen.getByRole('button', { name: /browse files/i }))
     expect(clickSpy).toHaveBeenCalled()
   })
 
@@ -133,18 +132,16 @@ describe('ImageInput drag-and-drop dropzone', () => {
   it('hides the drop-error once a subsequent valid drop is accepted', async () => {
     const onChange = vi.fn()
     render(<ImageInput value={null} onChange={onChange} />)
-    const button = screen.getByRole('button', {
-      name: /drop an image here, or click to browse/i,
-    })
+    const region = screen.getByRole('region', { name: /image upload/i })
     // First: bad drop
     const pdf = makeFile('nope.pdf', 'application/pdf', 1024)
-    fireEvent.drop(button, { dataTransfer: buildDataTransfer([pdf]) })
+    fireEvent.drop(region, { dataTransfer: buildDataTransfer([pdf]) })
     expect(
       await screen.findByText(/unsupported format\. use jpg, png, or webp\./i),
     ).toBeInTheDocument()
     // Then: good drop
     const ok = makeFile('ok.webp', 'image/webp', 1024)
-    fireEvent.drop(button, { dataTransfer: buildDataTransfer([ok]) })
+    fireEvent.drop(region, { dataTransfer: buildDataTransfer([ok]) })
     await waitFor(() =>
       expect(
         screen.queryByText(/unsupported format\. use jpg, png, or webp\./i),

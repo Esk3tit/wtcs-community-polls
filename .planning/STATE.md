@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.2
-milestone_name: Admin Visibility Controls
-status: executing
+milestone_name: — Admin Visibility Controls
+status: "Phase 12 shipped — PR #28"
 stopped_at: Phase 12 UI-SPEC approved
-last_updated: "2026-05-12T09:53:38.611Z"
-last_activity: 2026-05-12 -- Phase 12 planning complete
+last_updated: "2026-05-13T05:37:54.270Z"
+last_activity: "2026-05-12 -- Phase 12 shipped (PR #28)"
 progress:
   total_phases: 3
-  completed_phases: 1
-  total_plans: 14
-  completed_plans: 7
-  percent: 50
+  completed_phases: 2
+  total_plans: 15
+  completed_plans: 15
+  percent: 100
 ---
 
 # Project State
@@ -21,17 +21,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-11 after v1.1 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** v1.2 — Admin Visibility Controls — Phase 11 shipped (database + Edge Function foundations). Phase 12 (Admin UI + User UI + UIDN-03 Sweep) ready to plan.
+**Current focus:** Phase 13 — UIDN-02 Mobile Audit Closure
 
 ## Current Position
 
-Phase: 12 — Admin UI + User UI + UIDN-03 Sweep (READY TO PLAN)
-Plan: —
-Status: Ready to execute
-Last activity: 2026-05-12 -- Phase 12 planning complete
+Phase: 12 — COMPLETE (Phase 13 next)
+Plan: 8 of 8 (complete)
+Status: Phase 12 shipped — PR #28
+Last activity: 2026-05-12 -- Phase 12 shipped (PR #28)
 
 ```
-v1.2 progress:  [██████░░░░░░░░░░░░░░] 33% (Phase 11 ✅ Shipped, Phase 12 next, Phase 13 last)
+v1.2 progress:  [█████████████░░░░░░░] 67% (Phase 11 ✅ Shipped, Phase 12 ✅ Shipped, Phase 13 next)
 ```
 
 ## Accumulated Context
@@ -79,6 +79,6 @@ None. Phase 12 is unblocked: the EF and audit_log surface needed for the admin U
 
 ## Session Continuity
 
-Last session: 2026-05-12T09:09:57.593Z
-Stopped at: Phase 12 UI-SPEC approved
-Resume action: `/gsd-plan-phase 12` to begin Phase 12 (Admin UI + User UI + UIDN-03 Sweep) planning. Requirements: VIS-06, VIS-07, VIS-08, UIDN-03, TEST-13.
+Last session: 2026-05-12T22:30:00Z
+Stopped at: Phase 12 shipped — PR #28
+Resume action: `/gsd-plan-phase 13` to begin Phase 13 (UIDN-02 Mobile Audit Closure) planning. Requirements: UIDN-02.

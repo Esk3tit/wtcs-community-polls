@@ -2,8 +2,11 @@ import { useState, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { extractFunctionErrorMessage } from '@/lib/fn-error'
+import type { ResolutionStatus } from '@/lib/types/suggestions'
 
-export type Resolution = 'addressed' | 'forwarded' | 'closed'
+// Re-exported alias so callers can `import type { Resolution } from '@/hooks/useClosePoll'`
+// while the canonical declaration lives in the lib type module (lib must not depend on hooks).
+export type Resolution = ResolutionStatus
 
 export function useClosePoll() {
   const [submitting, setSubmitting] = useState(false)

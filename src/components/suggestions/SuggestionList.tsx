@@ -13,10 +13,10 @@ import { SuggestionCard } from '@/components/suggestions/SuggestionCard'
 interface SuggestionListProps {
   status: 'active' | 'closed'
   /**
-   * MR-06: when an admin clicks "View results" in the kebab menu the
-   * public list is deep-linked with `?focus=<pollId>`. On mount we
-   * scroll the matching card into view and add a transient ring so
-   * the user can identify which row they came from.
+   * When an admin clicks "View results" in the kebab menu the public
+   * list is deep-linked with `?focus=<pollId>`. On mount we scroll the
+   * matching card into view and add a transient ring so the user can
+   * identify which row they came from.
    */
   focusId?: string
 }
@@ -36,7 +36,10 @@ export function SuggestionList({ status, focusId }: SuggestionListProps) {
   )
   // Polling enabled only for active suggestions. Closed suggestions fetch once on mount.
   const enablePolling = status === 'active'
-  const { voteCounts } = useVoteCounts(votedPollIds, enablePolling)
+  // results_hidden is polled at the useVoteCounts cadence so the voter
+  // UI auto-updates within ~8s of an admin flip. Map-miss defaults to
+  // visible — RLS enforces no-leak independently at the DB layer.
+  const { voteCounts, resultsHidden } = useVoteCounts(votedPollIds, enablePolling)
   const { submitVote, submittingPollId, submittingChoiceId } = useVoteSubmit(addOptimisticVote)
 
   const hasActiveFilters = activeCategoryId !== null || debouncedSearch.length > 0
@@ -61,8 +64,9 @@ export function SuggestionList({ status, focusId }: SuggestionListProps) {
     setActiveCategoryId(null)
   }
 
-  // MR-06: scroll to the focused suggestion once it's in the rendered
-  // list. Runs once per mount so user-driven scroll isn't hijacked.
+  // Scroll to the focused suggestion (from ?focus=<pollId>) once it's
+  // in the rendered list. Runs once per mount so user-driven scroll
+  // isn't hijacked on subsequent re-renders.
   useEffect(() => {
     if (focusScrolledRef.current) return
     if (!focusId) return
@@ -146,6 +150,7 @@ export function SuggestionList({ status, focusId }: SuggestionListProps) {
                     suggestion={suggestion}
                     categoryIndex={categoryIndex >= 0 ? categoryIndex : 0}
                     userChoiceId={userVotes.get(suggestion.id)}
+                    resultsHidden={resultsHidden.get(suggestion.id) ?? false}
                     onVote={submitVote}
                     voteCounts={voteCounts.get(suggestion.id)}
                     submittingPollId={submittingPollId}

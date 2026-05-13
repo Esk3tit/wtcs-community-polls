@@ -1,7 +1,8 @@
-import { Pin } from 'lucide-react'
+import { Eye, EyeOff, Loader2, Pin } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Switch } from '@/components/ui/switch'
 import { SuggestionKebabMenu } from './SuggestionKebabMenu'
-import type { Resolution } from '@/hooks/useClosePoll'
+import { normalizeResolution } from '@/lib/poll-status'
 
 export type AdminSuggestion = {
   id: string
@@ -9,6 +10,7 @@ export type AdminSuggestion = {
   status: string
   resolution: string | null
   is_pinned: boolean
+  results_hidden: boolean
   closes_at: string | null
   closed_at: string | null
   category_id: string | null
@@ -20,13 +22,8 @@ interface Props {
   voteCount: number
   onChanged: () => void
   onTogglePin: (pollId: string, nextPinned: boolean) => void
-}
-
-const VALID_RESOLUTIONS: Resolution[] = ['addressed', 'forwarded', 'closed']
-
-function normalizeResolution(raw: string | null): Resolution | null {
-  if (raw === null) return null
-  return VALID_RESOLUTIONS.includes(raw as Resolution) ? (raw as Resolution) : null
+  onToggleResultsVisibility: (pollId: string, nextHidden: boolean) => void
+  isPendingVisibility?: boolean
 }
 
 export function AdminSuggestionRow({
@@ -34,11 +31,14 @@ export function AdminSuggestionRow({
   voteCount,
   onChanged,
   onTogglePin,
+  onToggleResultsVisibility,
+  isPendingVisibility,
 }: Props) {
   const s = suggestion
   const isClosed = s.status === 'closed'
   // Amber flag for closed-with-null-resolution (any close path, not just auto-close).
   const needsResolution = isClosed && s.resolution === null
+  const resultsHidden = s.results_hidden
 
   return (
     <div
@@ -71,20 +71,48 @@ export function AdminSuggestionRow({
             </span>
           )}
         </div>
-        <p className="text-sm font-medium mt-1 truncate">{s.title}</p>
+        <p className="text-sm font-medium mt-1 truncate" title={s.title}>{s.title}</p>
         <p className="text-xs text-muted-foreground mt-0.5">
           {voteCount} response{voteCount === 1 ? '' : 's'}
         </p>
       </div>
-      <SuggestionKebabMenu
-        pollId={s.id}
-        status={s.status}
-        isPinned={s.is_pinned}
-        resolution={normalizeResolution(s.resolution)}
-        voteCount={voteCount}
-        onChanged={onChanged}
-        onTogglePin={(next) => onTogglePin(s.id, next)}
-      />
+      <div className="flex items-center gap-2 shrink-0">
+        {/* Visual width parity with kebab (h-11 w-11) on < sm where the
+            textual label collapses to a 16px icon; sm: drops the floor so
+            the label can sit at its natural width. */}
+        <label className="inline-flex items-center gap-2 min-h-[44px] min-w-11 sm:min-w-0 cursor-pointer select-none">
+          <Switch
+            checked={!resultsHidden}
+            onCheckedChange={(v) => onToggleResultsVisibility(s.id, !v)}
+            disabled={isPendingVisibility}
+            aria-busy={isPendingVisibility}
+            aria-label={resultsHidden ? 'Results currently hidden' : 'Results currently visible'}
+            data-testid={`visibility-switch-${s.id}`}
+          />
+          <span className="hidden sm:inline text-sm font-medium">
+            {resultsHidden ? 'Show results' : 'Hide results'}
+          </span>
+          <span className="sm:hidden inline-flex">
+            {resultsHidden ? (
+              <EyeOff className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            ) : (
+              <Eye className="h-4 w-4 text-foreground" aria-hidden="true" />
+            )}
+          </span>
+          {isPendingVisibility && (
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-hidden="true" />
+          )}
+        </label>
+        <SuggestionKebabMenu
+          pollId={s.id}
+          status={s.status}
+          isPinned={s.is_pinned}
+          resolution={normalizeResolution(s.resolution)}
+          voteCount={voteCount}
+          onChanged={onChanged}
+          onTogglePin={(next) => onTogglePin(s.id, next)}
+        />
+      </div>
     </div>
   )
 }

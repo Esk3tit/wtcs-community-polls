@@ -20,6 +20,7 @@ vi.mock('@/hooks/useAuth', () => ({
 vi.mock('@/hooks/useVoteCounts', () => ({
   useVoteCounts: () => ({
     voteCounts: new Map(),
+    resultsHidden: new Map(),
     refetchVoteCounts: vi.fn(),
   }),
 }))
@@ -54,6 +55,7 @@ vi.mock('lucide-react', () => ({
   SearchX: () => <span data-testid="search-x-icon" />,
   Inbox: () => <span data-testid="inbox-icon" />,
   Archive: () => <span data-testid="archive-icon" />,
+  EyeOff: () => <span data-testid="eye-off-icon" />,
 }))
 
 // Mock UI components
@@ -148,7 +150,7 @@ describe('SuggestionList', () => {
     })
   })
 
-  // Test 1: CATG-02 -- displays active suggestions from server-filtered query
+  // Test 1: displays active suggestions from server-filtered query
   it('displays active suggestions from server-filtered query', () => {
     const suggestions = [
       mockSuggestion({ id: 'poll-1', title: 'Remove MiG-29' }),
@@ -169,7 +171,7 @@ describe('SuggestionList', () => {
     expect(screen.getByText('Active Topics')).toBeInTheDocument()
   })
 
-  // Test 2: CATG-03 -- filters by category when pill is clicked
+  // Test 2: filters by category when pill is clicked
   it('filters by category when pill is clicked', async () => {
     const suggestions = [
       mockSuggestion({
@@ -209,7 +211,7 @@ describe('SuggestionList', () => {
     expect(screen.getByText('Map Pool Suggestion')).toBeInTheDocument()
   })
 
-  // Test 3: CATG-04 -- searches by text with debounced input
+  // Test 3: searches by text with debounced input
   it('searches by text with debounced input', async () => {
     const suggestions = [
       mockSuggestion({ id: 'poll-1', title: 'Remove MiG-29' }),
@@ -238,7 +240,7 @@ describe('SuggestionList', () => {
     expect(screen.queryByText('Add Sinai')).not.toBeInTheDocument()
   })
 
-  // Test 4: CATG-04 -- shows no-matches empty state when filters exclude all
+  // Test 4: shows no-matches empty state when filters exclude all
   it('shows no-matches empty state when filters exclude all suggestions', () => {
     const suggestions = [
       mockSuggestion({ id: 'poll-1', title: 'Remove MiG-29' }),
@@ -260,7 +262,7 @@ describe('SuggestionList', () => {
     expect(screen.getByText('No topics match your search')).toBeInTheDocument()
   })
 
-  // Test 5: CATG-02 -- shows no-active empty state when no suggestions exist
+  // Test 5: shows no-active empty state when no suggestions exist
   it('shows no-active empty state when no suggestions exist', () => {
     mockUseSuggestions.mockReturnValue({
       suggestions: [],

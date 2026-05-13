@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { supabase } from '@/lib/supabase'
 import { usePinPoll } from '@/hooks/usePinPoll'
+import { useToggleResultsVisibility } from '@/hooks/useToggleResultsVisibility'
 import { AdminSuggestionRow, type AdminSuggestion } from './AdminSuggestionRow'
 
 type Filter = 'active' | 'closed' | 'all'
@@ -34,9 +35,28 @@ export function AdminSuggestionsTab() {
   const [voteCounts, setVoteCounts] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<Error | null>(null)
+  const [pendingVisibility, setPendingVisibility] = useState<Set<string>>(new Set())
 
   const { pinPoll } = usePinPoll()
+  const { toggleResultsVisibility } = useToggleResultsVisibility()
   const fetchIdRef = useRef(0)
+  // Per-poll inflight gate for pin toggles, read synchronously inside the
+  // handler so a rapid double-click cannot slip between handler-1's "I am
+  // taking ownership" mark and React committing that mark. usePinPoll's
+  // hook-side gate is a singleton boolean and returns ok:false without a
+  // reason discriminant, so caller-side dedup is the only way to keep
+  // handler-2 from running the revert path against handler-1's still-
+  // pending optimistic flip.
+  const pendingPinRef = useRef<Set<string>>(new Set())
+  // Refs mirror the items + pendingVisibility state so the visibility
+  // handler can read the latest values without listing them as useCallback
+  // deps. Without these the callback would be recreated on every setItems
+  // / setPendingVisibility call, defeating referential stability for child
+  // memoization and matching the pin-handler pattern above.
+  const itemsRef = useRef(items)
+  itemsRef.current = items
+  const pendingVisibilityRef = useRef(pendingVisibility)
+  pendingVisibilityRef.current = pendingVisibility
 
   const fetchAll = useCallback(async () => {
     const id = ++fetchIdRef.current
@@ -66,6 +86,10 @@ export function AdminSuggestionsTab() {
           .in('poll_id', pollIds)
         if (vcErr) throw vcErr
         if (id !== fetchIdRef.current) return // stale response
+        // The generated `vote_counts.count` type is non-null at the table
+        // level, but the view-level aggregation can still surface NULL on
+        // edge cases (e.g., aggregate functions over empty partitions),
+        // so we widen the row type and coalesce to 0 defensively.
         for (const r of (vcData ?? []) as Array<{ poll_id: string; count: number | null }>) {
           counts[r.poll_id] = (counts[r.poll_id] ?? 0) + (r.count ?? 0)
         }
@@ -88,28 +112,123 @@ export function AdminSuggestionsTab() {
     navigate({ to: '/admin', search: { tab: 'suggestions', filter: f } })
 
   // Optimistic pin: flip is_pinned locally and re-sort before firing the
-  // mutation. Revert on failure. Post-mutation refetch reconciles so server
-  // state always wins.
+  // mutation. Revert via functional setItems on failure so concurrent flips
+  // against different rows do not trample each other's optimistic state.
+  // Post-mutation refetch (success OR failure) is the canonical reconcile.
   const handleTogglePin = useCallback(
     async (pollId: string, nextPinned: boolean) => {
-      const prev = items
-      const optimistic = sortAdminSuggestions(
-        items.map((it) =>
-          it.id === pollId ? { ...it, is_pinned: nextPinned } : it,
+      // Short-circuit rapid double-click on the same row BEFORE any
+      // optimistic flip. usePinPoll's hook-side gate is a singleton
+      // boolean without a reason discriminant, so without this guard
+      // handler-2 cannot distinguish "I lost the inflight race" from
+      // "real EF/network error" and would run the revert path against
+      // handler-1's still-pending optimistic flip. A ref-backed Set is
+      // read synchronously and avoids the React commit window that a
+      // useState-backed gate would expose.
+      if (pendingPinRef.current.has(pollId)) return
+      pendingPinRef.current.add(pollId)
+      setItems((cur) =>
+        sortAdminSuggestions(
+          cur.map((it) => (it.id === pollId ? { ...it, is_pinned: nextPinned } : it)),
         ),
       )
-      setItems(optimistic)
-      const res = await pinPoll({ poll_id: pollId, is_pinned: nextPinned })
-      if (!res.ok) {
-        // Revert to the pre-optimistic snapshot. The toast was already
-        // surfaced by usePinPoll's error path.
-        setItems(prev)
-        return
+      try {
+        const res = await pinPoll({ poll_id: pollId, is_pinned: nextPinned })
+        if (!res.ok) {
+          // Diff-revert only the target row, then re-sort. Other rows'
+          // concurrent optimistic flips stay intact. The toast was already
+          // surfaced by usePinPoll's error path.
+          setItems((cur) =>
+            sortAdminSuggestions(
+              cur.map((it) => (it.id === pollId ? { ...it, is_pinned: !nextPinned } : it)),
+            ),
+          )
+          // Reconcile against server too — guarantees convergence if a
+          // concurrent flip raced us.
+          void fetchAll()
+          return
+        }
+        void fetchAll()
+      } finally {
+        pendingPinRef.current.delete(pollId)
       }
-      // Reconciliation — fetch canonical state.
-      void fetchAll()
     },
-    [items, pinPoll, fetchAll],
+    [pinPoll, fetchAll],
+  )
+
+  // Optimistic results-visibility flip: results_hidden does not affect list
+  // ordering, so no re-sort. Functional setItems diffs only the target row
+  // so concurrent flips on other rows stay intact. Per-row pending Set lets
+  // multiple rows be in-flight independently. Toast surfaced by hook.
+  const handleToggleResultsVisibility = useCallback(
+    async (pollId: string, nextHidden: boolean) => {
+      // Short-circuit rapid double-click on the same row BEFORE any
+      // optimistic flip. The Switch's `disabled={pendingVisibility.has(s.id)}`
+      // guards the common case, but the window between the first click's
+      // setPendingVisibility and the next render is non-zero (and can
+      // stretch under React 19 concurrent-mode load). Without this guard
+      // the second handler ran the revert path on the hook's inflight
+      // rejection — flickering the Switch B→A→B — and tampered with the
+      // first handler's pending marker. Ref read (not state) so the
+      // callback identity stays stable across renders.
+      if (pendingVisibilityRef.current.has(pollId)) return
+
+      // Read title from the items ref OUTSIDE the setItems updater. The
+      // row is guaranteed to exist because the user just clicked its
+      // Switch. Mutating closure-scoped vars inside a setState updater
+      // violates React's purity contract (StrictMode double-invokes
+      // updaters in dev to surface this).
+      const target = itemsRef.current.find((it) => it.id === pollId)
+      const title = target?.title ?? 'this suggestion'
+      setItems((cur) =>
+        cur.map((it) =>
+          it.id === pollId ? { ...it, results_hidden: nextHidden } : it,
+        ),
+      )
+      setPendingVisibility((s) => {
+        const n = new Set(s)
+        n.add(pollId)
+        return n
+      })
+      // keepPending mirrors the inflight-skip semantics across the
+      // finally: a try/finally that unconditionally cleared the pending
+      // entry would race handler-1 (the inflight winner still owns the
+      // marker AND the optimistic flip). The flag flips only on the
+      // inflight branch so unexpected exceptions in the success/error
+      // paths still trigger cleanup and the Switch never gets stuck
+      // disabled until refresh.
+      let keepPending = false
+      try {
+        const res = await toggleResultsVisibility({ poll_id: pollId, hidden: nextHidden, title })
+        if (!res.ok && res.reason === 'inflight') {
+          keepPending = true
+          return
+        }
+        if (!res.ok) {
+          // Real EF/network error — diff-revert only the target row so
+          // concurrent flips on other rows keep their optimistic state.
+          setItems((cur) =>
+            cur.map((it) =>
+              it.id === pollId ? { ...it, results_hidden: !nextHidden } : it,
+            ),
+          )
+          // Reconcile against server too — guarantees convergence if a
+          // concurrent flip raced us.
+          void fetchAll()
+          return
+        }
+        void fetchAll()
+      } finally {
+        if (!keepPending) {
+          setPendingVisibility((s) => {
+            const n = new Set(s)
+            n.delete(pollId)
+            return n
+          })
+        }
+      }
+    },
+    [toggleResultsVisibility, fetchAll],
   )
 
   return (
@@ -202,6 +321,10 @@ export function AdminSuggestionsTab() {
               voteCount={voteCounts[s.id] ?? 0}
               onChanged={fetchAll}
               onTogglePin={(pid, next) => void handleTogglePin(pid, next)}
+              onToggleResultsVisibility={(pid, next) =>
+                void handleToggleResultsVisibility(pid, next)
+              }
+              isPendingVisibility={pendingVisibility.has(s.id)}
             />
           ))}
         </div>

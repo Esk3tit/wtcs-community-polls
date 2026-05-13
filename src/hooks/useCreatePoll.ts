@@ -13,6 +13,8 @@ export function useCreatePoll() {
     inflightRef.current = true
     setSubmitting(true)
     try {
+      // results_hidden rides through SuggestionFormInput; the create-poll EF
+      // validates the field as boolean | undefined and defaults to false.
       const { data, error } = await supabase.functions.invoke<{ id: string }>(
         'create-poll',
         { body: input },

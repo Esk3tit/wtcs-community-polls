@@ -49,7 +49,7 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
 ### v1.2 — Admin Visibility Controls (Phases 11–13)
 
 - [x] **Phase 11: Schema + RLS + EF Foundations** — Migration 10 (`results_hidden` boolean + `results_hidden_changed_at` timestamptz on `polls`, `vote_counts` RLS DROP+CREATE, `polls_effective` view rewrite with `security_invoker = on`), `toggle-results-visibility` Edge Function, 12-cell RLS invariant test suite (TEST-11), admin EF authorization test (TEST-12) — shipped 2026-05-11
-- [ ] **Phase 12: Admin UI + User UI + UIDN-03 Sweep** — VisibilityCheckbox on creation form, "Hide/Show results" toggle button + AlertDialog on admin cards, `canSeeResults` gate in `SuggestionCard`, hidden-state message component, `useVoteCounts` extension, archive view fix, 4 native-button drift cleanup co-landing in `SuggestionForm.tsx`, `SearchBar.tsx`, `ImageInput.tsx`, Playwright E2E happy path (TEST-13)
+- [x] **Phase 12: Admin UI + User UI + UIDN-03 Sweep** — VisibilityCheckbox on creation form, inline "Hide/Show results" Switch + sonner toast on `AdminSuggestionRow` (per CONTEXT D-01; supersedes earlier AlertDialog pattern), `canSeeResults` gate in `SuggestionCard`, hidden-state message component, `useVoteCounts` extension, archive view fix, 4 native-button drift cleanup co-landing in `SuggestionForm.tsx`, `SearchBar.tsx`, `ImageInput.tsx`, Playwright E2E happy path (TEST-13) (completed 2026-05-12)
 - [ ] **Phase 13: UIDN-02 Mobile Audit Closure** — `audit-screenshots.mjs` hydration-wait fix (Plan 02 defect), Lighthouse mobile audit rerun with authenticated Pass-A evidence for `/topics` and `/archive`, Key Decision rows flipped ⚠️ → ✓
 
 ## Phase Details
@@ -90,20 +90,23 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
   4. The Playwright E2E spec (TEST-13) passes end-to-end: admin creates a poll, a test vote is cast, admin hides results, the voter UI shows the hidden message, admin shows results, the voter UI shows count bars again
   5. ESLint and `tsc -b` pass with zero errors after the 4 native-button replacements in `SearchBar.tsx`, `SuggestionForm.tsx` (×2), and `ImageInput.tsx`; `type="submit"` is preserved where applicable; no existing form-submission behavior regresses
 
-**Plans**: 7 plans
+**Plans**: 8 plans
 
 **Wave 1** *(foundation — independent, parallel)*
-- [ ] 12-00-PLAN.md — Type regen + npm gen:types script + vendor shadcn Checkbox/Switch + REQUIREMENTS.md VIS-07 wording edit
-- [ ] 12-01-PLAN.md — UIDN-03 D-15: SearchBar clear-X native button → shadcn Button (ghost icon)
+- [x] 12-00-PLAN.md — Type regen + npm gen:types script + vendor shadcn Checkbox/Switch + REQUIREMENTS.md VIS-07 wording edit
+- [x] 12-01-PLAN.md — UIDN-03 D-15: SearchBar clear-X native button → shadcn Button (ghost icon)
 
 **Wave 2** *(blocked on Wave 1 completion — parallel within wave)*
-- [ ] 12-02-PLAN.md — VIS-06 checkbox on SuggestionForm + UIDN-03 D-14 ×2 TanStack Link back-link replacements
-- [ ] 12-03-PLAN.md — VIS-07 inline Switch on AdminSuggestionRow + new useToggleResultsVisibility hook + AdminSuggestionsTab optimistic wiring
-- [ ] 12-04-PLAN.md — VIS-08 hidden-state Alert in SuggestionCard + useVoteCounts extension polling results_hidden
-- [ ] 12-05-PLAN.md — UIDN-03 D-13: extract DropZone component, refactor ImageInput
+- [x] 12-02-PLAN.md — VIS-06 checkbox on SuggestionForm + UIDN-03 D-14 ×2 TanStack Link back-link replacements
+- [x] 12-03-PLAN.md — VIS-07 inline Switch on AdminSuggestionRow + new useToggleResultsVisibility hook + AdminSuggestionsTab optimistic wiring
+- [x] 12-04-PLAN.md — VIS-08 hidden-state Alert in SuggestionCard + useVoteCounts extension polling results_hidden
+- [x] 12-05-PLAN.md — UIDN-03 D-13: extract DropZone component, refactor ImageInput
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 12-06-PLAN.md — TEST-13 Playwright E2E spec + freshPoll fixture vote-cast helper + REQUIREMENTS.md traceability marks complete
+- [x] 12-06-PLAN.md — TEST-13 Playwright E2E spec + freshPoll fixture vote-cast helper + REQUIREMENTS.md traceability marks complete
+
+**Wave 4** *(gap closure — blocked on UAT diagnosis)*
+- [x] 12-07-PLAN.md — UIDN-03 D-14 gap closure: SuggestionForm Cancel button → `<Button asChild><Link to="/admin">` (Test 3 UAT fix)
 
 Cross-cutting constraints:
 - Zero direct `from('polls')` reads in `src/` (Phase 11 VIS-09 invariant — `polls-effective-invariant.test.ts` must continue to pass)
@@ -135,7 +138,7 @@ Cross-cutting constraints:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 11. Schema + RLS + EF Foundations | 7/7 | ✅ Shipped | 2026-05-11 |
-| 12. Admin UI + User UI + UIDN-03 Sweep | 0/? | Not started | - |
+| 12. Admin UI + User UI + UIDN-03 Sweep | 8/8 | Complete   | 2026-05-12 |
 | 13. UIDN-02 Mobile Audit Closure | 0/? | Not started | - |
 
 | Milestone | Phases | Plans | Status | Shipped |
