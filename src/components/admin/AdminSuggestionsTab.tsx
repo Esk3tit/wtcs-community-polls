@@ -133,9 +133,8 @@ export function AdminSuggestionsTab() {
       // setPendingVisibility and the next render is non-zero (and can
       // stretch under React 19 concurrent-mode load). Without this guard
       // the second handler ran the revert path on the hook's inflight
-      // rejection — flickering the Switch B→A→B — and its pending-delete
-      // step re-enabled the Switch while the first request was still in
-      // flight.
+      // rejection — flickering the Switch B→A→B — and tampered with the
+      // first handler's pending marker.
       if (pendingVisibility.has(pollId)) return
 
       // Read title from current state OUTSIDE the setItems updater. The
@@ -156,19 +155,21 @@ export function AdminSuggestionsTab() {
         return n
       })
       const res = await toggleResultsVisibility({ poll_id: pollId, hidden: nextHidden, title })
+      // Inflight gate trip: the caller-side `pendingVisibility.has` guard
+      // missed the React-commit window, so the first handler still owns
+      // BOTH the pending marker AND the optimistic flip. Do not touch
+      // pendingVisibility (clearing it here would re-enable the Switch
+      // while the first EF is still in flight) and do not revert items
+      // (first handler's flip is the source of truth).
+      if (!res.ok && res.reason === 'inflight') return
       setPendingVisibility((s) => {
         const n = new Set(s)
         n.delete(pollId)
         return n
       })
       if (!res.ok) {
-        // Defense-in-depth: if the hook reported an inflight gate trip
-        // (caller-side guard above missed the window), the first click's
-        // flip is still pending — DO NOT revert the optimistic state.
-        // Only revert on real EF/network errors.
-        if (res.reason === 'inflight') return
-        // Diff-revert only the target row so concurrent flips on other
-        // rows keep their optimistic state.
+        // Real EF/network error — diff-revert only the target row so
+        // concurrent flips on other rows keep their optimistic state.
         setItems((cur) =>
           cur.map((it) =>
             it.id === pollId ? { ...it, results_hidden: !nextHidden } : it,
