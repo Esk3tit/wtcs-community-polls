@@ -11,7 +11,7 @@ import { ChoiceButtons } from '@/components/suggestions/ChoiceButtons'
 import { ResultBars } from '@/components/suggestions/ResultBars'
 import { formatTimeRemaining } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import { normalizeResolution } from '@/lib/poll-status'
+import { normalizeResolution, normalizeStatus } from '@/lib/poll-status'
 import type { SuggestionWithChoices } from '@/lib/types/suggestions'
 
 export function SuggestionCard({
@@ -36,7 +36,8 @@ export function SuggestionCard({
   const [isOpen, setIsOpen] = useState(suggestion.is_pinned)
 
   const isPinned = suggestion.is_pinned
-  const isClosed = suggestion.status !== 'active'
+  const pollStatus = normalizeStatus(suggestion.status)
+  const isClosed = pollStatus === 'closed'
   const resolution = isClosed ? normalizeResolution(suggestion.resolution) : null
   const hasResolution = resolution !== null
 
@@ -156,7 +157,7 @@ export function SuggestionCard({
                 <ChoiceButtons
                   choices={suggestion.choices}
                   pollId={suggestion.id}
-                  pollStatus={suggestion.status as 'active' | 'closed'}
+                  pollStatus={pollStatus}
                   hasVoted={false}
                   onVote={onVote}
                   submittingPollId={submittingPollId}
