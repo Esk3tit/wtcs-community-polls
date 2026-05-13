@@ -149,7 +149,7 @@ export function SuggestionCard({
                   <p className="text-sm text-muted-foreground">
                     Your response:{' '}
                     <span className="text-foreground font-medium">
-                      {suggestion.choices.find((c) => c.id === userChoiceId)?.label ?? '(unknown)'}
+                      {suggestion.choices.find((c) => c.id === userChoiceId)?.label ?? 'an option no longer available'}
                     </span>
                   </p>
                   <Alert>
