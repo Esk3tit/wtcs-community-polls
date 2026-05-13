@@ -128,7 +128,9 @@ Cross-cutting constraints:
   3. Lighthouse mobile audit produces a score for all 5 routes; results are archived in `.planning/closure/UIDN-02-mobile-evidence.md` (v1.2 rerun section) with the raw numeric scores recorded
   4. The `Mobile-first responsive design` Key Decision row in `PROJECT.md` is flipped from ⚠️ Revisit to ✓ Good if Performance ≥ 90 on all 5 routes; if any route scores below 90, the evidence file documents the delta with rationale and the row remains ⚠️ with a follow-up note
 
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 13-01-PLAN.md — Harness fix: sentinel swap + UNAUTH_ROUTES reduction + member context + sha256 dupe-check; harness execution to produce clean 42-PNG corpus
+- [ ] 13-02-PLAN.md — Lighthouse mobile audit (single-run, D-13) + evidence file v1.2 Rerun section + PROJECT.md row + REQUIREMENTS.md rows + atomic commit
 **UI hint**: no
 
 ---
@@ -139,10 +141,10 @@ Cross-cutting constraints:
 |-------|----------------|--------|-----------|
 | 11. Schema + RLS + EF Foundations | 7/7 | ✅ Shipped | 2026-05-11 |
 | 12. Admin UI + User UI + UIDN-03 Sweep | 8/8 | Complete   | 2026-05-12 |
-| 13. UIDN-02 Mobile Audit Closure | 0/? | Not started | - |
+| 13. UIDN-02 Mobile Audit Closure | 0/2 | In progress | - |
 
 | Milestone | Phases | Plans | Status | Shipped |
 |-----------|--------|-------|--------|---------|
 | v1.0 | 1–6 | 32/32 | ✅ Shipped | 2026-04-28 |
 | v1.1 | 7–10 | 16/16 | ✅ Shipped | 2026-05-11 |
-| v1.2 | 11–13 | 7/? | 🔄 In progress (1/3 phases) | - |
+| v1.2 | 11–13 | 17/17 | 🔄 In progress (2/3 phases complete) | - |

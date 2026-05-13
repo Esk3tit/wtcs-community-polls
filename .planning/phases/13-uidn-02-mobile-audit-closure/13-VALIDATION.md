@@ -2,9 +2,10 @@
 phase: 13
 slug: uidn-02-mobile-audit-closure
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-05-13
+updated: 2026-05-13
 ---
 
 # Phase 13 — Validation Strategy
@@ -38,13 +39,15 @@ created: 2026-05-13
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| TBD-01 | TBD | 1 | UIDN-02 SC1 | — | Harness exits 0; "All DOM assertions matched."; "sha256 uniqueness check passed (42 PNGs, 0 collisions)" | Functional (CLI) | `node .planning/closure/audit-screenshots.mjs` | ✅ | ⬜ pending |
-| TBD-02 | TBD | 1 | UIDN-02 SC2 | — | 42 PNGs in `.planning/closure/artifacts/`; member-fixture session UI in `bp-{w}-topics.png` + `bp-{w}-archive.png` (no Admin link in Navbar) | Behavioral (PNG inspection + count) | `ls .planning/closure/artifacts/*.png \| wc -l` → 42 | ✅ | ⬜ pending |
-| TBD-03 | TBD | 2 | UIDN-02 SC3 | — | 5 Lighthouse JSON reports archived; numeric Performance score for each of `/`, `/topics`, `/archive`, `/auth/error`, `/admin` | Functional (CLI) | `bash .planning/closure/audit-mobile.sh` | ✅ | ⬜ pending |
-| TBD-04 | TBD | 2 | UIDN-02 SC4 | — | Evidence file `## v1.2 Rerun (2026-05-XX)` section present with scores; PROJECT.md row + REQUIREMENTS.md row mirror outcome | Cross-doc consistency | `grep "v1.2 Rerun" .planning/closure/UIDN-02-mobile-evidence.md && grep "Mobile-first" .planning/PROJECT.md && grep "UIDN-02" .planning/REQUIREMENTS.md` | ✅ | ⬜ pending |
+| 13-01-01 | 13-01 | 1 | UIDN-02 SC1 | — | Harness exits 0; "All DOM assertions matched."; "sha256 uniqueness check passed (42 PNGs, 0 collisions)"; sentinel replacement confirmed via grep | Functional (CLI) | `node --check .planning/closure/audit-screenshots.mjs && grep -c 'Toggle color theme' .planning/closure/audit-screenshots.mjs` → 3 | ✅ | ⬜ pending |
+| 13-01-02 | 13-01 | 1 | UIDN-02 SC2 | — | Operator pre-flight + harness execution: 42 PNGs in `.planning/closure/artifacts/`; sha256 uniqueness passed; member-fixture session UI in `bp-{w}-topics.png` + `bp-{w}-archive.png` (authenticated, no login redirect) | Behavioral (CLI + PNG inspection) | `ls .planning/closure/artifacts/screenshots/*.png \| wc -l` → 42 | ✅ | ⬜ pending (checkpoint) |
+| 13-02-01 | 13-02 | 2 | UIDN-02 SC3 | — | Lighthouse audit completes for all 5 routes; reports archived; exit code 0 (pass) or 1 (miss per D-11 strict floor — both are valid outcomes) | Functional (CLI) | `bash .planning/closure/audit-mobile.sh && ls .planning/closure/artifacts/lighthouse/ \| wc -l` → 10 | ✅ | ⬜ pending |
+| 13-02-02 | 13-02 | 2 | UIDN-02 SC3 + SC4 | — | Evidence file `## v1.2 Rerun (2026-05-XX)` section present with actual scores; PROJECT.md row updated per D-17; REQUIREMENTS.md UIDN-02 row + Traceability row reflect outcome; all three docs agree | Cross-doc consistency (CLI) | `grep 'v1.2 Rerun' .planning/closure/UIDN-02-mobile-evidence.md && grep 'Mobile-first' .planning/PROJECT.md && grep 'UIDN-02' .planning/REQUIREMENTS.md` | ✅ | ⬜ pending |
+| 13-02-03 | 13-02 | 2 | UIDN-02 SC4 | — | Human verifies cross-doc consistency and authorizes atomic commit | Manual (checkpoint) | — | ✅ | ⬜ pending (checkpoint) |
+| 13-02-04 | 13-02 | 2 | UIDN-02 SC1-SC4 | — | Atomic commit covers all 5 changed planning files; zero src/ edits; MANIFEST.json updated | Functional (git) | `git show --name-only HEAD \| grep "src/"` → empty; `git show --name-only HEAD \| grep ".planning"` → 5 files | ✅ | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
-*Task IDs are placeholders — planner assigns final 13-NN-MM IDs in PLAN.md.*
+*Task IDs follow 13-NN-MM convention: plan number + sequential task number within the plan.*
 
 ---
 
@@ -61,19 +64,19 @@ Existing infrastructure covers all phase validations. No new test files, fixture
 
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
-| Authenticated UI captured (no login redirect, member-fixture session visible) | UIDN-02 SC2 | PNG content is binary; visual recognition that the screenshot shows the post-login `/topics` view, not the unauth redirect to `/` | Open `.planning/closure/artifacts/bp-390-topics.png` (smallest viewport); confirm Navbar shows member username + signout, no Admin link, suggestion cards visible (not loading shells) |
+| Authenticated UI captured (no login redirect, member-fixture session visible) | UIDN-02 SC2 | PNG content is binary; visual recognition that the screenshot shows the post-login `/topics` view, not the unauth redirect to `/` | Open `.planning/closure/artifacts/screenshots/bp-375-topics.png` (or any bp-XXX-topics.png); confirm Navbar shows theme-toggle button visible, suggestion cards rendered (not loading shell), no "Sign in with Discord" CTA as primary content |
 | Pass/miss disposition in evidence file Sign-off | UIDN-02 SC4 | Italics-form `*Disposition: ...*` paragraph reflects human judgment on follow-up trigger wording | Read final paragraph of `## v1.2 Rerun` section; confirm wording matches Phase 9 italics convention + D-12 follow-up trigger ("next perf-budget change") |
-| Lighthouse score variance interpretation | UIDN-02 SC4 | If any route scores 88–89 (Pitfall 1 ±5–10pp band), human decides whether D-11 strict floor or a documented variance note applies | Inspect each route's Performance score; per D-11 the strict-90 floor applies (no D-14 analog this phase) — sub-90 routes flip outcome to miss |
+| Lighthouse score variance interpretation | UIDN-02 SC4 | If any route scores 88–89 (Pitfall 1 ±5–10pp band), human decides per D-11 strict floor | Inspect each route's Performance score; per D-11 the strict-90 floor applies (no D-14 analog this phase) — sub-90 routes flip outcome to miss regardless of variance band |
 
 ---
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or are explicitly classified as manual above
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references (none — existing infra covers)
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 300s
-- [ ] `nyquist_compliant: true` set in frontmatter (after planner finalizes Task IDs)
+- [x] All tasks have `<automated>` verify or are explicitly classified as manual above
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify (13-01-01 auto → 13-01-02 checkpoint → 13-02-01 auto → 13-02-02 auto → 13-02-03 checkpoint → 13-02-04 auto)
+- [x] Wave 0 covers all MISSING references (none — existing infra covers)
+- [x] No watch-mode flags
+- [x] Feedback latency < 300s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** pending execution
