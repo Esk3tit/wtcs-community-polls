@@ -84,7 +84,10 @@ export function AdminSuggestionRow({
         </p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <label className="inline-flex items-center gap-2 min-h-[44px] cursor-pointer select-none">
+        {/* Visual width parity with kebab (h-11 w-11) on < sm where the
+            textual label collapses to a 16px icon; sm: drops the floor so
+            the label can sit at its natural width. */}
+        <label className="inline-flex items-center gap-2 min-h-[44px] min-w-11 sm:min-w-0 cursor-pointer select-none">
           <Switch
             checked={!resultsHidden}
             onCheckedChange={(v) => onToggleResultsVisibility(s.id, !v)}
