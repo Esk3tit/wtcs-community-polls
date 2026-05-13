@@ -138,7 +138,7 @@ Cross-cutting constraints:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 11. Schema + RLS + EF Foundations | 7/7 | ✅ Shipped | 2026-05-11 |
-| 12. Admin UI + User UI + UIDN-03 Sweep | 8/8 | Complete   | 2026-05-13 |
+| 12. Admin UI + User UI + UIDN-03 Sweep | 8/8 | Complete   | 2026-05-12 |
 | 13. UIDN-02 Mobile Audit Closure | 0/? | Not started | - |
 
 | Milestone | Phases | Plans | Status | Shipped |

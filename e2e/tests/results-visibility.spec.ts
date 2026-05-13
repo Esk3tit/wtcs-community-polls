@@ -138,6 +138,15 @@ test('[@smoke] admin creates, voter votes, admin hide/show roundtrip end-to-end'
     const firstChoice = voterCard.getByTestId('choice-button').first()
     await firstChoice.click()
 
+    // Confirm the vote actually landed before moving to hide/show
+    // assertions. Without this gate, a silent submit-vote failure would
+    // fall through to STEP 4 and surface as a misleading 12s polling
+    // timeout. The "N total response(s)" string is only rendered by
+    // ResultBars post-submission (same marker used in browse-respond.spec.ts).
+    await expect(voterCard.getByText(/[1-9]\d*\s+total response/i)).toBeVisible({
+      timeout: 10_000,
+    })
+
     // Sanity: results are still VISIBLE (hide checkbox was unchecked at
     // create). The hidden-alert wrapper must NOT be on screen yet.
     await expect(
@@ -189,9 +198,16 @@ test('[@smoke] admin creates, voter votes, admin hide/show roundtrip end-to-end'
     // Always close the admin context and delete the created poll, even
     // if the spec body throws. Best-effort teardown — deletePollById
     // logs but does not rethrow so reporter shows the real failure.
-    await adminContext.close()
-    if (createdPollId) {
-      await deletePollById(createdPollId)
+    // Nested try/finally guarantees the DB-level row delete runs even
+    // if adminContext.close() throws (otherwise the [E2E]-prefixed poll
+    // would leak; global-setup would sweep it on next run, but per-test
+    // cleanup is preferred).
+    try {
+      await adminContext.close()
+    } finally {
+      if (createdPollId) {
+        await deletePollById(createdPollId)
+      }
     }
   }
 })

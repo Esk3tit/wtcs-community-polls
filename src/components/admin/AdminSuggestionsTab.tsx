@@ -48,6 +48,15 @@ export function AdminSuggestionsTab() {
   // handler-2 from running the revert path against handler-1's still-
   // pending optimistic flip.
   const pendingPinRef = useRef<Set<string>>(new Set())
+  // Refs mirror the items + pendingVisibility state so the visibility
+  // handler can read the latest values without listing them as useCallback
+  // deps. Without these the callback would be recreated on every setItems
+  // / setPendingVisibility call, defeating referential stability for child
+  // memoization and matching the pin-handler pattern above.
+  const itemsRef = useRef(items)
+  itemsRef.current = items
+  const pendingVisibilityRef = useRef(pendingVisibility)
+  pendingVisibilityRef.current = pendingVisibility
 
   const fetchAll = useCallback(async () => {
     const id = ++fetchIdRef.current
@@ -160,15 +169,16 @@ export function AdminSuggestionsTab() {
       // stretch under React 19 concurrent-mode load). Without this guard
       // the second handler ran the revert path on the hook's inflight
       // rejection — flickering the Switch B→A→B — and tampered with the
-      // first handler's pending marker.
-      if (pendingVisibility.has(pollId)) return
+      // first handler's pending marker. Ref read (not state) so the
+      // callback identity stays stable across renders.
+      if (pendingVisibilityRef.current.has(pollId)) return
 
-      // Read title from current state OUTSIDE the setItems updater. The
+      // Read title from the items ref OUTSIDE the setItems updater. The
       // row is guaranteed to exist because the user just clicked its
       // Switch. Mutating closure-scoped vars inside a setState updater
       // violates React's purity contract (StrictMode double-invokes
       // updaters in dev to surface this).
-      const target = items.find((it) => it.id === pollId)
+      const target = itemsRef.current.find((it) => it.id === pollId)
       const title = target?.title ?? 'this suggestion'
       setItems((cur) =>
         cur.map((it) =>
@@ -208,7 +218,7 @@ export function AdminSuggestionsTab() {
       }
       void fetchAll()
     },
-    [items, pendingVisibility, toggleResultsVisibility, fetchAll],
+    [toggleResultsVisibility, fetchAll],
   )
 
   return (

@@ -25,13 +25,13 @@ See: .planning/PROJECT.md (updated 2026-05-11 after v1.1 milestone)
 
 ## Current Position
 
-Phase: 12 — COMPLETE
-Plan: 1 of 7
+Phase: 12 — COMPLETE (Phase 13 next)
+Plan: 8 of 8 (complete)
 Status: Phase 12 shipped — PR #28
 Last activity: 2026-05-12 -- Phase 12 shipped (PR #28)
 
 ```
-v1.2 progress:  [██████░░░░░░░░░░░░░░] 33% (Phase 11 ✅ Shipped, Phase 12 next, Phase 13 last)
+v1.2 progress:  [█████████████░░░░░░░] 67% (Phase 11 ✅ Shipped, Phase 12 ✅ Shipped, Phase 13 next)
 ```
 
 ## Accumulated Context

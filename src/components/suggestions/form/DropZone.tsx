@@ -44,6 +44,9 @@ export function DropZone({
       onDragLeave={(e) => {
         e.preventDefault()
         e.stopPropagation()
+        // Suppress spurious leave events when the pointer crosses into a
+        // child element — without this guard the highlight ring flickers.
+        if (e.currentTarget.contains(e.relatedTarget as Node)) return
         onDragStateChange(false)
       }}
       onDrop={(e) => {
@@ -57,7 +60,7 @@ export function DropZone({
       className={cn(
         'flex min-h-[160px] flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed bg-muted/30 px-4 py-8 text-sm transition-colors',
         dragOver && !uploading && 'bg-muted/60 ring-2 ring-ring',
-        disabled && 'opacity-60 cursor-not-allowed',
+        inert && 'opacity-60 cursor-not-allowed',
       )}
     >
       {uploading ? (
