@@ -274,8 +274,8 @@ export function SuggestionForm({ mode, pollId }: Props) {
         </div>
 
         <div className="sticky bottom-0 bg-background border-t py-4 px-4 -mx-4 md:static md:mx-0 md:px-0 md:border-0 md:pt-6 flex items-center justify-end gap-2">
-          <Button type="button" variant="ghost" onClick={() => navigate({ to: '/admin' })}>
-            Cancel
+          <Button asChild variant="ghost">
+            <Link to="/admin">Cancel</Link>
           </Button>
           <Button
             type="submit"
