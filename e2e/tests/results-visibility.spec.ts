@@ -120,14 +120,16 @@ test('[@smoke] admin creates, voter votes, admin hide/show roundtrip end-to-end'
     await expect(voterCard).toBeVisible({ timeout: 10_000 })
 
     // The new poll is NOT pinned, so SuggestionCard renders collapsed
-    // with the wrapper role=button + aria-expanded=false. Click the
-    // collapsed trigger to expand. Resilience pattern copied verbatim
-    // from browse-respond.spec.ts.
-    // eslint-disable-next-line no-restricted-syntax -- DOM-scoped inside fixture card; at most one collapsed trigger exists when card is unpinned.
-    const collapsedTrigger = voterCard.getByRole('button', { expanded: false }).first()
-    // eslint-disable-next-line no-restricted-syntax -- DOM-scoped variable bound above; .count() probes presence of the at-most-one collapsed trigger.
-    if (await collapsedTrigger.count()) {
-      await collapsedTrigger.click()
+    // with the wrapper itself carrying role=button + aria-expanded=false
+    // (the same div that gets data-testid=suggestion-card). Playwright's
+    // `voterCard.getByRole('button', { expanded: false })` only matches
+    // descendants — voterCard IS the trigger, so a descendant search
+    // returns count=0 and the card stays collapsed. Inspect the wrapper
+    // attribute and click voterCard itself when it advertises the
+    // collapsed state.
+    if ((await voterCard.getAttribute('aria-expanded')) === 'false') {
+      await voterCard.click()
+      await expect(voterCard).toHaveAttribute('aria-expanded', 'true')
     }
 
     // Stable `choice-button` testid — getByRole('button') would also
