@@ -106,7 +106,7 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
 - [x] 12-06-PLAN.md — TEST-13 Playwright E2E spec + freshPoll fixture vote-cast helper + REQUIREMENTS.md traceability marks complete
 
 **Wave 4** *(gap closure — blocked on UAT diagnosis)*
-- [ ] 12-07-PLAN.md — UIDN-03 D-14 gap closure: SuggestionForm Cancel button → `<Button asChild><Link to="/admin">` (Test 3 UAT fix)
+- [x] 12-07-PLAN.md — UIDN-03 D-14 gap closure: SuggestionForm Cancel button → `<Button asChild><Link to="/admin">` (Test 3 UAT fix)
 
 Cross-cutting constraints:
 - Zero direct `from('polls')` reads in `src/` (Phase 11 VIS-09 invariant — `polls-effective-invariant.test.ts` must continue to pass)
@@ -138,7 +138,7 @@ Cross-cutting constraints:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 11. Schema + RLS + EF Foundations | 7/7 | ✅ Shipped | 2026-05-11 |
-| 12. Admin UI + User UI + UIDN-03 Sweep | 7/7 | Complete   | 2026-05-12 |
+| 12. Admin UI + User UI + UIDN-03 Sweep | 8/8 | Complete   | 2026-05-13 |
 | 13. UIDN-02 Mobile Audit Closure | 0/? | Not started | - |
 
 | Milestone | Phases | Plans | Status | Shipped |

@@ -37,9 +37,11 @@ result: pass
 ### 3. Admin SuggestionForm Back-Links (UIDN-03 D-14)
 expected: |
   Sign in as admin via Discord. Navigate to /admin and open the "New Suggestion" form. Two back-links exist (header link and Cancel button). Both look the same as before. Middle-click each → opens /admin in a new tab. Cmd-click (Mac) / Ctrl-click (Win) → also opens in new tab. Right-click → "Open Link in New Tab" works. (Pre-fix, these were native buttons that didn't support new-tab gestures.)
-result: issue
+result: pass
 reported: "the cancel button doesn't support new tab but the back to admin header link does"
 severity: major
+resolved_by: Plan 12-07 — commit 65d85a6 (fix(12-07): swap SuggestionForm Cancel to TanStack Link)
+resolved_verified_by: Playwright MCP DOM inspection — Cancel now reports tag="A" href="/admin"
 
 ### 4. DropZone Drag + Browse (UIDN-03 D-13)
 expected: |
@@ -121,18 +123,26 @@ result: pending
 ## Summary
 
 total: 9
-passed: 6
-issues: 1
+passed: 7
+issues: 0
 pending: 2
 skipped: 0
 blocked: 0
+notes: |
+  Tests 8 and 9 remain pending — VIS-08 voter-side hidden-state Alert + 8s
+  polling auto-update require a SECOND non-admin Discord account who has
+  voted on a suggestion, which cannot be automated from the Playwright MCP
+  session (Discord OAuth + multi-user scenario). User to verify manually
+  when ready.
 
 ## Gaps
 
 - truth: "Both back-link sites (header + Cancel button) on SuggestionForm support new-tab gestures (middle-click, cmd-click, right-click) per UIDN-03 D-14."
-  status: failed
+  status: resolved
   reason: "User reported: the cancel button doesn't support new tab but the back to admin header link does"
   severity: major
   test: 3
+  resolved_by: Plan 12-07 (commit 65d85a6)
+  resolved_verified_by: Playwright MCP DOM inspection — Cancel now <a href=/admin>
   artifacts: []
   missing: []
