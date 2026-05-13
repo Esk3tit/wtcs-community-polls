@@ -190,33 +190,43 @@ export function AdminSuggestionsTab() {
         n.add(pollId)
         return n
       })
-      const res = await toggleResultsVisibility({ poll_id: pollId, hidden: nextHidden, title })
-      // Inflight gate trip: the caller-side `pendingVisibility.has` guard
-      // missed the React-commit window, so the first handler still owns
-      // BOTH the pending marker AND the optimistic flip. Do not touch
-      // pendingVisibility (clearing it here would re-enable the Switch
-      // while the first EF is still in flight) and do not revert items
-      // (first handler's flip is the source of truth).
-      if (!res.ok && res.reason === 'inflight') return
-      setPendingVisibility((s) => {
-        const n = new Set(s)
-        n.delete(pollId)
-        return n
-      })
-      if (!res.ok) {
-        // Real EF/network error — diff-revert only the target row so
-        // concurrent flips on other rows keep their optimistic state.
-        setItems((cur) =>
-          cur.map((it) =>
-            it.id === pollId ? { ...it, results_hidden: !nextHidden } : it,
-          ),
-        )
-        // Reconcile against server too — guarantees convergence if a
-        // concurrent flip raced us.
+      // keepPending mirrors the inflight-skip semantics across the
+      // finally: a try/finally that unconditionally cleared the pending
+      // entry would race handler-1 (the inflight winner still owns the
+      // marker AND the optimistic flip). The flag flips only on the
+      // inflight branch so unexpected exceptions in the success/error
+      // paths still trigger cleanup and the Switch never gets stuck
+      // disabled until refresh.
+      let keepPending = false
+      try {
+        const res = await toggleResultsVisibility({ poll_id: pollId, hidden: nextHidden, title })
+        if (!res.ok && res.reason === 'inflight') {
+          keepPending = true
+          return
+        }
+        if (!res.ok) {
+          // Real EF/network error — diff-revert only the target row so
+          // concurrent flips on other rows keep their optimistic state.
+          setItems((cur) =>
+            cur.map((it) =>
+              it.id === pollId ? { ...it, results_hidden: !nextHidden } : it,
+            ),
+          )
+          // Reconcile against server too — guarantees convergence if a
+          // concurrent flip raced us.
+          void fetchAll()
+          return
+        }
         void fetchAll()
-        return
+      } finally {
+        if (!keepPending) {
+          setPendingVisibility((s) => {
+            const n = new Set(s)
+            n.delete(pollId)
+            return n
+          })
+        }
       }
-      void fetchAll()
     },
     [toggleResultsVisibility, fetchAll],
   )

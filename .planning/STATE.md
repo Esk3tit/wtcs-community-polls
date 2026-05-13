@@ -21,7 +21,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-11 after v1.1 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** Phase 12 — admin-ui-user-ui-uidn-03-sweep
+**Current focus:** Phase 13 — UIDN-02 Mobile Audit Closure
 
 ## Current Position
 
