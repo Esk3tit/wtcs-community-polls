@@ -1,7 +1,9 @@
 ---
 phase: 13-uidn-02-mobile-audit-closure
 created: 2026-05-13
-status: ready-for-uat
+status: resolved
+resolved: 2026-05-13T21:28:00Z
+resolved_via: 13-UAT.md (3/3 tests passed)
 source: 13-VERIFICATION.md human_verification items
 ---
 

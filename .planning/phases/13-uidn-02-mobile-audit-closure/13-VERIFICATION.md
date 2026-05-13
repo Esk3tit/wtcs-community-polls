@@ -1,8 +1,9 @@
 ---
 phase: 13-uidn-02-mobile-audit-closure
 verified: 2026-05-13T00:00:00Z
-status: human_needed
-score: 24/25 must-haves verified
+status: passed
+score: 25/25 must-haves verified (3 human_needed items confirmed via 13-UAT.md, all `pass`)
+reverified: 2026-05-13T21:28:00Z
 overrides_applied: 0
 human_verification:
   - test: "Visual spot-check: open .planning/closure/artifacts/screenshots/bp-375-topics.png and bp-375-archive.png; confirm authenticated /topics + /archive UI (member Discord avatar + topic cards / archive cards), NOT landing page or sign-in CTA"
