@@ -90,7 +90,7 @@ export function AdminSuggestionRow({
             onCheckedChange={(v) => onToggleResultsVisibility(s.id, !v)}
             disabled={isPendingVisibility}
             aria-busy={isPendingVisibility}
-            aria-label="Toggle results visibility"
+            aria-label={resultsHidden ? 'Results currently hidden' : 'Results currently visible'}
             data-testid={`visibility-switch-${s.id}`}
           />
           <span className="hidden sm:inline text-sm font-medium">
