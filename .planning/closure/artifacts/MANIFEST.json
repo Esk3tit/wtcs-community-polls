@@ -1,76 +1,6 @@
 {
   "entries": [
     {
-      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-admin.report.html",
-      "sha256": "283113bcda6875ed2982d97cb426ad5f10508991cc0b906e1c8dfebced665add",
-      "sizeBytes": 484763,
-      "recordedAt": "2026-05-05T07:13:26Z",
-      "kind": "lighthouse"
-    },
-    {
-      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-admin.report.json",
-      "sha256": "58383fa031a129151b269fba183cd441e93173b7b83835ac34a6ac578589b0a9",
-      "sizeBytes": 410798,
-      "recordedAt": "2026-05-05T07:13:26Z",
-      "kind": "lighthouse"
-    },
-    {
-      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-archive.report.html",
-      "sha256": "517c190d95ea23fc36ec0a8fbcd0f6609772da0d1610945df5ff54ceaf7eaa6c",
-      "sizeBytes": 456571,
-      "recordedAt": "2026-05-05T07:13:26Z",
-      "kind": "lighthouse"
-    },
-    {
-      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-archive.report.json",
-      "sha256": "9c172bb3b0c109ab09443f1daa870847fe3c65a95786454779c01951fe239512",
-      "sizeBytes": 382491,
-      "recordedAt": "2026-05-05T07:13:26Z",
-      "kind": "lighthouse"
-    },
-    {
-      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-auth-error.report.html",
-      "sha256": "02ad430ad26affb3dc050757e77237b1784b8e87f5f0d7092d7d3c26982920fb",
-      "sizeBytes": 448899,
-      "recordedAt": "2026-05-05T07:13:26Z",
-      "kind": "lighthouse"
-    },
-    {
-      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-auth-error.report.json",
-      "sha256": "78d0817143a1d98a1103467fc22c472ef06e1f1191a97d6d450b71bd5122edf1",
-      "sizeBytes": 373367,
-      "recordedAt": "2026-05-05T07:13:26Z",
-      "kind": "lighthouse"
-    },
-    {
-      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-home.report.html",
-      "sha256": "b000a8a404aef415359bebb0fa82a69f13c2c238ef38fba8af362060a9d9b0b4",
-      "sizeBytes": 448569,
-      "recordedAt": "2026-05-05T07:13:26Z",
-      "kind": "lighthouse"
-    },
-    {
-      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-home.report.json",
-      "sha256": "80eb103ea99f177c59cb99ed8d362688c669125141fc924b41e83bd0ada3c9f3",
-      "sizeBytes": 372412,
-      "recordedAt": "2026-05-05T07:13:26Z",
-      "kind": "lighthouse"
-    },
-    {
-      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-topics.report.html",
-      "sha256": "70835a777e56241242d3fd266b64ed4743486d68d7340a93500473cc2f1de117",
-      "sizeBytes": 484617,
-      "recordedAt": "2026-05-05T07:13:26Z",
-      "kind": "lighthouse"
-    },
-    {
-      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-topics.report.json",
-      "sha256": "7fd0110048b70956db4ebe9808b79a332c673b35d7d3aecb31ab24521ad78ec6",
-      "sizeBytes": 410750,
-      "recordedAt": "2026-05-05T07:13:26Z",
-      "kind": "lighthouse"
-    },
-    {
       "path": ".planning/closure/artifacts/screenshots/bp-1024-admin-suggestions-id-edit.png",
       "sha256": "729d9d57f5f1fd0d7d4846075f65a335776a7545805224c0a98d7943666c70ef",
       "sizeBytes": 95672,
@@ -363,7 +293,77 @@
       "sizeBytes": 164278,
       "recordedAt": "2026-05-13T20:14:51.338Z",
       "kind": "screenshot"
+    },
+    {
+      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-admin.report.html",
+      "sha256": "7b19a9c1341279079d154bf19f628cccd5d2b7a0e9c127c755e16e13fbe0f722",
+      "sizeBytes": 492072,
+      "recordedAt": "2026-05-13T20:19:13Z",
+      "kind": "lighthouse"
+    },
+    {
+      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-archive.report.html",
+      "sha256": "60276fa1f396934712dd120f64c8eaedb731db76472f2f2b95c9d8e1ac66ad79",
+      "sizeBytes": 486419,
+      "recordedAt": "2026-05-13T20:19:13Z",
+      "kind": "lighthouse"
+    },
+    {
+      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-auth-error.report.html",
+      "sha256": "45d1f780b94e2c251bbaa4c09e6cf153a6315f2038102431e0133ff410d579e2",
+      "sizeBytes": 451900,
+      "recordedAt": "2026-05-13T20:19:13Z",
+      "kind": "lighthouse"
+    },
+    {
+      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-home.report.html",
+      "sha256": "0f27fc295f934424ce2a45a5d4da764b1566e8fd627fb31e66f681694e24e455",
+      "sizeBytes": 456803,
+      "recordedAt": "2026-05-13T20:19:13Z",
+      "kind": "lighthouse"
+    },
+    {
+      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-topics.report.html",
+      "sha256": "65606aa2081678ea1e6d1353700584b0ab44730423ee97caf4fea5b17f947d08",
+      "sizeBytes": 459600,
+      "recordedAt": "2026-05-13T20:19:13Z",
+      "kind": "lighthouse"
+    },
+    {
+      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-admin.report.json",
+      "sha256": "078b80193e25fd6183411354118a5cf4d1fc4cf7a648ba58b4cee0156bd65bfc",
+      "sizeBytes": 419178,
+      "recordedAt": "2026-05-13T20:19:13Z",
+      "kind": "lighthouse"
+    },
+    {
+      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-archive.report.json",
+      "sha256": "6a25b6ba1b8fcb6f745f0f4a862f6e12cbceae71e27aedd8352af5ec805ac7da",
+      "sizeBytes": 413624,
+      "recordedAt": "2026-05-13T20:19:13Z",
+      "kind": "lighthouse"
+    },
+    {
+      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-auth-error.report.json",
+      "sha256": "3365691f99c8e3ce6970c5b84cedb1b9f4c404061c13d3edf140ecf8c871ab38",
+      "sizeBytes": 377632,
+      "recordedAt": "2026-05-13T20:19:13Z",
+      "kind": "lighthouse"
+    },
+    {
+      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-home.report.json",
+      "sha256": "83b3a549b811c297c7d173b02b469bf207e9e7a9590930ffe7c8aa8c8f958366",
+      "sizeBytes": 382322,
+      "recordedAt": "2026-05-13T20:19:13Z",
+      "kind": "lighthouse"
+    },
+    {
+      "path": ".planning/closure/artifacts/lighthouse/lh-mobile-topics.report.json",
+      "sha256": "d5306a6804661c186011671117c56bb04a57c3f4839a05afd3531421f326ba08",
+      "sizeBytes": 386884,
+      "recordedAt": "2026-05-13T20:19:13Z",
+      "kind": "lighthouse"
     }
   ],
-  "updatedAt": "2026-05-13T20:14:51.338Z"
+  "updatedAt": "2026-05-13T20:19:13Z"
 }

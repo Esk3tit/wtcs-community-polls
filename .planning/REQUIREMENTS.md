@@ -30,6 +30,7 @@ This document tracks the v1.2 milestone requirements. After v1.0 (43 of 45 reqs)
 
 - [ ] **UIDN-02**: Mobile-first responsive design closure evidence captured — Lighthouse mobile audit + 6-width breakpoint matrix archived at `.planning/closure/UIDN-02-mobile-evidence.md` (v1.2 rerun). **v1.1 Phase 9 outcome:** Path-3 deferred; F2 hard gate failed (Perf 5/5 routes below 90 target). **v1.2 prerequisites:** (1) `audit-screenshots.mjs` hydration-wait fix (Plan 02 defect — `waitForLoadState('networkidle')` plus authenticated Pass-A for `/topics` and `/archive` using existing `loginAs` from `e2e/helpers/auth.ts`); (2) v1.2 production deploy stabilizes perf budget. After both: rerun audit; flip `Mobile-first responsive design` Key Decision row ⚠️ → ✓ if Perf 5/5 ≥ 90 hits.
   _Carry-forward from v1.1; baseline at `.planning/closure/UIDN-02-mobile-evidence.md` (status: deferred)._
+  *(Phase 13 v1.2 rerun complete 2026-05-13 — 4/5 routes under threshold; follow-up: next perf-budget change. See .planning/closure/UIDN-02-mobile-evidence.md § v1.2 Rerun.)*
 
 - [x] **UIDN-03**: shadcn polish closure — cleanup of 4 native-`<button>` drifts identified in v1.1 Phase 9 audit and authenticated Pass-A screenshot capture. Replace native buttons with shadcn `Button` (correct `variant=` per drift site) at: `SearchBar.tsx:22` (search-clear-X — `variant="ghost"` icon button), `SuggestionForm.tsx:140` + `:163` (form-action buttons — `variant=` per role: primary/secondary), `ImageInput.tsx:108` (drop-zone trigger — programmatic via `useRef`, may stay native if button role isn't required). Preserve `type="submit"` / `type="button"` to avoid form-submit regressions. Re-run UIDN-03 audit; flip `shadcn/ui new-york + Tailwind CSS v4` Key Decision row ⚠️ → ✓ if 0 FAIL cells. *(Plans 12-01 + 12-02 + 12-05, 2026-05-12 — four-site sweep: SearchBar, SuggestionForm ×2, ImageInput DropZone refactor)*
   _Carry-forward from v1.1; baseline at `.planning/closure/UIDN-03-shadcn-audit.md` (status: deferred)._
@@ -71,7 +72,7 @@ This document tracks the v1.2 milestone requirements. After v1.0 (43 of 45 reqs)
 | VIS-07 | Phase 12 | Complete (Plan 12-03, 2026-05-12; wording revised in Plan 12-00) |
 | VIS-08 | Phase 12 | Complete (Plan 12-04, 2026-05-12) |
 | VIS-09 | Phase 11 | Complete (Plan 11-01, 2026-05-11) |
-| UIDN-02 | Phase 13 | Pending |
+| UIDN-02 | Phase 13 | Active (Phase 13 v1.2 rerun complete; pending next perf-budget change) |
 | UIDN-03 | Phase 12 | Complete (Plans 12-01 + 12-02 + 12-05, 2026-05-12) |
 | TEST-11 | Phase 11 | Complete (Plan 11-04, 2026-05-11; runtime PASS gated to Plan 11-05) |
 | TEST-12 | Phase 11 | Complete (Plan 11-04, 2026-05-11; runtime PASS gated to Plan 11-05) |

@@ -7,7 +7,8 @@ targets:
   accessibility: 95
   best_practices: 95
   seo: 90
-status: deferred — Lighthouse Perf 5/5 routes under target + 6 F6 DOM-assertion warnings rooted in Plan 02 harness hydration-wait defect
+status: deferred-v1.2 — 4/5 routes under threshold; follow-up tied to next perf-budget change
+audited_v1_2: 2026-05-13
 phase: 09-ui-closure-evidence
 plan: 03
 ---
@@ -95,3 +96,55 @@ The 12 auth-local PNGs landed without F6 warnings (the harness's hydration-wait 
 _Audited: 2026-05-05 against https://polls.wtcsmapban.com (Lighthouse 13.2.0 + Playwright 1.59.1)_
 _Method: 5-route Lighthouse mobile audit + 6-width × 7-route screenshot matrix; harness at `.planning/closure/audit-{mobile.sh,screenshots.mjs}`_
 _Disposition: UIDN-02 deferred — row stays ⚠️ Revisit; rerun audit after v1.2 perf budget hit + Plan 02 harness hydration-wait fix._
+
+
+## v1.2 Rerun (2026-05-13)
+
+Phase 13 reruns the UIDN-02 audit after Plan 13-01 fixed the Phase 9 Plan 02 harness hydration-wait defect (sentinel swap, member context for authenticated `/topics` + `/archive`, route reduction, sha256 dupe-check with D-19 whitelist). The Lighthouse audit ran once against the v1.2 production deploy (Phase 12 merge commit `de15e33`); per D-13 single-run policy, the numbers below are the only ones recorded.
+
+### Harness changes (Phase 13)
+
+- **Sentinel fix (D-01..D-04):** replaced the fragile `body.locator().filter({hasText}).waitFor()` with a deterministic `[aria-label="Toggle color theme"]` waitFor against the unconditionally-rendered Navbar theme-toggle (Navbar.tsx:76). Soft 10 s timeout with `.catch(() => {})` preserved; sha256 dupe-check is the hard backstop.
+- **UNAUTH_ROUTES reduction (D-09):** dropped `/topics` and `/archive` from Pass-A (AuthGuard renders `<LandingPage />` in place for unauth visitors → PNGs byte-identical to `/` unauth at every width). `/admin` retained as Phase 9 D-06 evidence; per-width home↔admin sha256 collision is whitelisted (D-19), not a regression.
+- **Member context (D-07/D-08):** added a second Playwright context using `playwright-user-member@test.local` to capture authenticated `/topics` and `/archive` at six widths; admin/`*` auth pass continues to use `playwright-user-admin@test.local`. Constants inline-mirrored from `e2e/fixtures/test-users.ts:21-30` per D-23 (.mjs cannot runtime-import .ts).
+- **sha256 uniqueness gate (D-05/D-06/D-19):** rejects any unexpected collision before MANIFEST write; per-width `bp-{W}-home.png ↔ bp-{W}-admin.png` whitelisted as the legitimate Phase 9 D-06 collision. v1.2 run reports `42 PNGs, 6 allowed home↔admin collision pairs per D-19, 0 unexpected collisions`.
+
+### Lighthouse mobile scores (v1.2 production)
+
+| Route | Perf (≥90) | A11y (≥95) | BP (≥95) | SEO (≥90) | Final URL | Status |
+|-------|------------|-------------|-----------|-----------|-----------|--------|
+| / | 85 | 100 | 100 | 92 | https://polls.wtcsmapban.com/ | FAIL Perf=85 |
+| /topics | 86 | 100 | 100 | 92 | https://polls.wtcsmapban.com/topics | FAIL Perf=86 |
+| /archive | 88 | 100 | 100 | 92 | https://polls.wtcsmapban.com/archive | FAIL Perf=88 |
+| /auth/error | 85 | 100 | 100 | 92 | https://polls.wtcsmapban.com/auth/error?reason=auth-failed | FAIL Perf=85 |
+| /admin | 94 | 100 | 100 | 92 | https://polls.wtcsmapban.com/ | PASS |
+
+Single-run record, no rerun (D-13). All four failing routes miss only on Performance; A11y, BP, and SEO clear thresholds on every route. `audit-mobile.sh` exit=1 (4/5 failing routes). Canonical exit log at `.planning/closure/artifacts/lighthouse/audit-mobile.stdout.log` (D-27 mktemp+bash-c+cp capture pattern; final line `exit=1`). Per-route .report.json + .report.html files at `.planning/closure/artifacts/lighthouse/lh-mobile-*.report.{html,json}` (gitignored; sha256-pinned in MANIFEST.json).
+
+(v1.1 baseline for comparison: `/` 82 → 85 (+3); `/topics` 88 → 86 (−2); `/archive` 86 → 88 (+2); `/auth/error` 85 → 85 (=0); `/admin` 86 → 94 (+8). Net: small movement within the ±5–10pp Lighthouse simulate variance band; `/admin` made the only meaningful gain.)
+
+### Breakpoint matrix (42 PNGs — v1.2)
+
+| Width | Pass A — unauth prod (3 routes × 6 widths = 18 PNGs) | Pass B — admin (adminUser, 2 routes × 6 widths = 12 PNGs) | Pass B — member (memberUser, 2 routes × 6 widths = 12 PNGs) |
+|-------|-------------------------------------------------------|------------------------------------------------------------|--------------------------------------------------------------|
+| 320px  | bp-320-home.png · bp-320-auth-error.png · bp-320-admin.png    | bp-320-admin-suggestions-new.png · bp-320-admin-suggestions-id-edit.png   | bp-320-topics.png · bp-320-archive.png  |
+| 375px  | bp-375-home.png · bp-375-auth-error.png · bp-375-admin.png    | bp-375-admin-suggestions-new.png · bp-375-admin-suggestions-id-edit.png   | bp-375-topics.png · bp-375-archive.png  |
+| 414px  | bp-414-home.png · bp-414-auth-error.png · bp-414-admin.png    | bp-414-admin-suggestions-new.png · bp-414-admin-suggestions-id-edit.png   | bp-414-topics.png · bp-414-archive.png  |
+| 768px  | bp-768-home.png · bp-768-auth-error.png · bp-768-admin.png    | bp-768-admin-suggestions-new.png · bp-768-admin-suggestions-id-edit.png   | bp-768-topics.png · bp-768-archive.png  |
+| 1024px | bp-1024-home.png · bp-1024-auth-error.png · bp-1024-admin.png | bp-1024-admin-suggestions-new.png · bp-1024-admin-suggestions-id-edit.png | bp-1024-topics.png · bp-1024-archive.png |
+| 1440px | bp-1440-home.png · bp-1440-auth-error.png · bp-1440-admin.png | bp-1440-admin-suggestions-new.png · bp-1440-admin-suggestions-id-edit.png | bp-1440-topics.png · bp-1440-archive.png |
+
+Pass A captured against `https://polls.wtcsmapban.com` (production); Pass B against `http://localhost:4173` (local preview built with `VITE_SUPABASE_URL=http://localhost:54321` so the SPA's supabase-js storage key matches the harness's session injection — see Plan 13-01 SUMMARY operational note). Zero F6 DOM-assertion warnings (`All DOM assertions matched.`); zero unexpected sha256 collisions; 6 expected home↔admin per-width pairs whitelisted per D-19 (Phase 9 D-06 AdminGuard → LandingPage at `/` evidence preserved).
+
+### Cross-references (new for v1.2)
+
+- `.planning/phases/13-uidn-02-mobile-audit-closure/13-CONTEXT.md` — D-01..D-27 locked decisions (sentinel, harness shape, dupe-check whitelist, single-run policy, multi-category MISS wording, zsh+rm-rf-safe log capture)
+- `.planning/phases/13-uidn-02-mobile-audit-closure/13-01-PLAN.md` — harness fix implementation
+- `.planning/phases/13-uidn-02-mobile-audit-closure/13-02-PLAN.md` — Lighthouse rerun + evidence update
+- `.planning/phases/13-uidn-02-mobile-audit-closure/13-REVIEWS.md` — cross-AI review cycles 1-3 (Gemini + Codex) feedback incorporated
+- Phase 12 prod commit `de15e33` — v1.2 deploy that this audit measures
+
+---
+_Audited: 2026-05-13 against https://polls.wtcsmapban.com (Lighthouse 13.2.0 + Playwright 1.59.1)_
+_Method: 5-route Lighthouse mobile audit + 6-width × 42-PNG matrix (18 unauth-prod + 24 auth-local across adminUser + memberUser contexts); harness at `.planning/closure/audit-{mobile.sh,screenshots.mjs}`_
+_Disposition: DEFER — row stays ⚠️ Revisit; follow-up tied to next perf-budget change_
