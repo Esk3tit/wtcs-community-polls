@@ -50,7 +50,7 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
 
 - [x] **Phase 11: Schema + RLS + EF Foundations** — Migration 10 (`results_hidden` boolean + `results_hidden_changed_at` timestamptz on `polls`, `vote_counts` RLS DROP+CREATE, `polls_effective` view rewrite with `security_invoker = on`), `toggle-results-visibility` Edge Function, 12-cell RLS invariant test suite (TEST-11), admin EF authorization test (TEST-12) — shipped 2026-05-11
 - [x] **Phase 12: Admin UI + User UI + UIDN-03 Sweep** — VisibilityCheckbox on creation form, inline "Hide/Show results" Switch + sonner toast on `AdminSuggestionRow` (per CONTEXT D-01; supersedes earlier AlertDialog pattern), `canSeeResults` gate in `SuggestionCard`, hidden-state message component, `useVoteCounts` extension, archive view fix, 4 native-button drift cleanup co-landing in `SuggestionForm.tsx`, `SearchBar.tsx`, `ImageInput.tsx`, Playwright E2E happy path (TEST-13) (completed 2026-05-12)
-- [ ] **Phase 13: UIDN-02 Mobile Audit Closure** — `audit-screenshots.mjs` hydration-wait fix (Plan 02 defect), Lighthouse mobile audit rerun with authenticated Pass-A evidence for `/topics` and `/archive`, Key Decision rows flipped ⚠️ → ✓
+- [x] **Phase 13: UIDN-02 Mobile Audit Closure** — `audit-screenshots.mjs` hydration-wait fix (Plan 02 defect), Lighthouse mobile audit rerun with authenticated Pass-A evidence for `/topics` and `/archive`, Key Decision rows flipped ⚠️ → ✓ (completed 2026-05-13)
 
 ## Phase Details
 
@@ -130,7 +130,7 @@ Cross-cutting constraints:
 
 **Plans**: 2 plans
 - [x] 13-01-PLAN.md — Harness fix: sentinel swap + UNAUTH_ROUTES reduction + member context + sha256 dupe-check; harness execution to produce clean 42-PNG corpus
-- [ ] 13-02-PLAN.md — Lighthouse mobile audit (single-run, D-13) + evidence file v1.2 Rerun section + PROJECT.md row + REQUIREMENTS.md rows + atomic commit
+- [x] 13-02-PLAN.md — Lighthouse mobile audit (single-run, D-13) + evidence file v1.2 Rerun section + PROJECT.md row + REQUIREMENTS.md rows + atomic commit
 **UI hint**: no
 
 ---
@@ -141,7 +141,7 @@ Cross-cutting constraints:
 |-------|----------------|--------|-----------|
 | 11. Schema + RLS + EF Foundations | 7/7 | ✅ Shipped | 2026-05-11 |
 | 12. Admin UI + User UI + UIDN-03 Sweep | 8/8 | Complete   | 2026-05-12 |
-| 13. UIDN-02 Mobile Audit Closure | 1/2 | In Progress|  |
+| 13. UIDN-02 Mobile Audit Closure | 2/2 | Complete   | 2026-05-13 |
 
 | Milestone | Phases | Plans | Status | Shipped |
 |-----------|--------|-------|--------|---------|
