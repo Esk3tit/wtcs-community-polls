@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: — Admin Visibility Controls
-status: completed
+status: "Phase 12 shipped — PR #28"
 stopped_at: Phase 12 UI-SPEC approved
-last_updated: "2026-05-12T21:47:36.970Z"
-last_activity: 2026-05-12 -- Phase 12 marked complete
+last_updated: "2026-05-13T05:37:54.270Z"
+last_activity: "2026-05-12 -- Phase 12 shipped (PR #28)"
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 14
-  completed_plans: 14
-  percent: 67
+  total_plans: 15
+  completed_plans: 15
+  percent: 100
 ---
 
 # Project State
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-05-11 after v1.1 milestone)
 
 Phase: 12 — COMPLETE
 Plan: 1 of 7
-Status: Phase 12 complete
-Last activity: 2026-05-12 -- Phase 12 marked complete
+Status: Phase 12 shipped — PR #28
+Last activity: 2026-05-12 -- Phase 12 shipped (PR #28)
 
 ```
 v1.2 progress:  [██████░░░░░░░░░░░░░░] 33% (Phase 11 ✅ Shipped, Phase 12 next, Phase 13 last)
