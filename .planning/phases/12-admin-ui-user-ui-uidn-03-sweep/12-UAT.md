@@ -1,5 +1,5 @@
 ---
-status: testing
+status: partial
 phase: 12-admin-ui-user-ui-uidn-03-sweep
 source:
   - 12-00-SUMMARY.md
@@ -14,13 +14,8 @@ updated: 2026-05-12T21:17:00Z
 ---
 
 ## Current Test
-<!-- OVERWRITE each test - shows where we are -->
 
-number: 8
-name: Voter VIS-08 — Hidden-State Alert + Own Choice
-expected: |
-  Sign in as a SECOND Discord account (or open an incognito window). Vote on a suggestion. Confirm results bars render (count breakouts visible). Now switch back to your admin tab, find that suggestion's Switch, and flip it to hidden. Switch back to the voter tab. Within a few seconds the count bars are replaced by: "Your response: {the choice you picked}" line + an Alert box with EyeOff icon and the text "Results temporarily hidden by admin". The icon should look subdued (muted-foreground), not full-contrast competing with the title.
-awaiting: user response (requires second non-admin Discord account)
+[testing complete — Tests 8 and 9 blocked on second-account access; deferred to community verification post-deploy]
 
 ## Tests
 
@@ -113,27 +108,33 @@ verified_notes: |
 ### 8. Voter VIS-08 — Hidden-State Alert + Own Choice
 expected: |
   Sign in as a SECOND Discord account (or open an incognito window). Vote on a suggestion. Confirm results bars render (count breakouts visible). Now switch back to your admin tab, find that suggestion's Switch, and flip it to hidden. Switch back to the voter tab. Within a few seconds the count bars are replaced by: "Your response: {the choice you picked}" line + an Alert box with EyeOff icon and the text "Results temporarily hidden by admin". The icon should look subdued (muted-foreground), not full-contrast competing with the title.
-result: pending
+result: blocked
+blocked_by: other
+reason: "User has only one Discord account; needs a community member or teammate to verify the voter-side VIS-08 flow post-deploy. TEST-13 Playwright E2E spec already covers this contract in CI when env vars are set."
 
 ### 9. Voter VIS-08 — Live Polling Auto-Update (~8s)
 expected: |
   With the voter tab still open on a hidden suggestion (showing the Alert from Test 8): in the admin tab, flip the same Switch back to visible. Watch the voter tab WITHOUT refreshing. Within ~8 seconds (the polling cadence), the Alert disappears and the result bars return — showing the same vote count that was hidden moments earlier. No page reload needed. Flip back to hidden → within ~8 seconds the Alert returns. (This is the live VIS-08 polling extension on `polls_effective`.)
-result: pending
+result: blocked
+blocked_by: other
+reason: "Same as Test 8 — second Discord account required. Defer to community verification post-deploy. TEST-13 spec covers the polling cadence + Alert/ResultBars swap in CI."
 
 ## Summary
 
 total: 9
 passed: 7
 issues: 0
-pending: 2
+pending: 0
 skipped: 0
-blocked: 0
+blocked: 2
 notes: |
-  Tests 8 and 9 remain pending — VIS-08 voter-side hidden-state Alert + 8s
-  polling auto-update require a SECOND non-admin Discord account who has
-  voted on a suggestion, which cannot be automated from the Playwright MCP
-  session (Discord OAuth + multi-user scenario). User to verify manually
-  when ready.
+  Tests 8 and 9 (voter VIS-08 Alert + 8s polling auto-update) blocked on
+  second non-admin Discord account access. Deferred to community
+  verification post-deploy. The locked TEST-13 Playwright E2E spec
+  (e2e/tests/results-visibility.spec.ts) covers both flows end-to-end
+  in CI when Supabase env vars are exported per 12-06 SUMMARY § User
+  Setup Required — so the contracts are still gated, just not by manual
+  UAT in this session.
 
 ## Gaps
 
