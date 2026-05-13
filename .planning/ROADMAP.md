@@ -90,7 +90,7 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
   4. The Playwright E2E spec (TEST-13) passes end-to-end: admin creates a poll, a test vote is cast, admin hides results, the voter UI shows the hidden message, admin shows results, the voter UI shows count bars again
   5. ESLint and `tsc -b` pass with zero errors after the 4 native-button replacements in `SearchBar.tsx`, `SuggestionForm.tsx` (×2), and `ImageInput.tsx`; `type="submit"` is preserved where applicable; no existing form-submission behavior regresses
 
-**Plans**: 7 plans
+**Plans**: 8 plans
 
 **Wave 1** *(foundation — independent, parallel)*
 - [x] 12-00-PLAN.md — Type regen + npm gen:types script + vendor shadcn Checkbox/Switch + REQUIREMENTS.md VIS-07 wording edit
@@ -104,6 +104,9 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
 
 **Wave 3** *(blocked on Wave 2 completion)*
 - [x] 12-06-PLAN.md — TEST-13 Playwright E2E spec + freshPoll fixture vote-cast helper + REQUIREMENTS.md traceability marks complete
+
+**Wave 4** *(gap closure — blocked on UAT diagnosis)*
+- [ ] 12-07-PLAN.md — UIDN-03 D-14 gap closure: SuggestionForm Cancel button → `<Button asChild><Link to="/admin">` (Test 3 UAT fix)
 
 Cross-cutting constraints:
 - Zero direct `from('polls')` reads in `src/` (Phase 11 VIS-09 invariant — `polls-effective-invariant.test.ts` must continue to pass)
