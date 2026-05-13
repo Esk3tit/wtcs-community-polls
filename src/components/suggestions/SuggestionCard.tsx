@@ -141,7 +141,7 @@ export function SuggestionCard({
                     </span>
                   </p>
                   <Alert>
-                    <EyeOff className="h-4 w-4" aria-hidden="true" />
+                    <EyeOff className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     <AlertTitle>Results temporarily hidden by admin</AlertTitle>
                   </Alert>
                 </div>
