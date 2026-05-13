@@ -129,7 +129,7 @@ Cross-cutting constraints:
   4. The `Mobile-first responsive design` Key Decision row in `PROJECT.md` is flipped from ⚠️ Revisit to ✓ Good if Performance ≥ 90 on all 5 routes; if any route scores below 90, the evidence file documents the delta with rationale and the row remains ⚠️ with a follow-up note
 
 **Plans**: 2 plans
-- [ ] 13-01-PLAN.md — Harness fix: sentinel swap + UNAUTH_ROUTES reduction + member context + sha256 dupe-check; harness execution to produce clean 42-PNG corpus
+- [x] 13-01-PLAN.md — Harness fix: sentinel swap + UNAUTH_ROUTES reduction + member context + sha256 dupe-check; harness execution to produce clean 42-PNG corpus
 - [ ] 13-02-PLAN.md — Lighthouse mobile audit (single-run, D-13) + evidence file v1.2 Rerun section + PROJECT.md row + REQUIREMENTS.md rows + atomic commit
 **UI hint**: no
 
@@ -141,7 +141,7 @@ Cross-cutting constraints:
 |-------|----------------|--------|-----------|
 | 11. Schema + RLS + EF Foundations | 7/7 | ✅ Shipped | 2026-05-11 |
 | 12. Admin UI + User UI + UIDN-03 Sweep | 8/8 | Complete   | 2026-05-12 |
-| 13. UIDN-02 Mobile Audit Closure | 0/2 | In progress | - |
+| 13. UIDN-02 Mobile Audit Closure | 1/2 | In Progress|  |
 
 | Milestone | Phases | Plans | Status | Shipped |
 |-----------|--------|-------|--------|---------|
