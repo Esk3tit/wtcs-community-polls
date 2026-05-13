@@ -3,15 +3,188 @@ phase: 13
 reviewers: [gemini, codex]
 reviewers_skipped:
   - claude (running inside Claude Code CLI — skipped for independence)
-  - coderabbit (no diff to review — clean working tree)
+  - coderabbit (reviews diffs, not plan prompts)
   - cursor (usage limit reached)
-cycle: 2
-cycles_run: 2
-reviewed_at: 2026-05-13T17:05:00Z
+cycle: 3
+cycles_run: 3
+reviewed_at: 2026-05-13T17:18:10Z
 plans_reviewed:
   - 13-01-PLAN.md
   - 13-02-PLAN.md
-replan_commit: e0a7a5e
+replan_commit: 377ceac
+---
+
+# Cross-AI Plan Review — Phase 13 (Convergence Loop)
+
+This file aggregates three review cycles. Cycle 1 raised 3 HIGHs (all resolved in cycle 2
+replan). Cycle 2 raised 1 new HIGH (zsh PIPESTATUS + rm -rf race in Plan 13-02 Task 1 log
+capture). The plan was updated at commit 377ceac with D-27 (mktemp + bash -c + cp pattern).
+Cycle 3 verifies whether that HIGH is resolved and whether any new HIGHs were introduced.
+
+## Convergence Status
+
+| Metric | Cycle 1 | Cycle 2 | Cycle 3 |
+|--------|---------|---------|---------|
+| HIGH concerns (Gemini) | 0 | 0 | 0 |
+| HIGH concerns (Codex) | 3 | 1 (new) | 0 |
+| HIGH concerns total (unique) | 3 | 1 (new) | 0 |
+| Cycle-(N-1) HIGHs unresolved | n/a | 0 (all 3 RESOLVED) | 0 (1 RESOLVED) |
+| Overall risk (Gemini) | LOW | LOW | LOW |
+| Overall risk (Codex) | HIGH | HIGH (until fix) | LOW |
+
+**Convergence verdict (Cycle 3):** CONVERGED. Both Gemini and Codex independently confirm
+the Cycle-2 HIGH (zsh PIPESTATUS + rm -rf race) is FULLY RESOLVED by D-27's mktemp +
+`bash -c` + post-run cp pattern. No new HIGHs identified by either reviewer. Remaining
+concerns are MEDIUM (D-22 self-check regex expected-count text) and LOW (stale CONTEXT/RESEARCH
+wording, audit-mobile.sh stale comment, fallback-language framing).
+
+---
+
+# Cycle 3 — Review of 377ceac replan (D-27)
+
+## Cycle 3 — Gemini Review
+
+# Cross-AI Plan Review — Phase 13 (CYCLE 3)
+
+## 1. Summary
+The Phase 13 Cycle 3 implementation plans are technically mature and provide a comprehensive resolution to the `UIDN-02` mobile audit closure. The plans successfully incorporate all preceding review feedback, most notably the **D-27** shell-safety pattern which robustly handles the log capture in a zsh environment while avoiding race conditions with directory cleanup. By whitelisting intentional `home` ↔ `admin` collisions (**D-19**) and enforcing a strict single-run policy with report-based verification (**D-22**), the plans maintain high forensic integrity. The branching documentation logic for pass/miss outcomes is exceptionally thorough, ensuring project state artifacts (`PROJECT.md`, `REQUIREMENTS.md`) remain accurate regardless of the Lighthouse results.
+
+## 2. Strengths
+- **Robust Shell Safety (D-27):** The `mktemp` + `bash -c` wrapper + `cp` pattern perfectly addresses the Cycle 2 HIGH by ensuring log persistence and correct exit-code capture in zsh.
+- **Collision Integrity (D-19):** Whitelisting the intentional per-width `home` ↔ `admin` pairs prevents false-positive dupe-check failures while still catching loading-shell defects.
+- **Verification Rigor (D-22):** The transition to report-based verification (`jq`) instead of re-running the audit protects the single-run policy.
+- **Thorough Branching Logic:** Clear, copy-pasteable wording for both PASS and MISS outcomes ensures document consistency.
+- **Zero Source Edits (D-02):** Adherence to the Phase 9 invariant prevents accidental production regressions.
+- **AST-Style Verification:** Using a Node.js one-liner to verify the `UNAUTH_ROUTES` array length is a significant improvement over brittle line-grep counts.
+
+## 3. Concerns
+- **None.** All previously raised HIGHs are fully resolved, and no new high-severity risks were identified in this cycle.
+
+## 4. Suggestions
+- **None.** The plans are highly prescriptive and ready for autonomous execution.
+
+## 5. Risk Assessment: LOW
+The risk is **LOW**. The plans are grounded in empirical research, include multiple layers of validation (sentinel, `sha256` dupe-check, cross-doc consistency), and strictly follow the established closure methodology. The inclusion of a D-22 "plan-invariant" check using Python regex demonstrates an exceptionally high level of self-correcting detail.
+
+## 6. Cycle-2 HIGH Verification
+The Cycle-2 HIGH (zsh `PIPESTATUS` + `rm -rf` race) is **FULLY RESOLVED**.
+- **Log Persistence:** The use of `mktemp` ensures the log is written to a location outside the artifacts directory before the audit script runs its `rm -rf` cleanup.
+- **Shell Compatibility:** The `bash -c` wrapper correctly forces Bash semantics for the pipe, ensuring `${PIPESTATUS[0]}` is correctly expanded and recorded in the log footer regardless of the executor's shell (zsh).
+- **Canonical Record:** The verification logic in Plan 13-02 Task 1 correctly identifies a valid `exit=0` or `exit=1` record, ensuring the audit's "truth" is preserved.
+
+**Verdict:** Converged. Ready for execution.
+
+---
+
+## Cycle 3 — Codex Review
+
+**Summary**
+The Cycle-3 plans are materially converged. The Cycle-2 HIGH is fully resolved by D-27: Plan 13-02 now logs to `mktemp`, runs the pipeline under `bash -c` so `${PIPESTATUS[0]}` is valid, copies the log back after `audit-mobile.sh` recreates the artifacts directory, and verifies the final `exit=0|1` record. I found no remaining or newly introduced HIGH concerns.
+
+**Strengths**
+- D-27 directly fixes both prior defects: zsh `PIPESTATUS` incompatibility and the `rm -rf "$ARTIFACTS_DIR"` log deletion race.
+- D-22 remains intact: verify blocks inspect existing Lighthouse reports with `jq` and do not re-run `audit-mobile.sh`.
+- D-19 is the right compromise for sha256 checking: expected `/` ↔ unauth `/admin` collisions are whitelisted, unexpected loading-shell collisions still hard-fail.
+- D-20 correctly handles non-Performance category failures with generic “under threshold” wording and per-route category diagnosis.
+- D-23/D-24/D-25 cleanly avoid `.mjs`→`.ts` imports, summary-file commit drift, and PR placeholder rot.
+- The plans cover all Phase 13 success criteria: harness fix, 42-PNG corpus, authenticated `/topics` + `/archive`, Lighthouse archive, evidence/doc row updates.
+
+**Concerns**
+- **No HIGH concerns.**
+- **MEDIUM:** The D-22 self-check regex in [13-02-PLAN.md](/Users/khaiphan/code/wtcs-community-polls/.claude/worktrees/agent-af9d46c4baaed7c96/.planning/phases/13-uidn-02-mobile-audit-closure/13-02-PLAN.md:378) is fragile. It reports `of 6 total` in the current file because prose mentions literal `<verify>...</verify>` tags, while the expected text says `of 4 total`. It still confirms no re-run, but the expected-count text should be corrected or removed.
+- **LOW:** Stale context/research wording remains outside the operational plans: `13-RESEARCH.md` still contains older strict “any 2+ share a hash” and `GitHub PR #XX` examples, while `13-CONTEXT.md` still has one “planner imports these constants” line. The plans override these, but cleanup would reduce executor confusion.
+- **LOW:** `audit-mobile.sh` still has the old D-14 ship-anyway comment. Execution behavior and Plan 13-02 enforce strict D-11, so this is documentation drift only.
+- **LOW:** The fallback language “abort and rerun ONCE” on report/log disagreement should explicitly classify that as an invalid infrastructure attempt, not a score rerun, to preserve D-13’s forensic framing.
+
+**Suggestions**
+- Update the D-22 Python check expected text from `of 4 total` to either the actual count or just require `PASS`.
+- Clean stale `13-RESEARCH.md` and `13-CONTEXT.md` wording for D-19/D-23/D-25 consistency.
+- Reword the mismatch branch as: “do not use this run as canonical; document infra failure, fix capture, then run the single canonical audit.”
+- Optionally add a visual spot-check for one `/admin` PNG as well as `/topics`, since `/admin` is intentionally in the sha whitelist.
+
+**Risk Assessment**
+LOW. The prior execution blocker is fixed, and I do not see a remaining path that would corrupt the canonical Lighthouse log or silently re-run the audit. Remaining issues are verification/documentation hygiene, not phase-blocking risks.
+
+**Cycle-2 HIGH Verification**
+FULLY RESOLVED. The D-27 pattern in [13-02-PLAN.md](/Users/khaiphan/code/wtcs-community-polls/.claude/worktrees/agent-af9d46c4baaed7c96/.planning/phases/13-uidn-02-mobile-audit-closure/13-02-PLAN.md:216) fixes both parts:
+
+- `mktemp` writes outside `.planning/closure/artifacts/lighthouse`, so `audit-mobile.sh` line 28 cannot delete the live log.
+- `bash -c '... | tee "$1"; exit "${PIPESTATUS[0]}"'` forces bash semantics, so the script exit is captured correctly even when the caller shell is zsh.
+- The log is copied back only after the audit script recreates the directory, and verification requires final line `exit=0` or `exit=1`.
+
+Verdict: no HIGHs remain; no new HIGHs introduced.
+
+---
+
+## Consensus Summary — Cycle 3
+
+Both reviewers independently confirm the Cycle-2 HIGH is **FULLY RESOLVED**:
+
+- **mktemp** writes the log outside `.planning/closure/artifacts/lighthouse/`, so `audit-mobile.sh`'s
+  `rm -rf "$ARTIFACTS_DIR"` cannot delete the live log mid-run.
+- **`bash -c '... | tee "$1"; exit "${PIPESTATUS[0]}"'`** forces bash semantics for the pipe,
+  so `${PIPESTATUS[0]}` correctly expands regardless of the executor's shell (zsh, bash, etc.).
+- The log is **copied back via `cp`** only after `audit-mobile.sh` recreates the directory at
+  `audit-mobile.sh:29`, ensuring the canonical record survives.
+- The verify block correctly requires `exit=0` or `exit=1` as the final line.
+
+### Agreed Strengths (Cycle 3)
+
+- **D-27 mktemp + bash -c + cp** robustly handles both prior defects (zsh PIPESTATUS, rm -rf race).
+- **D-22** verification rigor preserved (jq-based report inspection, no audit re-run).
+- **D-19** per-width whitelist correctly handles intentional home↔admin sha256 collisions.
+- **D-20** generic "under threshold" wording handles non-Performance category failures.
+- **D-23 / D-24 / D-25** cleanly resolved (no .mjs→.ts imports, summary-file commit drift, PR placeholder rot).
+- Plans cover all Phase 13 success criteria: harness fix, 42-PNG corpus, authenticated /topics + /archive,
+  Lighthouse archive, evidence/doc row updates.
+
+### Agreed Concerns (Cycle 3)
+
+- **None at HIGH severity** — both reviewers explicitly state no HIGHs remain or were introduced.
+
+### Cycle 3 — Remaining Non-Blocking Concerns
+
+Codex surfaced four non-HIGH items; Gemini surfaced none. Sorted by severity:
+
+1. **MEDIUM (Codex)** — D-22 self-check regex in Plan 13-02 fragile re: expected `of 4 total` text.
+   File currently mentions inline `<verify>...</verify>` tags in prose; live count is 6, regex
+   expects 4. The check still confirms no re-run, but the expected-count text should be corrected
+   or relaxed to just require PASS. Not blocking — verification still detects audit-mobile.sh
+   re-invocation correctly.
+
+2. **LOW (Codex)** — `13-RESEARCH.md` retains older "any 2+ share a hash" and `GitHub PR #XX`
+   example wording; `13-CONTEXT.md` retains one "planner imports the constant" line. Plans
+   override, but cleanup would reduce executor confusion.
+
+3. **LOW (Codex)** — `audit-mobile.sh` still has the old D-14 ship-anyway comment; documentation
+   drift only, execution behavior is correct per Plan 13-02 strict D-11.
+
+4. **LOW (Codex)** — Fallback language "abort and rerun ONCE" on report/log disagreement could
+   be re-framed explicitly as an "invalid infrastructure attempt, not a score rerun" to preserve
+   D-13's forensic framing.
+
+### Divergent Views (Cycle 3)
+
+- **Gemini:** zero concerns, ready to execute (LOW risk).
+- **Codex:** zero HIGH concerns + 1 MEDIUM + 3 LOW (cleanup/clarity items). Overall risk LOW.
+
+The divergence is **non-substantive**: Codex's items are documentation hygiene and forensic-framing
+refinements, not execution blockers. Both reviewers agree the plan is executable as written.
+
+### Recommended Actions Before Execute (Cycle 3 — optional)
+
+These items are NON-BLOCKING; the plan is converged and executable. They are recommended only
+if a Cycle-4 polish pass is desired:
+
+1. **(MEDIUM)** Update the D-22 Python check expected text from `of 4 total` to either the
+   actual count or just require `PASS`.
+2. **(LOW)** Clean stale `13-RESEARCH.md` and `13-CONTEXT.md` wording for D-19 / D-23 / D-25
+   consistency.
+3. **(LOW)** Reword the report/log mismatch branch as "do not use this run as canonical;
+   document infra failure, fix capture, then run the single canonical audit."
+4. **(LOW)** Optionally add a visual spot-check for one `/admin` PNG (since `/admin` is
+   intentionally in the sha256 whitelist).
+
 ---
 
 # Cross-AI Plan Review — Phase 13 (Convergence Loop)
