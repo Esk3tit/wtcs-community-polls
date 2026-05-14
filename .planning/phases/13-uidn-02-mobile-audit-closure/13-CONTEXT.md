@@ -106,9 +106,10 @@ Validate that the v1.2 production deploy delivers the mobile-perf budget, fix th
 - `.planning/closure/artifacts/MANIFEST.json` — sha256-pinned record committed; binary PNGs and Lighthouse reports stay gitignored. The new dupe check reads sha256 directly from the harness's in-memory hash, not from the manifest (manifest write happens after the check).
 
 ### Auth + fixtures
-- `e2e/helpers/auth.ts:71-114` — `loginAs(page, fixtureUserId)` helper. Pattern reused inline in audit-screenshots.mjs Pass-B (already at lines 122-149 for adminUser; D-08 adds a parallel block for memberUser).
-- `e2e/fixtures/test-users.ts:21-30` — `fixtureUsers.adminUser.id = '22222222-…'` and `fixtureUsers.memberUser.id = '11111111-…'`. Planner imports these constants rather than hardcoding UUIDs.
-- `e2e/fixtures/test-users.ts:49` — `FIXTURE_PASSWORD` shared sentinel; already used by audit-screenshots.mjs.
+- `e2e/helpers/auth.ts:71-114` — `loginAs(page, fixtureUserId)` helper (canonical sign-in flow). The `.mjs` harness reuses this **pattern** inline in audit-screenshots.mjs Pass-B (already at lines 122-149 for `adminUser`; D-08 adds a parallel block for `memberUser`) — it does not `import` the helper, because Node ESM cannot runtime-import `.ts`.
+- `e2e/fixtures/test-users.ts:21-30` — source-of-truth fixture constants: `fixtureUsers.adminUser.id` (`'22222222-…'`), `fixtureUsers.memberUser.id` (`'11111111-…'`).
+- `e2e/fixtures/test-users.ts:49` — `FIXTURE_PASSWORD` shared sentinel.
+- **Fixture-sync strategy (per D-23, reinforced by SYNC-CHECK breadcrumbs added in `e5b97a5`):** `.mjs` harnesses (e.g., `.planning/closure/audit-screenshots.mjs`) MUST **inline-mirror** the constants above as a `MEMBER_FIXTURE`/`ADMIN_FIXTURE` literal with a `// SYNC-CHECK: e2e/fixtures/test-users.ts:21-30` comment, and the source `.ts` file MUST carry the reciprocal `// SYNC-CHECK` breadcrumb pointing back to the `.mjs` mirror. Do **not** `import` from `e2e/fixtures/test-users.ts` inside a `.mjs` file — Node ESM rejects runtime `.ts` imports and the harness will crash. Use `import type` only from `.ts` to `.ts`.
 
 ### Sentinel target
 - `src/components/layout/Navbar.tsx:74-80` — DropdownMenu trigger Button with `aria-label="Toggle color theme"`. Unconditional render (outside the `{user ? ... : ...}` ternary at line 98). The sentinel target locked by D-03.
