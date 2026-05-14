@@ -22,8 +22,8 @@ human_verification:
 **Phase Goal:** Close UIDN-02 by rerunning the v1.2 Lighthouse mobile audit + 42-PNG breakpoint matrix after fixing the Phase 9 Plan 02 harness hydration-wait defect. Apply the correct pass/miss outcome wording to evidence file, PROJECT.md Key Decision row, and REQUIREMENTS.md (active row + Phase Traceability).
 
 **Verified:** 2026-05-13
-**Status:** human_needed (24/25 truths verified; 1 visual + 1 binary-asset + 1 post-merge spot-check needed)
-**Re-verification:** No — initial verification
+**Status:** passed (25/25 truths verified; 3 human_needed items confirmed via 13-UAT.md 2026-05-13T21:28Z)
+**Re-verification:** Yes — re-verified 2026-05-13T21:28Z after HUMAN-UAT 3/3 pass
 
 ## Goal Achievement
 
@@ -72,7 +72,7 @@ human_verification:
 
 **Score:** 31 of 31 codebase-verifiable truths VERIFIED.
 
-(Note: the score in frontmatter `24/25` reflects the original must_haves from PLAN frontmatter consolidated — this body table breaks them into 31 individually-verifiable items. None failed. The 3 human_verification items are visual/binary checks that cannot be done by grep/jq.)
+(Note: the score in frontmatter `25/25` reflects the original must_haves from PLAN frontmatter consolidated — this body table breaks them into 31 individually-verifiable items. None failed. The 3 human_verification items are visual/binary checks that cannot be done by grep/jq; all 3 were confirmed via 13-UAT.md 2026-05-13T21:28Z.)
 
 ### Required Artifacts
 
@@ -177,7 +177,7 @@ Phase 13 has no `scripts/*/tests/probe-*.sh` probes. The phase IS a probe-execut
 
 The two operational deviations recorded in SUMMARYs (rebuild env-override requirement, zsh `$status` collision) are flagged for v1.3+ hygiene and do not undermine this phase's evidence integrity. The audit ran exactly once (D-13 honored); the captured JSON reports cross-verify the canonical log; the evidence corpus is sha256-pinned in MANIFEST.json.
 
-**Status:** human_needed only because (a) visual PNG/HTML inspection is non-programmatic and binaries are gitignored, and (b) PR description note is post-merge by design. All codebase-verifiable elements PASS.
+**Status:** passed — initially `human_needed` because (a) visual PNG/HTML inspection is non-programmatic and binaries are gitignored, and (b) PR description note is post-merge by design; all 3 human items subsequently confirmed via 13-UAT.md 2026-05-13T21:28Z. All codebase-verifiable elements PASS; reverified 2026-05-13T21:28Z.
 
 ---
 

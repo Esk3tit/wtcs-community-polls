@@ -16,8 +16,9 @@
 - D-02: Wait on an existing always-rendered shell element. Zero `src/` edits — sentinel selector lives only in the harness.
 - D-03: Sentinel selector = `[aria-label="Toggle color theme"]` — the theme-toggle Button at `Navbar.tsx:76`. Unconditionally rendered on every route (outside the `{user ? ... : ...}` ternary).
 - D-04: Soft 10s timeout, keep `.catch` (vs hard fail on miss, vs PR #24's 5s).
-- D-05: Hard-fail sha256 uniqueness check across all 42 PNGs. After the screenshot run, group PNGs by sha256; if any 2+ share a hash, log the offending paths and exit non-zero.
+- D-05: Hard-fail sha256 uniqueness check across all 42 PNGs. Group PNGs by sha256; fail only on UNEXPECTED collisions. Whitelist per-width `home ↔ admin` pairs per D-19 (Phase 9 D-06 evidence — AdminGuard navigates unauth `/admin` → `/` renders LandingPage, byte-identical to `/` unauth at every width; this is intentional UX, NOT a loading-shell defect). Log any non-whitelisted collisions and exit non-zero.
 - D-06: Apply the sentinel + dupe-check uniformly to BOTH Pass-A and Pass-B.
+- D-19 (decided post-research): Per-width `home ↔ admin` sha256 collision pair is whitelisted as expected; see shipped harness at `.planning/closure/audit-screenshots.mjs:282-326`.
 
 **Area 2 — Auth pass for /topics + /archive**
 - D-07: Extend Pass-B to 4 sub-routes (reuses existing `signInWithPassword` + `addInitScript` infrastructure).
@@ -274,16 +275,19 @@ Source: `[VERIFIED: .planning/closure/audit-screenshots.mjs:122-179]` — admin 
 
 ### Pattern 3: sha256 Dupe-Check Block (NEW — before MANIFEST upsert)
 
-**What:** After all screenshots are captured and before the MANIFEST upsert block (current line 195), add a ~15-line sha256 uniqueness check that exits non-zero on any hash collision.
+**What:** After all screenshots are captured and before the MANIFEST upsert block (current line 195), add a sha256 uniqueness check that exits non-zero on any UNEXPECTED hash collision. Per D-19, per-width `home ↔ admin` pairs are whitelisted as expected (Phase 9 D-06 evidence — AdminGuard navigates unauth `/admin` → `/` renders LandingPage, byte-identical to `/` unauth at every width).
 
 **When to use:** After `browser.close()` and the warning summary, before the MANIFEST upsert block that starts at current line 198.
 
 **Pattern:**
 ```javascript
-// D-05 — sha256 uniqueness gate (hard fail on loading-shell dupes).
+// D-05 + D-19 — sha256 uniqueness gate (hard fail on UNEXPECTED collisions only).
 // Phase 9 defect: 24/30 unauth-prod PNGs were byte-identical loading shells.
-// This check catches that signature deterministically. Exit non-zero BEFORE
-// writing the MANIFEST so a known-bad run does not record a clean manifest.
+// This check catches that signature deterministically. Per D-19, per-width
+// `home ↔ admin` pairs are whitelisted as expected (AdminGuard navigates unauth
+// `/admin` → `/` renders LandingPage, byte-identical to `/` unauth at every width —
+// intentional UX, NOT a loading-shell defect). Exit non-zero BEFORE writing the
+// MANIFEST so a known-bad run does not record a clean manifest.
 {
   const { readdir: readdirForDupe } = await import('node:fs/promises')
   const pathForDupe = await import('node:path')
@@ -296,16 +300,26 @@ Source: `[VERIFIED: .planning/closure/audit-screenshots.mjs:122-179]` — admin 
     if (!shaToFiles.has(sha)) shaToFiles.set(sha, [])
     shaToFiles.get(sha).push(f)
   }
-  const collisions = [...shaToFiles.values()].filter((paths) => paths.length > 1)
-  if (collisions.length > 0) {
-    console.error(`\n=== sha256 DUPE FAILURE: ${collisions.length} collision group(s) ===`)
-    for (const group of collisions) {
+  // D-19 whitelist: per-width `bp-{w}-home.png` ↔ `bp-{w}-admin.png` pairs are expected.
+  const isWhitelistedHomeAdminPair = (group) => {
+    if (group.length !== 2) return false
+    const widths = group.map((f) => f.match(/^bp-(\d+)-(home|admin)\.png$/)).filter(Boolean)
+    if (widths.length !== 2) return false
+    const [a, b] = widths
+    return a[1] === b[1] && ((a[2] === 'home' && b[2] === 'admin') || (a[2] === 'admin' && b[2] === 'home'))
+  }
+  const allCollisions = [...shaToFiles.values()].filter((paths) => paths.length > 1)
+  const allowedPairs = allCollisions.filter(isWhitelistedHomeAdminPair)
+  const unexpectedCollisions = allCollisions.filter((g) => !isWhitelistedHomeAdminPair(g))
+  if (unexpectedCollisions.length > 0) {
+    console.error(`\n=== sha256 DUPE FAILURE: ${unexpectedCollisions.length} UNEXPECTED collision group(s) ===`)
+    for (const group of unexpectedCollisions) {
       console.error(`  collision: ${group.join(', ')}`)
     }
     console.error('Hydration sentinel did not prevent loading-shell captures. Fix the harness before re-running.')
     process.exit(1)
   }
-  console.log(`sha256 uniqueness check passed (${dupeFiles.length} PNGs, 0 collisions)`)
+  console.log(`sha256 uniqueness check passed (${dupeFiles.length} PNGs, 0 unexpected collisions, ${allowedPairs.length} allowed home↔admin collision pair(s) per D-19)`)
 }
 ```
 
@@ -620,7 +634,7 @@ Structure for the new section:
 ### Cross-references
 - `.planning/phases/13-uidn-02-mobile-audit-closure/13-CONTEXT.md` — D-01..D-18
 - `.planning/phases/13-uidn-02-mobile-audit-closure/13-PLAN.md` — implementation
-- GitHub PR #XX — Phase 13 PR
+- GitHub PR (linked at PR-open time per D-25) — Phase 13 PR
 - Phase 12 prod commit `de15e33` — v1.2 deploy audited against
 
 ---

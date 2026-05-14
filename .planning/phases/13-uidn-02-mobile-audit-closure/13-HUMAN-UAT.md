@@ -30,6 +30,7 @@ The gsd-verifier returned `human_needed` because three artifacts can't be confir
 **Expected:** "Phase 13 ships in two commits on this branch: `97d1440` (Wave 1 harness fix, cherry-picked from executor worktree so the operator could run the harness against existing Supabase containers) + `0ab6973` (Wave 2 closure atomic commit — 3 docs + MANIFEST). Same atomic-commit spirit, split by wave boundary."
 **Why human:** Deferred by design per D-25 — no PR placeholder text was committed; the operator adds this note at PR-open time.
 **Status in session:** DEFERRED-BY-DESIGN — not a blocker; reminded above for PR-open time.
+**Note (post-PR-open):** the actual PR #29 body uses fuller commit-subject wording (`fix(13-01): replace fragile hydration sentinel + add member context + sha256 dupe-check with D-19 whitelist` and `feat(13): UIDN-02 v1.2 rerun — harness sentinel fix + 42-PNG corpus; row stays ⚠️ (4/5 routes under threshold)`) than this verifier-proposed summary above. Item 3 is satisfied — DEFERRED-BY-DESIGN per D-25; operator authored the wave-split note (with full subjects) at PR-open time. The pre-PR-open bullet above is preserved as the verifier's original proposed wording, not the final PR text.
 
 ## Resume
 

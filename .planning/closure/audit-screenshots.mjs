@@ -207,6 +207,8 @@ const warnings = []  // F6 — collected per-screenshot DOM-assertion misses
     // D-23: mirrored from e2e/fixtures/test-users.ts:21-30 — single source of truth lives there;
     // update both if fixture changes. Harness is .mjs and the fixture file is .ts — Node's ESM
     // loader cannot runtime-import TypeScript across that boundary, so the values are inlined.
+    // SYNC-CHECK: keep aligned with e2e/fixtures/test-users.ts:21-30 — grep both files
+    // (search MEMBER_FIXTURE here, fixtureUsers.memberUser there) when changing fixture credentials.
     const MEMBER_FIXTURE = {
       id: '11111111-1111-1111-1111-111111111111',
       email: 'playwright-user-member@test.local',
