@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: — Admin Visibility Controls
-status: Phase 12 shipped to prod — merge commit de15e33
-stopped_at: "Phase 12 shipped — PR #28"
-last_updated: "2026-05-13T07:02:26.943Z"
-last_activity: 2026-05-13 -- Phase 12 merged to main (de15e33), live in prod
+status: "Phase 13 shipped — PR #29 open"
+stopped_at: Phase 13 shipped — PR #29 open
+last_updated: "2026-05-13T22:46:10.104Z"
+last_activity: "2026-05-13 -- Phase 13 shipped — PR #29"
 progress:
   total_phases: 3
-  completed_phases: 2
-  total_plans: 15
-  completed_plans: 15
+  completed_phases: 3
+  total_plans: 17
+  completed_plans: 17
   percent: 100
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-11 after v1.1 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** Phase 13 — UIDN-02 Mobile Audit Closure
+**Current focus:** Phase 13 — uidn-02-mobile-audit-closure
 
 ## Current Position
 
-Phase: 12 — COMPLETE (Phase 13 next)
-Plan: 8 of 8 (complete)
-Status: Phase 12 shipped to prod — merge commit de15e33
-Last activity: 2026-05-13 -- Phase 12 merged to main (de15e33), live in prod
+Phase: 13 (uidn-02-mobile-audit-closure) — EXECUTING
+Plan: 1 of 2
+Status: Phase 13 shipped — PR #29 open
+Last activity: 2026-05-13 -- Phase 13 shipped — PR #29
 
 ```
 v1.2 progress:  [█████████████░░░░░░░] 67% (Phase 11 ✅ Shipped, Phase 12 ✅ Shipped, Phase 13 next)
@@ -79,6 +79,6 @@ None. Phase 12 is unblocked: the EF and audit_log surface needed for the admin U
 
 ## Session Continuity
 
-Last session: 2026-05-12T22:30:00Z
-Stopped at: Phase 12 shipped — PR #28
-Resume action: `/gsd-plan-phase 13` to begin Phase 13 (UIDN-02 Mobile Audit Closure) planning. Requirements: UIDN-02.
+Last session: 2026-05-13T10:31:13.220Z
+Stopped at: Phase 13 shipped — PR #29 open
+Resume action: `/gsd-complete-milestone v1.2` once PR #29 merges — Phase 11+12+13 all shipped; v1.2 milestone is ready to close.

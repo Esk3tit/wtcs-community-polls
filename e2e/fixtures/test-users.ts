@@ -18,6 +18,9 @@ export interface FixtureUser {
   discord_id: string
 }
 
+// SYNC-CHECK: memberUser is also inline-mirrored in .planning/closure/audit-screenshots.mjs
+// (search MEMBER_FIXTURE) because Node ESM cannot runtime-import .ts. Update both sites
+// when changing fixture credentials.
 export const fixtureUsers = {
   memberUser: {
     id: '11111111-1111-1111-1111-111111111111',

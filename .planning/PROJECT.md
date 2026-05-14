@@ -208,7 +208,7 @@ GitHub milestone: TBD on first push.
 | GDPR opt-IN consent (Phase 6 rewire from initial opt-OUT) | EU compliance; analytics off until user clicks Allow | ✓ Good (v1.0 — PostHog smoke verified zero pre-Allow events) |
 | Sentry error capture unconditional; Replay consent-gated | Error visibility preserved; Replay PII-sensitive only on Allow | ✓ Good (v1.0 — D-05) |
 | Russian users expected to use VPN (no geo-gating) | Matches sister-site behavior; ISP-level blocks user-side | ✓ Good (v1.0 — no detection logic) |
-| Mobile-first responsive design | Discord users tap links from phones | ⚠️ Revisit (UIDN-02 closure evidence pending — issue #18) |
+| Mobile-first responsive design | Discord users tap links from phones | ⚠️ Revisit (v1.2 rerun — 4/5 routes under threshold; follow-up tied to next perf-budget change; see .planning/closure/UIDN-02-mobile-evidence.md § v1.2 Rerun) |
 | Phase numbering: integers + decimal-insertions | Clear insertion semantics for urgent fixes | — Pending (no decimals used in v1.0) |
 | Sentry React SDK v10 + ErrorBoundary | Render-phase throws don't ship via ErrorBoundary capture path | ⚠️ Revisit (issue #17 — pivoted to event-handler throw for D-08 verification) |
 
