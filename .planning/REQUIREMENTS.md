@@ -110,32 +110,32 @@ Continues from v1.0's UIDN-01..03. UIDN-03-FOLLOWUP-LIST-CARDS from v1.1 audit t
 
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| DBHY-01 | TBD | Pending |
-| DBHY-02 | TBD | Pending |
-| DBHY-03 | TBD | Pending |
-| DBHY-04 | TBD | Pending |
-| OBSV-03 | TBD | Pending |
-| OBSV-04 | TBD | Pending |
-| OBSV-05 | TBD | Pending |
-| TEST-14 | TBD | Pending |
-| TEST-15 | TBD | Pending |
-| TEST-16 | TBD | Pending |
-| PERF-01 | TBD | Pending |
-| PERF-02 | TBD | Pending |
-| PERF-03 | TBD | Pending |
-| PERF-04 | TBD | Pending |
-| PERF-05 | TBD | Pending |
-| PERF-06 | TBD | Pending |
-| PERF-07 | TBD | Pending |
-| DOCS-05 | TBD | Pending |
-| DOCS-06 | TBD | Pending |
-| DOCS-07 | TBD | Pending |
-| DOCS-08 | TBD | Pending |
-| UIDN-04 | TBD | Pending |
-| UIDN-05 | TBD | Pending |
+| DBHY-01 | Phase 14 | Pending |
+| DBHY-02 | Phase 14 | Pending |
+| DBHY-03 | Phase 14 | Pending |
+| DBHY-04 | Phase 14 | Pending |
+| OBSV-03 | Phase 15 | Pending |
+| OBSV-04 | Phase 15 | Pending |
+| OBSV-05 | Phase 15 | Pending |
+| TEST-14 | Phase 15 | Pending |
+| TEST-15 | Phase 15 | Pending |
+| TEST-16 | Phase 15 | Pending |
+| PERF-01 | Phase 16 | Pending |
+| PERF-02 | Phase 16 | Pending |
+| PERF-03 | Phase 16 | Pending |
+| PERF-04 | Phase 16 | Pending |
+| PERF-05 | Phase 16 | Pending |
+| PERF-06 | Phase 16 | Pending |
+| PERF-07 | Phase 16 | Pending |
+| DOCS-05 | Phase 17 | Pending |
+| DOCS-06 | Phase 17 | Pending |
+| DOCS-07 | Phase 17 | Pending |
+| DOCS-08 | Phase 17 | Pending |
+| UIDN-04 | Phase 17 | Pending |
+| UIDN-05 | Phase 17 | Pending |
 
-*(Phase column filled by gsd-roadmapper. UIDN-05 may collapse into UIDN-04 if Phase 17 audit confirms PromoteAdminDialog already meets the Card pattern.)*
+*(UIDN-05 may close as no-op if Phase 17 audit confirms PromoteAdminDialog already meets the Card pattern.)*
 
 ---
 
-*Last updated: 2026-05-14 — v1.3 milestone scoped post-research. 23 requirements across 6 categories (DBHY ×4 / OBSV ×3 / TEST ×3 / PERF ×7 / DOCS ×4 / UIDN ×2). 4 phases expected (Phase 14 DB hygiene → Phase 15 obs+E2E verify → Phase 16 perf pass → Phase 17 docs+UI sweep), to be confirmed by roadmapper.*
+*Last updated: 2026-05-14 — v1.3 roadmap created. 23 requirements across 6 categories (DBHY ×4 / OBSV ×3 / TEST ×3 / PERF ×7 / DOCS ×4 / UIDN ×2) mapped to 4 phases: Phase 14 (DB hygiene) → Phase 15 (obs+E2E verify) → Phase 16 (perf pass) → Phase 17 (docs+UI sweep). Coverage: 23/23.*

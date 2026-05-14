@@ -6,7 +6,7 @@ status: planning
 last_updated: "2026-05-14T09:34:01.058Z"
 last_activity: 2026-05-14
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,35 +20,47 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-14 after v1.2 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** Awaiting v1.3 milestone scoping
+**Current focus:** Phase 14 — Security-Definer Search-Path Migration (next to plan)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 14 of 17 (Security-Definer Search-Path Migration)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-05-14 — Milestone v1.3 started
+Status: Ready to plan (roadmap created)
+Last activity: 2026-05-14 — v1.3 roadmap created (4 phases, 23 REQ-IDs mapped)
+
+Progress: [░░░░░░░░░░] 0%
+
+## Performance Metrics
+
+**Velocity:**
+- Total plans completed: 0
+- Average duration: —
+- Total execution time: 0 hours
+
+**By Phase:**
+
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| - | - | - | - |
+
+*Updated after each plan completion*
 
 ## Accumulated Context
 
-Per-milestone phase context now lives entirely in:
-
-- `.planning/MILESTONES.md` — shipped accomplishments + key decision outcomes per milestone
-- `.planning/milestones/v[X.Y]-ROADMAP.md` — phase-by-phase scope and plans
-- `.planning/milestones/v[X.Y]-REQUIREMENTS.md` — milestone requirement set with traceability
-- `.planning/milestones/v[X.Y]-MILESTONE-AUDIT.md` — cross-phase integration verification (v1.0, v1.1 only — v1.2 had no separate audit file; the pre-close artifact audit + Phase 13 verification covered this)
-- `.planning/phases/{N}-*/` — raw execution history per phase (or `.planning/milestones/v[X.Y]-phases/` once retroactively archived)
-
 ### Decisions
 
-Recent decisions are in PROJECT.md Key Decisions table with outcomes (✓ Good / ⚠️ Revisit / — Pending). The v1.2 close updated:
+Recent decisions affecting v1.3 work (full log in PROJECT.md Key Decisions table):
 
-- `shadcn/ui new-york + Tailwind CSS v4` — flipped ⚠️ → ✓ (UIDN-03 4-site sweep closed in Phase 12)
-- `Mobile-first responsive design` — stays ⚠️ Revisit (UIDN-02 v1.2 rerun ran but 4/5 routes Perf < 90; closure trigger = next perf-budget change per D-12)
+- D-12: UIDN-02 closure trigger = next perf-budget change (not a hard 5/5-route gate); DEFER outcome is acceptable
+- D-13: Single Lighthouse rerun per milestone on production; no repeated runs
+- Phase 14: `CREATE OR REPLACE FUNCTION` (not `ALTER FUNCTION`) for Migration 14 — preserves OID stability for trigger references
 
 ### Blockers/Concerns
 
-None. v1.3 milestone scoping is unblocked.
+- Phase 14 HIGH-RISK: `increment_vote_count` 42P01 production-outage risk under `search_path = ''` — body rewrite (`INSERT INTO vote_counts` → `INSERT INTO public.vote_counts`) is mandatory before deploying Migration 14
+- Phase 14 HIGH-RISK: `is_current_user_admin()` gates all admin RLS policies — must be body-identical rewrite (logic unchanged, only `search_path` value)
+- Open gap: `rls_auto_enable` function may not exist on disk — requires `supabase db dump` or dashboard check before writing Migration 14
 
 ## Deferred Items
 
@@ -58,15 +70,12 @@ Items acknowledged and deferred at milestone v1.2 close on 2026-05-14:
 |----------|------|--------|-------|
 | uat_gaps | Phase 12 12-UAT.md | partial | 0 pending scenarios — file status string drift; live tests all pass |
 | uat_gaps | Phase 13 13-HUMAN-UAT.md | resolved | 0 pending scenarios — verifier confirmed UAT 3/3 pass; status field reads `resolved` not `complete` |
-
-Both are bookkeeping (non-`complete` status string) with zero actual open scenarios. Tracked here for transparency; safe to re-stamp to `complete` in a future cleanup pass.
+| v1.4+ | Phase 04 UAT 6a backfill | deferred | second-admin live test; deferred again at v1.3 scoping |
+| v1.4+ | Phase 03 UAT tests 2+3 | deferred | non-member tester gated; deferred again at v1.3 scoping |
+| v1.4+ | Local ES256 bug (1.73.x) | deferred | prod unaffected; awaiting upstream Supabase fix |
 
 ## Session Continuity
 
-Last session: 2026-05-14T08:55Z
-Stopped at: v1.2 milestone closed and tagged
-Resume action: `/gsd-new-milestone` to begin v1.3 scoping (questioning → research → requirements → roadmap).
-
-## Operator Next Steps
-
-- Start the next milestone with `/gsd-new-milestone`
+Last session: 2026-05-14
+Stopped at: v1.3 roadmap created and written to disk
+Resume action: `/gsd-plan-phase 14` to plan Phase 14 (Security-Definer Search-Path Migration)
