@@ -30,16 +30,27 @@ This platform gathers community **opinions**, not binding votes. Nothing on the 
 **v1.2 archives:** [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROADMAP.md) · [milestones/v1.2-REQUIREMENTS.md](milestones/v1.2-REQUIREMENTS.md) (no separate v1.2 audit file; pre-close artifact audit + Phase 13 verification covered this)
 **v1.1 archives:** [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md) · [milestones/v1.1-REQUIREMENTS.md](milestones/v1.1-REQUIREMENTS.md) · [milestones/v1.1-MILESTONE-AUDIT.md](milestones/v1.1-MILESTONE-AUDIT.md)
 
-## Next Milestone Goals
+## Current Milestone: v1.3 — Hygiene & Performance
 
-**Status:** Awaiting v1.3 scoping (`/gsd-new-milestone` to begin questioning → research → requirements → roadmap).
+**Goal:** Close v1.0–v1.2 carry-forward debt (DB / test / observability / planning-doc / UI hygiene) and ship an aggressive perf-budget pass that triggers the UIDN-02 Lighthouse rerun, flipping the "Mobile-first responsive design" Key Decision row if Perf gates clear.
 
-**Carry-forward debt likely to scope into v1.3:**
-- **UIDN-02** — Mobile-first Lighthouse Perf trigger per D-12 (next perf-budget change). Current row stays ⚠️ Revisit; closure file at `.planning/closure/UIDN-02-mobile-evidence.md § v1.2 Rerun`. Open in REQUIREMENTS Phase Traceability as `Active`.
-- **UIDN-03-FOLLOWUP-LIST-CARDS** — `AdminsList` / `CategoriesList` / `PromoteAdminDialog` → shadcn `Card` (audit transparency note, not a FAIL cell).
-- **7 pre-Phase-11 SECURITY DEFINER advisor warnings** — pre-v1.0, WARN-level. Track for v1.3 hygiene phase.
+**Target features:**
 
-GitHub milestone: TBD on v1.3 scoping.
+- **DB hygiene** — `SECURITY DEFINER` + `search_path = ''` on 7 pre-Phase-11 functions (`update_profile_after_auth`, `handle_new_user`, `validate_vote_choice`, `increment_vote_count`, `is_current_user_admin`, `profile_self_update_allowed`, `rls_auto_enable`); clear all WARN-level Supabase advisors; align `11-PATTERNS.md` `vote_counts` skeleton with shipped REVIEW-FIX-H3 form.
+- **Test/E2E hygiene** — Close issues #11 (`admin-create.spec.ts` doesn't populate Choice 1/2), #12 (`browse-respond.spec.ts` asserts vote count on zero-vote fixtures), #13 (`filter-search.spec.ts` `toHaveCount()` under two-layer seed). Real fixture/seed fixes, not skip-and-defer.
+- **Observability hygiene** — Issue #17 Sentry React 19 ErrorBoundary render-phase throw capture (SDK v10 transport investigation); issue #19 Vite/Rolldown sourcemap function-name preservation (Sentry shows real names, not minified `$M`).
+- **Planning-doc + UI hygiene** — VALIDATION.md frontmatter backfill on phases 01–04; Phase 03 VERIFICATION.md retrospective; 17 SUMMARY `requirements-completed` declarations; **v1.1 MILESTONES.md entry backfill** (folded into this cluster); `AdminsList` / `CategoriesList` / `PromoteAdminDialog` hand-rolled containers → shadcn `Card` (UIDN-03-FOLLOWUP-LIST-CARDS).
+- **UIDN-02 perf-budget pass (aggressive)** — Bundle audit (rollup-plugin-visualizer) + route-level code split + admin route lazy-load + image format migration (WebP/AVIF) + font subsetting + route prefetch tuning + critical CSS audit. Single Lighthouse rerun per D-13. Accept rerun outcome (could be PASS or DEFER); follow-up trigger stays D-12 if perf still misses.
+
+**Key context:**
+
+- Phase numbering continues from v1.2 (last phase 13) → v1.3 starts at **Phase 14**.
+- UIDN-02 closure mode = aggressive change + accept rerun outcome (no hard PASS gate). Strict-floor MISS remains acceptable per D-12.
+- No new product features. Mirrors v1.1's "Hygiene & Polish" structural pattern but adds a real product-touching perf-budget axis.
+- **Stays deferred (not in v1.3):** Phase 04 UAT 6a + Phase 03 UAT 2+3 (second-human-gated); local supabase-edge-runtime ES256 verification bug (1.73.x; prod unaffected, transitively covered by Phase 12 UAT).
+- The five v1.3 work-streams are roughly equal in weight; observability hygiene is diagnose-first (#17 + #19) and may earn its own phase rather than fold into a generic "ops cleanup".
+
+GitHub milestone: TBD on first push.
 
 <details>
 <summary>Previous milestone goals (v1.2)</summary>
@@ -171,9 +182,15 @@ GitHub milestone: TBD on first push.
 - [ ] Local supabase-edge-runtime ES256 verification bug (1.73.x; affects `npm run test:integration` only; production unaffected)
 - [ ] `11-PATTERNS.md` drift: still carries legacy admin-OR-bypass form for `vote_counts` skeleton; shipped form per REVIEW-FIX-H3 differs
 
-### Planned for v1.3 (TBD)
+### Planned for v1.3 (Hygiene & Performance — scoped 2026-05-14)
 
-- Awaiting `/gsd-new-milestone` scoping. UIDN-02 perf budget revisit + hygiene cleanup are likely candidates.
+- **DB hygiene:** 7 SECURITY DEFINER advisor warnings + `11-PATTERNS.md` `vote_counts` drift alignment.
+- **Test/E2E hygiene:** issues #11, #12, #13 Playwright fixture/seed fixes.
+- **Observability hygiene:** issue #17 (Sentry React 19 ErrorBoundary capture) + issue #19 (Vite/Rolldown sourcemap function names).
+- **Planning-doc + UI hygiene:** VALIDATION.md frontmatter on phases 01–04, Phase 03 VERIFICATION.md retrospective, 17 SUMMARY `requirements-completed` declarations, v1.1 MILESTONES.md entry backfill, UIDN-03-FOLLOWUP-LIST-CARDS (shadcn `Card` migration).
+- **UIDN-02 perf-budget pass (aggressive):** bundle + images + fonts + prefetch + critical CSS; single Lighthouse rerun per D-13; accept PASS-or-DEFER outcome (no hard 5/5-route gate).
+
+REQUIREMENTS.md will track REQ-IDs and phase mapping.
 
 ### Deferred to v2 (or later)
 
@@ -272,4 +289,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-14 — v1.2 Admin Visibility Controls milestone shipped (13/14 reqs satisfied; UIDN-02 carry-forward to v1.3+); v1.2 archived to `milestones/v1.2-*.md`.*
+*Last updated: 2026-05-14 — v1.3 Hygiene & Performance milestone scoped (5 work-streams: DB / Test-E2E / Observability / Planning-doc + UI / UIDN-02 aggressive perf pass). Phase numbering continues at Phase 14. Requirements pending REQUIREMENTS.md draft.*
