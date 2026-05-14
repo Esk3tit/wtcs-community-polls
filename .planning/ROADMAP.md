@@ -10,7 +10,8 @@ This roadmap delivers a Discord-authenticated community suggestion and opinion-g
 
 - ✅ **v1.0 — Launch-Ready MVP** — Phases 1–6 (shipped 2026-04-28) — see [MILESTONES.md](MILESTONES.md) and [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 - ✅ **v1.1 — Hygiene & Polish** — Phases 7–10 (shipped 2026-05-11) — see [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md) and [GitHub milestone v1.1](https://github.com/Esk3tit/wtcs-community-polls/milestone/1)
-- 🔄 **v1.2 — Admin Visibility Controls** — Phases 11–13 (in progress)
+- ✅ **v1.2 — Admin Visibility Controls** — Phases 11–13 (shipped 2026-05-14) — see [MILESTONES.md](MILESTONES.md) and [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROADMAP.md)
+- 📋 **v1.3 — TBD** — awaiting `/gsd-new-milestone` scoping
 
 ## Phases
 
@@ -46,105 +47,26 @@ Full v1.1 phase details (goals, plans, decisions, reconciliation) preserved in [
 
 </details>
 
-### v1.2 — Admin Visibility Controls (Phases 11–13)
+<details>
+<summary>✅ <strong>v1.2 — Admin Visibility Controls (Phases 11–13) — SHIPPED 2026-05-14</strong></summary>
 
-- [x] **Phase 11: Schema + RLS + EF Foundations** — Migration 10 (`results_hidden` boolean + `results_hidden_changed_at` timestamptz on `polls`, `vote_counts` RLS DROP+CREATE, `polls_effective` view rewrite with `security_invoker = on`), `toggle-results-visibility` Edge Function, 12-cell RLS invariant test suite (TEST-11), admin EF authorization test (TEST-12) — shipped 2026-05-11
-- [x] **Phase 12: Admin UI + User UI + UIDN-03 Sweep** — VisibilityCheckbox on creation form, inline "Hide/Show results" Switch + sonner toast on `AdminSuggestionRow` (per CONTEXT D-01; supersedes earlier AlertDialog pattern), `canSeeResults` gate in `SuggestionCard`, hidden-state message component, `useVoteCounts` extension, archive view fix, 4 native-button drift cleanup co-landing in `SuggestionForm.tsx`, `SearchBar.tsx`, `ImageInput.tsx`, Playwright E2E happy path (TEST-13) (completed 2026-05-12)
-- [x] **Phase 13: UIDN-02 Mobile Audit Closure** — `audit-screenshots.mjs` hydration-wait fix (Plan 02 defect), Lighthouse mobile audit rerun with authenticated Pass-B evidence for `/topics` and `/archive`, outcome DEFER (4/5 routes Perf<90; Mobile-first row stays ⚠️ Revisit with follow-up tied to next perf-budget change per D-12; see `.planning/closure/UIDN-02-mobile-evidence.md § v1.2 Rerun`) (completed 2026-05-13)
+- [x] **Phase 11: Schema + RLS + EF Foundations** (7/7 plans) — Migration 10 (`polls.results_hidden` + `results_hidden_changed_at`, `audit_log` table with TEXT `target_id`, `polls_effective` rewrite, `vote_counts` policy DROP+CREATE), shared `writeAudit` helper, race-safe `toggle-results-visibility` EF, 12 existing admin EFs retrofitted, 12-cell RLS invariant suite (TEST-11), toggle EF authz suite (TEST-12), all deployed to prod (PR #26 merged 2026-05-11)
+- [x] **Phase 12: Admin UI + User UI + UIDN-03 Sweep** (8/8 plans) — Vendored shadcn Checkbox + Switch, regenerated types, VIS-06 admin Checkbox, VIS-07 inline admin Switch with optimistic + revert-on-error + sonner toast, VIS-08 voter "hidden by admin" placeholder, UIDN-03 4-site native-`<button>` sweep (SearchBar + 2× SuggestionForm + ImageInput `<DropZone>` extraction), TEST-13 Playwright `@smoke` SC4 round-trip (PR #28 merged 2026-05-12)
+- [x] **Phase 13: UIDN-02 Mobile Audit Closure** (2/2 plans) — `audit-screenshots.mjs` hydration-wait fix (Phase 9 Plan 02 defect closed): deterministic Navbar theme-toggle sentinel + two-context Pass-B (admin + member) + sha256 uniqueness gate with D-19 home↔admin whitelist + 42-PNG clean corpus; Lighthouse v1.2 rerun outcome **DEFER** (4/5 routes Perf < 90 — perf-only; A11y/BP/SEO clear); Mobile-first row stays ⚠️ Revisit per D-12 (next perf-budget change). 4 rounds of bot-review fix passes resolved 15/15 threads (PR #29 merged 2026-05-14)
 
-## Phase Details
+Full v1.2 phase details (goals, plans, decisions, wave structure, success criteria) preserved in [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROADMAP.md).
 
-### Phase 11: Schema + RLS + EF Foundations
-**Goal**: The `results_hidden` policy is enforced at the database layer — RLS on `vote_counts` correctly gates visibility per voter status, and the `toggle-results-visibility` Edge Function is deployed and admin-authorized
-**Depends on**: Phase 10 (v1.1 shipped)
-**Requirements**: VIS-01, VIS-02, VIS-03, VIS-04, VIS-05, VIS-09, TEST-11, TEST-12
+</details>
 
-**Success Criteria** (what must be TRUE):
-  1. Migration 10 applies cleanly: `polls.results_hidden boolean NOT NULL DEFAULT false` and `polls.results_hidden_changed_at timestamptz` columns exist; all 10 pre-existing migrations (00–09) continue to pass
-  2. The 12-cell RLS invariant test suite passes in full: every cell where `results_hidden = true` OR the caller has not voted returns 0 rows from `vote_counts`; only `voted + results_hidden = false + authenticated` returns count data; service-role bypasses the policy in all states — **no cell may be skipped; this is a merge blocker**
-  3. Admin EF authorization test confirms: non-admin caller receives HTTP 403; admin caller receives HTTP 200 with updated poll row including the new `results_hidden` value and a non-null `results_hidden_changed_at`; an `audit_log` row is written for every toggle
-  4. The `polls_effective` view exposes `results_hidden` and `results_hidden_changed_at` to all callers (including the React client via the existing public read path); `security_invoker = on` re-applied; the `polls-effective-invariant.test.ts` continues to pass with zero new `from('polls')` direct reads introduced
-  5. `toggle-results-visibility` EF is deployed and reachable: calling it as a non-admin returns 403; calling it as an admin with a valid `{ poll_id, hidden: boolean }` body flips the value and writes the audit row
+### 📋 v1.3 — TBD
 
-**Plans**: 7 plans
-- [x] 11-00-PLAN.md — Wave 0 integration test fixtures (vitest config, helpers, scaffolds) — complete 2026-05-11
-- [x] 11-01-PLAN.md — Migration 10 (polls columns + audit_log + view rewrite + vote_counts policy) — complete 2026-05-11
-- [x] 11-02-PLAN.md — Shared audit helper + toggle-results-visibility EF — complete 2026-05-11
-- [x] 11-03-PLAN.md — Audit retrofit of 11 existing mutation admin EFs (excluding create-poll, planned in 11-03b) — complete 2026-05-11
-- [x] 11-03b-PLAN.md — create-poll results_hidden extension + audit retrofit (Option A — post-RPC conditional UPDATE) — complete 2026-05-11
-- [x] 11-04-PLAN.md — TEST-11 12-cell RLS matrix + TEST-12 admin EF authz tests + create-poll results_hidden 4-case suite — complete 2026-05-11 (runtime PASS gated to Plan 11-05)
-- [x] 11-05-PLAN.md — [BLOCKING] migration 10 push + 13 EFs deployed via MCP — shipped 2026-05-11
-**UI hint**: no
-
----
-
-### Phase 12: Admin UI + User UI + UIDN-03 Sweep
-**Goal**: Admins can hide and show results on any suggestion from the admin UI, users see either live vote counts or a "Results temporarily hidden by admin" message depending on the current state, and all 4 shadcn native-button drift sites are replaced
-**Depends on**: Phase 11
-**Requirements**: VIS-06, VIS-07, VIS-08, UIDN-03, TEST-13
-
-**Success Criteria** (what must be TRUE):
-  1. Admin creation form has a "Hide results from voters" checkbox (default unchecked); creating a poll with it checked produces a row with `results_hidden = true`; creating with it unchecked produces `results_hidden = false`
-  2. Live and archived admin suggestion cards show a "Hide results" / "Show results" toggle button that opens an AlertDialog with the suggestion title and an audit-trail note before confirming; confirming calls the `toggle-results-visibility` EF and the card label updates immediately
-  3. A logged-in user who has voted on a suggestion with `results_hidden = true` sees "Results temporarily hidden by admin" in place of the vote count breakout; the same user on a suggestion with `results_hidden = false` sees the normal count bars
-  4. The Playwright E2E spec (TEST-13) passes end-to-end: admin creates a poll, a test vote is cast, admin hides results, the voter UI shows the hidden message, admin shows results, the voter UI shows count bars again
-  5. ESLint and `tsc -b` pass with zero errors after the 4 native-button replacements in `SearchBar.tsx`, `SuggestionForm.tsx` (×2), and `ImageInput.tsx`; `type="submit"` is preserved where applicable; no existing form-submission behavior regresses
-
-**Plans**: 8 plans
-
-**Wave 1** *(foundation — independent, parallel)*
-- [x] 12-00-PLAN.md — Type regen + npm gen:types script + vendor shadcn Checkbox/Switch + REQUIREMENTS.md VIS-07 wording edit
-- [x] 12-01-PLAN.md — UIDN-03 D-15: SearchBar clear-X native button → shadcn Button (ghost icon)
-
-**Wave 2** *(blocked on Wave 1 completion — parallel within wave)*
-- [x] 12-02-PLAN.md — VIS-06 checkbox on SuggestionForm + UIDN-03 D-14 ×2 TanStack Link back-link replacements
-- [x] 12-03-PLAN.md — VIS-07 inline Switch on AdminSuggestionRow + new useToggleResultsVisibility hook + AdminSuggestionsTab optimistic wiring
-- [x] 12-04-PLAN.md — VIS-08 hidden-state Alert in SuggestionCard + useVoteCounts extension polling results_hidden
-- [x] 12-05-PLAN.md — UIDN-03 D-13: extract DropZone component, refactor ImageInput
-
-**Wave 3** *(blocked on Wave 2 completion)*
-- [x] 12-06-PLAN.md — TEST-13 Playwright E2E spec + freshPoll fixture vote-cast helper + REQUIREMENTS.md traceability marks complete
-
-**Wave 4** *(gap closure — blocked on UAT diagnosis)*
-- [x] 12-07-PLAN.md — UIDN-03 D-14 gap closure: SuggestionForm Cancel button → `<Button asChild><Link to="/admin">` (Test 3 UAT fix)
-
-Cross-cutting constraints:
-- Zero direct `from('polls')` reads in `src/` (Phase 11 VIS-09 invariant — `polls-effective-invariant.test.ts` must continue to pass)
-- All plans run `npm run lint` and `tsc -b` in verify
-- Plan 00's REQUIREMENTS.md VIS-07 wording edit (drops AlertDialog, adopts Switch + toast per CONTEXT D-01) supersedes the Phase 12 ROADMAP SC2 mention of "AlertDialog" — SC2 stays as the original phase contract for historical traceability; the implementation matches the CONTEXT/REQUIREMENTS wording
-
-**UI hint**: yes
-
----
-
-### Phase 13: UIDN-02 Mobile Audit Closure
-**Goal**: The Lighthouse mobile audit runs cleanly against v1.2 production (no F6 hydration-wait warnings, authenticated screenshots captured), and the `Mobile-first responsive design` Key Decision row flips ⚠️ → ✓ if Performance ≥ 90 on all 5 routes
-**Depends on**: Phase 12 (v1.2 production deploy must be live before Lighthouse scores are meaningful)
-**Requirements**: UIDN-02
-
-**Success Criteria** (what must be TRUE):
-  1. `audit-screenshots.mjs` runs without F6 DOM-assertion warnings: `waitForLoadState('networkidle')` (or equivalent hydration wait) is applied before screenshot capture; the byte-identical unauthenticated PNG defect is resolved
-  2. Authenticated Pass-A screenshots are captured for `/topics` and `/archive` using the existing `loginAs` helper from `e2e/helpers/auth.ts`; the screenshot corpus includes both authenticated and unauthenticated state for all audited routes
-  3. Lighthouse mobile audit produces a score for all 5 routes; results are archived in `.planning/closure/UIDN-02-mobile-evidence.md` (v1.2 rerun section) with the raw numeric scores recorded
-  4. The `Mobile-first responsive design` Key Decision row in `PROJECT.md` is flipped from ⚠️ Revisit to ✓ Good if Performance ≥ 90 on all 5 routes; if any route scores below 90, the evidence file documents the delta with rationale and the row remains ⚠️ with a follow-up note
-
-**Plans**: 2 plans
-- [x] 13-01-PLAN.md — Harness fix: sentinel swap + UNAUTH_ROUTES reduction + member context + sha256 dupe-check; harness execution to produce clean 42-PNG corpus
-- [x] 13-02-PLAN.md — Lighthouse mobile audit (single-run, D-13) + evidence file v1.2 Rerun section + PROJECT.md row + REQUIREMENTS.md rows + atomic commit
-**UI hint**: no
-
----
+- Awaiting `/gsd-new-milestone` scoping. Likely candidates from v1.2 carry-forward: UIDN-02 perf-budget revisit, UIDN-03-FOLLOWUP-LIST-CARDS, 7 pre-Phase-11 SECURITY DEFINER advisor warnings, local supabase-edge-runtime ES256 verification bug, PATTERNS.md drift cleanup.
 
 ## Progress
-
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 11. Schema + RLS + EF Foundations | 7/7 | ✅ Shipped | 2026-05-11 |
-| 12. Admin UI + User UI + UIDN-03 Sweep | 8/8 | Complete   | 2026-05-12 |
-| 13. UIDN-02 Mobile Audit Closure | 2/2 | Complete   | 2026-05-13 |
 
 | Milestone | Phases | Plans | Status | Shipped |
 |-----------|--------|-------|--------|---------|
 | v1.0 | 1–6 | 32/32 | ✅ Shipped | 2026-04-28 |
 | v1.1 | 7–10 | 16/16 | ✅ Shipped | 2026-05-11 |
-| v1.2 | 11–13 | 17/17 | 🔄 In progress (2/3 phases complete) | - |
+| v1.2 | 11–13 | 17/17 | ✅ Shipped | 2026-05-14 |
+| v1.3 | TBD | — | 📋 Planned | — |

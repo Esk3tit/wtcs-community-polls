@@ -22,14 +22,29 @@ This platform gathers community **opinions**, not binding votes. Nothing on the 
 
 ## Current State
 
-**Shipped:** v1.1 — Hygiene & Polish (2026-05-11)
-**Previous:** v1.0 — Launch-Ready MVP (2026-04-28)
-**Production:** https://polls.wtcsmapban.com (unchanged from v1.0 — v1.1 was hygiene/polish, no user-visible features)
-**Code:** 13,602 LOC + v1.1 delta (+1,148 / −575 LOC across 64 non-`.planning/` files); 16 Edge Functions; 10 DB migrations; 378/378 unit tests; 47/50 UAT cases passing
-**Tests:** Playwright E2E suite now `[E2E]`-scoped + lint-enforced (TEST-07/08/09); Sentry React 19 capture path live in production (OBSV-01/02); second-human UAT evidence captured (TEST-10)
+**Shipped:** v1.2 — Admin Visibility Controls (2026-05-14)
+**Previous:** v1.1 — Hygiene & Polish (2026-05-11) · v1.0 — Launch-Ready MVP (2026-04-28)
+**Production:** https://polls.wtcsmapban.com — first user-visible feature delta since v1.0 (admin per-poll results-hide toggle + audit trail).
+**Code (cumulative through v1.2):** v1.0 baseline 13,602 LOC + v1.1 delta + v1.2 delta (+13,715 / −530 across 337 files in v1.2 commit range; planning-doc-heavy); 17 Edge Functions (one new: `toggle-results-visibility`); 11 DB migrations (Migration 10 = `results_hidden` + `audit_log` + `vote_counts` RLS rewrite); v1.2 added the 12-cell vote_counts RLS matrix (TEST-11) + 7-case toggle EF authz suite (TEST-12) + Playwright SC4 round-trip (TEST-13).
+**Tests:** Playwright E2E suite now includes the `@smoke` SC4 round-trip with `role="meter"` post-unhide assertion; integration test scaffolding (Vitest) wired with zero new dependencies.
+**v1.2 archives:** [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROADMAP.md) · [milestones/v1.2-REQUIREMENTS.md](milestones/v1.2-REQUIREMENTS.md) (no separate v1.2 audit file; pre-close artifact audit + Phase 13 verification covered this)
 **v1.1 archives:** [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md) · [milestones/v1.1-REQUIREMENTS.md](milestones/v1.1-REQUIREMENTS.md) · [milestones/v1.1-MILESTONE-AUDIT.md](milestones/v1.1-MILESTONE-AUDIT.md)
 
-## Current Milestone: v1.2 — Admin Visibility Controls
+## Next Milestone Goals
+
+**Status:** Awaiting v1.3 scoping (`/gsd-new-milestone` to begin questioning → research → requirements → roadmap).
+
+**Carry-forward debt likely to scope into v1.3:**
+- **UIDN-02** — Mobile-first Lighthouse Perf trigger per D-12 (next perf-budget change). Current row stays ⚠️ Revisit; closure file at `.planning/closure/UIDN-02-mobile-evidence.md § v1.2 Rerun`. Open in REQUIREMENTS Phase Traceability as `Active`.
+- **UIDN-03-FOLLOWUP-LIST-CARDS** — `AdminsList` / `CategoriesList` / `PromoteAdminDialog` → shadcn `Card` (audit transparency note, not a FAIL cell).
+- **7 pre-Phase-11 SECURITY DEFINER advisor warnings** — pre-v1.0, WARN-level. Track for v1.3 hygiene phase.
+
+GitHub milestone: TBD on v1.3 scoping.
+
+<details>
+<summary>Previous milestone goals (v1.2)</summary>
+
+## Previous Milestone: v1.2 — Admin Visibility Controls
 
 **Goal:** Give admins per-suggestion control over results visibility ([SEED-002](seeds/SEED-002-admin-controlled-results-visibility.md), Tim's ask), and close the v1.1 Path-3 carry-forward debt for mobile + shadcn so PROJECT.md Key Decision rows can flip ⚠️ Revisit → ✓ Good.
 
@@ -50,6 +65,8 @@ This platform gathers community **opinions**, not binding votes. Nothing on the 
 - Leftover `[E2E] Test:` polls in shared DB (data hygiene)
 
 GitHub milestone: TBD on first push.
+
+</details>
 
 <details>
 <summary>Previous milestone goals (v1.1)</summary>
@@ -123,10 +140,25 @@ GitHub milestone: TBD on first push.
 - ✓ 16 admin test files / 221 admin assertions (TEST-05) — v1.0
 - ✓ 4 Playwright @smoke specs (TEST-06) — v1.0
 
-### Active (v1.1 — Hygiene & Polish)
+### Validated (v1.2 — Admin Visibility Controls)
 
-- [ ] **UIDN-02**: Mobile-first responsive design — closure evidence (Lighthouse + UI audit) — issue #18
-- [ ] **UIDN-03**: Modern polished visual design — shadcn new-york/Neutral closure evidence — issue #18
+- ✓ Per-row `polls.results_hidden` boolean (VIS-01) — v1.2 (Phase 11 Plan 01)
+- ✓ Admin two-way toggle, no window restriction, audited (VIS-02) — v1.2 (Phase 11 Plan 02; race-safe conditional UPDATE)
+- ✓ `toggle-results-visibility` Edge Function with `requireAdmin` gate (VIS-03) — v1.2 (Phase 11 Plan 02)
+- ✓ `vote_counts` SELECT RLS honors `results_hidden`; service-role-only bypass (VIS-04) — v1.2 (Phase 11 Plan 01; REVIEW-FIX-H3)
+- ✓ RLS invariant 12-cell matrix + admin-JWT regression sentinel (VIS-05 / TEST-11) — v1.2 (Phase 11 Plan 04)
+- ✓ Admin "Hide results from voters" Checkbox in `SuggestionForm` create flow (VIS-06) — v1.2 (Phase 12 Plan 02)
+- ✓ Inline admin `Switch` per row with optimistic + revert-on-error + sonner toast (VIS-07) — v1.2 (Phase 12 Plan 03; D-01 wording revision dropped AlertDialog)
+- ✓ `SuggestionCard` + archive view show "hidden by admin" placeholder when voted + `results_hidden=true` (VIS-08) — v1.2 (Phase 12 Plan 04)
+- ✓ `polls_effective` view projects `results_hidden` + `results_hidden_changed_at`; `security_invoker = on` re-applied (VIS-09) — v1.2 (Phase 11 Plan 01)
+- ✓ UIDN-03 4-site native-`<button>` sweep (SearchBar + 2× SuggestionForm + ImageInput DropZone extraction) — v1.2 (Phase 12 Plans 01 + 02 + 05)
+- ✓ TEST-12 toggle EF authz/audit 7-case suite + create-poll results_hidden 4-case suite — v1.2 (Phase 11 Plan 04)
+- ✓ TEST-13 Playwright `@smoke` SC4 round-trip — v1.2 (Phase 12 Plan 06)
+
+### Active (carry-forward to v1.3+)
+
+- [ ] **UIDN-02**: Mobile-first Lighthouse Perf threshold — Phase 13 v1.2 rerun complete; 4/5 routes Perf<90 (perf-only); closure trigger per D-12 = next perf-budget change. `Active (Phase 13 v1.2 rerun complete; pending next perf-budget change)` in REQUIREMENTS Phase Traceability.
+- [ ] **UIDN-03-FOLLOWUP-LIST-CARDS**: `AdminsList` / `CategoriesList` / `PromoteAdminDialog` hand-rolled containers → shadcn `Card` (audit transparency note, not a FAIL cell)
 - [ ] Playwright E2E spec fixture/seed hygiene (issues #11, #12, #13)
 - [ ] Sentry React 19 ErrorBoundary capture transport (issue #17)
 - [ ] Vite/Rolldown sourcemap function-name preservation (issue #19)
@@ -135,10 +167,13 @@ GitHub milestone: TBD on first push.
 - [ ] 17 SUMMARY frontmatter `requirements-completed` declarations
 - [ ] Backfill Phase 04 UAT test 6a evidence (demote click flow — passed off-record on second admin, needs 04-UAT.md update)
 - [ ] Phase 03 UAT tests 2 + 3 with second human (2FA-enabled, non-WTCS-member Discord tester — 2FA must be ON so the gate clears and the non-member check fires)
+- [ ] 7 pre-Phase-11 SECURITY DEFINER advisor warnings (WARN-level, predates v1.0)
+- [ ] Local supabase-edge-runtime ES256 verification bug (1.73.x; affects `npm run test:integration` only; production unaffected)
+- [ ] `11-PATTERNS.md` drift: still carries legacy admin-OR-bypass form for `vote_counts` skeleton; shipped form per REVIEW-FIX-H3 differs
 
-### Planned for v1.2 (Admin Visibility Controls)
+### Planned for v1.3 (TBD)
 
-- **SEED-002**: Admin-controlled per-suggestion results visibility — set at creation (`respondents_only` default / `public_during` / `public_after_close`) + ad-hoc one-way reveal on live suggestions. Touches schema, RLS on `vote_counts`, new admin EF, admin + user UI. Tim's ask, captured 2026-04-28. Will reframe RSLT-05 from absolute rule to default behavior. See `.planning/seeds/SEED-002-admin-controlled-results-visibility.md`.
+- Awaiting `/gsd-new-milestone` scoping. UIDN-02 perf budget revisit + hygiene cleanup are likely candidates.
 
 ### Deferred to v2 (or later)
 
@@ -198,7 +233,7 @@ GitHub milestone: TBD on first push.
 | Results visible only to respondents | Encourages participation, prevents lurking | ✓ Good (v1.0 — RLS-enforced) |
 | Official WT esports Discord server membership | Ensures only community members respond | ✓ Good (v1.0 — guilds OAuth scope, fail-closed) |
 | Opinions-not-votes framing | WTCS has no authority over game changes; avoids false expectations | ✓ Good (v1.0) |
-| shadcn/ui + Tailwind CSS v4 (Maia/Neutral) | Component library for consistent rapid UI development | ⚠️ Revisit (UIDN-03 closure evidence pending — issue #18) |
+| shadcn/ui + Tailwind CSS v4 (Maia/Neutral) | Component library for consistent rapid UI development | ✓ Good (v1.2 — UIDN-03 4-site sweep complete in Phase 12) |
 | Light + dark mode from day one | System preference support via shadcn theme toggle | ✓ Good (v1.0) |
 | Status labels: Addressed/Forwarded/Closed | Neutral framing — avoids "Rejected" or "Implemented" | ✓ Good (v1.0) |
 | Two separate surfaces (user/admin) | Users never see admin UI | ✓ Good (v1.0 — AdminGuard + admin-route ConsentBanner suppression) |
@@ -208,9 +243,16 @@ GitHub milestone: TBD on first push.
 | GDPR opt-IN consent (Phase 6 rewire from initial opt-OUT) | EU compliance; analytics off until user clicks Allow | ✓ Good (v1.0 — PostHog smoke verified zero pre-Allow events) |
 | Sentry error capture unconditional; Replay consent-gated | Error visibility preserved; Replay PII-sensitive only on Allow | ✓ Good (v1.0 — D-05) |
 | Russian users expected to use VPN (no geo-gating) | Matches sister-site behavior; ISP-level blocks user-side | ✓ Good (v1.0 — no detection logic) |
-| Mobile-first responsive design | Discord users tap links from phones | ⚠️ Revisit (v1.2 rerun — 4/5 routes under threshold; follow-up tied to next perf-budget change; see .planning/closure/UIDN-02-mobile-evidence.md § v1.2 Rerun) |
-| Phase numbering: integers + decimal-insertions | Clear insertion semantics for urgent fixes | — Pending (no decimals used in v1.0) |
+| Mobile-first responsive design | Discord users tap links from phones | ⚠️ Revisit (v1.2 rerun — 4/5 routes under threshold; follow-up tied to next perf-budget change per D-12; see .planning/closure/UIDN-02-mobile-evidence.md § v1.2 Rerun) |
+| Phase numbering: integers + decimal-insertions | Clear insertion semantics for urgent fixes | — Pending (no decimals used in v1.0/v1.1/v1.2) |
 | Sentry React SDK v10 + ErrorBoundary | Render-phase throws don't ship via ErrorBoundary capture path | ⚠️ Revisit (issue #17 — pivoted to event-handler throw for D-08 verification) |
+| Admin per-poll `results_hidden` + two-way toggle (no window restriction) | Tim's ask reframed during v1.2 scoping from 3-mode enum + one-way reveal to single boolean + symmetric toggle for simplicity | ✓ Good (v1.2 — race-safe conditional UPDATE; voters-only privacy preserved) |
+| Service-role-only bypass on `vote_counts` SELECT RLS (no admin OR-branch) | Single trust path per RLS principle | ✓ Good (v1.2 — REVIEW-FIX-H3) |
+| `audit_log.target_id TEXT` (admits Discord snowflakes) | `promote-admin` Branch 2 needs snowflake support; UUID-only would silently fail-open via writeAudit | ✓ Good (v1.2 — REVIEW-FIX-C3/H1) |
+| Optimistic `Switch` + sonner toast (NOT AlertDialog confirm) for VIS-07 | Matches `usePinPoll` precedent; AlertDialog felt heavyweight for a reversible flip | ✓ Good (v1.2 — D-01 wording revision) |
+| `<DropZone>` extraction in `ImageInput` (separate drag-region from keyboard-Browse trigger) | Closes UIDN-03 [c] dual-role anti-pattern | ✓ Good (v1.2 — biggest UIDN-03 sweep site) |
+| Phase 9 harness sentinel = `[aria-label="Toggle color theme"]` (Navbar unconditional) | Phase 9 Plan 02 networkidle defect produced loading-shell captures; deterministic sentinel + .catch() preserves diagnostic screenshots on timeout | ✓ Good (v1.2 Phase 13 — 42/42 PNGs clean, 0 DOM warnings) |
+| D-19 per-width home↔admin sha256 whitelist | AdminGuard navigates unauth `/admin` → `/` (Phase 9 D-06 evidence); intentional collision preserved while loading-shell false-pass still hard-fails | ✓ Good (v1.2 Phase 13 — sha256 uniqueness gate hard-fails before MANIFEST write) |
 
 ## Evolution
 
@@ -230,4 +272,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-11 — v1.2 Admin Visibility Controls milestone opened (SEED-002 anchor + UIDN-02/03 carry-forward); v1.1 archived to `milestones/v1.1-*.md`.*
+*Last updated: 2026-05-14 — v1.2 Admin Visibility Controls milestone shipped (13/14 reqs satisfied; UIDN-02 carry-forward to v1.3+); v1.2 archived to `milestones/v1.2-*.md`.*

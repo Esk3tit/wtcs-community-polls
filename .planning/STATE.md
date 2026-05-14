@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: — Admin Visibility Controls
-status: "Phase 13 shipped — PR #29 open"
-stopped_at: Phase 13 shipped — PR #29 open
-last_updated: "2026-05-13T22:46:10.104Z"
-last_activity: "2026-05-13 -- Phase 13 shipped — PR #29"
+status: Awaiting next milestone
+stopped_at: "v1.2 milestone closed and tagged"
+last_updated: "2026-05-14T08:55:43.875Z"
+last_activity: 2026-05-14 — Milestone v1.2 completed and archived
 progress:
   total_phases: 3
   completed_phases: 3
@@ -18,67 +18,56 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-11 after v1.1 milestone)
+See: .planning/PROJECT.md (updated 2026-05-14 after v1.2 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** Phase 13 — uidn-02-mobile-audit-closure
+**Current focus:** Awaiting v1.3 milestone scoping
 
 ## Current Position
 
-Phase: 13 (uidn-02-mobile-audit-closure) — EXECUTING
-Plan: 1 of 2
-Status: Phase 13 shipped — PR #29 open
-Last activity: 2026-05-13 -- Phase 13 shipped — PR #29
-
-```
-v1.2 progress:  [█████████████░░░░░░░] 67% (Phase 11 ✅ Shipped, Phase 12 ✅ Shipped, Phase 13 next)
-```
+Phase: Milestone v1.2 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-05-14 — Milestone v1.2 completed and archived
 
 ## Accumulated Context
 
-Decisions and project history are now logged in PROJECT.md Key Decisions and MILESTONES.md.
-v1.1 phase-level context lives in:
+Per-milestone phase context now lives entirely in:
 
-- `.planning/MILESTONES.md` — shipped accomplishments + key decision outcomes
-- `.planning/milestones/v1.1-ROADMAP.md` — phase-by-phase scope and plans
-- `.planning/milestones/v1.1-REQUIREMENTS.md` — v1.1 requirement set with traceability
-- `.planning/milestones/v1.1-MILESTONE-AUDIT.md` — cross-phase integration verification + tech debt log
-- `.planning/phases/0[7-a]-*/` — raw execution history per v1.1 phase
+- `.planning/MILESTONES.md` — shipped accomplishments + key decision outcomes per milestone
+- `.planning/milestones/v[X.Y]-ROADMAP.md` — phase-by-phase scope and plans
+- `.planning/milestones/v[X.Y]-REQUIREMENTS.md` — milestone requirement set with traceability
+- `.planning/milestones/v[X.Y]-MILESTONE-AUDIT.md` — cross-phase integration verification (v1.0, v1.1 only — v1.2 had no separate audit file; the pre-close artifact audit + Phase 13 verification covered this)
+- `.planning/phases/{N}-*/` — raw execution history per phase (or `.planning/milestones/v[X.Y]-phases/` once retroactively archived)
 
 ### Decisions
 
-Recent decisions are in PROJECT.md Key Decisions table with outcomes (✓ Good / ⚠️ Revisit / — Pending).
+Recent decisions are in PROJECT.md Key Decisions table with outcomes (✓ Good / ⚠️ Revisit / — Pending). The v1.2 close updated:
 
-Two Key Decision rows remain ⚠️ pending v1.2 closure:
-
-- `Mobile-first responsive design` — UIDN-02 closure (Phase 13)
-- `shadcn/ui new-york + Tailwind CSS v4` — UIDN-03 closure (Phase 12)
-
-### Phase 11 — Decisions Landed (2026-05-11)
-
-(Summary across all 7 plans; full details in each `11-NN-SUMMARY.md`.)
-
-- **REVIEW-FIX-H3:** `vote_counts` policy has no `is_current_user_admin()` OR-branch — VIS-04 mandates service-role bypass only. Confirmed on prod via `execute_sql` qual check.
-- **REVIEW-FIX-H4:** toggle-results-visibility uses race-safe conditional UPDATE (`.not('results_hidden','is',hidden)`). Postgres row-locking serializes concurrent flips; loser writes no audit row. Eliminates phantom-audit race.
-- **REVIEW-FIX-H7:** Plan 05's local pre-merge gate uses `supabase db reset` ONLY (not `db push`). Production push runs in Task 05-02 step 2 after local-green.
-- **REVIEW-FIX-H8:** All 13 EFs deploy with `verify_jwt: false` (matches existing prod pattern; EFs verify JWTs themselves via `requireAdmin`).
-- **REVIEW-FIX-C3-H1:** `audit_log.target_id` declared `TEXT` (not `uuid`) — admits Discord snowflakes for `promote-admin` Branch 2; avoids `writeAudit` fail-open silent drop.
-- **Pitfall 2:** `ALTER VIEW … SET (security_invoker = on)` re-applied in the same migration file immediately after `CREATE OR REPLACE VIEW`.
-- **Migration version drift:** prod stamps via MCP-assigned timestamp; local file keeps sequential `00000000000010_results_hidden_audit.sql`. Matches the pre-existing migrations 5-9 pattern (local sequential vs prod timestamp).
-- **Plan 05 deploy routing:** routed prod deploy through Supabase MCP (`apply_migration` + `deploy_edge_function`) rather than local `supabase` CLI. Eliminated `SUPABASE_ACCESS_TOKEN` and project-link prep steps.
-
-### Tech Debt Surfaced (Not Phase 11 Caused)
-
-- **Local supabase-edge-runtime ES256 verification bug** — 1.73.x rejects auth-service-issued ES256 JWTs ("Legacy token type detected, attempting HS256 verification"). Affects `npm run test:integration` against the local stack. Production runtime is unaffected (JWKS discovery). Plan 05 task 05-01 ran with partial pass; full Plan 04 test suite runs against prod via Phase 12 UAT.
-- **7 pre-Phase-11 SECURITY DEFINER advisor warnings** on `update_profile_after_auth`, `handle_new_user`, `validate_vote_choice`, `increment_vote_count`, `is_current_user_admin`, `profile_self_update_allowed`, `rls_auto_enable`. WARN-level, predates v1.0. Track for v1.3+ hygiene phase.
-- **PATTERNS.md drift:** `11-PATTERNS.md` still carries the legacy admin-OR-bypass form for the `vote_counts` policy skeleton. Plan body's REVIEW-FIX-H3 form is what shipped. Align in a future cleanup.
+- `shadcn/ui new-york + Tailwind CSS v4` — flipped ⚠️ → ✓ (UIDN-03 4-site sweep closed in Phase 12)
+- `Mobile-first responsive design` — stays ⚠️ Revisit (UIDN-02 v1.2 rerun ran but 4/5 routes Perf < 90; closure trigger = next perf-budget change per D-12)
 
 ### Blockers/Concerns
 
-None. Phase 12 is unblocked: the EF and audit_log surface needed for the admin UI is now live in prod.
+None. v1.3 milestone scoping is unblocked.
+
+## Deferred Items
+
+Items acknowledged and deferred at milestone v1.2 close on 2026-05-14:
+
+| Category | Item | Status | Notes |
+|----------|------|--------|-------|
+| uat_gaps | Phase 12 12-UAT.md | partial | 0 pending scenarios — file status string drift; live tests all pass |
+| uat_gaps | Phase 13 13-HUMAN-UAT.md | resolved | 0 pending scenarios — verifier confirmed UAT 3/3 pass; status field reads `resolved` not `complete` |
+
+Both are bookkeeping (non-`complete` status string) with zero actual open scenarios. Tracked here for transparency; safe to re-stamp to `complete` in a future cleanup pass.
 
 ## Session Continuity
 
-Last session: 2026-05-13T10:31:13.220Z
-Stopped at: Phase 13 shipped — PR #29 open
-Resume action: `/gsd-complete-milestone v1.2` once PR #29 merges — Phase 11+12+13 all shipped; v1.2 milestone is ready to close.
+Last session: 2026-05-14T08:55Z
+Stopped at: v1.2 milestone closed and tagged
+Resume action: `/gsd-new-milestone` to begin v1.3 scoping (questioning → research → requirements → roadmap).
+
+## Operator Next Steps
+
+- Start the next milestone with `/gsd-new-milestone`
