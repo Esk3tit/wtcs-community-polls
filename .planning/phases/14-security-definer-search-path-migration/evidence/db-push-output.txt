@@ -1,0 +1,46 @@
+# supabase db push output — Migration 14 deploy to production
+# Captured: 2026-05-17
+# Project: cbjspmwgyoxxqukcccjr
+
+## Step 1 — migration repair --status applied (00..05 through 00..13)
+
+```
+$ npx supabase migration repair --status applied \
+    00000000000005 00000000000006 00000000000007 00000000000008 00000000000009 \
+    00000000000010 00000000000011 00000000000012 00000000000013
+Using workdir <redacted-local-path>/wtcs-community-polls
+Initialising login role...
+Connecting to remote database...
+Repaired migration history: [00000000000005 00000000000006 00000000000007 00000000000008 00000000000009 00000000000010 00000000000011 00000000000012 00000000000013] => applied
+Finished supabase migration repair.
+```
+
+## Step 2 — migration repair --status reverted (the 9 orphan timestamp versions)
+
+```
+$ npx supabase migration repair --status reverted \
+    20260412012940 20260412030450 20260412035526 20260412044736 20260412053808 \
+    20260511235304 20260512010406 20260512042958 20260512081057
+Using workdir <redacted-local-path>/wtcs-community-polls
+Initialising login role...
+Connecting to remote database...
+Repaired migration history: [20260412012940 20260412030450 20260412035526 20260412044736 20260412053808 20260511235304 20260512010406 20260512042958 20260512081057] => reverted
+Finished supabase migration repair.
+```
+
+## Step 3 — db push (the actual deploy)
+
+```
+$ npx supabase db push
+Using workdir <redacted-local-path>/wtcs-community-polls
+Initialising login role...
+Connecting to remote database...
+Do you want to push these migrations to the remote database?
+ • 00000000000014_harden_security_definer_search_path.sql
+
+ [Y/n] Y
+Applying migration 00000000000014_harden_security_definer_search_path.sql...
+Finished supabase db push.
+```
+
+Migration 14 is now applied to the linked production project (`cbjspmwgyoxxqukcccjr`).

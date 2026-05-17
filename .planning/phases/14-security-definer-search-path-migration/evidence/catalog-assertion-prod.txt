@@ -1,0 +1,24 @@
+# Post-deploy production catalog assertion — Migration 14
+# Captured: 2026-05-17 via Supabase Studio SQL editor (project cbjspmwgyoxxqukcccjr)
+
+proname                     | identity_args                                                                                  | num_args | is_security_definer | volatility | config                  | owner    | acl
+----------------------------|------------------------------------------------------------------------------------------------|----------|---------------------|------------|-------------------------|----------|---------------------------------------------------------------------------------------------------
+handle_new_user             |                                                                                                | 0        | true                | v          | ["search_path=\"\""]    | postgres | {=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+increment_vote_count        |                                                                                                | 0        | true                | v          | ["search_path=\"\""]    | postgres | {=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+is_current_user_admin       |                                                                                                | 0        | true                | s          | ["search_path=\"\""]    | postgres | {=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+profile_self_update_allowed |                                                                                                | 0        | true                | v          | ["search_path=\"\""]    | postgres | {=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+update_profile_after_auth   | p_mfa_verified boolean, p_discord_username text, p_avatar_url text, p_guild_member boolean     | 4        | true                | v          | ["search_path=\"\""]    | postgres | {=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+validate_vote_choice        |                                                                                                | 0        | true                | v          | ["search_path=\"\""]    | postgres | {=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+(6 rows)
+
+## Catalog assertion: PASS
+
+| Assertion                                           | Result |
+|-----------------------------------------------------|--------|
+| 6 rows (3-param update_profile_after_auth dropped)  | PASS — 6/6 |
+| Every function has is_security_definer=true         | PASS — 6/6 |
+| Every function has config = {"search_path=\"\""}    | PASS — 6/6 |
+| Owner preserved (postgres on all 6)                 | PASS — 6/6 |
+| ACL preserved (broad grants on all 6)               | PASS — 6/6 |
+| is_current_user_admin volatility = s (STABLE)       | PASS |
+| update_profile_after_auth num_args = 4              | PASS |

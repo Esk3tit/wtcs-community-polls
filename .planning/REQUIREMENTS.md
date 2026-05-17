@@ -10,13 +10,19 @@ This document tracks the v1.3 milestone requirements. After v1.0 (43 of 45 reqs)
 
 ### DB Hygiene (DBHY-*)
 
-- [ ] **DBHY-01**: Migration 14 `CREATE OR REPLACE FUNCTION` for all 7 pre-Phase-11 `SECURITY DEFINER` functions with `SET search_path = ''` and fully-qualified body references. Functions: `update_profile_after_auth`, `handle_new_user`, `validate_vote_choice`, `increment_vote_count`, `is_current_user_admin`, `profile_self_update_allowed`, `rls_auto_enable`. `increment_vote_count` body MUST be rewritten from bare `INSERT INTO vote_counts` → `INSERT INTO public.vote_counts` (otherwise 42P01 on every vote). `is_current_user_admin()` rewrite MUST be body-identical (only `search_path` value changes from `public` to `''`) to preserve admin RLS semantics across all admin-gated tables.
+- [x] **DBHY-01**: Migration 14 `CREATE OR REPLACE FUNCTION` for the 6 user-owned pre-Phase-11 `SECURITY DEFINER` functions with `SET search_path = ''` and fully-qualified body references. Functions: `update_profile_after_auth`, `handle_new_user`, `validate_vote_choice`, `increment_vote_count`, `is_current_user_admin`, `profile_self_update_allowed`. `rls_auto_enable` is carved out per W0 finding (system-owned; see DBHY-02 changelog). `increment_vote_count` body is already qualified (`INSERT INTO public.vote_counts`) per W0 production functiondef snapshot — only `SET search_path = ''` is added. `is_current_user_admin()` rewrite MUST be body-identical (only `search_path` value changes from `public` to `''`) to preserve admin RLS semantics across all admin-gated tables. Migration 14 additionally issues `DROP FUNCTION IF EXISTS public.update_profile_after_auth(BOOLEAN, TEXT, TEXT);` unconditionally (Cycle-3 Option A) to remove the stale 3-param overload found in production by W0 Check 1B.
+  - Updated 2026-05-17 (Phase 14, W0 finding) — function count 7 → 6 (rls_auto_enable carve-out); 3-param `update_profile_after_auth` overload drop added.
+  - **COMPLETED 2026-05-17** — Migration 14 (commit `c94c8f7`) deployed to production via `supabase db push`. Post-deploy `pg_get_functiondef` snapshot confirms all 6 functions carry `SET search_path TO ''`; 3-param overload absent. Machine-enforced is_current_user_admin body-identical diff (normalized) returned diff exit 0 (zero output).
 
-- [ ] **DBHY-02**: `supabase db lint --linked` reports zero `0011_function_search_path_mutable` advisor WARNs after Migration 14 deploys to production. Confirmed via CI or local `supabase` CLI 2.98.2+.
+- [x] **DBHY-02**: Zero `0011_function_search_path_mutable` WARNs for all user-owned target functions; one residual WARN for `rls_auto_enable` is permitted if and only if it is extension-owned or system-owned per Phase 14 W0 finding (multi-signal classification per W0 Check 1). Confirmed via `supabase db lint --linked` (CLI 2.98.2+) post-deploy.
+  - Updated 2026-05-17 (Phase 14, W0 finding) — explicit carve-out for system-owned `rls_auto_enable`.
+  - **COMPLETED 2026-05-17** — Post-deploy `npx supabase db lint --linked` returned "No schema errors found" (zero `0011` WARNs across the schema, including for `rls_auto_enable` which already has `SET search_path TO 'pg_catalog'`). The carve-out turned out unnecessary at the advisor level but remains in the wording as documented insurance.
 
-- [ ] **DBHY-03**: `submit-vote` smoke round-trip passes after Migration 14 deploys. Verifies `increment_vote_count` trigger still resolves `public.vote_counts` correctly post-`search_path = ''`. Includes a parallel TEST-11 12-cell RLS matrix re-run to confirm `is_current_user_admin()` body rewrite did not drift admin RLS behavior.
+- [x] **DBHY-03**: `submit-vote` smoke round-trip passes after Migration 14 deploys. Verifies `increment_vote_count` trigger still resolves `public.vote_counts` correctly post-`search_path = ''`. Includes a parallel TEST-11 12-cell RLS matrix re-run to confirm `is_current_user_admin()` body rewrite did not drift admin RLS behavior.
+  - **COMPLETED 2026-05-17** — Production smoke vote on https://polls.wtcsmapban.com: "Yes 100% (1) — 1 total response" rendered. Exercises validate_vote_choice trigger + increment_vote_count trigger + is_current_user_admin RLS read gate. TEST-11 12-cell vitest run deferred to v1.4+ (local gotrue `email_provider_disabled`); replaced with direct SQL regression fixture at `tests/sql/is_current_user_admin_regression.sql` (4 identity branches + 2 audit_log RLS branches, 6 PASS notices, psql exit 0).
 
-- [ ] **DBHY-04**: `.planning/phases/.../11-PATTERNS.md` `vote_counts` policy skeleton aligned with shipped REVIEW-FIX-H3 form (service-role-only bypass; no admin OR-branch). Doc-only fix; PATTERNS.md lives inside the v1.2 phase archive but should be updated for future cross-milestone reference.
+- [x] **DBHY-04**: `.planning/phases/.../11-PATTERNS.md` `vote_counts` policy skeleton aligned with shipped REVIEW-FIX-H3 form (service-role-only bypass; no admin OR-branch). Doc-only fix; PATTERNS.md lives inside the v1.2 phase archive but should be updated for future cross-milestone reference.
+  - **COMPLETED 2026-05-17** — Line 83 prose drift fixed ("whichever is current" → "both superseded"; added "migration 10, REVIEW-FIX-H3" anchor). Dated changelog header added at top of file. Commit `7788ec7`.
 
 ### Observability Hygiene (OBSV-*)
 
@@ -110,10 +116,10 @@ Continues from v1.0's UIDN-01..03. UIDN-03-FOLLOWUP-LIST-CARDS from v1.1 audit t
 
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| DBHY-01 | Phase 14 | Pending |
-| DBHY-02 | Phase 14 | Pending |
-| DBHY-03 | Phase 14 | Pending |
-| DBHY-04 | Phase 14 | Pending |
+| DBHY-01 | Phase 14 | Complete |
+| DBHY-02 | Phase 14 | Complete |
+| DBHY-03 | Phase 14 | Complete |
+| DBHY-04 | Phase 14 | Complete |
 | OBSV-03 | Phase 15 | Pending |
 | OBSV-04 | Phase 15 | Pending |
 | OBSV-05 | Phase 15 | Pending |

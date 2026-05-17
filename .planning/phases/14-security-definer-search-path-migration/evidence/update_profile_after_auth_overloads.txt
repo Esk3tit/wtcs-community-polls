@@ -1,0 +1,39 @@
+# update_profile_after_auth overload enumeration evidence
+
+**Captured:** 2026-05-17 (Phase 14 W0 Check 1B)
+**Source:** Supabase Studio SQL editor against project cbjspmwgyoxxqukcccjr
+
+## Production catalog query result
+
+| schema | function_name | identity_args | num_args | is_security_definer | config | owner |
+|---|---|---|---|---|---|---|
+| public | update_profile_after_auth | p_mfa_verified boolean, p_discord_username text, p_avatar_url text | 3 | true | null | postgres |
+| public | update_profile_after_auth | p_mfa_verified boolean, p_discord_username text, p_avatar_url text, p_guild_member boolean | 4 | true | null | postgres |
+
+## Classification
+
+**OUTCOME U2** — both 3-param AND 4-param overloads exist in production.
+
+Per Cycle-3 Option A, Migration 14 SQL is identical to U1 case:
+  1. `DROP FUNCTION IF EXISTS public.update_profile_after_auth(BOOLEAN, TEXT, TEXT);` (removes the stale 3-param overload)
+  2. `CREATE OR REPLACE FUNCTION public.update_profile_after_auth(boolean, text, text, boolean) ...` (rehardens 4-param)
+
+## 3-param caller audit
+
+```
+$ git grep -n "update_profile_after_auth" src/ supabase/functions/
+src/__tests__/auth/callback-behavior.test.tsx:211:  it('calls update_profile_after_auth RPC (not direct profile update)', async () => {
+src/__tests__/auth/callback-behavior.test.tsx:224:    expect(mockRpc).toHaveBeenCalledWith('update_profile_after_auth', {
+src/__tests__/auth/callback-behavior.test.tsx:410:    expect(mockRpc).toHaveBeenCalledWith('update_profile_after_auth', expect.objectContaining({
+src/lib/auth-helpers.ts:209:    const { error: rpcError } = await supabase.rpc('update_profile_after_auth', {
+src/lib/types/database.types.ts:377:      update_profile_after_auth: {
+```
+
+| Site | Param count | Notes |
+|---|---|---|
+| src/lib/auth-helpers.ts:209 | 4 | Production caller — passes `p_guild_member: true` |
+| src/__tests__/auth/callback-behavior.test.tsx:224 | 4 | Test asserts mockRpc called with 4 params including p_guild_member |
+| src/__tests__/auth/callback-behavior.test.tsx:410 | 4 | Test asserts mockRpc called with `expect.objectContaining({ p_guild_member: true })` |
+| src/lib/types/database.types.ts:377 | n/a | Type declaration; not a runtime caller |
+
+**3-param caller audit: CLEAN** — zero 3-param invocations in app code or tests. Safe to drop.

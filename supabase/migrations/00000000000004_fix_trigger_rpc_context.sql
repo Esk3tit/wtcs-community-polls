@@ -9,6 +9,10 @@
 -- (where current_user = function owner, session_user = original caller).
 -- ============================================================
 
+-- NOTE: this body is re-emitted by the later
+-- harden_security_definer_search_path migration with `SET search_path = ''`;
+-- otherwise byte-identical. The live function on production matches that
+-- later definition. Preserved here for historical reference.
 CREATE OR REPLACE FUNCTION public.profile_self_update_allowed()
 RETURNS TRIGGER AS $$
 BEGIN

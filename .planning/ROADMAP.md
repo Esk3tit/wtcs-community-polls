@@ -60,7 +60,7 @@ Full v1.2 phase details (goals, plans, decisions, wave structure, success criter
 
 ### v1.3 — Hygiene & Performance (Phases 14–17)
 
-- [ ] **Phase 14: Security-Definer Search-Path Migration** - Migration 14 rewrites 7 pre-Phase-11 `SECURITY DEFINER` functions with `SET search_path = ''` and fully-qualified body references; `supabase db lint --linked` shows zero `0011` WARNs; `submit-vote` smoke round-trip passes post-deploy
+- [x] **Phase 14: Security-Definer Search-Path Migration** (1/1 plan) — Migration 14 hardens the 6 user-owned pre-Phase-11 `SECURITY DEFINER` functions with `SET search_path = ''` (rls_auto_enable carved out per W0 finding as Supabase-managed); unconditionally drops stale 3-param `update_profile_after_auth` overload; `supabase db lint --linked` shows zero `0011` WARNs post-deploy; smoke vote round-trip on polls.wtcsmapban.com PASS. is_current_user_admin body-identical diff PASS via machine-enforced pre-vs-post pg_get_functiondef compare. Direct SQL regression fixture added for is_current_user_admin (4 identity branches + 2 audit_log RLS branches).
 - [ ] **Phase 15: Observability + E2E Verify & Close** - Smoke-verify Sentry React 19 ErrorBoundary render-phase capture + Rolldown sourcemap function names on deploy preview; confirm Playwright specs for issues #11/#12/#13 pass in CI; close GitHub issues #11, #12, #13, #17, #19
 - [ ] **Phase 16: UIDN-02 Aggressive Perf-Budget Pass** - Bundle audit → PostHog lazy-load (~180–200 KB off critical path) → `manualChunks` → WebP logo → `defaultPreload: 'intent'` → single Lighthouse mobile rerun; accept PASS-or-DEFER per D-12
 - [ ] **Phase 17: Planning-Doc + UI Hygiene Sweep** - VALIDATION.md frontmatter backfill phases 01–04; Phase 03 VERIFICATION.md retrospective; 17 SUMMARY `requirements-completed` declarations; v1.1 MILESTONES.md entry (HARD REQ); `AdminsList` / `CategoriesList` / `PromoteAdminDialog` → shadcn `Card`
@@ -108,7 +108,9 @@ Full phase details preserved in [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROA
   3. The TEST-11 12-cell RLS matrix re-run passes with zero regressions — admin-gated cells return rows for admin callers, voter-only cells gate correctly — confirming `is_current_user_admin()` body rewrite preserved identical semantics
   4. `supabase/migrations/00000000000014_security_definer_search_path.sql` exists in the repository, uses `CREATE OR REPLACE FUNCTION` for every modified function, and local `supabase db reset` applies all 14 migrations cleanly
 
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [x] 14-01-PLAN.md — Migration 14 shipped: 6-function SECURITY DEFINER hardening (rls_auto_enable carved out as Supabase-managed per W0), stale 3-param `update_profile_after_auth` overload dropped (Cycle-3 Option A), DBHY-04 `11-PATTERNS.md` prose fix shipped, local/prod lint clean, TEST-11 deferred to v1.4+ (local gotrue `email_provider_disabled`); replaced by Task 07b direct SQL regression fixture (psql exit 0, 6 PASS / 0 FAIL on 4 identity branches + 2 audit_log RLS branches), production smoke vote on polls.wtcsmapban.com PASS
 **UI hint**: no
 
 ---

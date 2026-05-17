@@ -44,7 +44,23 @@ CREATE TRIGGER on_profile_self_update
   WHEN (current_setting('role') = 'authenticated')
   EXECUTE FUNCTION public.profile_self_update_allowed();
 
-COMMENT ON FUNCTION public.profile_self_update_allowed IS 'Guards profile self-update: only discord_username and avatar_url can be changed by the user via RLS. mfa_verified is blocked (R2 security fix) -- use update_profile_after_auth RPC instead.';
+-- NOTE: the catalog comment string below has been intentionally updated to
+-- describe the live (post-Migration-14) hardened behavior rather than the
+-- migration-02 body in this file. The function body above is the historical
+-- migration-02 source kept for replay context; a later migration re-emits
+-- the body with SET search_path = '' and adds a current_user = session_user
+-- gate so SECURITY DEFINER callers bypass the is_admin / mfa_verified /
+-- guild_member checks. We deliberately align the COMMENT here with live
+-- behavior so that a fresh `supabase db reset --local` produces a catalog
+-- whose pg_description rows match what the live function actually does. No
+-- later migration re-issues COMMENT ON FUNCTION for this function; the
+-- production pg_description row remains as last set (we do not append a
+-- COMMENT to migration-14 to avoid diverging the repo from the
+-- already-applied production migration).
+COMMENT ON FUNCTION public.profile_self_update_allowed IS
+  'Guards profile self-update: blocks id/discord_id/created_at unconditionally; '
+  'blocks is_admin/mfa_verified/guild_member only when current_user = session_user '
+  '(direct client write). SECURITY DEFINER callers bypass the protected-column checks.';
 
 -- ============================================================
 -- RPC: Server-side profile update after auth callback
@@ -82,6 +98,12 @@ COMMENT ON FUNCTION public.update_profile_after_auth IS 'Server-side profile upd
 -- R1 fix: Checks admin_discord_ids table instead of pre-seeded profiles.
 -- R2 fix: Discord ID extraction uses COALESCE chain trying
 -- provider_id, then sub, then id from raw_user_meta_data.
+--
+-- NOTE: runtime body is re-emitted by a later migration with
+-- SET search_path = '' and without the RAISE WARNING branch below. The
+-- production-deployed function does not raise on discord_id fallback; this
+-- source is preserved for historical reference. See the later
+-- harden_security_definer_search_path migration for the live body.
 -- ============================================================
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
@@ -139,7 +161,23 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user();
 
-COMMENT ON FUNCTION public.handle_new_user IS 'Creates or updates profile on signup. Derives admin status from admin_discord_ids. R2 fix: discord_id extracted via COALESCE(provider_id, sub, id) with WARNING on fallback.';
+-- NOTE: the catalog comment string below has been intentionally updated to
+-- describe the live (post-Migration-14) hardened behavior rather than the
+-- migration-02 body in this file. The function body above (which RAISEs a
+-- WARNING on discord_id fallback) is the historical migration-02 source kept
+-- for replay context; a later migration re-emits the body with
+-- SET search_path = '' and removes the RAISE WARNING, so the live fallback
+-- is silent. We deliberately align the COMMENT here with live behavior so
+-- that a fresh `supabase db reset --local` produces a catalog whose
+-- pg_description rows match what the live function actually does. No later
+-- migration re-issues COMMENT ON FUNCTION for this function; the production
+-- pg_description row remains as last set (we do not append a COMMENT to
+-- migration-14 to avoid diverging the repo from the already-applied
+-- production migration).
+COMMENT ON FUNCTION public.handle_new_user IS
+  'Creates or updates profile on signup. Derives admin status from admin_discord_ids. '
+  'Discord ID extracted via COALESCE(provider_id, sub, id, NEW.id::TEXT). '
+  'Fallback to UUID-as-text is silent; see migration 14 header for observability follow-up.';
 
 -- ============================================================
 -- Trigger: Validate vote choice belongs to poll

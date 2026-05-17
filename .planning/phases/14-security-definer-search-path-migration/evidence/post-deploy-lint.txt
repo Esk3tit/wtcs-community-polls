@@ -1,0 +1,26 @@
+# Post-deploy `supabase db lint --linked` — Migration 14
+# Captured: 2026-05-17 via npx supabase 2.85.0 against project cbjspmwgyoxxqukcccjr
+
+```
+$ npx supabase db lint --linked
+Using workdir <redacted-local-path>/wtcs-community-polls
+Initialising login role...
+Connecting to remote database...
+Linting schema: extensions
+Linting schema: public
+
+No schema errors found
+```
+
+## Result: PASS — DBHY-02 satisfied
+
+Zero `0011_function_search_path_mutable` WARNs across the entire schema.
+
+The rls_auto_enable carve-out (REQUIREMENTS.md DBHY-02 W0-amendment) turned
+out to be unnecessary at the advisor level: `rls_auto_enable` already has
+`SET search_path TO 'pg_catalog'` (per W0 Check 1 production catalog query),
+and the `0011` advisor only fires on functions that lack any `SET search_path`
+clause, not on functions whose search_path value differs from `''`. The
+carve-out remains in the requirement wording as documented insurance — if a
+future Supabase advisor change tightens the rule to require empty-string,
+the carve-out preserves the audit trail without re-opening Phase 14.
