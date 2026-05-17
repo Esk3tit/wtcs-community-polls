@@ -1,5 +1,7 @@
 # Phase 11: Schema + RLS + EF Foundations — Pattern Map
 
+**Updated 2026-05-17 (Phase 14, DBHY-04)** — original form had admin-OR drift; see REVIEW-FIX-H3.
+
 **Mapped:** 2026-05-11
 **Files analyzed:** 7 new, 13 modified (12 EF retrofits + 1 read-only verification + package.json + ci.yml)
 **Analogs found:** 7/7 new files have strong analogs; all 12 retrofit targets share one canonical EF skeleton
@@ -80,7 +82,7 @@ FROM public.polls;
 ALTER VIEW public.polls_effective SET (security_invoker = on);
 ```
 
-**RLS policy DROP+CREATE pattern (vote_counts) — DROP the v1.0 policy at `migrations/00000000000001_rls.sql:72` and the v1.0.5 admin-bypass policy in `migrations/00000000000005_admin_phase4.sql:75-88` (whichever is current). The shipped policy has NO `is_current_user_admin()` OR-bypass — admin reads go through service-role-backed Edge Functions (which bypass RLS automatically) per the security review's VIS-04 / REVIEW-FIX-H3 decision. D-14, D-15, D-16:**
+**RLS policy DROP+CREATE pattern (vote_counts) — DROP the v1.0 policy at `migrations/00000000000001_rls.sql:72` and the v1.0.5 admin-bypass policy at `migrations/00000000000005_admin_phase4.sql:75-88` (both superseded). The shipped policy (migration 10, REVIEW-FIX-H3) has NO `is_current_user_admin()` OR-bypass — admin reads go through service-role-backed Edge Functions (which bypass RLS automatically) per the security review's VIS-04 / REVIEW-FIX-H3 decision. D-14, D-15, D-16:**
 
 ```sql
 DROP POLICY IF EXISTS "Vote counts visible to voters" ON public.vote_counts;
