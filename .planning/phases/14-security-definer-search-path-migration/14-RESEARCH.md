@@ -462,7 +462,9 @@ Not applicable — this is a schema DDL phase, not a rename/refactor/migration p
 
 ## Open Questions
 
-### 1. `rls_auto_enable` — system function or user function?
+> Question 1 is RESOLVED via plan gate — Task W0 in `14-01-PLAN.md` is a blocking checkpoint that the executor runs against production infrastructure before writing Migration 14. Question 2 is RESOLVED inline (see VERIFIED note).
+
+### 1. `rls_auto_enable` — system function or user function? [RESOLVED via Task W0 gate]
 
 **What we know:** The function is listed in REQUIREMENTS.md, CONTEXT.md, and PROJECT.md as one of the 7 target functions. It does not appear in any of migrations 0–13. Prior research noted it as "(inferred from `00000000000001_rls.sql`)" but that migration contains only `ENABLE ROW LEVEL SECURITY` DDL, no function definition.
 
@@ -470,7 +472,7 @@ Not applicable — this is a schema DDL phase, not a rename/refactor/migration p
 
 **Recommendation:** Wave 0 of the plan must include a single verification step: run `npx supabase db dump --linked --schema=public | grep -A 10 rls_auto_enable` (or equivalent Supabase Studio query: `SELECT pg_get_functiondef(oid) FROM pg_proc WHERE proname = 'rls_auto_enable'`). If the function exists in `public` schema with a user-writable body, include it in Migration 14. If not found (or found in a non-public schema), Migration 14 targets 6 functions and the advisor WARN for `rls_auto_enable` may require a Supabase support query to resolve.
 
-### 2. `update_profile_after_auth` — which signature is current?
+### 2. `update_profile_after_auth` — which signature is current? [RESOLVED inline]
 
 **What we know:** The function is redefined in migrations 2 and 3. Migration 2 has signature `(p_mfa_verified BOOLEAN, p_discord_username TEXT, p_avatar_url TEXT)`. Migration 3 extends it to `(p_mfa_verified BOOLEAN, p_discord_username TEXT, p_avatar_url TEXT, p_guild_member BOOLEAN DEFAULT FALSE)`. Migration 3 is the last definition, so it is current. [VERIFIED: migrations 2 and 3 read directly]
 
