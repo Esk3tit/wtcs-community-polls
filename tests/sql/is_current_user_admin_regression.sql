@@ -26,8 +26,8 @@ BEGIN;
 -- supabase_admin). RESET ROLE is a no-op here because we have not yet SET
 -- LOCAL ROLE, but is included for symmetry.
 --
--- IMPORTANT: The trigger `on_auth_user_created` defined at
--- `supabase/migrations/00000000000002_triggers.sql:137` fires on every INSERT
+-- IMPORTANT: The trigger `on_auth_user_created` defined in
+-- `supabase/migrations/00000000000002_triggers.sql` fires on every INSERT
 -- INTO auth.users. Its handler `handle_new_user()` already creates a matching
 -- `public.profiles` row (also via ON CONFLICT (id) DO UPDATE). The profiles
 -- INSERT below therefore MUST use ON CONFLICT (id) DO UPDATE to override the
@@ -52,7 +52,7 @@ VALUES
   ('00000000-0000-0000-0000-00000000a004'::uuid, '00000000-0000-0000-0000-000000000000'::uuid, 'authenticated', 'authenticated', 'fixture-no-guild@phase14.test',  '{"provider_id":"900000000000000004"}'::jsonb, NOW(), NOW());
 
 -- profiles fixture -- 4 identity branches for is_current_user_admin().
--- The trigger `on_auth_user_created` (supabase/migrations/00000000000002_triggers.sql:137)
+-- The trigger `on_auth_user_created` (supabase/migrations/00000000000002_triggers.sql)
 -- fires on INSERT INTO auth.users above and calls handle_new_user(), which INSERTs
 -- a matching profiles row with ON CONFLICT (id) DO UPDATE. Therefore the rows
 -- below MUST use ON CONFLICT to overwrite the trigger-inserted defaults; a bare
