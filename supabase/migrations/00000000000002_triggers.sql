@@ -44,7 +44,20 @@ CREATE TRIGGER on_profile_self_update
   WHEN (current_setting('role') = 'authenticated')
   EXECUTE FUNCTION public.profile_self_update_allowed();
 
-COMMENT ON FUNCTION public.profile_self_update_allowed IS 'Guards profile self-update: only discord_username and avatar_url can be changed by the user via RLS. mfa_verified is blocked (R2 security fix) -- use update_profile_after_auth RPC instead.';
+-- NOTE: the catalog comment string below is overwritten by a later migration
+-- that re-emits the function body. The string below describes the migration-02
+-- body; the live behavior diverges (current_user = session_user gate added in
+-- a later migration, and SECURITY DEFINER callers bypass the is_admin /
+-- mfa_verified / guild_member checks). The pg_description row in production
+-- will remain stale until a future migration explicitly issues a new
+-- COMMENT ON FUNCTION statement -- we intentionally do not append one to the
+-- migration-14 source because doing so would diverge the repo from the
+-- already-applied production migration. Source kept accurate for fresh
+-- re-applies (local dev stacks).
+COMMENT ON FUNCTION public.profile_self_update_allowed IS
+  'Guards profile self-update: blocks id/discord_id/created_at unconditionally; '
+  'blocks is_admin/mfa_verified/guild_member only when current_user = session_user '
+  '(direct client write). SECURITY DEFINER callers bypass the protected-column checks.';
 
 -- ============================================================
 -- RPC: Server-side profile update after auth callback
@@ -145,7 +158,18 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user();
 
-COMMENT ON FUNCTION public.handle_new_user IS 'Creates or updates profile on signup. Derives admin status from admin_discord_ids. R2 fix: discord_id extracted via COALESCE(provider_id, sub, id) with WARNING on fallback.';
+-- NOTE: the catalog comment string below describes the migration-02 body
+-- (which raises a WARNING on discord_id fallback). The live function body
+-- re-emitted by a later migration removed the RAISE WARNING; the pg_description
+-- row in production will remain stale until a future migration explicitly
+-- issues a new COMMENT ON FUNCTION statement. We intentionally do not append
+-- one to the migration-14 source because doing so would diverge the repo from
+-- the already-applied production migration. Source kept accurate for fresh
+-- re-applies (local dev stacks).
+COMMENT ON FUNCTION public.handle_new_user IS
+  'Creates or updates profile on signup. Derives admin status from admin_discord_ids. '
+  'Discord ID extracted via COALESCE(provider_id, sub, id, NEW.id::TEXT). '
+  'Fallback to UUID-as-text is silent; see migration 14 header for observability follow-up.';
 
 -- ============================================================
 -- Trigger: Validate vote choice belongs to poll
