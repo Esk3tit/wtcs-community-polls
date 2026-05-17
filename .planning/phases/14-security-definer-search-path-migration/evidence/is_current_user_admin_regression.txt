@@ -1,0 +1,37 @@
+BEGIN
+RESET
+INSERT 0 4
+INSERT 0 4
+INSERT 0 1
+CREATE FUNCTION
+ assert_admin 
+--------------
+ 
+(1 row)
+
+psql:<stdin>:112: NOTICE:  PASS admin: t == t
+ assert_admin 
+--------------
+ 
+(1 row)
+
+psql:<stdin>:115: NOTICE:  PASS non_admin: f == f
+psql:<stdin>:118: NOTICE:  PASS mfa_false: f == f
+ assert_admin 
+--------------
+ 
+(1 row)
+
+psql:<stdin>:121: NOTICE:  PASS guild_false: f == f
+ assert_admin 
+--------------
+ 
+(1 row)
+
+DO
+psql:<stdin>:148: NOTICE:  PASS audit_log/admin: 1 canary row(s) visible under authenticated role
+psql:<stdin>:164: NOTICE:  PASS audit_log/non_admin: 0 canary rows visible under authenticated role (RLS correctly hid the row)
+DO
+ROLLBACK
+
+is_current_user_admin regression exit code: 0

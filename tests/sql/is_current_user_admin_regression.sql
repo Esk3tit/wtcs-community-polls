@@ -1,13 +1,16 @@
--- tests/sql/is_current_user_admin_regression.sql
--- Direct regression for public.is_current_user_admin() across 4 identity branches
--- AND exercises one admin-gated RLS table beyond vote_counts (audit_log).
--- Addresses Phase 14 cross-AI review HIGH concerns:
---   H1: TEST-11 12-cell matrix tests vote_counts (REVIEW-FIX-H3 form, no admin
---       OR-branch) and does NOT strongly prove is_current_user_admin() behavior
---       on admin-gated tables.
---   H3: A direct psql session is privileged and bypasses RLS unless the role
---       is explicitly switched to `authenticated`. This fixture uses
---       `SET LOCAL ROLE authenticated` around every RLS-asserting SELECT.
+-- Direct regression for public.is_current_user_admin() across 4 identity
+-- branches AND exercises one admin-gated RLS table beyond vote_counts
+-- (audit_log).
+--
+-- The 12-cell vote_counts RLS matrix only proves the absence of an admin
+-- OR-branch on vote_counts; it does NOT directly prove is_current_user_admin()
+-- correctness on admin-gated tables. This fixture closes that gap.
+--
+-- A direct psql session is privileged (postgres / supabase_admin) and
+-- bypasses RLS by default. To prove RLS-correctness rather than
+-- privileged-bypass behavior, every SELECT against an RLS-gated table runs
+-- under `SET LOCAL ROLE authenticated` paired with a `request.jwt.claims`
+-- session-local setting that names the JWT sub.
 --
 -- Run: psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f tests/sql/is_current_user_admin_regression.sql
 --
