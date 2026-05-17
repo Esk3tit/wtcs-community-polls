@@ -37,15 +37,19 @@ BEGIN;
 RESET ROLE;
 
 -- profiles.id has FK to auth.users(id) ON DELETE CASCADE. Seed the auth.users
--- rows first. Minimal columns: id is the only NOT NULL without default in
--- auth.users for our purposes; Supabase will accept rows with id only when
--- inserted by a privileged role.
-INSERT INTO auth.users (id, instance_id, aud, role, email, created_at, updated_at)
+-- rows first. We include raw_user_meta_data so the on_auth_user_created
+-- trigger's handle_new_user() COALESCE chain (provider_id -> sub -> id ->
+-- NEW.id::TEXT) derives the intended snowflake discord_id rather than
+-- falling through to the UUID-as-string last-resort branch. Without this
+-- metadata, the trigger-inserted profile row carries a UUID-string
+-- discord_id and the fixture's explicit snowflake VALUES would be silently
+-- discarded by the ON CONFLICT clause below.
+INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data, created_at, updated_at)
 VALUES
-  ('00000000-0000-0000-0000-00000000a001'::uuid, '00000000-0000-0000-0000-000000000000'::uuid, 'authenticated', 'authenticated', 'fixture-admin@phase14.test',     NOW(), NOW()),
-  ('00000000-0000-0000-0000-00000000a002'::uuid, '00000000-0000-0000-0000-000000000000'::uuid, 'authenticated', 'authenticated', 'fixture-non-admin@phase14.test', NOW(), NOW()),
-  ('00000000-0000-0000-0000-00000000a003'::uuid, '00000000-0000-0000-0000-000000000000'::uuid, 'authenticated', 'authenticated', 'fixture-no-mfa@phase14.test',    NOW(), NOW()),
-  ('00000000-0000-0000-0000-00000000a004'::uuid, '00000000-0000-0000-0000-000000000000'::uuid, 'authenticated', 'authenticated', 'fixture-no-guild@phase14.test',  NOW(), NOW());
+  ('00000000-0000-0000-0000-00000000a001'::uuid, '00000000-0000-0000-0000-000000000000'::uuid, 'authenticated', 'authenticated', 'fixture-admin@phase14.test',     '{"provider_id":"900000000000000001"}'::jsonb, NOW(), NOW()),
+  ('00000000-0000-0000-0000-00000000a002'::uuid, '00000000-0000-0000-0000-000000000000'::uuid, 'authenticated', 'authenticated', 'fixture-non-admin@phase14.test', '{"provider_id":"900000000000000002"}'::jsonb, NOW(), NOW()),
+  ('00000000-0000-0000-0000-00000000a003'::uuid, '00000000-0000-0000-0000-000000000000'::uuid, 'authenticated', 'authenticated', 'fixture-no-mfa@phase14.test',    '{"provider_id":"900000000000000003"}'::jsonb, NOW(), NOW()),
+  ('00000000-0000-0000-0000-00000000a004'::uuid, '00000000-0000-0000-0000-000000000000'::uuid, 'authenticated', 'authenticated', 'fixture-no-guild@phase14.test',  '{"provider_id":"900000000000000004"}'::jsonb, NOW(), NOW());
 
 -- profiles fixture -- 4 identity branches for is_current_user_admin().
 -- The trigger `on_auth_user_created` (supabase/migrations/00000000000002_triggers.sql:137)
