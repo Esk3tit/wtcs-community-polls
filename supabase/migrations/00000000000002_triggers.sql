@@ -44,16 +44,19 @@ CREATE TRIGGER on_profile_self_update
   WHEN (current_setting('role') = 'authenticated')
   EXECUTE FUNCTION public.profile_self_update_allowed();
 
--- NOTE: the catalog comment string below is overwritten by a later migration
--- that re-emits the function body. The string below describes the migration-02
--- body; the live behavior diverges (current_user = session_user gate added in
--- a later migration, and SECURITY DEFINER callers bypass the is_admin /
--- mfa_verified / guild_member checks). The pg_description row in production
--- will remain stale until a future migration explicitly issues a new
--- COMMENT ON FUNCTION statement -- we intentionally do not append one to the
--- migration-14 source because doing so would diverge the repo from the
--- already-applied production migration. Source kept accurate for fresh
--- re-applies (local dev stacks).
+-- NOTE: the catalog comment string below has been intentionally updated to
+-- describe the live (post-Migration-14) hardened behavior rather than the
+-- migration-02 body in this file. The function body above is the historical
+-- migration-02 source kept for replay context; a later migration re-emits
+-- the body with SET search_path = '' and adds a current_user = session_user
+-- gate so SECURITY DEFINER callers bypass the is_admin / mfa_verified /
+-- guild_member checks. We deliberately align the COMMENT here with live
+-- behavior so that a fresh `supabase db reset --local` produces a catalog
+-- whose pg_description rows match what the live function actually does. No
+-- later migration re-issues COMMENT ON FUNCTION for this function; the
+-- production pg_description row remains as last set (we do not append a
+-- COMMENT to migration-14 to avoid diverging the repo from the
+-- already-applied production migration).
 COMMENT ON FUNCTION public.profile_self_update_allowed IS
   'Guards profile self-update: blocks id/discord_id/created_at unconditionally; '
   'blocks is_admin/mfa_verified/guild_member only when current_user = session_user '
@@ -158,14 +161,19 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user();
 
--- NOTE: the catalog comment string below describes the migration-02 body
--- (which raises a WARNING on discord_id fallback). The live function body
--- re-emitted by a later migration removed the RAISE WARNING; the pg_description
--- row in production will remain stale until a future migration explicitly
--- issues a new COMMENT ON FUNCTION statement. We intentionally do not append
--- one to the migration-14 source because doing so would diverge the repo from
--- the already-applied production migration. Source kept accurate for fresh
--- re-applies (local dev stacks).
+-- NOTE: the catalog comment string below has been intentionally updated to
+-- describe the live (post-Migration-14) hardened behavior rather than the
+-- migration-02 body in this file. The function body above (which RAISEs a
+-- WARNING on discord_id fallback) is the historical migration-02 source kept
+-- for replay context; a later migration re-emits the body with
+-- SET search_path = '' and removes the RAISE WARNING, so the live fallback
+-- is silent. We deliberately align the COMMENT here with live behavior so
+-- that a fresh `supabase db reset --local` produces a catalog whose
+-- pg_description rows match what the live function actually does. No later
+-- migration re-issues COMMENT ON FUNCTION for this function; the production
+-- pg_description row remains as last set (we do not append a COMMENT to
+-- migration-14 to avoid diverging the repo from the already-applied
+-- production migration).
 COMMENT ON FUNCTION public.handle_new_user IS
   'Creates or updates profile on signup. Derives admin status from admin_discord_ids. '
   'Discord ID extracted via COALESCE(provider_id, sub, id, NEW.id::TEXT). '

@@ -52,12 +52,12 @@ RESET ROLE;
 -- email_change_token_new). If this INSERT starts failing with a new
 -- "null value in column ... violates not-null constraint" after a Supabase
 -- upgrade, add the offending column here with an empty-string default.
-INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data, created_at, updated_at)
+INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data, email_confirmed_at, created_at, updated_at)
 VALUES
-  ('00000000-0000-0000-0000-00000000a001'::uuid, '00000000-0000-0000-0000-000000000000'::uuid, 'authenticated', 'authenticated', 'fixture-admin@phase14.test',     '{"provider_id":"900000000000000001"}'::jsonb, NOW(), NOW()),
-  ('00000000-0000-0000-0000-00000000a002'::uuid, '00000000-0000-0000-0000-000000000000'::uuid, 'authenticated', 'authenticated', 'fixture-non-admin@phase14.test', '{"provider_id":"900000000000000002"}'::jsonb, NOW(), NOW()),
-  ('00000000-0000-0000-0000-00000000a003'::uuid, '00000000-0000-0000-0000-000000000000'::uuid, 'authenticated', 'authenticated', 'fixture-no-mfa@phase14.test',    '{"provider_id":"900000000000000003"}'::jsonb, NOW(), NOW()),
-  ('00000000-0000-0000-0000-00000000a004'::uuid, '00000000-0000-0000-0000-000000000000'::uuid, 'authenticated', 'authenticated', 'fixture-no-guild@phase14.test',  '{"provider_id":"900000000000000004"}'::jsonb, NOW(), NOW());
+  ('00000000-0000-0000-0000-00000000a001'::uuid, '00000000-0000-0000-0000-000000000000'::uuid, 'authenticated', 'authenticated', 'fixture-admin@phase14.test',     '{"provider_id":"900000000000000001"}'::jsonb, NOW(), NOW(), NOW()),
+  ('00000000-0000-0000-0000-00000000a002'::uuid, '00000000-0000-0000-0000-000000000000'::uuid, 'authenticated', 'authenticated', 'fixture-non-admin@phase14.test', '{"provider_id":"900000000000000002"}'::jsonb, NOW(), NOW(), NOW()),
+  ('00000000-0000-0000-0000-00000000a003'::uuid, '00000000-0000-0000-0000-000000000000'::uuid, 'authenticated', 'authenticated', 'fixture-no-mfa@phase14.test',    '{"provider_id":"900000000000000003"}'::jsonb, NOW(), NOW(), NOW()),
+  ('00000000-0000-0000-0000-00000000a004'::uuid, '00000000-0000-0000-0000-000000000000'::uuid, 'authenticated', 'authenticated', 'fixture-no-guild@phase14.test',  '{"provider_id":"900000000000000004"}'::jsonb, NOW(), NOW(), NOW());
 
 -- profiles fixture -- 4 identity branches for is_current_user_admin().
 -- The trigger `on_auth_user_created` (supabase/migrations/00000000000002_triggers.sql)
@@ -76,7 +76,8 @@ ON CONFLICT (id) DO UPDATE SET
   mfa_verified     = EXCLUDED.mfa_verified,
   guild_member     = EXCLUDED.guild_member,
   discord_username = EXCLUDED.discord_username,
-  avatar_url       = EXCLUDED.avatar_url;
+  avatar_url       = EXCLUDED.avatar_url,
+  updated_at       = NOW();
 
 -- Canary audit_log row -- actor is the admin fixture. Inserted while
 -- privileged, before RLS is enforced.
@@ -110,6 +111,14 @@ DECLARE
 BEGIN
   PERFORM set_config('request.jwt.claim.sub', p_user_id::text, true);
   PERFORM set_config('request.jwt.claims', json_build_object('sub', p_user_id::text)::text, true);
+  -- SET LOCAL ROLE authenticated is a no-op for the is_current_user_admin()
+  -- call below: the function is SECURITY DEFINER so its body always runs as
+  -- the function owner regardless of the surrounding session role. The line
+  -- is kept here for SYMMETRY with the audit_log DO blocks further down,
+  -- where the role-switch IS load-bearing (RLS only engages under a
+  -- non-privileged role). Keeping the pattern uniform makes the fixture
+  -- easier to read and prevents a future author from mistakenly dropping
+  -- the role-switch from blocks that genuinely need it.
   SET LOCAL ROLE authenticated;
   SELECT public.is_current_user_admin() INTO v_actual;
   RESET ROLE;

@@ -110,7 +110,7 @@ Full phase details preserved in [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROA
 
 **Plans**: 1 plan
 Plans:
-- [ ] 14-01-PLAN.md — Author migration 14 (6 or 7 SECURITY DEFINER function rewrites), local apply + lint, DBHY-04 doc fix, pre-deploy lint + TEST-11, production push + post-deploy smoke
+- [x] 14-01-PLAN.md — Migration 14 shipped: 6-function SECURITY DEFINER hardening (rls_auto_enable carved out as Supabase-managed per W0), stale 3-param `update_profile_after_auth` overload dropped (Cycle-3 Option A), DBHY-04 `11-PATTERNS.md` prose fix shipped, local/prod lint clean, TEST-11 12-cell RLS matrix re-run PASS, production smoke vote on polls.wtcsmapban.com PASS
 **UI hint**: no
 
 ---

@@ -1,10 +1,11 @@
 ---
 phase: 14
 slug: security-definer-search-path-migration
-status: draft
+status: complete
 nyquist_compliant: true
-wave_0_complete: false
+wave_0_complete: true
 created: 2026-05-16
+last_updated: 2026-05-17
 plan_alignment: 14-01-PLAN.md
 ---
 
@@ -87,4 +88,4 @@ plan_alignment: 14-01-PLAN.md
 - [x] Cycle-2 review HIGH concerns addressed: H1 (Task 07b fixture FK + columns + PERFORM fixed); H3 + M1 (SET LOCAL ROLE authenticated wraps RLS-asserting SELECTs); H4 (W0 Check 1B enumerates `update_profile_after_auth` overloads; Task 01 explicit DROP-or-harden path for U2); M3 (Query A includes `pg_get_functiondef`)
 - [x] Cycle-3 review HIGH concerns addressed: H1 (fixture profiles INSERT now uses `ON CONFLICT (id) DO UPDATE` to avoid duplicate-key collision with the `handle_new_user()` trigger fired by the `auth.users` INSERT); H4 (overload-count gate inconsistency resolved via Cycle-3 Option A — Migration 14 emits unconditional `DROP FUNCTION IF EXISTS public.update_profile_after_auth(BOOLEAN, TEXT, TEXT);` before the 4-param `CREATE OR REPLACE`, collapsing U2 into U1; all catalog-assertion gates in Plan lines 565 and 1021 uniformly demand "exactly ONE row per function name" without overload-count carve-outs). Cycle-3 MEDIUM addressed: R2 classification no longer relies on `proowner = postgres` alone — multi-signal check (owning_extension non-NULL, non-public schema, Supabase-internal owner role, body references Supabase-internal schemas).
 
-**Approval:** pending (executor to flip to approved after Wave 0 completes)
+**Approval:** approved
