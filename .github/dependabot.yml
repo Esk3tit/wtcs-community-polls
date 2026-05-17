@@ -16,6 +16,19 @@ updates:
       interval: weekly
       day: monday
     groups:
+      # Group eslint + plugins together (incl. majors). The packages share
+      # a peer-dep chain (eslint <-> @eslint/js, plugins -> eslint), so a
+      # major bump must ship as one combined PR — Dependabot's individual
+      # eslint vs. @eslint/js PRs both fail `npm ci` with peer-dep
+      # conflicts on the other side. Listed BEFORE minor-and-patch so
+      # even minor/patch eslint bumps roll up here.
+      eslint:
+        patterns:
+          - "eslint"
+          - "@eslint/*"
+          - "eslint-plugin-*"
+          - "typescript-eslint"
+        update-types: [major, minor, patch]
       minor-and-patch:
         update-types: [minor, patch]
     open-pull-requests-limit: 5

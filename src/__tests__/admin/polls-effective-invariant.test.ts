@@ -20,7 +20,7 @@ const ALLOWLIST = new Set<string>([
 ])
 
 function walk(dir: string): string[] {
-  let entries: string[] = []
+  let entries: string[]
   try {
     entries = readdirSync(dir)
   } catch {
