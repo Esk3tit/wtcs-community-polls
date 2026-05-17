@@ -9,28 +9,28 @@ CREATE FUNCTION
  
 (1 row)
 
-psql:<stdin>:112: NOTICE:  PASS admin: t == t
+psql:<stdin>:124: NOTICE:  PASS admin: t == t
+psql:<stdin>:127: NOTICE:  PASS non_admin: f == f
  assert_admin 
 --------------
  
 (1 row)
 
-psql:<stdin>:115: NOTICE:  PASS non_admin: f == f
-psql:<stdin>:118: NOTICE:  PASS mfa_false: f == f
+psql:<stdin>:130: NOTICE:  PASS mfa_false: f == f
  assert_admin 
 --------------
  
 (1 row)
 
-psql:<stdin>:121: NOTICE:  PASS guild_false: f == f
+psql:<stdin>:133: NOTICE:  PASS guild_false: f == f
  assert_admin 
 --------------
  
 (1 row)
 
+psql:<stdin>:160: NOTICE:  PASS audit_log/admin: 1 canary row(s) visible under authenticated role
 DO
-psql:<stdin>:148: NOTICE:  PASS audit_log/admin: 1 canary row(s) visible under authenticated role
-psql:<stdin>:164: NOTICE:  PASS audit_log/non_admin: 0 canary rows visible under authenticated role (RLS correctly hid the row)
+psql:<stdin>:176: NOTICE:  PASS audit_log/non_admin: 0 canary rows visible under authenticated role (RLS correctly hid the row)
 DO
 ROLLBACK
 
