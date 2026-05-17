@@ -2,42 +2,41 @@
 phase: 14-security-definer-search-path-migration
 reviewed: 2026-05-17T00:00:00Z
 depth: deep
-iteration: 2
-files_reviewed: 3
+iteration: 3
+files_reviewed: 5
 files_reviewed_list:
   - supabase/migrations/00000000000014_harden_security_definer_search_path.sql
   - supabase/migrations/00000000000002_triggers.sql
+  - supabase/migrations/00000000000003_guild_membership.sql
+  - supabase/migrations/00000000000004_fix_trigger_rpc_context.sql
   - tests/sql/is_current_user_admin_regression.sql
 findings:
   critical: 0
   warning: 0
-  info: 3
-  total: 3
-status: issues_found
+  info: 0
+  total: 0
+status: clean
 ---
 
-# Phase 14: Code Review Report (Iteration 2)
+# Phase 14: Code Review Report (Iteration 3 — closure)
 
 **Reviewed:** 2026-05-17
 **Depth:** deep
-**Iteration:** 2
-**Files Reviewed:** 3
-**Status:** issues_found (Info-only — no Critical or Warning findings)
+**Iteration:** 3 of 3 (final, at `--auto` cap)
+**Files Reviewed:** 5
+**Status:** clean — iteration loop converged
 
 ## Summary
 
-Iteration-2 re-review of Phase 14 (SECURITY DEFINER `search_path = ''` hardening). All iteration-1 findings (WR-01, WR-02, IN-01, IN-02, IN-03, IN-05; IN-04 was a no-op observation) are genuinely closed at the right level:
+Iteration 3 is the closure pass for Phase 14. All three iteration-2 Info findings are verified closed and the iteration-2 fixes did not introduce any new defects. **No Critical, Warning, or Info findings remain.** The iteration loop has converged within the 3-iteration `--auto` cap.
 
-- **WR-01** — Multi-line WHY comment in `00000000000014_harden_security_definer_search_path.sql` lines 22-27 explains the dropped `RAISE WARNING` observability gap and names two concrete future-remediation paths (audit_log INSERT, Sentry breadcrumb). Comment is documentary only — no behavioral suggestion. Production-deploy invariant is respected: comment-only delta, function body byte-identical to the deployed form.
-- **WR-02** — Root-cause fix applied at the `auth.users` seed layer (fixture lines 55-60). `raw_user_meta_data->>'provider_id'` now carries the intended snowflake (`900000000000000001..a004`), so `handle_new_user`'s COALESCE chain derives the correct `discord_id` on the trigger-fired profiles INSERT. The fixture's ON CONFLICT SET list correctly omits `discord_id` because the trigger-inserted value is now already correct — no need to override. Verified by re-tracing trigger → handler → INSERT path against the migration-14 live body.
-- **IN-01** — Forward-reference NOTE block added at `00000000000002_triggers.sql` lines 85-90 above `handle_new_user`.
-- **IN-02** — `:137` line-number suffix dropped from fixture cross-references at lines 29-35 and 63-67.
-- **IN-03** — Canary `target_type` renamed to phase-agnostic `'rls-regression-canary'` (fixture line 89).
-- **IN-05** — Brittle-dependency WHY comment added above `auth.users` INSERT (fixture lines 48-54), naming `confirmation_token` and `email_change_token_new` as Supabase-upgrade watch-list examples.
+The expanded file scope (5 files vs. iteration-2's 3) reflects the fixer touching migrations 03 and 04 to address IN-02 iter-2. All four migration files plus the regression fixture are now coherent with respect to:
+- The live (deployed) function bodies on production
+- Forward-reference signposting for code archaeology
+- Catalog-comment text for fresh local-dev re-applies
+- Cross-reference brittleness (no surviving `:line` or `lines N-M` suffixes)
 
-The iteration-1 deep cross-file invariants still hold: schema qualification across all six bodies under `search_path = ''`, RLS policy binding preserved (functions re-emitted via `CREATE OR REPLACE` keep their OID), trigger graph intact, 3-param `update_profile_after_auth` cleanly dropped before 4-param re-emit, fixture role/JWT sequencing correct (`SET LOCAL ROLE authenticated` paired with `request.jwt.claims`).
-
-Three new Info-tier observations surfaced during iteration-2 cross-file analysis — all are documentation / catalog-comment drift that does not affect behavior. No new Critical, no new Warning.
+The production-deploy invariant is unchanged and respected: migration 14 has shipped; the iteration-2 source edits to migrations 02/03/04 are documentary only. Production `pg_description` still carries the migration-02-era catalog comments for `handle_new_user` and `profile_self_update_allowed` — a known accepted gap that the iter-2 IN-01 fix explicitly preserves (the new source comment is scoped to "fresh re-applies for local dev stacks").
 
 ## Structural Findings (fallow)
 
@@ -45,119 +44,87 @@ _No structural findings block was supplied with this review request; structural 
 
 ## Narrative Findings (AI reviewer)
 
-## Info
-
-### IN-01: Stale `COMMENT ON FUNCTION` text in catalog after migration 14 re-emit
-
-**File:** `supabase/migrations/00000000000002_triggers.sql:47`, `:148`
-**Issue:** Migration 14 uses `CREATE OR REPLACE FUNCTION` for `handle_new_user`, `profile_self_update_allowed`, and `update_profile_after_auth`, but does not re-emit corresponding `COMMENT ON FUNCTION` statements. Per Postgres semantics, `CREATE OR REPLACE FUNCTION` does NOT clear `pg_description` rows, so the original comments from migration 02 persist in the production catalog (`\df+` and `pg_description` queries). Two cases produce real drift:
-
-- Line 148 sets the comment on `public.handle_new_user` to `'... R2 fix: discord_id extracted via COALESCE(provider_id, sub, id) with WARNING on fallback.'` — but the live body re-emitted by migration 14 contains no `RAISE WARNING`. The catalog comment now advertises observability the function no longer provides. This is the same gap WR-01's source comment acknowledges, but it surfaces in a second venue (the function comment) that WR-01's WHY comment does not cover.
-- Line 47 sets the comment on `public.profile_self_update_allowed` to `'Guards profile self-update: only discord_username and avatar_url can be changed by the user via RLS. mfa_verified is blocked (R2 security fix) ...'` — but migration 14's live body adds a `current_user = session_user` gate around the protected-column blocks, allowing SECURITY DEFINER callers to bypass. The catalog comment overstates the constraint.
-
-**Fix:** In a follow-up migration (no need to re-deploy migration 14 — purely a catalog refresh), restate the comments to match the live bodies:
-```sql
-COMMENT ON FUNCTION public.handle_new_user IS
-  'Creates or updates profile on signup. Derives admin status from admin_discord_ids. '
-  'Discord ID extracted via COALESCE(provider_id, sub, id, NEW.id::TEXT). '
-  'Fallback to UUID-as-text is silent; see migration 14 header for observability follow-up.';
-
-COMMENT ON FUNCTION public.profile_self_update_allowed IS
-  'Guards profile self-update: blocks id/discord_id/created_at unconditionally; '
-  'blocks is_admin/mfa_verified/guild_member only when current_user = session_user '
-  '(direct client write). SECURITY DEFINER callers bypass the protected-column checks.';
-```
-
-### IN-02: Forward-reference NOTE missing on two other functions superseded by migration 14
-
-**File:** `supabase/migrations/00000000000002_triggers.sql:15-39`, `:56-75`
-**Issue:** Iteration-1 IN-01 added a forward-reference NOTE block (lines 85-90) above `handle_new_user` pointing to migration 14's re-emit. The same forward-reference is missing on the two other functions that migration 14 materially modifies:
-
-- `profile_self_update_allowed` (lines 15-39): migration 14 re-emits this with a semantically different body that adds the `current_user = session_user` branch. A reader of migration 02 alone would mis-model the protected-column policy.
-- 3-param `update_profile_after_auth` (lines 56-75): migration 14 explicitly `DROP FUNCTION` this overload (migration 14 line 17) and replaces it with a 4-param signature. A reader of migration 02 alone would believe the 3-param overload is callable.
-
-A future-reader following migration order chronologically gets no signal that these definitions are later replaced/dropped — the same code-archaeology gap that iteration-1 IN-01 closed for `handle_new_user`.
-
-**Fix:** Add forward-reference NOTE comments above each affected `CREATE OR REPLACE FUNCTION` block in migration 02, mirroring the style of lines 85-90. Example for `update_profile_after_auth`:
-```sql
--- NOTE: this 3-param overload is dropped by the later
--- harden_security_definer_search_path migration and replaced with a 4-param
--- signature including p_guild_member. Preserved here for historical reference.
-```
-Example for `profile_self_update_allowed`:
-```sql
--- NOTE: re-emitted by the later harden_security_definer_search_path migration
--- with a current_user = session_user guard that allows SECURITY DEFINER callers
--- to bypass the is_admin/mfa_verified/guild_member checks. See the later migration
--- for the live body.
-```
-
-### IN-03: Fixture comment retains a `:line-range` cross-reference to migration 10
-
-**File:** `tests/sql/is_current_user_admin_regression.sql:84`
-**Issue:** Iteration-1 IN-02 dropped the `:137` line-number suffix from the fixture's cross-reference to migration 02 in two places (lines 29-35 and 63-67). The same brittle pattern remains on line 84, which still reads `per migration 10 lines 47-56`. Line numbers in cross-references rot whenever the target file is edited — the same hazard IN-02 fixed elsewhere. The reference was likely present before iteration 1 (not introduced by the fix), but it is in scope for iteration 2 because the same convention is now applied inconsistently within the same file.
-
-**Fix:** Drop the line range; the migration filename pattern and column-list context are sufficient signal:
-```sql
--- NOTE: columns are (actor_id, action, target_type, target_id, before, after)
--- per the audit_log migration (00000000000010_*) -- two JSONB diff columns,
--- NOT a single body column.
-```
+_No findings. All iteration-2 findings verified closed; no new issues surfaced under deep cross-file analysis._
 
 ---
 
-## Iteration-1 Fix Verification
+## Iteration-2 Fix Verification
 
-| ID | Item | Closed | Notes |
+| ID (iter-2) | Item | Closed | Notes |
 |----|------|--------|-------|
-| WR-01 | WHY comment on dropped `RAISE WARNING` | YES | Migration 14 lines 22-27. Documentary only; names two concrete remediation paths. No behavioral suggestion. Production-deploy invariant respected. |
-| WR-02 | Fixture seeds `raw_user_meta_data` for trigger COALESCE | YES | Fixture lines 55-60. Root-cause fix at `auth.users` seed — trigger derives intended snowflake on first INSERT, so ON CONFLICT correctly omits `discord_id`. |
-| IN-01 | Cross-reference NOTE in `00000000000002_triggers.sql` | YES (partial — see new IN-02 above) | Forward-ref added for `handle_new_user`; same pattern still missing for `profile_self_update_allowed` and 3-param `update_profile_after_auth`. |
-| IN-02 | Drop `:137` line-number suffix in fixture | YES (partial — see new IN-03 above) | Two references fixed (lines 29-35, 63-67); one remaining at line 84 referencing migration 10. |
-| IN-03 | Rename canary `target_type` to phase-agnostic | YES | `'rls-regression-canary'` at fixture line 89. |
-| IN-04 | (No-op acknowledgement of clean header) | N/A | No action was required; still clean. |
-| IN-05 | Brittle-dependency WHY on `auth.users` INSERT | YES | Fixture lines 48-54. Names `confirmation_token` / `email_change_token_new` as watch-list examples. |
+| IN-01 iter-2 | Stale `COMMENT ON FUNCTION` text for `handle_new_user` + `profile_self_update_allowed` | YES | Migration 02 lines 47-60 (`profile_self_update_allowed`) and 161-172 (`handle_new_user`). Both restate the post-migration-14 behavior accurately. Each is preceded by a NOTE block explaining the production-catalog-vs-source gap and why migration 14 source intentionally does not re-emit `COMMENT ON FUNCTION` (would diverge from already-applied prod migration). |
+| IN-02 iter-2 | Forward-reference NOTEs on `update_profile_after_auth` (migration 03) + `profile_self_update_allowed` (migration 04) | YES | Migration 03 lines 40-43, migration 04 lines 12-15. Both NOTEs name the later migration explicitly (`harden_security_definer_search_path`) and describe what changes (3-param overload dropped; `SET search_path = ''` added). Style is consistent with the iter-1 NOTE at migration 02 lines 99-103. |
+| IN-03 iter-2 | Drop surviving `lines 47-56` from fixture cross-reference | YES | Fixture line 84 now reads `per the audit_log migration (00000000000010_*) -- two JSONB diff columns, NOT a single body column.` No line range. Consistent with the iter-1 convention applied to the migration-02 cross-references at fixture lines 30 and 63. |
 
 ---
 
-## Cross-File Analysis Notes (deep-depth re-check)
+## Drift Checks on Iteration-2 Fixes
 
-Iteration-1 deep-depth concerns explicitly re-verified — all still CLEAN:
+Per iter-3 review goal #2, every iteration-2 fix was probed for new drift it might have introduced. All clean:
 
-1. **Unqualified references under `search_path = ''`** — all six function bodies in migration 14 use `public.<table>` and `auth.uid()`. No 42P01 risk. Confirmed re-read.
+1. **`COMMENT ON FUNCTION public.profile_self_update_allowed` (migration 02 lines 57-60)** — verified against migration 14 lines 122-148 line-by-line:
+   - "blocks id/discord_id/created_at unconditionally" → matches lines 124-132 (outside the `current_user = session_user` block).
+   - "blocks is_admin/mfa_verified/guild_member only when current_user = session_user" → matches lines 137-148 (inside the gate).
+   - "SECURITY DEFINER callers bypass the protected-column checks" → matches the runtime semantics: when `update_profile_after_auth` calls UPDATE, `current_user` is the function owner (postgres), `session_user` is `authenticated`, so the gate evaluates FALSE and the inner block is skipped.
+   - Result: comment is neither overstated nor understated.
 
-2. **`DROP FUNCTION IF EXISTS public.update_profile_after_auth(BOOLEAN, TEXT, TEXT)`** still targets only the 3-param overload; the 4-param signature `(BOOLEAN, TEXT, TEXT, BOOLEAN)` is a distinct pg_proc row, unaffected. `CREATE OR REPLACE` preserves grants on the 4-param.
+2. **`COMMENT ON FUNCTION public.handle_new_user` (migration 02 lines 169-172)** — verified against migration 14 lines 28-74:
+   - "Creates or updates profile on signup" → matches the INSERT … ON CONFLICT (id) DO UPDATE.
+   - "Derives admin status from admin_discord_ids" → matches lines 48-50 (`SELECT EXISTS … FROM public.admin_discord_ids`).
+   - "Discord ID extracted via COALESCE(provider_id, sub, id, NEW.id::TEXT)" → matches lines 38-46 exactly (chain order + UUID-as-text last-resort).
+   - "Fallback to UUID-as-text is silent; see migration 14 header for observability follow-up" → matches migration 14 lines 22-27 WHY comment. Cross-reference is by header location ("migration 14 header"), not line number — not brittle.
+   - Result: accurate, and the cross-pointer to the migration-14 header is robust.
 
-3. **`is_current_user_admin` body-identicality** — body normalized matches migration 9's deployed form modulo `SET search_path = ''`. Volatility (`STABLE`), `SECURITY DEFINER`, and `RETURNS BOOLEAN` preserved. OID-preserving `CREATE OR REPLACE` keeps RLS policy binding stable.
+3. **Forward-reference NOTE phrasing consistency across migrations 02/03/04** — all five NOTE blocks in the four affected files were collected and read together:
+   - Migration 02 line 47 (`profile_self_update_allowed` comment), line 99 (`handle_new_user` body), line 161 (`handle_new_user` comment).
+   - Migration 03 line 40 (`update_profile_after_auth` 4-param body).
+   - Migration 04 line 12 (`profile_self_update_allowed` body).
+   All five reference "the later harden_security_definer_search_path migration" or equivalent ("a later migration that re-emits the function body"). Phrasing varies in detail (some describe the comment-catalog gap, some describe body re-emit, some describe the DROP of the 3-param overload) but the variation tracks what is actually different in each file's case — not style drift. No reader will mis-model the chronology.
 
-4. **`profile_self_update_allowed` divergence from migration 02** — semantically intentional (adds `current_user = session_user` gate). Now flagged as new IN-02 for forward-reference gap. Body matches the migration-04 form modulo `SET search_path = ''`.
+4. **Fixture line-offset drift (+1 from new comment line at iter-1)** — the fixture's only remaining cross-references are at lines 30 (`supabase/migrations/00000000000002_triggers.sql` — no line number) and 63 (same target, no line number) and 84 (`00000000000010_*` — no line number). All three are filename-pattern references; no line-number suffixes survive. Future +N line offsets in either target file will not stale these comments. Confirmed by `grep -n "lines\|line "` over the fixture file.
+
+5. **Regression evidence file** — `is_current_user_admin_regression.txt` was refreshed at iter-2 commit 97f5351 to match the new line offsets (NOTICE messages now reference `:125`, `:128`, `:131`, `:134`, `:161`, `:177`). 6 PASS / 0 FAIL / exit 0. The NOTICE line numbers in the evidence file are psql's own location stamps (they shift whenever the fixture grows), not cross-references inside source — they are expected to track the fixture, so the +1 refresh is correct.
+
+---
+
+## Cross-File Analysis Notes (deep-depth, iter-3 re-check)
+
+All iteration-1 and iteration-2 deep-depth invariants re-verified — all still CLEAN:
+
+1. **Unqualified references under `search_path = ''`** — all six function bodies in migration 14 use `public.<table>` and `auth.uid()`. No 42P01 risk.
+
+2. **`DROP FUNCTION IF EXISTS public.update_profile_after_auth(BOOLEAN, TEXT, TEXT)`** still targets only the 3-param overload from migration 02. The 4-param signature `(BOOLEAN, TEXT, TEXT, BOOLEAN)` from migration 03 is a distinct `pg_proc` row, unaffected. `CREATE OR REPLACE` preserves grants on the 4-param.
+
+3. **`is_current_user_admin` body-identicality** — body normalized matches migration 09's deployed form modulo `SET search_path = '' ` (was `public`). Volatility (`STABLE`), `SECURITY DEFINER`, and `RETURNS BOOLEAN` preserved. OID-preserving `CREATE OR REPLACE` keeps RLS policy binding stable.
+
+4. **`profile_self_update_allowed` divergence from migration 02** — semantically intentional (adds `current_user = session_user` gate); body matches migration 04 modulo `SET search_path = ''`. Forward-reference NOTE blocks at migration 02 line 47 and migration 04 line 12 signpost the chain correctly.
 
 5. **`increment_vote_count` / `validate_vote_choice`** — bodies byte-identical to migration 02 modulo `SET search_path = ''`. Tables already qualified.
 
-6. **Idempotency** — every statement is `CREATE OR REPLACE` or `DROP … IF EXISTS`. Re-applicable N times.
+6. **Idempotency** — every statement in migration 14 is `CREATE OR REPLACE` or `DROP … IF EXISTS`. Re-applicable N times.
 
-7. **Trigger graph preservation** — triggers (`on_auth_user_created`, `on_profile_self_update`, `on_vote_validate_choice`, `on_vote_inserted`) bind by name → pg_proc OID. `CREATE OR REPLACE` preserves OID. Triggers continue to bind.
+7. **Trigger graph preservation** — triggers `on_auth_user_created`, `on_profile_self_update`, `on_vote_validate_choice`, `on_vote_inserted` bind by name → `pg_proc` OID. `CREATE OR REPLACE` preserves OID. Triggers continue to bind.
 
-8. **RLS policy binding preservation** — policies that reference `public.is_current_user_admin()` (migration 5, migration 10's audit_log policy) still bind correctly.
+8. **RLS policy binding preservation** — policies that reference `public.is_current_user_admin()` (migration 05, migration 10's `audit_log` policy) still bind correctly; the fixture's audit_log SELECT under `authenticated` role + admin JWT proves end-to-end.
 
-9. **`SET LOCAL ROLE authenticated` sequencing in fixture** — helper `pg_temp.assert_admin` correctly: `set_config(claim)` → `SET LOCAL ROLE authenticated` → call → `RESET ROLE`. Exception path covered by transaction-wide `ROLLBACK` under `ON_ERROR_STOP=1`.
+9. **Fixture role/JWT sequencing** — helper `pg_temp.assert_admin` and the two `DO $$ … $$` blocks follow the correct sequence: `set_config(claim)` → `SET LOCAL ROLE authenticated` → call/SELECT → `RESET ROLE`. Exception path covered by transaction-wide `ROLLBACK` under `ON_ERROR_STOP=1`.
 
 10. **JWT claim wiring** — both `request.jwt.claim.sub` and `request.jwt.claims` are set (defensive — `auth.uid()` reads either form).
 
-11. **`current_setting('role')` trigger guard** — `on_profile_self_update` fires only when `current_setting('role') = 'authenticated'`; fixture's privileged INSERT runs as postgres/supabase_admin (role GUC `'default'`), so the trigger does not fire on fixture seed rows. WR-02's root-cause fix path is safe regardless of `profile_self_update_allowed` body.
+11. **`current_setting('role')` trigger guard** — `on_profile_self_update` fires only when `current_setting('role') = 'authenticated'`; fixture's privileged INSERT runs as postgres/supabase_admin so the trigger does not fire on fixture seed rows. The migration-14 body's `current_user = session_user` gate would also skip the protected-column checks in this case (definer-rights bypass) — but the trigger never fires, so the gate is unreached. Path is safe regardless.
 
-12. **WR-02 trace** — re-walked the trigger sequence post-fix:
-    - `INSERT INTO auth.users (..., raw_user_meta_data, ...) VALUES (..., '{"provider_id":"900000000000000001"}'::jsonb, ...)`
-    - `on_auth_user_created` fires `handle_new_user()` (migration-14 body): `_discord_id := COALESCE(NEW.raw_user_meta_data->>'provider_id', ...)` → `'900000000000000001'` (no fallback to `NEW.id::TEXT`).
-    - Trigger INSERTs profile with `discord_id = '900000000000000001'`.
-    - Fixture's profiles INSERT hits ON CONFLICT; SET list updates `is_admin/mfa_verified/guild_member/discord_username/avatar_url`. `discord_id` is preserved at `'900000000000000001'` — the snowflake the author intended.
-    - `is_current_user_admin()` reads `is_admin AND mfa_verified AND guild_member` — unaffected by `discord_id`, so assertions stand. But the fixture now also has correct `discord_id` values for any future extension. Confirmed: root-cause fix at the right layer.
+12. **WR-02 root-cause fix (iter-1, re-verified iter-3)** — trigger-fired `handle_new_user` INSERT under migration-14 body derives `discord_id = '900000000000000001'` (etc.) from `raw_user_meta_data->>'provider_id'`, so the fixture's profiles ON CONFLICT correctly omits `discord_id` from the SET list. `is_current_user_admin()` is unaffected by `discord_id` (reads `is_admin AND mfa_verified AND guild_member`), but the fixture is now also correctly seeded for any future extension that reads `discord_id`.
 
-13. **WR-01 trace** — re-read migration 14 lines 22-27 comment block in context. The comment correctly identifies the silent fallback, the failure mode (UUID-string in `discord_id` after a Supabase Auth claim-shape change), the resulting admin-lookup miss, and the absence of pg log signal. Two remediation paths suggested (audit_log INSERT, Sentry breadcrumb). Comment is anchored immediately above the COALESCE chain, so it remains discoverable when reading the function body. No behavioral change suggested in the comment text itself — it documents an open follow-up. Compliant with CLAUDE.md WHY-only convention.
+13. **Production-deploy invariant (iter-2 IN-01 carry-over)** — explicitly affirmed:
+    - Migration 14 has shipped. Its `.sql` file may receive documentary edits (header comments, WHY blocks) without re-deployment risk; bodies are unchanged.
+    - The iter-2 IN-01 fix updated `COMMENT ON FUNCTION` strings in migration 02 source only. Production `pg_description` was last written when migration 02 was first applied (years ago) and is not re-written by migration 14 (no `COMMENT ON FUNCTION` statement in migration 14). The accepted gap is documented in two places: the NOTE block above each comment in migration 02, and the iter-1 WHY comment in migration 14 header.
+    - The iter-2 IN-02 fixes (NOTE blocks in migrations 03/04) are also documentary only.
+
+14. **Convergence statement** — iteration 3 found zero new findings. The loop has converged at the 3-iteration `--auto` cap. The phase is ready to close.
 
 ---
 
 _Reviewed: 2026-05-17_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: deep_
-_Iteration: 2_
+_Iteration: 3 (final, converged)_
