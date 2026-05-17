@@ -82,6 +82,12 @@ COMMENT ON FUNCTION public.update_profile_after_auth IS 'Server-side profile upd
 -- R1 fix: Checks admin_discord_ids table instead of pre-seeded profiles.
 -- R2 fix: Discord ID extraction uses COALESCE chain trying
 -- provider_id, then sub, then id from raw_user_meta_data.
+--
+-- NOTE: runtime body is re-emitted by a later migration with
+-- SET search_path = '' and without the RAISE WARNING branch below. The
+-- production-deployed function does not raise on discord_id fallback; this
+-- source is preserved for historical reference. See the later
+-- harden_security_definer_search_path migration for the live body.
 -- ============================================================
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
