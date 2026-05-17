@@ -108,7 +108,9 @@ Full phase details preserved in [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROA
   3. The TEST-11 12-cell RLS matrix re-run passes with zero regressions — admin-gated cells return rows for admin callers, voter-only cells gate correctly — confirming `is_current_user_admin()` body rewrite preserved identical semantics
   4. `supabase/migrations/00000000000014_security_definer_search_path.sql` exists in the repository, uses `CREATE OR REPLACE FUNCTION` for every modified function, and local `supabase db reset` applies all 14 migrations cleanly
 
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 14-01-PLAN.md — Author migration 14 (6 or 7 SECURITY DEFINER function rewrites), local apply + lint, DBHY-04 doc fix, pre-deploy lint + TEST-11, production push + post-deploy smoke
 **UI hint**: no
 
 ---
