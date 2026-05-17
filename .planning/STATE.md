@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.3
-milestone_name: Hygiene & Performance
+milestone_name: — Hygiene & Performance
 status: executing
-stopped_at: Phase 14 context gathered
-last_updated: "2026-05-17T01:25:45.471Z"
-last_activity: 2026-05-17 -- Phase 14 planning complete
+stopped_at: Phase 14 plan 01 — Task W0 pre-flight gate
+last_updated: "2026-05-17T03:00:00.000Z"
+last_activity: 2026-05-17 -- Phase 14 execution started (branch gsd/phase-14-security-definer-search-path-migration)
 progress:
   total_phases: 4
   completed_phases: 0
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-05-14 after v1.2 milestone)
 ## Current Position
 
 Phase: 14 of 17 (Security-Definer Search-Path Migration)
-Plan: —
-Status: Ready to execute
-Last activity: 2026-05-17 -- Phase 14 planning complete
+Plan: 14-01 (in progress — Wave 0 pre-flight gate)
+Status: Executing
+Last activity: 2026-05-17 -- Phase 14 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
