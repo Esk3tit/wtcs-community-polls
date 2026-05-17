@@ -19,6 +19,12 @@ DROP FUNCTION IF EXISTS public.update_profile_after_auth(BOOLEAN, TEXT, TEXT);
 
 -- handle_new_user — fires from on_auth_user_created trigger on auth.users.
 -- Body matches production verbatim (no RAISE WARNING on discord_id fallback).
+-- Observability gap: the discord_id COALESCE fallback to NEW.id::TEXT is now
+-- silent. If a future Supabase Auth SDK upgrade renames the OAuth claim shape,
+-- new signups land with a UUID-string discord_id and lose admin lookup with no
+-- pg log signal. Future remediation should add an audit_log INSERT (or Sentry
+-- breadcrumb from the client post-signup) inside the IF _discord_id IS NULL
+-- branch so the fallback remains observable.
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER
 LANGUAGE plpgsql
