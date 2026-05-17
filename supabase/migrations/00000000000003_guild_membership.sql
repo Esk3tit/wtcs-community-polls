@@ -37,6 +37,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- NOTE: the later harden_security_definer_search_path migration drops the
+-- 3-param overload of update_profile_after_auth (defined in migration 02)
+-- and re-emits this 4-param signature with `SET search_path = ''`. Only the
+-- 4-param overload remains callable. Preserved here for historical reference.
 -- Update RPC to accept guild_member parameter
 CREATE OR REPLACE FUNCTION public.update_profile_after_auth(
   p_mfa_verified BOOLEAN,
