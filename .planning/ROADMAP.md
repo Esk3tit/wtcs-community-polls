@@ -110,7 +110,7 @@ Full phase details preserved in [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROA
 
 **Plans**: 1 plan
 Plans:
-- [x] 14-01-PLAN.md — Migration 14 shipped: 6-function SECURITY DEFINER hardening (rls_auto_enable carved out as Supabase-managed per W0), stale 3-param `update_profile_after_auth` overload dropped (Cycle-3 Option A), DBHY-04 `11-PATTERNS.md` prose fix shipped, local/prod lint clean, TEST-11 12-cell RLS matrix re-run PASS, production smoke vote on polls.wtcsmapban.com PASS
+- [x] 14-01-PLAN.md — Migration 14 shipped: 6-function SECURITY DEFINER hardening (rls_auto_enable carved out as Supabase-managed per W0), stale 3-param `update_profile_after_auth` overload dropped (Cycle-3 Option A), DBHY-04 `11-PATTERNS.md` prose fix shipped, local/prod lint clean, TEST-11 deferred to v1.4+ (local gotrue `email_provider_disabled`); replaced by Task 07b direct SQL regression fixture (psql exit 0, 6 PASS / 0 FAIL on 4 identity branches + 2 audit_log RLS branches), production smoke vote on polls.wtcsmapban.com PASS
 **UI hint**: no
 
 ---

@@ -116,10 +116,10 @@ Continues from v1.0's UIDN-01..03. UIDN-03-FOLLOWUP-LIST-CARDS from v1.1 audit t
 
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| DBHY-01 | Phase 14 | Pending |
-| DBHY-02 | Phase 14 | Pending |
-| DBHY-03 | Phase 14 | Pending |
-| DBHY-04 | Phase 14 | Pending |
+| DBHY-01 | Phase 14 | Complete |
+| DBHY-02 | Phase 14 | Complete |
+| DBHY-03 | Phase 14 | Complete |
+| DBHY-04 | Phase 14 | Complete |
 | OBSV-03 | Phase 15 | Pending |
 | OBSV-04 | Phase 15 | Pending |
 | OBSV-05 | Phase 15 | Pending |

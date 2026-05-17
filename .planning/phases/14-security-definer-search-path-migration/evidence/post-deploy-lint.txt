@@ -3,7 +3,7 @@
 
 ```
 $ npx supabase db lint --linked
-Using workdir /Users/khaiphan/code/wtcs-community-polls
+Using workdir <redacted-local-path>/wtcs-community-polls
 Initialising login role...
 Connecting to remote database...
 Linting schema: extensions
