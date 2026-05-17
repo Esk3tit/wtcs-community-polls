@@ -81,7 +81,8 @@ ON CONFLICT (id) DO UPDATE SET
 -- Canary audit_log row -- actor is the admin fixture. Inserted while
 -- privileged, before RLS is enforced.
 -- NOTE: columns are (actor_id, action, target_type, target_id, before, after)
--- per migration 10 lines 47-56 -- two JSONB diff columns, NOT a single body column.
+-- per the audit_log migration (00000000000010_*) -- two JSONB diff columns,
+-- NOT a single body column.
 INSERT INTO public.audit_log (actor_id, action, target_type, target_id, before, after)
 VALUES (
   '00000000-0000-0000-0000-00000000a001'::uuid,
