@@ -76,9 +76,10 @@ Items acknowledged and deferred at milestone v1.2 close on 2026-05-14:
 | v1.4+ | Phase 03 UAT tests 2+3 | deferred | non-member tester gated; deferred again at v1.3 scoping |
 | v1.4+ | Local ES256 bug (1.73.x) | deferred | prod unaffected; awaiting upstream Supabase fix |
 | v1.4+ | TEST-11 12-cell vitest run | deferred | local gotrue `email_provider_disabled`; same precedent as Local ES256. Phase 14 Task 07b regression fixture covers the is_current_user_admin correctness question with stronger evidence. |
+| v1.4+ | `profile_self_update_allowed` `current_user = session_user` gate | deferred | Postgres-semantics finding from coderabbit on PR #30 (declined as out-of-scope for hardening phase). Inside a SECURITY DEFINER trigger, `current_user` always resolves to function owner — gate can't distinguish direct client UPDATEs from RPC-mediated UPDATEs. Function pre-dates Phase 14 (migration 4); preserved verbatim under hardening-only invariant. In practice the protected-column branch is likely dead code because table-level RLS blocks direct client UPDATEs to protected columns. Remediation options: (a) drop SECURITY DEFINER from trigger; (b) pass an explicit trusted-context flag from `update_profile_after_auth` (session GUC) and check that flag instead. Option (b) more robust; needs its own migration. |
 
 ## Session Continuity
 
-Last session: 2026-05-17T08:00:00.000Z
-Stopped at: Phase 14 complete — Migration 14 deployed to production
+Last session: 2026-05-17T22:01:00.000Z
+Stopped at: Phase 14 merged to main (PR #30, merge commit 7232aaa)
 Resume action: `/gsd-plan-phase 15` to plan Phase 15 (Observability + E2E Verify & Close)
