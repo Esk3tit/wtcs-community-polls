@@ -44,6 +44,14 @@ RESET ROLE;
 -- metadata, the trigger-inserted profile row carries a UUID-string
 -- discord_id and the fixture's explicit snowflake VALUES would be silently
 -- discarded by the ON CONFLICT clause below.
+--
+-- NOTE: this INSERT is brittle to Supabase auth-schema upgrades. The column
+-- list below relies on the rest of auth.users being nullable / having
+-- defaults. Supabase has periodically tightened auth.users NOT NULL
+-- constraints across minor versions (e.g., confirmation_token,
+-- email_change_token_new). If this INSERT starts failing with a new
+-- "null value in column ... violates not-null constraint" after a Supabase
+-- upgrade, add the offending column here with an empty-string default.
 INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data, created_at, updated_at)
 VALUES
   ('00000000-0000-0000-0000-00000000a001'::uuid, '00000000-0000-0000-0000-000000000000'::uuid, 'authenticated', 'authenticated', 'fixture-admin@phase14.test',     '{"provider_id":"900000000000000001"}'::jsonb, NOW(), NOW()),
