@@ -22,6 +22,14 @@ BEGIN;
 -- This block runs as the connection's privileged role (postgres /
 -- supabase_admin). RESET ROLE is a no-op here because we have not yet SET
 -- LOCAL ROLE, but is included for symmetry.
+--
+-- IMPORTANT: The trigger `on_auth_user_created` defined at
+-- `supabase/migrations/00000000000002_triggers.sql:137` fires on every INSERT
+-- INTO auth.users. Its handler `handle_new_user()` already creates a matching
+-- `public.profiles` row (also via ON CONFLICT (id) DO UPDATE). The profiles
+-- INSERT below therefore MUST use ON CONFLICT (id) DO UPDATE to override the
+-- trigger-inserted defaults; otherwise the script aborts with a duplicate-key
+-- violation on profiles_pkey.
 -- ---------------------------------------------------------------------------
 RESET ROLE;
 
@@ -37,12 +45,23 @@ VALUES
   ('00000000-0000-0000-0000-00000000a004'::uuid, '00000000-0000-0000-0000-000000000000'::uuid, 'authenticated', 'authenticated', 'fixture-no-guild@phase14.test',  NOW(), NOW());
 
 -- profiles fixture -- 4 identity branches for is_current_user_admin().
+-- The trigger `on_auth_user_created` (supabase/migrations/00000000000002_triggers.sql:137)
+-- fires on INSERT INTO auth.users above and calls handle_new_user(), which INSERTs
+-- a matching profiles row with ON CONFLICT (id) DO UPDATE. Therefore the rows
+-- below MUST use ON CONFLICT to overwrite the trigger-inserted defaults; a bare
+-- INSERT would raise a duplicate-key violation.
 INSERT INTO public.profiles (id, discord_id, is_admin, mfa_verified, guild_member, discord_username, avatar_url)
 VALUES
   ('00000000-0000-0000-0000-00000000a001'::uuid, '900000000000000001', TRUE,  TRUE,  TRUE,  'fixture_admin',     ''),
   ('00000000-0000-0000-0000-00000000a002'::uuid, '900000000000000002', FALSE, TRUE,  TRUE,  'fixture_non_admin', ''),
   ('00000000-0000-0000-0000-00000000a003'::uuid, '900000000000000003', TRUE,  FALSE, TRUE,  'fixture_no_mfa',    ''),
-  ('00000000-0000-0000-0000-00000000a004'::uuid, '900000000000000004', TRUE,  TRUE,  FALSE, 'fixture_no_guild',  '');
+  ('00000000-0000-0000-0000-00000000a004'::uuid, '900000000000000004', TRUE,  TRUE,  FALSE, 'fixture_no_guild',  '')
+ON CONFLICT (id) DO UPDATE SET
+  is_admin         = EXCLUDED.is_admin,
+  mfa_verified     = EXCLUDED.mfa_verified,
+  guild_member     = EXCLUDED.guild_member,
+  discord_username = EXCLUDED.discord_username,
+  avatar_url       = EXCLUDED.avatar_url;
 
 -- Canary audit_log row -- actor is the admin fixture. Inserted while
 -- privileged, before RLS is enforced.
