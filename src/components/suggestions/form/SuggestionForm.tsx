@@ -30,8 +30,11 @@ export function SuggestionForm({ mode, pollId }: Props) {
   const [description, setDescription] = useState('')
   const [choices, setChoices] = useState<string[]>(['', ''])
   const [imageUrl, setImageUrl] = useState<string | null>(null)
+  // Lazy initializer wraps Date.now() (impure) so the value is computed once
+  // at mount, satisfying react-hooks/purity. The +7-day default is a UI
+  // affordance — admins can override before submit.
   const [closesAt, setClosesAt] = useState<string>(
-    new Date(Date.now() + 7 * 86400_000).toISOString(),
+    () => new Date(Date.now() + 7 * 86400_000).toISOString(),
   )
   const [categoryId, setCategoryId] = useState<string | null>(null)
   const [resultsHidden, setResultsHidden] = useState(false)
@@ -100,6 +103,9 @@ export function SuggestionForm({ mode, pollId }: Props) {
   }, [mode, pollId])
 
   useEffect(() => {
+    // Mount-fetch pattern for edit mode (no-ops on create). setState happens
+    // inside loadPoll on resolve.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- TanStack Query / use() refactor planned for v1.4+
     void loadPoll()
   }, [loadPoll])
 

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useLayoutEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { Plus, Inbox, Archive, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -52,11 +52,18 @@ export function AdminSuggestionsTab() {
   // handler can read the latest values without listing them as useCallback
   // deps. Without these the callback would be recreated on every setItems
   // / setPendingVisibility call, defeating referential stability for child
-  // memoization and matching the pin-handler pattern above.
+  // memoization and matching the pin-handler pattern above. The ref writes
+  // run in a useLayoutEffect (synchronously after commit, before paint) so
+  // the refs are up-to-date for any reader on a flushSync / useLayoutEffect
+  // path — closer to the original inline-during-render guarantee — and the
+  // dep array narrows the rewrite to the actual state changes so we don't
+  // re-assign on unrelated re-renders. Satisfies react-hooks/refs.
   const itemsRef = useRef(items)
-  itemsRef.current = items
   const pendingVisibilityRef = useRef(pendingVisibility)
-  pendingVisibilityRef.current = pendingVisibility
+  useLayoutEffect(() => {
+    itemsRef.current = items
+    pendingVisibilityRef.current = pendingVisibility
+  }, [items, pendingVisibility])
 
   const fetchAll = useCallback(async () => {
     const id = ++fetchIdRef.current
@@ -105,6 +112,8 @@ export function AdminSuggestionsTab() {
   }, [filter])
 
   useEffect(() => {
+    // Mount-fetch pattern; setState happens inside fetchAll on resolve.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- TanStack Query / use() refactor planned for v1.4+
     void fetchAll()
   }, [fetchAll])
 
