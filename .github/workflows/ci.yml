@@ -32,6 +32,14 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm test -- --run
+      # D-08 / OBSV-04(a) — build solely to produce dist/ for the verify step
+      # below; no Supabase env vars needed (build succeeds with them unset,
+      # throw fires at browser runtime only). SENTRY_AUTH_TOKEN intentionally
+      # absent — sourcemap upload is a Netlify-build concern, not a CI concern.
+      - name: Build (for sourcemap-names verify)
+        run: npm run build
+      - name: Verify sourcemap function names preserved
+        run: node scripts/verify-sourcemap-names.mjs
       # D-16 §4 — non-blocking supply-chain check. Promotable to blocking
       # once the launch-week advisory noise floor is understood.
       - name: npm audit (non-blocking)
