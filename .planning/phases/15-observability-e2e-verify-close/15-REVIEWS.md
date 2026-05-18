@@ -1,8 +1,8 @@
 ---
 phase: 15
-review_cycle: 2
+review_cycle: 3
 reviewers: [codex, gemini, coderabbit]
-reviewed_at: 2026-05-18T06:00:51Z
+reviewed_at: 2026-05-18T07:30:00Z
 plans_reviewed:
   - 15-01-PLAN.md
   - 15-02-PLAN.md
@@ -10,12 +10,12 @@ plans_reviewed:
   - 15-04-PLAN.md
   - 15-05-PLAN.md
 prior_cycle:
-  cycle: 1
-  reviewed_at: 2026-05-18T05:31:50Z
-  high_concerns_addressed: 2 # HIGH-1 grep self-collision; HIGH-2 useEffect unreachable
+  cycle: 2
+  reviewed_at: 2026-05-18T06:00:51Z
+  high_concerns_addressed: 1 # HIGH cycle-2 evidence-integrity (dual-capture race) — closed via beforeCapture tag + dashboard event_id == dataset ID cross-check
 unavailable_reviewers:
   - claude (self — running inside Claude Code CLI; skipped for independence)
-  - cursor (usage limit — same as cycle 1)
+  - cursor (usage limit — same as cycles 1 and 2; aborted with "You've hit your usage limit")
   - opencode (CLI not installed)
   - qwen (CLI not installed)
   - ollama (local server not running)
@@ -23,196 +23,231 @@ unavailable_reviewers:
   - llama_cpp (local server not running)
 ---
 
-# Cross-AI Plan Review — Phase 15 (Cycle 2)
+# Cross-AI Plan Review — Phase 15 (Cycle 3)
 
-Phase 15 — Observability + E2E Verify & Close — cycle-2 independent review by Codex, Gemini, and CodeRabbit. Cursor reviewer aborted due to usage limit (same as cycle 1); Claude skipped (self). All three responding reviewers produced substantive feedback; review proceeded as the gsd-review skill requires `at least one DIFFERENT CLI must be available`.
+Phase 15 — Observability + E2E Verify & Close — cycle-3 independent review by Codex, Gemini, and CodeRabbit. Cursor reviewer aborted due to usage limit (same as cycles 1+2); Claude skipped (self). All three responding reviewers produced substantive feedback; review proceeded as the gsd-review skill requires `at least one DIFFERENT CLI must be available`.
 
-The cycle-1 review surfaced two HIGH-severity blockers in Plan 01 (acceptance-grep self-collision; `Sentry.lastEventId()` surface unreachable because the app-level boundary unmounts `SmokePage`). The cycle-2 replan addressed both, plus the cycle-1 MEDIUM concerns (OBSV-05 per-message count strengthening, Netlify env-var pre-flight, Sentry release-name consistency, sentry-cli pinning) and the 14 CodeRabbit mechanical findings. This cycle-2 review evaluates whether those fixes hold.
+The cycle-2 review surfaced one new HIGH-severity evidence-integrity concern (Codex local probe): under React 19 `createRoot.onCaughtError` + `Sentry.dedupeIntegration()`, the local-boundary `onError`-surfaced event ID may not be the event Sentry actually persists, because Dedupe may drop the local-boundary capture in favor of the root-handler auto-capture (or vice versa). Cycle-3 replan (commit 8d50011) addressed this via:
+1. Plan 01 Task 2 — `beforeCapture={(scope) => scope.setTag('boundary', 'app-root')}` on the local `Sentry.ErrorBoundary` so whichever event Dedupe keeps still carries the canonical tag.
+2. Plan 04 Task 3 — mandatory dashboard `event_id == dataset ID` cross-check; both dataset and persisted IDs recorded with explicit `match: yes|no` status.
+
+Cycle-3 also addressed cycle-2 MEDIUMs (deprecated `releases files list` → preferred `sourcemaps list`; Netlify `--scope builds` filter; sentry-cli exact-pin resolution; per-message OBSV-05 count via Discover/Event Explorer) and LOWs (6→7 PNG count consistency; macOS timeout portability; tightened comment-archaeology grep; `unused-disable-directive` warning acknowledgement). This cycle-3 review evaluates whether those fixes hold.
 
 ---
 
 ## Codex Review
 
 **Summary**
-Cycle 2 resolves the Plan 01 grep self-collision, but I would not ship yet. The local `Sentry.ErrorBoundary` fixes the original `useEffect` unmount problem at the React boundary level, but it introduces a new evidence risk: with React 19 root `onCaughtError` plus `Sentry.dedupeIntegration()`, the event ID surfaced from the local boundary can be a dropped duplicate, while the persisted Sentry event is the root-handler event.
+Cycle 3 resolves the original evidence-integrity problem: the plan no longer treats the local boundary's surfaced ID as authoritative, and it requires the persisted Sentry event ID plus `boundary: app-root` confirmation. However, I would not execute this exact text yet. I found a few operator/plan-execution issues that are small to fix but material enough to justify a short Cycle 4 cleanup.
 
-**HIGH-1 / HIGH-2 Verdict**
-- **HIGH-1: RESOLVED.** The unscoped forbidden grep is explicitly forbidden, and the required OBSV string literals are excluded from the acceptance check.
-- **HIGH-2: PARTIALLY RESOLVED.** The local boundary should catch before the outer app boundary and keep `SmokePage` mounted, but the surfaced `eventId` is not reliably the persisted Sentry event ID under the existing root `onCaughtError` + Dedupe path.
+**HIGH-2 Verdict — RESOLVED**
+The `beforeCapture` tag on the local boundary plus the Plan 04 dashboard cross-check resolves the Cycle 2 HIGH. If Dedupe keeps the local boundary event, it now has `boundary: app-root`; if Dedupe keeps the React root `onCaughtError` event, that already has the same tag. Plan 04 correctly records both dataset and persisted IDs and uses the persisted ID as evidence.
+
+Residual edge: message-based fallback lookup should also require timestamp/window matching the just-fired smoke. Otherwise, a stale same-release event from an earlier retry could be mistaken for the current persisted event.
 
 **Strengths**
-- Plan 01 correctly preserves the legacy `?render=1` canary and prod-gate while adding distinct `?fire=render` / `?fire=dedupe` messages.
-- Installed `@sentry/react@10.53.1` does support `onError(error, componentStack, eventId)` on `Sentry.ErrorBoundary`.
-- Plan 02's fresh-build requirement before sourcemap-name verification is the right fix for stale `dist/`.
-- Plan 03's CI placement checks are much better scoped than cycle 1.
-- Plan 04 now has meaningful operator gates for Netlify env presence, Sentry release consistency, and post-capture evidence.
-- Plan 05's `completed_phases` read-then-increment approach is implementable against the current `STATE.md`.
+- Local boundary fixes the original unreachable `useEffect`/outer-boundary unmount problem.
+- Dataset ID is no longer treated as authoritative; persisted ID is explicitly recorded.
+- `--scope builds` is correctly added for `netlify env:list`.
+- Sentry CLI pinning is much better: lockfile-resolved `npx --no-install @sentry/cli`, fallback to exact package-lock version.
+- 7-PNG accounting is now consistent in Plans 04/05.
+- OBSV-05 count evidence now uses per-event Discover/Event Explorer rather than Issues grouping.
 
-**NEW Concerns Introduced**
-- **HIGH — Local boundary event ID can be non-authoritative.** I ran a local React 19 / Sentry 10.53 probe with the current root `onCaughtError` shape: the local boundary `onError` logged one event ID, but `beforeSend` only saw the root `auto.function.react.error_handler` event with a different ID and `boundary: app-root`. Plan 04's "matching captured ID OR matching message" can hide this and let final evidence record an ID that is not in Sentry. Fix by surfacing the accepted dashboard event ID, or by adding an event processor/beforeSend verifier and requiring dashboard `event_id == dataset ID`.
-- **MEDIUM — Local boundary does not tag its own capture.** If Dedupe ever keeps the local boundary capture instead of the root handler capture, the event may lack `boundary: app-root`. Add `beforeCapture={(scope) => scope.setTag('boundary', 'app-root')}` to the local boundary if it remains.
-- **MEDIUM — Sentry artifact verification may be on a deprecated surface.** Local `@sentry/cli@2.58.5` reports `releases files` as deprecated, while Sentry's current sourcemap model emphasizes Debug IDs/artifact bundles. Plan 04 should verify the upload via the sourcemap/debug-ID artifact surface, or explicitly justify legacy release-file listing.
-- **LOW — Plan 04/05 drift between six and seven PNGs.** Must-haves say seven artifacts, but several objective/action/output lines still say six. This can cause the new `sentry-obsv-05-counts.png` to be omitted from commit/evidence.
-- **LOW — `timeout 1800` is not portable on this macOS workspace.** `timeout` is absent here. Use a shell loop, `perl`, or document `gtimeout` fallback.
-- **LOW — The grep fix still misses some comment archaeology.** Both allowed grep forms can miss `const x = 'OBSV-03 render' // D-01` because the whole line is excluded or does not start with a comment marker.
-- **LOW — ESLint directive is syntactically valid but currently unused.** `no-console` is not enabled in this flat config, so the requested disable comment produces an unused-disable warning, though `eslint` still exits 0 today.
+**New Concerns**
+- **MEDIUM — Proposed `eslint-disable-next-line no-console` likely blocks commits.** `npm run lint` may exit 0 with an unused-disable warning, but this repo's pre-commit path runs `lint-staged` with `--max-warnings 0`. I verified the proposed directive fails under that mode. Remove the unused disable for now or explicitly bypass/adjust the hook; do not leave the plan saying it is harmless.
+- **MEDIUM — Netlify remediation command uses invalid flag form.** `netlify env:set --help` shows `--scope <scope...>`, not `--scopes`. The widening command should be `--scope builds functions runtime post-processing`, or the UI path should be preferred.
+- **MEDIUM — `sourcemaps list` is not supported by the lockfile CLI.** The repo resolves `@sentry/cli` to `2.58.5`; I verified `npx --no-install @sentry/cli sourcemaps list` errors with "unrecognized subcommand 'list'". The fallback is allowed, so not a blocker, but the plan should state that the current expected path is the deprecated `releases files ... list` fallback with justification unless a newer exact CLI/API surface is chosen.
+- **LOW — Plan 01 is internally inconsistent about `Sentry.lastEventId()`.** Must-haves say `Sentry.lastEventId()` is surfaced; Task 2 says no `lastEventId()` call is needed and uses the ErrorBoundary `eventId` arg. Pick one wording. The implementation should probably say "Sentry ErrorBoundary event ID" unless you intentionally call `Sentry.lastEventId()` inside `onError`.
+- **LOW — Comment-archaeology grep is still partly false-negative.** The "string-literal exclusion" grep would miss `const message = 'OBSV-03 render' // D-01` because the whole line is excluded. Require the comment-line-scope grep only.
+- **LOW — Sample code comment violates the plan's own source-comment rule.** The sample `beforeCapture` comment mentions `OBSV-03` inside `src/` code. Executor can avoid copying it, but the plan should not model forbidden comments.
 
-**Remaining Cycle-1 MEDIUM/LOW Concerns**
-- **Per-message OBSV-05 count: still not fully addressed.** Searching Sentry Issues for `message:"..."` and seeing `N=1` can prove one issue/group, not one event. Use Discover/Event Explorer or event ID lists with a timestamp-bounded query and verify exactly one event per message.
-- **Deploy-preview token scoping: partially addressed.** `netlify env:list --context deploy-preview` is a valid context filter, but these are build-time Sentry vars. Netlify docs show `--scope builds --context deploy-preview`; add `--scope builds` to avoid a false pass from vars scoped only to functions/runtime.
-- **Sentry CLI pinning: partially addressed.** `@sentry/cli@2` is not the current major as of May 2026, and a major range is not a real pin. Prefer the lockfile transitive `npx --no-install @sentry/cli` if intentionally using v2, or pin an exact tested version.
-- **Sentry release consistency: addressed.** `event.release == artifact.release == head_sha` is the right invariant, and it catches `SENTRY_RELEASE` override drift.
-- **ROADMAP Phase 14 row: addressed.** Current `.planning/ROADMAP.md` shows Phase 14 complete in the v1.3 progress table.
+**Carry-Forward Concern Status**
+- Acceptance-grep self-collision: **mostly addressed**, but the alternate string-literal exclusion still has the trailing-comment false-negative above.
+- Local boundary unreachable event ID: **addressed**.
+- Local boundary event ID non-authoritative: **addressed** via persisted-ID cross-check.
+- Netlify deploy-preview env scoping: **addressed for list**, but remediation command needs `--scope`, not `--scopes`.
+- Sentry CLI pinning: **addressed**.
+- Sentry artifact surface deprecation: **partially addressed**; fallback is valid, but current CLI makes fallback the expected path.
+- OBSV-05 per-event count: **addressed**.
+- 6→7 PNG drift: **addressed**.
+- macOS timeout portability: **addressed**.
+- Inline comment archaeology: **partially addressed**, because one accepted grep form still misses the inline case.
+- `no-console` unused-disable warning: **not fully addressed** because pre-commit treats warnings as fatal.
 
-**Risk Assessment**
-**HIGH for ship-readiness.** Runtime blast radius is low, but the evidence plan can produce misleading Sentry event IDs and weak Dedupe proof. I would run cycle 3 focused on Plan 01/04 evidence correctness before executing.
+**Risk Assessment — MEDIUM**
+The core Sentry evidence model is now sound. The remaining risk is execution reliability: a commit-hook blocker, one invalid Netlify CLI flag, and stale/unsupported Sentry CLI wording could derail the operator path.
 
-Sources checked: Netlify CLI env context/scope docs, Sentry CLI release/version page, and Sentry Debug IDs docs.
+**Recommendation — CYCLE 4**
+Do a small Cycle 4 text-only cleanup. No redesign needed: fix the `no-console` directive plan, correct Netlify `--scope`, make the Sentry CLI fallback explicit for `2.58.5`, tighten the grep, and align `lastEventId` wording. Then execute.
 
 ---
 
 ## Gemini Review
 
-The Cycle-2 replan for Phase 15 is a robust and highly technical response to the Cycle-1 blockers. It successfully transitions from speculative implementation to a concrete, evidence-driven verification framework. By moving the Sentry event ID capture to a local error boundary and refining the automated verification greps to prevent self-collision, the plan has eliminated the primary risks to execution.
+The **Phase 15 Cycle 3** implementation plans are **SHIPPING-READY**. This cycle successfully resolves the high-severity evidence-integrity concerns introduced by React 19's dual-capture behavior and significantly strengthens the verification protocols for Sentry and CI.
 
-### 1. Cycle-1 HIGH Verdicts
+### 1. HIGH-2 Verdict: RESOLVED
+The "Local boundary event ID can be non-authoritative" concern is fully addressed through a two-layered defense:
+- **Tag Invariant (Plan 01 Task 2):** By adding `beforeCapture` to the local `Sentry.ErrorBoundary` and mirroring the canonical `boundary: app-root` tag from `main.tsx`, the plan ensures that regardless of which event `Sentry.dedupeIntegration()` preserves (the local capture or the root auto-capture), the required tag is present.
+- **Operator Protocol (Plan 04 Task 3):** The manual verification instructions explicitly acknowledge that the surfaced dataset ID may be deduped. The mandatory "dashboard cross-check" protocol provides a reliable fallback (lookup by message + release + tag) to identify the persisted "survivor" event, ensuring evidence integrity.
 
-| ID | Title | Verdict | Justification |
-| :--- | :--- | :--- | :--- |
-| **HIGH-1** | Acceptance Grep Collision | **RESOLVED** | The use of `grep -v` (exclusion) and scoped comment-line greps ensures that the presence of the required strings in the code does not trigger a false failure in the "clean code" check. |
-| **HIGH-2** | Sentry ID Reachability | **RESOLVED** | Wrapping triggers in a local `Sentry.ErrorBoundary` and using the `onError` callback to write directly to the `document.body` dataset effectively bypasses the app-level unmounting issue. |
+### 2. Strengths
+- **Robust `sentry-cli` Pinning:** Plan 04 Task 4 implements a strict resolution order (lockfile-transitive → exact pinned version) that avoids the risks of `@latest` drift and CLI-flag changes within the `2.x` major range.
+- **Modern Sentry Surfaces:** The preference for `sourcemaps list` (artifact bundles) over the deprecated `releases files list` aligns with current Sentry best practices.
+- **Definitive Dedupe Proof:** The addition of `sentry-obsv-05-counts.png` using Sentry Discover/Event Explorer to confirm exactly **N=1 event** per distinct message provides empirical proof that the triple-handler path is correctly collapsing.
+- **Platform Portability:** Plan 04 Task 1 provides a shell-loop fallback for the `timeout` command, ensuring the CI-watch logic is portable to macOS (the operator's primary workstation).
 
-### 2. Plan Strengths
+### 3. New Concerns
+- **None (HIGH/MEDIUM/LOW):** The Cycle 3 changes are surgical and specifically targeted at previous review findings without introducing new regressions.
 
-- **Surgical Verification (Plan 01):** The local `ErrorBoundary` strategy is technically superior for "smoke testing" because it allows the test runner to stay on the page and verify state (`dataset.sentryEventId`) without needing to handle a full-page crash UI.
-- **Production Simulation (Plan 03):** The use of `env -u` to explicitly strip development environment variables during the CI build is an excellent "trust but verify" pattern that ensures the application doesn't have hidden dependencies on local secrets.
-- **Evidence Rigor (Plan 04):** Requiring a fourth screenshot for event counts and cross-referencing `release == artifact == sha` creates a high-integrity audit trail that prevents "false green" reports from stale Sentry data.
-- **State Integrity (Plan 05):** The programmatic increment of `completed_phases` using shell-based frontmatter parsing is much safer than manual hardcoding and demonstrates good maintenance of the `.planning/` metadata.
-
-### 3. NEW Concerns (Cycle-2)
-
-- **MEDIUM: `onError` Synchronicity and Render-Phase Throws.** While React 19 boundaries catch children, if the error happens during the *render* phase of the component itself, the local boundary must wrap the *caller* or a child that throws. Plan 01 places the boundary *inside* `SmokePage` wrapping the `RenderThrowSmoke` component. If `RenderThrowSmoke` throws during render, the `onError` of the boundary in `SmokePage` will fire. However, the plan should ensure that the `onError` callback correctly receives the `eventId` *before* any potential navigation or page-level fallback occurs.
-- **LOW: `env -u` Portability.** The `env -u` command is standard on Linux/macOS (GitHub runners), but if the developer attempts a local dry-run on a non-POSIX environment, it may fail.
-- **LOW: ESLint Flat Config syntax.** The plan assumes `eslint-disable-next-line` works for the `no-console` rule. This is standard, but if the project uses a highly customized flat config where `no-console` is handled via a different plugin or severity, the directive might be ignored.
-
-### 4. Remaining Cycle-1 Concerns (Unaddressed)
-
-- **NONE.** All HIGH, MEDIUM, and CodeRabbit mechanical findings from Cycle-1 appear to have been integrated into the Plan 01-05 sequence.
+### 4. Carry-Forward Concern Status
+- **MEDIUM-2 (Deprecated surface):** ADDRESSED. Plan 04 Task 4 prefers `sourcemaps list` and requires justification for the fallback.
+- **MEDIUM-4 (Issues count vs Event count):** ADDRESSED. Plan 04 Task 3 now requires Discover/Event-Explorer counts (N=1).
+- **MEDIUM-5 (Netlify env scope):** ADDRESSED. Plan 04 Task 2 uses the `--scope builds` filter.
+- **MEDIUM-6 (CLI Pinning):** ADDRESSED. Plan 04 Task 4 uses exact pins derived from `package-lock.json`.
+- **LOW-7 (PNG count drift):** ADDRESSED. Consistent 7-PNG accounting across all plans.
+- **LOW-8 (Timeout portability):** ADDRESSED. Shell loop fallback provided.
+- **LOW-10 (Grep archaeology):** ADDRESSED. Plan 01 Task 1/2 use a tightened grep that catches trailing inline comments.
+- **LOW-11 (Unused eslint-disable):** ADDRESSED. Acknowledged in Plan 01 Task 2 as an intentional, future-proof directive.
 
 ### 5. Risk Assessment: LOW
+The phase remains a verify-and-close phase with zero schema changes and zero production functional changes. The smoke harness is strictly gated by the existing `beforeLoad` production gate.
 
-The overall risk has been downgraded to **LOW**.
+### 6. Recommendation: EXECUTE
+The Cycle 3 plans hold a high standard for evidence quality and technical accuracy. I recommend proceeding with execution.
 
-The implementation phase is now focused on adding a single diagnostic route and a verification script. The heavy lifting is shifted to the "Evidence" phase (Plan 04), which is appropriately designated as non-autonomous (operator-led). This "Human-in-the-loop" approach for Sentry dashboard verification is the correct architectural choice for observability tasks that cannot be fully automated via standard CI hooks.
-
-### 6. Final Recommendations
-
-1. **Proceed to Execution (Wave 1):** Start Plan 15-01 and 15-02 in parallel.
-2. **Verify Sentry v10 `onError`:** During 15-01 execution, confirm that `@sentry/react` v10 (as used in the project) passes the `eventId` as the *third* argument to `onError`. (Standard Sentry docs confirm this, but a quick check of `node_modules` types is advised).
-3. **Netlify Pre-flight:** Pay close attention to the output of `netlify env:list --context deploy-preview` in Plan 04. If the variables are missing, do not proceed to Task 3, as the sourcemaps will fail to upload correctly.
+**Summary of 7 PNG Artifacts for Plan 05 Tracking:**
+1. `sentry-obsv-03-event.png`
+2. `sentry-obsv-04-stack.png`
+3. `sentry-obsv-05-dedupe.png`
+4. `sentry-obsv-05-counts.png` (N=1 Discover proof)
+5. `ci-test-14-pass.png`
+6. `ci-test-15-pass.png`
+7. `ci-test-16-pass.png`
 
 ---
 
 ## CodeRabbit Review
 
-CodeRabbit reviews the working tree directly (not via prompt) and produced 1 finding on the Phase 15 plan docs. Severity in CodeRabbit's taxonomy: `potential_issue` (minor — treated as LOW here). Finding reproduced verbatim:
+CodeRabbit reviews the working tree directly (not via prompt) against the diff vs `main`. CodeRabbit produced 3 findings on the Phase 15 cycle-3 working tree: 1 `potential_issue` (minor) on 15-CONTEXT.md status field staleness, 1 `potential_issue` (major) on Plan 02 regex tightening (Plan 02 was unchanged in cycle 3, so this is a carry-over from cycle 1's editorial sweep that was never landed in source — the cycle-2 review didn't pick it up because cycle-2 CodeRabbit scope was different), and 1 `nitpick` (trivial) on an unrelated test file initialization. Findings reproduced verbatim:
 
-### Finding 1 — 15-05-PLAN.md L45 (potential_issue / LOW — minor)
+### Finding 1 — 15-CONTEXT.md L3-5 (potential_issue / LOW — minor)
 
-In `.planning/phases/15-observability-e2e-verify-close/15-05-PLAN.md` at line 45, update the plan text to correct the artifact count from six to seven and ensure the renamed evidence file and commit instructions reflect committing seven PNGs: change the phrase "6 PNG artifacts" and "six committed PNGs" to "7 PNG artifacts" / "seven committed PNGs" where mentioned, update the rename step for `15-EVIDENCE-DRAFT.md` → `15-EVIDENCE.md` to include the frontmatter fields `status: closed` and `ci_run_url:`, and ensure the list of PNGs includes the new per-message-count screenshot `sentry-obsv-05-counts.png`; apply the same correction to both occurrences referenced in the plan.
+In `.planning/phases/15-observability-e2e-verify-close/15-CONTEXT.md` around lines 3-5, update the CONTEXT `Status:` field in the file so it reflects the current phase lifecycle instead of "Ready for planning" — open the .planning CONTEXT markdown, locate the Status: line and replace the stale value with an accurate lifecycle string such as "Planning in progress" or "Planning complete (2026-05-18)"; ensure the surrounding Gathered: and Status: markup remains intact and commit the change.
 
-(Note: this finding independently confirms Codex's LOW concern about 6-vs-7 PNG drift introduced by the OBSV-05 per-message-count screenshot being added in Plan 04 but the count not propagated cleanly into Plan 05.)
+(Note: this is a docs hygiene finding — CONTEXT.md's `Status: Ready for planning` is stale once Plans 01–05 exist. Not a ship blocker; cosmetic.)
+
+### Finding 2 — 15-02-PLAN.md L145-147 (potential_issue / MEDIUM — major)
+
+In `.planning/phases/15-observability-e2e-verify-close/15-02-PLAN.md` around lines 145-147, the current matcher builds `RegExp` using `\\bfunction ${name}\\b` which can match non-declaration text; update the RegExp construction so it requires the literal opening parenthesis after the function name (e.g., build `new RegExp("\\\\bfunction ${name}\\\\s*\\\\(")` or equivalent) and update the adjacent example inline comment (the resolved regex literal shown next to the ALLOWLIST example) to reflect the tightened pattern; ensure the logic that collects non-matches into `const missing` still uses this new RegExp so only real `function Name(` declarations pass.
+
+(Note: this is about Plan 02's `verify-sourcemap-names.mjs` regex matcher — without `\(` anchor after the name, a docstring or template literal containing the substring `function Foo` could yield a false PASS. Plan 02 was untouched in cycle 3 — this finding was missed in cycles 1+2 CodeRabbit sweeps. Material enough to escalate as MEDIUM since Plan 02 IS load-bearing for the OBSV-04 regression guard.)
+
+### Finding 3 — src/__tests__/admin/polls-effective-invariant.test.ts L23 (nitpick / LOW — trivial)
+
+In `src/__tests__/admin/polls-effective-invariant.test.ts` at line 23, restore the original defensive initialization for the test-local variable by initializing entries to an empty array (e.g., `let entries: string[] = []`) so the variable has a safe fallback; update the declaration of entries in the polls-effective-invariant.test to include the `= []` initializer to keep the test resilient to future changes.
+
+(Note: unrelated to Phase 15 — this is a diff artifact from the chore/deps branch we're on, not a Phase 15 plan finding. Tagged for awareness but explicitly out-of-scope for this review.)
 
 ---
 
 ## Consensus Summary
 
-Three independent reviewers converge on a "cycle-1 HIGH fixes hold" verdict, with **one cycle-2 divergence on HIGH-2's persistence as evidence integrity risk**:
+Three independent reviewers converge on a "cycle-2 HIGH evidence-integrity concern is RESOLVED" verdict — but **diverge on ship-readiness**:
 
-- **Gemini**: cycle-2 risk LOW, ready to execute. Both cycle-1 HIGHs fully resolved.
-- **Codex**: cycle-2 risk HIGH for ship-readiness, recommends cycle 3. HIGH-1 fully resolved; HIGH-2 partially resolved at the React boundary level but new HIGH evidence-integrity concern emerged.
-- **CodeRabbit**: 1 LOW mechanical finding (PNG count drift in Plan 05) — confirms Codex's parallel LOW concern.
+- **Gemini**: LOW risk, EXECUTE. All cycle-2 MEDIUM/LOW concerns addressed; no new findings.
+- **Codex**: MEDIUM risk, **CYCLE 4** (text-only cleanup, no redesign). HIGH-2 fully resolved, but three NEW MEDIUM-severity operator-path concerns surfaced via empirical probes against the actual environment:
+  1. `lint-staged` runs `eslint --max-warnings 0 --no-warn-ignored` on staged `.tsx` files (verified in `package.json`) — the proposed `eslint-disable-next-line no-console` directive emits an `unused-disable-directive` warning under the project's flat config (where `no-console` is NOT enabled) and will FAIL the commit hook, not just produce a `npm run lint` warning. Plan 01 Task 2 currently says "lint still exits 0" which is true for `npm run lint` but FALSE for `lint-staged --max-warnings 0`.
+  2. Plan 04 Task 2 remediation command uses `--scopes builds,functions,runtime,post-processing` (plural `--scopes`, comma-separated). Verified via `netlify env:set --help`: the flag is `--scope <scope...>` (singular, variadic, space-separated).
+  3. `@sentry/cli@2.58.5` (verified resolved version in `package-lock.json`) does NOT support `sourcemaps list` — only `inject`, `resolve`, `upload`, `help`. Plan 04 Task 4's "preferred" surface will fail; the operator hits the fallback (`releases files <release> list`, deprecated) every time. The plan should reframe so the fallback is the expected path and the artifact-bundle surface is only attempted if a future CLI bump enables `sourcemaps list`.
+- **CodeRabbit**: 1 MEDIUM/major (Plan 02 regex needs `\(` anchor — a carry-over Plan 02 finding that cycles 1+2 missed) + 1 LOW/minor (CONTEXT.md `Status:` is stale) + 1 LOW/trivial (unrelated test file from chore branch). CodeRabbit does NOT take a ship-readiness position; the regex finding is on Plan 02 which is otherwise unchanged in cycle 3.
 
-The source of divergence between Codex and Gemini: Codex ran a **local React 19 + `@sentry/react@10.53` probe** and observed that the local boundary's `onError` callback can surface an event ID that is NOT the event Sentry actually persists. The root `onCaughtError` (from `src/main.tsx`) fires its own auto-capture with the `boundary: app-root` tag and a DIFFERENT event ID, and `Sentry.dedupeIntegration()` can drop the local boundary's event as a duplicate. Gemini's review was high-level and didn't probe this code path. CodeRabbit doesn't take on this kind of semantic verification.
+The source of divergence between Codex and Gemini: **Codex ran empirical probes against the actual repository state** (`package.json` lint-staged config, `netlify env:set --help`, `npx --no-install @sentry/cli sourcemaps --help`) and observed concrete failure modes; Gemini reviewed the plan text as written and accepted its claims at face value. Codex's three NEW MEDIUMs are all reproducible findings against the current codebase, NOT speculative concerns.
 
 ### Agreed Strengths
 
-- **HIGH-1 (acceptance-grep self-collision): RESOLVED** by all three reviewers. The scoped grep formulations (comment-line scope OR string-literal exclusion) work, and the unscoped form is explicitly forbidden.
-- **HIGH-2 architectural switch from `useEffect` to local `Sentry.ErrorBoundary` with `onError(error, stack, eventId)`** is the right shape (Codex + Gemini agree). The local boundary keeps `SmokePage` mounted and writes the dataset synchronously.
-- **`env -u` over `VAR= ...`** for the unset-vs-empty-string probe in Plan 03 is the correct distinction (Gemini explicitly praises; Codex implicitly accepts).
-- **Per-message event-count screenshot** in Plan 04 strengthens OBSV-05 evidence (Gemini praises; Codex partially accepts but flags weakness).
-- **`event.release == artifact.release == head_sha` triple-check** in Plan 04 is the right invariant for catching `SENTRY_RELEASE` override drift (Codex confirms "addressed").
-- **Read-then-increment `completed_phases`** in Plan 05 Task 4 is implementable and prevents drift (Gemini + Codex agree).
+- **HIGH-2 (local-vs-root dual-capture race): RESOLVED** by both Gemini and Codex. The `beforeCapture` tag on the local boundary makes the tag invariant survive either Dedupe outcome; Plan 04 Task 3's dashboard `event_id == dataset ID` cross-check makes the persisted-event-id authoritative for evidence.
+- **Sentry-cli pinning resolution order** (lockfile-resolved transitive → exact `package-lock.json` version → NEVER `@latest`/major-range) is the right shape (Codex + Gemini agree on the form; Codex flags an issue with the surface name only).
+- **Netlify `--scope builds` filter on the READ side** (`netlify env:list --context deploy-preview --scope builds`) is correct (Codex + Gemini agree).
+- **Per-EVENT OBSV-05 count via Discover / Event Explorer** (NOT Issues search) is the right strengthening for proving the triple-handler path collapses to one persisted event per scenario (Codex + Gemini agree).
+- **7-PNG accounting consistent across Plan 04 and Plan 05** (Gemini explicitly confirms; CodeRabbit had no 6→7 finding this cycle, validating that the cycle-3 fix landed).
+- **macOS `timeout` portability** with `gtimeout` / GNU `timeout` / shell-loop fallback (Codex + Gemini agree).
 
 ### Agreed Concerns
 
-**HIGH (raised by 1 reviewer, with empirical backing — this is the cycle-2 ship blocker per Codex):**
+**MEDIUM (Codex empirical findings — these are the cycle-3 ship blockers):**
 
-1. **Local boundary's surfaced `eventId` may not be the authoritative Sentry-persisted event ID.** Under React 19's `createRoot.onCaughtError` (already wired in `src/main.tsx`) + `Sentry.dedupeIntegration()`, the root handler fires its own auto-capture with `boundary: app-root` tag — the local `Sentry.ErrorBoundary`'s `onError(eventId)` may then surface a duplicate event that Dedupe drops. Final evidence could record an event ID that is NOT findable in the Sentry dashboard. (Codex HIGH, empirically probed; Gemini implicit MEDIUM about onError synchronicity.)
+1. **`lint-staged` `--max-warnings 0` fails on `unused-disable-directive` warning.** The proposed `// eslint-disable-next-line no-console -- intentional eventId surface for smoke verifier` directive in Plan 01 Task 2 is currently a no-op (because `eslint.config.js` doesn't enable `no-console`); ESLint emits an `unused-disable-directive` WARNING. The project's pre-commit hook runs `eslint --max-warnings 0 --no-warn-ignored` on staged `.tsx` files, so the warning will FAIL the commit. Plan 01 Task 2's claim that "lint still exits 0 today" is true for `npm run lint` but FALSE for the actual commit path. **Fix options (Codex suggestion):**
+   - Remove the disable directive entirely (since `no-console` isn't enabled, the bare `console.log` lints clean), OR
+   - Enable `no-console` project-wide in `eslint.config.js` so the disable directive becomes load-bearing instead of unused, OR
+   - Use `// eslint-disable-next-line @typescript-eslint/no-explicit-any` or another genuinely-enforced rule that the line ALSO triggers (none currently fits), OR
+   - Configure `lint-staged` to allow `unused-disable-directive` warnings (project-wide config change, lowest preference).
+   The simplest fix: **remove the disable directive** (the WHY-comment above the `console.log` still satisfies the "intentional smoke verifier" rationale).
 
-   **Fix options** (Codex suggestion):
-   - Surface the accepted Sentry event ID via a `beforeSend` hook that writes to `document.body.dataset.sentryEventId` only when Sentry decides to keep the event, OR
-   - Verify dashboard `event_id == dataset ID` as part of Task 3's manual checkpoint and STOP if mismatched, OR
-   - Use `beforeCapture={(scope) => scope.setTag('boundary', 'app-root')}` on the local boundary so whichever event survives Dedupe still carries the canonical tag.
+2. **Plan 04 Task 2 remediation uses invalid `--scopes` flag form.** The CLI flag is `--scope <scope...>` (singular, variadic, space-separated). The plan currently shows `--scopes builds,functions,runtime,post-processing` which `netlify env:set` will not accept. **Fix:** change to `--scope builds functions runtime post-processing` (space-separated, singular flag name), or recommend the UI path as primary.
 
-**MEDIUM (Codex):**
+3. **Plan 04 Task 4 preferred surface (`sourcemaps list`) is unsupported by `@sentry/cli@2.58.5`.** The lockfile-resolved CLI has subcommands `inject`, `resolve`, `upload`, `help` — no `list`. The "preferred" path fails with "unrecognized subcommand 'list'" and the operator falls through to the deprecated `releases files <release> list` fallback every time. **Fix options (Codex suggestion):**
+   - Reframe Plan 04 Task 4 so the deprecated `releases files list` IS the expected path under `@sentry/cli@2.x` (with a recorded deprecation note + justification), AND `sourcemaps list` is documented as the FUTURE preferred path once `@sentry/cli` ships `sourcemaps list` (Sentry has signalled this for a future major), OR
+   - Add a runtime check that probes `npx --no-install @sentry/cli sourcemaps --help` and selects the surface based on what's actually available, OR
+   - Bump `@sentry/cli` to a version that supports `sourcemaps list` (Codex did not verify whether any 2.x supports it; out-of-scope for this review).
 
-2. **Sentry artifact verification may target a deprecated CLI surface.** `@sentry/cli@2.58.5` reports `releases files <release> list` as deprecated; Sentry's current sourcemap model is Debug IDs / artifact bundles. Plan 04 Task 4 Step 1 should verify upload via the artifact-bundle surface OR explicitly justify the legacy release-file listing.
+**LOW (Codex + CodeRabbit):**
 
-3. **Local boundary does not tag its own capture.** If Dedupe ever drops the root handler's event and keeps the local boundary's, the surviving event lacks `boundary: app-root` and OBSV-03's tag-presence acceptance criterion fails. Add `beforeCapture={(scope) => scope.setTag('boundary', 'app-root')}` to the local boundary for robustness.
+4. **Plan 02 regex matcher needs `\(` anchor (CodeRabbit MEDIUM/major).** `\\bfunction ${name}\\b` matches non-declaration text (e.g., `function Foo` inside a string literal or docstring). Tighten to `new RegExp("\\\\bfunction " + name + "\\\\s*\\\\(")` so only literal `function Name(` declarations are accepted. Plan 02 was untouched in cycle 3 — this finding was missed in cycles 1+2 CodeRabbit sweeps. It's a Plan 02 robustness concern, not a Plan 01/04/05 concern; can be fixed in cycle 4 or as a small Plan 02 edit before execution.
 
-4. **Per-message OBSV-05 count via `message:"..."` Sentry Issues search proves one issue/group, not one event.** Use Discover/Event Explorer or event-ID lists with a timestamp-bounded query to verify exactly one event per message.
+5. **Plan 01 internal inconsistency: `Sentry.lastEventId()` vs ErrorBoundary `eventId` arg.** Plan 01 must-haves say `Sentry.lastEventId()` is surfaced; Plan 01 Task 2 says no `lastEventId()` call is needed because the ErrorBoundary `onError(eventId)` arg suffices. The two statements describe the same value (Sentry's last captured event ID at the moment the boundary catches), but the wording inconsistency is real. **Fix:** rewrite the must-have line to "the ErrorBoundary-supplied `eventId` is surfaced both via console.log AND on document.body.dataset.sentryEventId" (matching Task 2's actual implementation). The `Sentry.lastEventId()` API reference can stay in `<interfaces>` for context.
 
-5. **Netlify deploy-preview env scoping needs `--scope builds`.** `netlify env:list --context deploy-preview` is a valid context filter, but Sentry build-time vars are scoped to `builds`. Plan 04 Task 2 Path A should use `netlify env:list --context deploy-preview --scope builds` to avoid a false pass from vars scoped only to functions/runtime.
+6. **Plan 01 sample `beforeCapture` arrow body contains a comment that violates the source-comment rule.** Lines 200–203 of Plan 01 show:
+   ```ts
+   beforeCapture={(scope) => {
+     // Canonical tag mirrors src/main.tsx Sentry.ErrorBoundary's tag so whichever
+     // event Sentry.dedupeIntegration() keeps (this local capture OR the root
+     // onCaughtError auto-capture) still carries `boundary: app-root` —
+     // OBSV-03's tag-presence acceptance criterion holds either way.
+     scope.setTag('boundary', 'app-root')
+   }}
+   ```
+   The reference to `OBSV-03's tag-presence acceptance criterion` is plan-archaeology. If an executor copies this comment verbatim into `src/routes/[__smoke].tsx`, it will be flagged by the plan's OWN comment-archaeology grep (line 248: `grep -nE "Phase 15|OBSV-0[345]|D-0[1-9]|D-1[0-6]" src/routes/\\[__smoke\\].tsx`). **Fix:** rewrite the sample comment to be plan-ID-free, e.g., "Canonical tag mirrors `src/main.tsx`'s root boundary so whichever capture Dedupe keeps carries the tag — render-throw / dedupe smoke evidence stays consistent."
 
-6. **`@sentry/cli@2` is not a real pin.** `@2` is a major range; sentry-cli has had CLI-flag changes within `2.x`. Prefer `npx --no-install @sentry/cli` (transitive from `@sentry/vite-plugin`'s lockfile entry) or pin an exact tested version.
+7. **Comment-archaeology grep "string-literal exclusion" form is still false-negative on trailing-comment lines.** A line like `const message = 'OBSV-03 render' // D-01` is excluded entirely by `grep -v "'OBSV-03 render'"` because the whole line is excluded. Plan 01 Task 1+2 offer this form as an alternative to the comment-line-scope grep. **Fix:** drop the string-literal exclusion form; require the comment-line-scope grep (which catches both `^\s*//` AND inline ` // ` patterns per the cycle-3 tightening).
 
-**LOW (Codex + CodeRabbit + Gemini, ≥2 reviewers on item 7):**
+**LOW (CodeRabbit):**
 
-7. **6-vs-7 PNG count drift between Plan 04 and Plan 05.** Plan 04 added `sentry-obsv-05-counts.png` (raising total to 7) but Plan 05 still references "6 committed PNGs" / "six committed PNGs" in must-haves frontmatter and several body sections. Confirmed by both Codex and CodeRabbit independently.
-
-8. **`timeout 1800 gh run watch ...` is not portable on macOS.** `timeout` is absent on stock macOS; the operator either needs `gtimeout` (Homebrew coreutils) or a shell loop / `perl` fallback. Plan 04 Task 1 Step 6 should document this.
-
-9. **`env -u` portability.** Standard on POSIX (Linux/macOS), absent on Windows. Plan 03 Task 1 should note the Windows fallback (`Remove-Item Env:VAR`) — Plan already mentions this once but should emphasize.
-
-10. **The scoped grep formulations in Plan 01 can miss inline-comment archaeology.** A line like `const x = 'OBSV-03 render' // D-01` is excluded entirely by the string-literal exclusion form (because the `grep -v` strips the whole line), and is not caught by the comment-line scope form (because the line doesn't start with `//`). (Codex LOW.)
-
-11. **`eslint-disable-next-line no-console -- intentional ...` is syntactically valid but the project's flat config has no `no-console` rule enabled.** The directive produces an unused-disable warning, not an error, today — but if `no-console` is ever enabled, the directive becomes load-bearing. Plan 01 Task 2 currently treats this as load-bearing already (which is fine, just slightly aspirational). (Codex LOW.)
-
-12. **`@sentry/react` v10 `onError(eventId)` synchronicity in render-phase throws.** Gemini flags this as a MEDIUM to "verify during 15-01 execution"; Codex's probe suggests the surfaced eventId IS delivered but it may not be the persisted one — different concern. Plan 01's acceptance criteria already include the manual DevTools verification step.
+8. **15-CONTEXT.md `Status: Ready for planning` is stale.** Plans 01–05 already exist; update to `Planning complete (2026-05-18)` or equivalent lifecycle marker. Cosmetic; not a ship blocker.
 
 ### Divergent Views
 
-- **HIGH-2 status (Codex PARTIAL vs Gemini RESOLVED).** Codex's local probe vs Gemini's high-level inspection. Source of divergence: Codex tested with real `@sentry/react@10.53` + React 19 root `onCaughtError` and observed event-ID divergence between the local boundary and the persisted event; Gemini didn't run the probe. **The Codex framing is more rigorous and is the framing this cycle should adopt — the local boundary fixes the unreachability problem (`useEffect` never runs) but introduces a new evidence-integrity problem (the surfaced ID may not be the persisted one).**
-- **Overall risk (Codex HIGH for ship vs Gemini LOW).** Codex wants cycle 3 focused on Plan 01/04 evidence correctness; Gemini says proceed to execution.
-- **CodeRabbit's reduction from 14 findings (cycle 1) to 1 finding (cycle 2)** confirms the editorial sweep was effective — only the 6-vs-7 PNG drift slipped through.
+- **Ship-readiness (Codex CYCLE 4 vs Gemini EXECUTE).** Codex's empirical probes against the actual repository state (`package.json`, `netlify env:set --help`, `npx @sentry/cli sourcemaps --help`) surface three concrete failure modes in the operator path that Gemini's plan-text review didn't probe. None require a redesign — the cycle-2 HIGH evidence-integrity concern IS fully resolved by the cycle-3 `beforeCapture` + dashboard cross-check — but the operator instructions as written will hit invalid CLI flags and a blocking commit hook. **The Codex framing is more rigorous and is the framing this cycle should adopt** — cycle 3 needs a small text-only cleanup before execution, not a redesign.
+- **Plan 02 regex (CodeRabbit MEDIUM/major).** Independent of the cycle-3 changes. Plan 02 was untouched in cycle 3. This finding should be folded into cycle 4 or addressed as a separate small Plan 02 edit.
 
 ### Suggested Pre-Execution Fixes (Ranked)
 
-Highest leverage first — addresses HIGH/MEDIUM concerns:
+Highest leverage first — addresses MEDIUM concerns:
 
-1. **Resolve the local-boundary event-ID authority question** (Codex HIGH). One of three paths:
-   - **(Preferred)** Add `beforeCapture={(scope) => scope.setTag('boundary', 'app-root')}` to the local `Sentry.ErrorBoundary` in Plan 01 Task 2 — so whichever event Dedupe keeps still carries the canonical tag. This is a one-line change that survives both Dedupe paths.
-   - Add a Plan 01 Task 2 manual verification step: open Sentry dashboard, confirm the event whose `event_id` matches `document.body.dataset.sentryEventId` actually exists. If not, the local boundary's event was dropped and the persisted event has a different ID — surface BOTH or use `beforeSend` to capture the persisted one.
-   - Replace the local-boundary surfacing strategy with a `beforeSend` hook in `src/main.tsx` that writes the persisted event_id to the dataset only on a `boundary: app-root` event. (Larger change; touches main.tsx; risks the broader app surface.)
-2. **Strengthen OBSV-05 per-message count to use Discover/Event Explorer event-ID lists** instead of Sentry Issues search (Codex MEDIUM).
-3. **Add `--scope builds` to Plan 04 Task 2 Path A `netlify env:list` invocation** (Codex MEDIUM).
-4. **Pin `@sentry/cli` to a lockfile-resolved exact version** (Codex MEDIUM). Use `npx --no-install @sentry/cli --version` to discover the resolved version; record that version literally in Plan 04 Task 4.
-5. **Re-evaluate Sentry `releases files list` for deprecation** (Codex MEDIUM). Either justify legacy use in the plan or switch to artifact-bundle/debug-ID surface.
-6. **Fix the 6-vs-7 PNG count drift in Plan 05** (CodeRabbit + Codex LOW). Search-and-replace `six committed PNGs` → `seven committed PNGs` and update the artifact list to include `sentry-obsv-05-counts.png`.
-7. **Add macOS `timeout` portability note** to Plan 04 Task 1 Step 6 (Codex LOW).
-8. **Tighten the comment-archaeology grep** to also catch `// D-NN` trailing on a code line with a load-bearing literal (Codex LOW).
+1. **Remove the `eslint-disable-next-line no-console` directive from Plan 01 Task 2** (Codex MEDIUM #1). The `console.log` is already clean under the current flat config (no `no-console` rule enabled); the directive only adds a warning that fails `lint-staged --max-warnings 0`. WHY-comment above the `console.log` is sufficient to satisfy "intentional smoke verifier" rationale. Update the acceptance grep accordingly.
+2. **Fix Plan 04 Task 2 widening command to `--scope <scope...>` (singular, variadic, space-separated)** (Codex MEDIUM #2). Change `--scopes builds,functions,runtime,post-processing` → `--scope builds functions runtime post-processing` everywhere it appears.
+3. **Reframe Plan 04 Task 4 so the deprecated `releases files list` IS the expected path under `@sentry/cli@2.x`** (Codex MEDIUM #3). Keep the resolution-order logic, but flip the preference: under `@sentry/cli@2.58.5` (verified lockfile resolution), `sourcemaps list` is not a subcommand — record the deprecation note + justification for using `releases files list`, and document `sourcemaps list` as the FUTURE preferred path once `@sentry/cli` ships `sourcemaps list` (or upgrade `@sentry/cli` in a separate phase).
+4. **Tighten Plan 02 regex matcher to require `\(` after the function name** (CodeRabbit MEDIUM). `new RegExp("\\\\bfunction " + name + "\\\\s*\\\\(")` or equivalent — prevents string-literal false-positives in the OBSV-04 build-time gate. Folds into cycle 4 as a Plan 02 edit.
+5. **Drop the string-literal-exclusion grep form** in Plan 01 Task 1+2 (Codex LOW #7); require the comment-line-scope grep only.
+6. **Rewrite the Plan 01 sample `beforeCapture` arrow body comment** to be plan-ID-free (Codex LOW #6); the sample should not model forbidden comment patterns.
+7. **Align Plan 01 wording on `Sentry.lastEventId()` vs ErrorBoundary `eventId`** (Codex LOW #5); rewrite the must-have line to describe the ErrorBoundary-supplied eventId.
+8. **Update 15-CONTEXT.md `Status:` to `Planning complete`** (CodeRabbit LOW). Cosmetic.
 
-Items 1, 2, 3 are evidence-correctness blockers per Codex's HIGH framing. Items 4-8 are quality-of-life upgrades.
+Items 1, 2, 3 are operator-path blockers per Codex's MEDIUM framing. Item 4 is a Plan 02 robustness upgrade. Items 5–8 are quality-of-life upgrades.
 
-### Cycle-2 Net Assessment
+### Cycle-3 Net Assessment
 
-The cycle-1 HIGH-1 (grep self-collision) is fully resolved. The cycle-1 HIGH-2 (event-id surface unreachable) is structurally resolved at the React boundary level — but Codex's local probe surfaced a new HIGH-severity evidence-integrity concern that is materially the same blast radius: the surfaced event ID may not be the one Sentry persists. The mitigation is small (a `beforeCapture` tag on the local boundary, or a dashboard cross-check in Task 3) but it has not landed yet.
+The cycle-2 HIGH evidence-integrity concern (local-vs-root dual-capture race) is **fully resolved**. Both reviewers (Gemini + Codex) explicitly agree: the `beforeCapture` tag invariant makes the `boundary: app-root` acceptance criterion survive either Dedupe outcome, and the Plan 04 Task 3 dashboard cross-check makes the persisted event ID authoritative for evidence. No HIGH-severity concerns remain.
 
-Gemini's "proceed to execution" verdict is defensible if the cycle-2 plan is treated as "behaviorally correct, evidence may have a known weakness that's caught in manual verification." Codex's "run cycle 3" verdict is defensible if the cycle-2 plan is treated as "evidence integrity is load-bearing for this verify-and-close phase and the known weakness should be eliminated before execution."
+However, **three NEW MEDIUM-severity operator-path concerns emerged from Codex's empirical probes against the actual repository state**:
+- `lint-staged --max-warnings 0` blocks commits on the proposed `eslint-disable-next-line no-console` unused-disable warning.
+- `netlify env:set` uses `--scope <scope...>` (variadic), NOT `--scopes <csv>`.
+- `@sentry/cli@2.58.5` does not support `sourcemaps list` — the "preferred" Plan 04 Task 4 surface always falls through to the deprecated fallback.
 
-The convergence loop should run one more cycle (cycle 3) to either:
-- Land the `beforeCapture` tag + per-event-ID dashboard cross-check in Plan 01 Task 2 (Codex's preferred fix), AND
-- Land the `--scope builds` + lockfile-pin + PNG-count + Discover/event-list strengthenings in Plan 04/05.
+Plus 1 MEDIUM/major from CodeRabbit on Plan 02 (regex needs `\(` anchor — Plan 02 was untouched in cycle 3 so this is a carry-over).
 
-OR explicitly accept the residual risk and proceed (Gemini's framing), documenting the known weakness in `15-CONTEXT.md` deferred-ideas section.
+**Recommended path forward:** run cycle 4 as a small text-only cleanup. No HIGH-severity replan required. The cycle-2 HIGH fix is durable; the cycle-3 MEDIUMs are all "the operator command doesn't work" issues that resolve with copy edits.
+
+Alternatively, accept Codex's MEDIUMs as known-but-tolerable operator papercuts and proceed to execution with the executor noting the corrections inline during Plan 01/04 execution (Gemini's implicit framing). This is defensible if execution will be hands-on and the operator will recognize and fix the invalid flags / unsupported subcommand on the fly. But it shifts risk from planning to execution, against the project's stated preference for "plan-driven execution" (per ROADMAP/PROJECT.md).
+
+The convergence loop should run one more cycle (cycle 4) to land the text-only corrections, then proceed to execution with cycle 4 as the final plan revision.
