@@ -135,7 +135,13 @@ Plans:
   3. `npm run test:e2e` (or equivalent CI invocation) exits 0 with `admin-create.spec.ts`, `browse-respond.spec.ts`, and `filter-search.spec.ts` all reporting PASSED — no skips, no failures on these three specs
   4. GitHub issues #11, #12, #13, #17, and #19 are all in Closed state on the repository
 
-**Plans**: TBD
+**Plans**: 5 plans
+Plans:
+- [ ] 15-01-PLAN.md — Smoke harness extension to /__smoke route (two distinct render-phase throw triggers + Sentry.lastEventId() surface)
+- [ ] 15-02-PLAN.md — scripts/verify-sourcemap-names.mjs (zero-dep Node ESM allowlist guard for keepNames: true)
+- [ ] 15-03-PLAN.md — Wire verify-sourcemap-names into CI lint-and-unit job (build + verify steps)
+- [ ] 15-04-PLAN.md — Manual smoke verification on Netlify preview + CI evidence capture (6 PNGs + draft EVIDENCE)
+- [ ] 15-05-PLAN.md — Merge PR (auto-close 5 issues), finalize EVIDENCE.md post-merge, post per-issue closure comments
 **UI hint**: no
 
 ---
@@ -198,7 +204,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 14. Security-Definer Search-Path Migration | 0/TBD | Not started | - |
-| 15. Observability + E2E Verify & Close | 0/TBD | Not started | - |
+| 15. Observability + E2E Verify & Close | 0/5 | Not started | - |
 | 16. UIDN-02 Aggressive Perf-Budget Pass | 0/TBD | Not started | - |
 | 17. Planning-Doc + UI Hygiene Sweep | 0/TBD | Not started | - |
 

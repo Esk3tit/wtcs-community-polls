@@ -503,32 +503,37 @@ The existing `RenderThrowSmoke.tsx` already throws `'RenderThrowSmoke: deliberat
 | A7 | Sentry `tracesSampleRate: 0.1` does NOT affect error captures (only transactions/spans). | Common Pitfalls / Pitfall 8 | LOW — this is standard Sentry SDK semantics, but the planner may want to confirm against the current `@sentry/react` 10.49.0 changelog during plan execution. |
 | A8 | The planner has discretion on whether to repurpose `RenderThrowSmoke.tsx` for the OBSV-03 message or add new components. | Code Examples | LOW — both forms satisfy D-02. Recommendation favors adding new components to preserve the existing canary's v1.0 contract. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should the verify-sourcemap-names.mjs allowlist include component names from generated route modules (e.g., `IndexPage`, `LandingPage`, `AdminTab`)?**
    - What we know: Phase 7 baseline lists 59 unique 5+-char PascalCase identifiers in names[], including `IndexPage`, `LandingPage`, `AdminTab` etc.
    - What's unclear: whether locking the allowlist to top-level shell components (`App`, `ConsentProvider`, `AuthGate`, `AdminGuard`, `RenderThrowSmoke`) is sufficient regression coverage, or whether broader coverage adds value.
    - Recommendation: start with D-06's seed list of five. Broader coverage can be added later if a regression slips through.
+   - RESOLVED: Plan 02 Task 1 cross-checks the D-06 seed allowlist against a fresh Phase 15 `npm run build` before the script is written; replacements (if any) are documented with rationale in the Task 1 chat output and frozen as the final ALLOWLIST in Plan 02 Task 2.
 
 2. **If `sentry-cli releases files <release> list` returns an empty list, is that an OBSV-04 fail, or a verifier-environment fail (auth token / org / project slug wrong)?**
    - What we know: empty list could mean (a) source-map upload didn't run on the preview build (token absent, plugin disabled), or (b) wrong SHA queried, or (c) wrong org/project.
    - What's unclear: how to disambiguate quickly.
    - Recommendation: the planner's evidence step should include a "smoke-check the auth" sub-step: `npx @sentry/cli@latest info` (lists configured org/project) BEFORE the `files list` call. Document the disambiguation tree in 15-EVIDENCE.md.
+   - RESOLVED: Folded into Plan 04 Task 3 acceptance criteria as an explicit disambiguation tree — if `sentry-cli releases files <sha> list` returns empty, the operator first re-runs the Plan 04 Task 2 pre-flight Netlify env check; if env is OK, retries with explicit `--org` and `--project` flags; if still empty, captures the full error output to `15-EVIDENCE-DRAFT.md` and treats it as a blocker for issue closure.
 
 3. **Does the deploy-preview Netlify environment set `SENTRY_AUTH_TOKEN` correctly so sourcemap upload actually runs?**
    - What we know: `vite.config.ts` passes `authToken: process.env.SENTRY_AUTH_TOKEN` to the plugin. If unset, the plugin's `bundler-plugin-core` short-circuits the upload silently.
    - What's unclear: whether Netlify's deploy-preview context inherits the production-context env vars (Netlify treats preview, branch, and production contexts separately).
    - Recommendation: planner adds a pre-flight check to the playbook: confirm in Netlify UI that `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` are set for "Deploy previews" context (not just "Production"). If they are NOT, the deploy-preview build will skip sourcemap upload and OBSV-04(b) cannot be proved.
+   - RESOLVED: Plan 04 Task 2 (new pre-flight task) explicitly verifies `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, and `SENTRY_PROJECT` are set for the deploy-preview context via `netlify env:list --context deploy-preview` (or Netlify UI Environment variables → "Deploy previews" scope) BEFORE the operator runs sentry-cli in Task 3. Remediation guidance (set var in Netlify, wait for next deploy-preview build, retry) is in the task action.
 
 4. **Does the `e2e` CI job's `--grep @smoke` regex have any false positives that would inflate the per-spec evidence?**
    - What we know: as of `main` HEAD, only the three target specs + any other `[@smoke]`-tagged specs run. `e2e/tests/` count: planner can confirm with `grep -l '@smoke' e2e/tests/`.
    - What's unclear: whether the post-merge CI run will pick up additional `@smoke` specs that didn't exist at research time.
    - Recommendation: D-10 mandates capturing PASS lines BY NAME for the three target specs. Other `@smoke` specs running alongside is fine — Phase 15 only certifies these three.
+   - RESOLVED: Plan 04 Task 3 Step 2 names the three target specs verbatim (`admin-create.spec.ts`, `browse-respond.spec.ts`, `filter-search.spec.ts`) and captures PASS-line text by spec name; any additional `@smoke` specs in the post-merge run are ignored as out-of-scope for Phase 15 evidence.
 
 5. **What's the canonical syntax for the per-issue closure comment (D-16) — does the project have a style precedent?**
    - What we know: closure directory (`.planning/closure/`) contains `OBSV-02-bundle-delta.md`, `UIDN-02-mobile-evidence.md`, `UIDN-03-shadcn-audit.md` — these are evidence files, not issue-close-comment templates.
    - What's unclear: whether existing closed issues have a recurring comment shape.
    - Recommendation: planner runs `gh issue list --state closed --limit 10` and inspects the most-recent close comments for style. Likely shape: `Closed by Phase 15 (PR #N). Evidence: <link to 15-EVIDENCE.md#anchor>.` Short and link-driven.
+   - RESOLVED: Plan 05 Task 3 locks the closure-comment shape to `Closed by Phase 15 PR — see evidence: <base-url>#<anchor>` (short, link-driven, one comment per closed issue). Operator clicks each link in Step 6 to verify anchor resolution and edits via `gh issue comment <N> --edit-last` on slug mismatch.
 
 ## Environment Availability
 
