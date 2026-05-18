@@ -36,6 +36,17 @@ export default defineConfig([
     },
   },
   {
+    // Smoke route intentionally logs the Sentry event ID to DevTools console
+    // for human verifiers. Enable no-console here so the eslint-disable-next-line
+    // directive in the file is not flagged as unused under --max-warnings 0.
+    // Brackets must be escaped (\\[) — otherwise ESLint glob treats [__smoke]
+    // as a character class and the pattern never matches the file.
+    files: ['src/routes/\\[__smoke\\].tsx'],
+    rules: {
+      'no-console': 'warn',
+    },
+  },
+  {
     files: ['e2e/tests/**/*.spec.ts'],
     rules: {
       // E2E-SCOPE-1: list locators on the shared E2E DB drift unless they
