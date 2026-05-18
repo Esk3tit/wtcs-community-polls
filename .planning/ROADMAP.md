@@ -203,8 +203,8 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 14. Security-Definer Search-Path Migration | 0/TBD | Not started | - |
-| 15. Observability + E2E Verify & Close | 0/5 | Not started | - |
+| 14. Security-Definer Search-Path Migration | 1/1 | Complete | 2026-05-17 |
+| 15. Observability + E2E Verify & Close | 0/5 | Planned | - |
 | 16. UIDN-02 Aggressive Perf-Budget Pass | 0/TBD | Not started | - |
 | 17. Planning-Doc + UI Hygiene Sweep | 0/TBD | Not started | - |
 
@@ -213,4 +213,4 @@ Plans:
 | v1.0 | 1–6 | 32/32 | ✅ Shipped | 2026-04-28 |
 | v1.1 | 7–10 | 16/16 | ✅ Shipped | 2026-05-11 |
 | v1.2 | 11–13 | 17/17 | ✅ Shipped | 2026-05-14 |
-| v1.3 | 14–17 | 0/TBD | 🔄 In progress | - |
+| v1.3 | 14–17 | 1/TBD | 🔄 In progress | - |
