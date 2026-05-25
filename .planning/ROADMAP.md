@@ -61,7 +61,7 @@ Full v1.2 phase details (goals, plans, decisions, wave structure, success criter
 ### v1.3 — Hygiene & Performance (Phases 14–17)
 
 - [x] **Phase 14: Security-Definer Search-Path Migration** (1/1 plan) — Migration 14 hardens the 6 user-owned pre-Phase-11 `SECURITY DEFINER` functions with `SET search_path = ''` (rls_auto_enable carved out per W0 finding as Supabase-managed); unconditionally drops stale 3-param `update_profile_after_auth` overload; `supabase db lint --linked` shows zero `0011` WARNs post-deploy; smoke vote round-trip on polls.wtcsmapban.com PASS. is_current_user_admin body-identical diff PASS via machine-enforced pre-vs-post pg_get_functiondef compare. Direct SQL regression fixture added for is_current_user_admin (4 identity branches + 2 audit_log RLS branches).
-- [ ] **Phase 15: Observability + E2E Verify & Close** - Smoke-verify Sentry React 19 ErrorBoundary render-phase capture + Rolldown sourcemap function names on deploy preview; confirm Playwright specs for issues #11/#12/#13 pass in CI; close GitHub issues #11, #12, #13, #17, #19
+- [x] **Phase 15: Observability + E2E Verify & Close** (5/5 plans) — Smoke harness landed at `/__smoke?fire=render|dedupe` with local `Sentry.ErrorBoundary` + `beforeCapture` `boundary: app-root` invariant (Plan 01); `scripts/verify-sourcemap-names.mjs` zero-dep build-time `keepNames: true` regression guard + CI `lint-and-unit` wiring (Plans 02, 03); operator-driven evidence capture: 4 Sentry PNGs + 3 CI PASS PNGs + `15-EVIDENCE.md` (Plan 04 — sentry-cli output captured via v3 `releases info` after plan-defect deviation documented; Discover unavailable on free plan, per-issue Events filter fallback used); merge PR #35 auto-closed all 5 GitHub issues #11, #12, #13, #17, #19 with per-issue evidence-anchor closure comments (Plan 05). Shipped 2026-05-25.
 - [ ] **Phase 16: UIDN-02 Aggressive Perf-Budget Pass** - Bundle audit → PostHog lazy-load (~180–200 KB off critical path) → `manualChunks` → WebP logo → `defaultPreload: 'intent'` → single Lighthouse mobile rerun; accept PASS-or-DEFER per D-12
 - [ ] **Phase 17: Planning-Doc + UI Hygiene Sweep** - VALIDATION.md frontmatter backfill phases 01–04; Phase 03 VERIFICATION.md retrospective; 17 SUMMARY `requirements-completed` declarations; v1.1 MILESTONES.md entry (HARD REQ); `AdminsList` / `CategoriesList` / `PromoteAdminDialog` → shadcn `Card`
 
@@ -137,11 +137,13 @@ Plans:
 
 **Plans**: 5 plans
 Plans:
-- [ ] 15-01-PLAN.md — Smoke harness extension to /__smoke route (two distinct render-phase throw triggers + Sentry.lastEventId() surface)
-- [ ] 15-02-PLAN.md — scripts/verify-sourcemap-names.mjs (zero-dep Node ESM allowlist guard for keepNames: true)
-- [ ] 15-03-PLAN.md — Wire verify-sourcemap-names into CI lint-and-unit job (build + verify steps)
-- [ ] 15-04-PLAN.md — Manual smoke verification on Netlify preview + CI evidence capture (6 PNGs + draft EVIDENCE)
-- [ ] 15-05-PLAN.md — Merge PR (auto-close 5 issues), finalize EVIDENCE.md post-merge, post per-issue closure comments
+- [x] 15-01-PLAN.md — Smoke harness extension to /__smoke route (two distinct render-phase throw triggers + local Sentry.ErrorBoundary + dataset.sentryEventId surface)
+- [x] 15-02-PLAN.md — scripts/verify-sourcemap-names.mjs (zero-dep Node ESM allowlist guard for keepNames: true; 7-name allowlist)
+- [x] 15-03-PLAN.md — Wire verify-sourcemap-names into CI lint-and-unit job (build + verify steps)
+- [x] 15-04-PLAN.md — Operator-driven evidence capture on Netlify preview (4 Sentry + 3 CI PNGs + 15-EVIDENCE-DRAFT.md; sentry-cli plan defect documented — v3 removed both `sourcemaps list` and `releases files list`, `releases info` substituted)
+- [x] 15-05-PLAN.md — Merge PR #35 (auto-closed 5 issues), finalize 15-EVIDENCE.md with post-merge CI run URL, 5 per-issue closure comments posted
+
+**COMPLETED 2026-05-25** — Phase 15 PR #35 merged (merge commit `2b75412`). All 5 GitHub issues closed (#11 TEST-14, #12 TEST-15, #13 TEST-16, #17 OBSV-03+05, #19 OBSV-04) via auto-close keywords. Finalized evidence: `.planning/phases/15-observability-e2e-verify-close/15-EVIDENCE.md` on `main` (status: closed; post-merge CI run https://github.com/Esk3tit/wtcs-community-polls/actions/runs/26388788421 success). Plan-defects recorded in STATE/15-04-SUMMARY for cleanup follow-up: (a) sentry-cli v3 surface drift; (b) OBSV-05 Discover paid-tier dependency.
 **UI hint**: no
 
 ---
@@ -204,7 +206,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 14. Security-Definer Search-Path Migration | 1/1 | Complete | 2026-05-17 |
-| 15. Observability + E2E Verify & Close | 0/5 | Planned | - |
+| 15. Observability + E2E Verify & Close | 5/5 | Shipped | 2026-05-25 |
 | 16. UIDN-02 Aggressive Perf-Budget Pass | 0/TBD | Not started | - |
 | 17. Planning-Doc + UI Hygiene Sweep | 0/TBD | Not started | - |
 
@@ -213,4 +215,4 @@ Plans:
 | v1.0 | 1–6 | 32/32 | ✅ Shipped | 2026-04-28 |
 | v1.1 | 7–10 | 16/16 | ✅ Shipped | 2026-05-11 |
 | v1.2 | 11–13 | 17/17 | ✅ Shipped | 2026-05-14 |
-| v1.3 | 14–17 | 1/TBD | 🔄 In progress | - |
+| v1.3 | 14–17 | 6/TBD | 🔄 In progress | - |

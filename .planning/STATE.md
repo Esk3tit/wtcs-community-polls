@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: — Hygiene & Performance
 status: executing
-stopped_at: Phase 15 context gathered
-last_updated: "2026-05-18T07:56:00.462Z"
-last_activity: 2026-05-18 -- Phase 15 execution started
+stopped_at: Phase 15 shipped
+last_updated: "2026-05-25T07:35:00.000Z"
+last_activity: 2026-05-25 -- Phase 15 shipped (5 plans, 5 issues closed)
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 6
-  completed_plans: 1
-  percent: 17
+  completed_plans: 6
+  percent: 50
 ---
 
 # Project State
@@ -21,30 +21,31 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-14 after v1.2 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** Phase 15 — observability-e2e-verify-close
+**Current focus:** Phase 15 shipped 2026-05-25 — next: Phase 16 (DBHY-03 dead-symbol cleanup) or Phase 17 (perf budget)
 
 ## Current Position
 
-Phase: 15 (observability-e2e-verify-close) — EXECUTING
-Plan: 1 of 5
-Status: Executing Phase 15
-Last activity: 2026-05-18 -- Phase 15 execution started
+Phase: 15 of 17 COMPLETE → 16 of 17 next
+Plan: 15-05 SHIPPED — Phase 15 PR merged (2b75412), 5 issues closed (#11, #12, #13, #17, #19), evidence in 15-EVIDENCE.md
+Status: Ready for Phase 16 planning
+Last activity: 2026-05-25 -- Phase 15 shipped
 
-Progress: [██░░░░░░░░] 25% (1 of 4 v1.3 phases)
+Progress: [█████░░░░░] 50% (2 of 4 v1.3 phases)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 1
-- Average duration: ~3h
-- Total execution time: 3 hours
+- Total plans completed: 6
+- Average duration: mixed (Phase 14: ~3h; Phase 15: orchestrator-driven multi-session)
+- Total execution time: ~3h (Phase 14) + multi-session (Phase 15)
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 14 | 1 | ~3h | ~3h |
+| 15 | 5 | multi-session | mixed (operator-driven Wave 3) |
 
 *Updated after each plan completion*
 
@@ -59,6 +60,8 @@ Recent decisions affecting v1.3 work (full log in PROJECT.md Key Decisions table
 - Phase 14: `CREATE OR REPLACE FUNCTION` (not `ALTER FUNCTION`) for Migration 14 — preserves OID stability for trigger references
 - Phase 14 W0: `rls_auto_enable` carved out as R2 system-owned (dashboard-installed event trigger, not in repo migration history); DBHY-02 acceptance amended to permit one residual `0011` WARN for it (turned out unnecessary — post-deploy lint showed zero WARNs)
 - Phase 14 W0 Check 1B: U2 outcome (3+4-param overloads both in prod); Migration 14 unconditionally drops the 3-param overload (Cycle-3 Option A)
+- Phase 15 shipped 2026-05-25: 5 plans (smoke fire triggers + sourcemap-names verify script + CI wiring + operator evidence capture + closure), 5 issues closed (#11, #12, #13, #17, #19), evidence in 15-EVIDENCE.md
+- Phase 15 plan-defects recorded for cleanup: (a) sentry-cli v3 removed both `sourcemaps list` and `releases files <release> list` — plan referenced both; (b) OBSV-05 Discover-based per-event count requires paid Sentry tier; per-issue Events filter fallback was used
 
 ### Blockers/Concerns
 
@@ -80,6 +83,6 @@ Items acknowledged and deferred at milestone v1.2 close on 2026-05-14:
 
 ## Session Continuity
 
-Last session: 2026-05-18T03:35:31.051Z
-Stopped at: Phase 15 context gathered
-Resume action: `/gsd-plan-phase 15` to plan Phase 15 (Observability + E2E Verify & Close)
+Last session: 2026-05-25T07:35:00.000Z
+Stopped at: Phase 15 shipped
+Resume action: `/gsd-discuss-phase 16` (or 17) to scope the next v1.3 hygiene phase

@@ -28,21 +28,21 @@ This document tracks the v1.3 milestone requirements. After v1.0 (43 of 45 reqs)
 
 Continues from v1.1's OBSV-01 (Sentry sourcemap upload) + OBSV-02 (bundle delta tracking).
 
-- [ ] **OBSV-03**: Sentry React 19 ErrorBoundary render-phase throw capture smoke-verified on Netlify deploy preview. Verification = trigger a render-phase throw via `?debug=sentry-test` overlay (or equivalent), confirm Sentry dashboard receives event with `boundary: app-root` tag, confirm stack frame names are present (cross-check OBSV-04). Close GitHub issue #17.
+- [x] **OBSV-03**: Sentry React 19 ErrorBoundary render-phase throw capture smoke-verified on Netlify deploy preview. Verification = trigger a render-phase throw via `?debug=sentry-test` overlay (or equivalent), confirm Sentry dashboard receives event with `boundary: app-root` tag, confirm stack frame names are present (cross-check OBSV-04). Close GitHub issue #17.
 
-- [ ] **OBSV-04**: Vite/Rolldown sourcemap function-name preservation verified end-to-end. (a) Run `verify-sourcemap-names.mjs` (or equivalent build-time check) confirming production build emits literal `function Name(...)` declarations, not minified `$M`. (b) Confirm Sentry Artifacts API shows uploaded source maps for the current release. (c) Inspect a smoke-test Sentry event's stack frames in the dashboard and confirm real function names appear, not `$M`. Close GitHub issue #19.
+- [x] **OBSV-04**: Vite/Rolldown sourcemap function-name preservation verified end-to-end. (a) Run `verify-sourcemap-names.mjs` (or equivalent build-time check) confirming production build emits literal `function Name(...)` declarations, not minified `$M`. (b) Confirm Sentry Artifacts API shows uploaded source maps for the current release. (c) Inspect a smoke-test Sentry event's stack frames in the dashboard and confirm real function names appear, not `$M`. Close GitHub issue #19.
 
-- [ ] **OBSV-05**: `Sentry.dedupeIntegration()` behavior smoke-verified — triple-handler path (`createRoot.onCaughtError` + `ErrorBoundary.onError` + auto-capture) collapses to one event per error, but verification scenarios use DISTINCT error messages per case (`new Error('OBSV-03 render')`, `new Error('OBSV-04 sourcemap')`) to prevent Dedupe from masking the second event. Verification uses `Sentry.lastEventId()` to confirm capture independent of transport flush.
+- [x] **OBSV-05**: `Sentry.dedupeIntegration()` behavior smoke-verified — triple-handler path (`createRoot.onCaughtError` + `ErrorBoundary.onError` + auto-capture) collapses to one event per error, but verification scenarios use DISTINCT error messages per case (`new Error('OBSV-03 render')`, `new Error('OBSV-04 sourcemap')`) to prevent Dedupe from masking the second event. Verification uses `Sentry.lastEventId()` to confirm capture independent of transport flush.
 
 ### Test/E2E Hygiene (TEST-*)
 
 Continues from v1.2's TEST-13 (Playwright @smoke SC4 round-trip).
 
-- [ ] **TEST-14**: `e2e/tests/admin-create.spec.ts` passes in CI on `main`. Confirms the committed Yes/No preset click fix resolves the original "doesn't populate Choice 1/2" issue (#11). Close GitHub issue #11.
+- [x] **TEST-14**: `e2e/tests/admin-create.spec.ts` passes in CI on `main`. Confirms the committed Yes/No preset click fix resolves the original "doesn't populate Choice 1/2" issue (#11). Close GitHub issue #11.
 
-- [ ] **TEST-15**: `e2e/tests/browse-respond.spec.ts` passes in CI on `main`. Confirms the committed `freshPoll` fixture + `[1-9]\d*` non-zero regex resolves the original "asserts vote count on fixture polls with zero votes" issue (#12). Close GitHub issue #12.
+- [x] **TEST-15**: `e2e/tests/browse-respond.spec.ts` passes in CI on `main`. Confirms the committed `freshPoll` fixture + `[1-9]\d*` non-zero regex resolves the original "asserts vote count on fixture polls with zero votes" issue (#12). Close GitHub issue #12.
 
-- [ ] **TEST-16**: `e2e/tests/filter-search.spec.ts` passes in CI on `main`. Confirms the committed `E2E_TITLE` prefix filter on `toHaveCount()` resolves the original "two-layer seed count" issue (#13). Close GitHub issue #13.
+- [x] **TEST-16**: `e2e/tests/filter-search.spec.ts` passes in CI on `main`. Confirms the committed `E2E_TITLE` prefix filter on `toHaveCount()` resolves the original "two-layer seed count" issue (#13). Close GitHub issue #13.
 
 ### Perf-Budget Pass (PERF-*)
 
@@ -120,12 +120,12 @@ Continues from v1.0's UIDN-01..03. UIDN-03-FOLLOWUP-LIST-CARDS from v1.1 audit t
 | DBHY-02 | Phase 14 | Complete |
 | DBHY-03 | Phase 14 | Complete |
 | DBHY-04 | Phase 14 | Complete |
-| OBSV-03 | Phase 15 | Pending |
-| OBSV-04 | Phase 15 | Pending |
-| OBSV-05 | Phase 15 | Pending |
-| TEST-14 | Phase 15 | Pending |
-| TEST-15 | Phase 15 | Pending |
-| TEST-16 | Phase 15 | Pending |
+| OBSV-03 | Phase 15 | Complete |
+| OBSV-04 | Phase 15 | Complete |
+| OBSV-05 | Phase 15 | Complete |
+| TEST-14 | Phase 15 | Complete |
+| TEST-15 | Phase 15 | Complete |
+| TEST-16 | Phase 15 | Complete |
 | PERF-01 | Phase 16 | Pending |
 | PERF-02 | Phase 16 | Pending |
 | PERF-03 | Phase 16 | Pending |
