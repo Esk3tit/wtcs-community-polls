@@ -4,16 +4,19 @@ measured: 2026-05-25
 preview_sha: 34a5aa63bc45340583f29e18270ea32ab5df1d38
 preview_url: https://deploy-preview-35--wtcs-community-polls.netlify.app
 pr_url: https://github.com/Esk3tit/wtcs-community-polls/pull/35
-ci_run_url: https://github.com/Esk3tit/wtcs-community-polls/actions/runs/26022337580
-status: draft-pending-merge
+ci_run_url: https://github.com/Esk3tit/wtcs-community-polls/actions/runs/26388788421
+merge_commit: 2b7541262c3563a60e2c864c37de609682f27e5a
+merged_at: 2026-05-25T07:25:33Z
+status: closed
 requirements: [OBSV-03, OBSV-04, OBSV-05, TEST-14, TEST-15, TEST-16]
 ---
 
-# Phase 15 Evidence — DRAFT (pending merge)
+# Phase 15 Evidence
 
-> Per D-12 freshness rule: this draft is captured on the open PR. Plan 05
-> finalizes `15-EVIDENCE.md` after merge so the CI run URL points at the
-> post-merge run on `main`.
+> Finalized post-merge per D-12 freshness rule. The `ci_run_url` above points
+> at the post-merge CI run on `main` (head `2b75412`); the original pre-merge
+> PR run is preserved here for traceability only:
+> https://github.com/Esk3tit/wtcs-community-polls/actions/runs/26022337580
 
 ## Preflight (Plan 15-04 Task 1)
 
@@ -21,8 +24,10 @@ requirements: [OBSV-03, OBSV-04, OBSV-05, TEST-14, TEST-15, TEST-16]
 |---|---|
 | PR | https://github.com/Esk3tit/wtcs-community-polls/pull/35 |
 | Preview URL | https://deploy-preview-35--wtcs-community-polls.netlify.app |
-| Pre-merge CI run | https://github.com/Esk3tit/wtcs-community-polls/actions/runs/26022337580 |
-| Head SHA | `34a5aa63bc45340583f29e18270ea32ab5df1d38` |
+| Pre-merge CI run (PR branch) | https://github.com/Esk3tit/wtcs-community-polls/actions/runs/26022337580 |
+| Post-merge CI run (`main`) | https://github.com/Esk3tit/wtcs-community-polls/actions/runs/26388788421 — **success** |
+| Merge commit | `2b7541262c3563a60e2c864c37de609682f27e5a` (2026-05-25T07:25:33Z) |
+| Preview build SHA (release tag on captured events) | `34a5aa63bc45340583f29e18270ea32ab5df1d38` |
 | Sentry release | `34a5aa63bc45340583f29e18270ea32ab5df1d38` (registered 2026-05-18T08:30:49Z) |
 | Sentry issue (smoke events) | https://khai-phan.sentry.io/organizations/khai-phan/issues/7504077970/ |
 
@@ -240,10 +245,9 @@ Screenshots:
 
 (OBSV-05 does not map 1:1 to a separate GitHub issue — it's implicit in #17 closure.)
 
-## TEST-14 — `admin-create.spec.ts` passes in CI on PR branch
+## TEST-14 — `admin-create.spec.ts` passes in CI on `main`
 
-- CI run URL (PRE-MERGE): https://github.com/Esk3tit/wtcs-community-polls/actions/runs/26022337580
-  *(Plan 05 replaces with the post-merge `main` CI run URL)*
+- CI run URL (post-merge `main`): https://github.com/Esk3tit/wtcs-community-polls/actions/runs/26388788421 — **success**
 - PASS line (verbatim from `gh run view 26022337580 --log`):
 
   ```
@@ -254,7 +258,7 @@ Screenshots:
 
 Closes GitHub #11 (auto-close on merge — PR body keyword `Closes #11`).
 
-## TEST-15 — `browse-respond.spec.ts` passes in CI on PR branch
+## TEST-15 — `browse-respond.spec.ts` passes in CI on `main`
 
 - CI run URL: same as TEST-14
 - PASS line:
@@ -267,7 +271,7 @@ Closes GitHub #11 (auto-close on merge — PR body keyword `Closes #11`).
 
 Closes GitHub #12 (auto-close on merge — PR body keyword `Closes #12`).
 
-## TEST-16 — `filter-search.spec.ts` passes in CI on PR branch
+## TEST-16 — `filter-search.spec.ts` passes in CI on `main`
 
 - CI run URL: same as TEST-14
 - PASS line:
@@ -280,11 +284,23 @@ Closes GitHub #12 (auto-close on merge — PR body keyword `Closes #12`).
 
 Closes GitHub #13 (auto-close on merge — PR body keyword `Closes #13`).
 
-## Closure plan
+## Final state
 
-- PR #35 body carries auto-close keywords for all five issues (`Closes #11 #12 #13 #17 #19`) — verified via `gh pr view 35 --json body --jq '.body' | grep -cE "Closes #(11|12|13|17|19)"` returns 5.
-- On merge: GitHub auto-closes the five referenced issues.
-- Plan 05 (Wave 4) then: (a) updates this draft → `15-EVIDENCE.md` with the post-merge `main` CI run URL, (b) posts an evidence comment on each closed issue linking to the relevant `15-EVIDENCE.md#…` anchor, (c) updates `.planning/STATE.md`, `.planning/ROADMAP.md`, and `.planning/REQUIREMENTS.md` to reflect Phase 15 closure.
+All five GitHub issues are closed. Closure was performed automatically by
+the `Closes #11 #12 #13 #17 #19` keywords in the PR body when commit
+`2b7541262c3563a60e2c864c37de609682f27e5a` landed on `main`. Per-issue
+closure comments were then posted linking to the section anchors in this
+file (see "Closure links" below).
+
+| Issue | Closed at | Requirement(s) | Anchor |
+|---|---|---|---|
+| [#11](https://github.com/Esk3tit/wtcs-community-polls/issues/11) | 2026-05-25T07:25:34Z | TEST-14 | `#test-14--admin-createspects-passes-in-ci-on-main` |
+| [#12](https://github.com/Esk3tit/wtcs-community-polls/issues/12) | 2026-05-25T07:25:35Z | TEST-15 | `#test-15--browse-respondspects-passes-in-ci-on-main` |
+| [#13](https://github.com/Esk3tit/wtcs-community-polls/issues/13) | 2026-05-25T07:25:35Z | TEST-16 | `#test-16--filter-searchspects-passes-in-ci-on-main` |
+| [#17](https://github.com/Esk3tit/wtcs-community-polls/issues/17) | 2026-05-25T07:25:36Z | OBSV-03, OBSV-05 | `#obsv-03--sentry-react-19-errorboundary-render-phase-capture`, `#obsv-05--dedupe-integration-triple-handler-collapse-with-distinct-messages` |
+| [#19](https://github.com/Esk3tit/wtcs-community-polls/issues/19) | 2026-05-25T07:25:36Z | OBSV-04 | `#obsv-04--viterolldown-sourcemap-function-name-preservation` |
+
+Base URL for anchors: `https://github.com/Esk3tit/wtcs-community-polls/blob/main/.planning/phases/15-observability-e2e-verify-close/15-EVIDENCE.md`
 
 ## Plan defects recorded (for cleanup follow-up)
 
