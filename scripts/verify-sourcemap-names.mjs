@@ -63,7 +63,7 @@ const missing = ALLOWLIST.filter((name) => {
 
 if (missing.length > 0) {
   console.error(
-    `[verify-sourcemap-names] FAIL: ${missing.length} name(s) missing from dist/assets/*.js\n` +
+    `[verify-sourcemap-names] FAIL: ${missing.length} name(s) missing from dist/assets/**/*.js\n` +
     missing.map((n) => `  - ${n}`).join('\n') + '\n' +
     'This means vite.config.ts rolldownOptions.output.keepNames may have regressed. ' +
     'Restore the flag or update the allowlist if a name was renamed in source.'
