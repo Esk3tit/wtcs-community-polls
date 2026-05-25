@@ -2,6 +2,8 @@
 phase: 15-observability-e2e-verify-close
 plan: 05
 status: complete
+tasks_completed: 4
+tasks_total: 4
 requirements: [OBSV-03, OBSV-04, OBSV-05, TEST-14, TEST-15, TEST-16]
 ---
 
