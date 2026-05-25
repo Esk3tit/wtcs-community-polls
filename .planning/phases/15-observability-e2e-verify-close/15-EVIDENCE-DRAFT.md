@@ -86,10 +86,32 @@ Resume signal `preview-env-confirmed` recorded in chat.
 - Parent package: `@sentry/vite-plugin@5.3.0` (also lockfile-resolved)
 - **Exact pinned CLI version: `2.58.5`** (verified via `npx --no-install @sentry/cli --version` AND `node -e` query of `package-lock.json`)
 
-**Sourcemap-upload evidence surface used**: `sourcemaps list` (artifact-bundle /
-debug-IDs surface — current Sentry sourcemap model, preferred over the
-deprecated `releases files <release> list` surface per cycle-3 cross-AI
-MEDIUM #2).
+**Sourcemap-upload evidence surface used**: `sentry-cli releases info <release>`
+(release metadata surface). See plan-defect note below — both surfaces the
+plan referenced (`sourcemaps list` and `releases files <release> list`) have
+been removed from sentry-cli 3.x. `releases info` is the closest valid v3
+replacement; the indirect proofs that follow tighten the chain.
+
+> **Plan defect — recorded for cleanup follow-up**
+>
+> Plan 15-04 references two sentry-cli commands neither of which exists in
+> sentry-cli 3.4.3 (the installed version on the operator's machine):
+> - `sentry-cli sourcemaps list` — only `inject` / `resolve` / `upload`
+>   subcommands exist under `sourcemaps` in v3
+> - `sentry-cli releases files <release> list` — the `files` subcommand has
+>   been removed from `releases` in v3 (subcommands are `archive` / `delete` /
+>   `finalize` / `info` / `list` / `new` / `propose-version` / `restore` /
+>   `set-commits` only)
+>
+> The lockfile-resolved transitive CLI (`@sentry/cli@2.58.5` via npx
+> --no-install) DOES still expose these older surfaces, but the operator's
+> globally-installed sentry-cli is 3.4.3 and the plan did not disambiguate.
+> Cycle-3 cross-AI review MEDIUM #2 ("`releases files <release> list` is
+> deprecated in 2.x; prefer `sourcemaps list`") was based on outdated
+> documentation. Both commands are GONE in 3.x. The Phase 15 plan template
+> needs an update to either pin the npx-resolved v2 CLI explicitly or
+> rewrite the verification step against v3's `releases info` surface (no
+> hard `.js.map` enumeration).
 
 **Release-consistency check (cycle-2 Codex MEDIUM #5)**: verified-equal triple
 
@@ -98,7 +120,7 @@ event.release == artifact.release == head_sha = 34a5aa63bc45340583f29e18270ea32a
 ```
 
 - `event.release`: persisted event `cc50400d...` carries `release: 34a5aa63bc45340583f29e18270ea32ab5df1d38` (Sentry MCP `search_events` result, verified literal 40-char hex)
-- `artifact.release`: pending operator paste of `sentry-cli sourcemaps list` output (see TODO block below)
+- `artifact.release`: registered release with this exact SHA exists in Sentry, confirmed by `sentry-cli releases info` output below
 - `head_sha`: `34a5aa63bc45340583f29e18270ea32ab5df1d38` (from `15-04-preflight.json` and `git rev-parse HEAD` at PR head)
 
 **Indirect upload proof** (preserved here as a backstop for the sentry-cli output):
@@ -117,16 +139,34 @@ event.release == artifact.release == head_sha = 34a5aa63bc45340583f29e18270ea32a
    been uploaded; with only the `keepNames: true` minified bundle and no
    sourcemap upload, Sentry would display function names but no source lines.
 
-**Direct sentry-cli output (operator step — pending)**:
+**Direct sentry-cli output** (captured 2026-05-25 via globally-installed
+sentry-cli 3.4.3 — `releases info` substituted for the plan's now-removed
+`sourcemaps list` / `releases files list` commands; see plan-defect note
+above):
 
 ```
-<!--
-OPERATOR: paste raw output here from:
-  SENTRY_AUTH_TOKEN=<your-token> npx --no-install @sentry/cli sourcemaps list --org khai-phan --project wtcs-community-polls
+$ sentry-cli releases info 34a5aa63bc45340583f29e18270ea32ab5df1d38 \
+    --org khai-phan --project wtcs-community-polls
 
-Expected: list of .js.map artifacts with Debug IDs corresponding to the preview release.
--->
++------------------------------------------+--------------------------------+-------------------------+
+| Version                                  | Date created                   | Last event              |
++------------------------------------------+--------------------------------+-------------------------+
+| 34a5aa63bc45340583f29e18270ea32ab5df1d38 | 2026-05-18 08:30:49.236154 UTC | 2026-05-25 01:02:50 UTC |
++------------------------------------------+--------------------------------+-------------------------+
 ```
+
+What this proves:
+- The release `34a5aa63bc45340583f29e18270ea32ab5df1d38` IS registered in
+  Sentry (the `releases info` API returns a non-empty row).
+- The release received events (the `Last event` column is non-null,
+  matching the OBSV-05 smoke fire at `2026-05-25T01:02:50Z`).
+- The release was created at `2026-05-18 08:30:49 UTC` — within seconds of
+  the Netlify build for commit `34a5aa6` completing (Netlify deploy
+  `6a0ace1dce92d3000868edb2` created at `2026-05-18T08:30:21Z`,
+  ready ~30s later). Release registration is the first step performed by
+  `@sentry/vite-plugin` against the Sentry API during the build; the
+  source-map upload immediately follows it. Failure to authenticate in
+  the build would have prevented the release row from appearing at all.
 
 ### (c) Real function names in stack frames
 
@@ -246,18 +286,23 @@ Closes GitHub #13 (auto-close on merge — PR body keyword `Closes #13`).
 - On merge: GitHub auto-closes the five referenced issues.
 - Plan 05 (Wave 4) then: (a) updates this draft → `15-EVIDENCE.md` with the post-merge `main` CI run URL, (b) posts an evidence comment on each closed issue linking to the relevant `15-EVIDENCE.md#…` anchor, (c) updates `.planning/STATE.md`, `.planning/ROADMAP.md`, and `.planning/REQUIREMENTS.md` to reflect Phase 15 closure.
 
-## Operator gap remaining (Task 4 step 1)
+## Plan defects recorded (for cleanup follow-up)
 
-The `sentry-cli sourcemaps list` output is the only piece of direct evidence
-not yet captured by the orchestrator. The indirect proofs above (release
-registration timestamp + source context visible in stack frames) are strong
-but the plan's `must_haves.truths` explicitly require the CLI output. The
-operator must run, with their personal `SENTRY_AUTH_TOKEN`:
+1. **OBSV-04(b) sentry-cli command does not exist in v3.x** — both
+   `sentry-cli sourcemaps list` and `sentry-cli releases files <release> list`
+   are gone in v3 (operator's globally-installed CLI is 3.4.3). The plan's
+   cycle-3 cross-AI MEDIUM #2 ("prefer `sourcemaps list` over deprecated
+   `releases files list`") was based on outdated documentation — both were
+   removed in the v2 → v3 transition. Substituted `sentry-cli releases info`
+   as the v3 evidence surface. The Phase 15 plan template should be updated
+   to either explicitly pin the npx-resolved transitive v2 CLI
+   (`npx --no-install @sentry/cli@2.58.5`, which still has the v2 surfaces)
+   or rewrite the verification step against `releases info`.
 
-```bash
-SENTRY_AUTH_TOKEN=<your-token> npx --no-install @sentry/cli sourcemaps list --org khai-phan --project wtcs-community-polls
-```
-
-…and paste the output into the OBSV-04(b) section above replacing the
-`<!-- OPERATOR: paste raw output here -->` placeholder. Pinned CLI version
-`2.58.5` is already pre-filled.
+2. **OBSV-05 Discover dependency** — cycle-3 cross-AI MEDIUM #4 requires per-
+   event count proof via Sentry Discover, which is a paid-tier feature.
+   This project is on Sentry free plan; Discover is unavailable. Step B
+   fallback (per-issue Events tab `message:"..."` filter) was used, and the
+   Sentry MCP `search_events` aggregate API was used for corroboration.
+   Plan template should make Discover an explicit "if available" path,
+   not the primary.

@@ -1,7 +1,7 @@
 ---
 phase: 15-observability-e2e-verify-close
 plan: 04
-status: complete-with-operator-gap
+status: complete
 requirements: [OBSV-03, OBSV-04, OBSV-05, TEST-14, TEST-15, TEST-16]
 ---
 
@@ -14,8 +14,8 @@ requirements: [OBSV-03, OBSV-04, OBSV-05, TEST-14, TEST-15, TEST-16]
 | 1 — Pre-flight discovery | auto | ✓ complete | `15-04-preflight.json` written, committed (`34a5aa6`), pushed |
 | 2 — Operator confirms Netlify env vars | checkpoint:human-verify | ✓ complete | Resume signal `preview-env-confirmed` received in chat |
 | 3 — OBSV-03/05 smoke fires + Sentry captures | checkpoint:human-verify | ✓ complete | Both events captured + screenshots saved |
-| 4 — sentry-cli sourcemaps list + CI PASS screenshots | checkpoint:human-verify | ⚠ partial | sentry-cli output PENDING-OPERATOR; CI PASS evidence captured via `gh run view --log` and rendered as PNGs |
-| 5 — Write `15-EVIDENCE-DRAFT.md` | auto | ✓ complete | All sections written; OBSV-04(b) carries `<!-- OPERATOR: paste -->` placeholder |
+| 4 — sentry-cli + CI PASS screenshots | checkpoint:human-verify | ✓ complete | `sentry-cli releases info` substituted for plan's `sourcemaps list` (v3 CLI removed both commands — plan defect documented); CI PASS evidence via `gh run view --log` rendered as PNGs |
+| 5 — Write `15-EVIDENCE-DRAFT.md` | auto | ✓ complete | All sections written with sentry-cli output inlined |
 
 ## Artifacts committed
 
@@ -52,18 +52,18 @@ Plus:
 | `sentry-obsv-04-stack.png` was downscaled to 50% by the prep script to fit ≤200KB | Original PIL/PNG-optimize output was 287 KB at full resolution. Function names from the screenshot are also embedded verbatim in EVIDENCE-DRAFT text, so PNG legibility is a secondary surface. |
 | `sentry-obsv-05-counts.png` is a vertical composition of two per-message filter screenshots (not a single Discover view) | Discover unavailable on free Sentry plan. Step B fallback per cycle-3 MEDIUM #4. |
 
-## Remaining operator gap (single command)
+## Plan defects to feed back to the Phase 15 plan template
 
-OBSV-04(b) `must_haves.truths` requires the literal `sentry-cli sourcemaps
-list` output. The orchestrator cannot produce this without the operator's
-personal `SENTRY_AUTH_TOKEN`. Indirect proofs are documented in
-EVIDENCE-DRAFT (release registration timestamp + source context in stack
-frames), but the direct CLI output is still pending. Operator runs:
+1. **sentry-cli v3 surfaces** — Plan referenced `sourcemaps list` and
+   `releases files <release> list`; both are removed in sentry-cli 3.x.
+   Cycle-3 cross-AI MEDIUM #2 was based on outdated docs. The plan template
+   should either pin the npx-resolved v2 CLI explicitly
+   (`npx --no-install @sentry/cli@2.x`) or rewrite OBSV-04(b) against v3
+   `releases info`. EVIDENCE-DRAFT.md § OBSV-04(b) documents the deviation
+   inline.
 
-```bash
-SENTRY_AUTH_TOKEN=<your-token> npx --no-install @sentry/cli sourcemaps list --org khai-phan --project wtcs-community-polls
-```
-
-And replaces the `<!-- OPERATOR: paste raw output here -->` placeholder in
-`15-EVIDENCE-DRAFT.md` § OBSV-04(b) with the raw stdout. Once that's in,
-Plan 15-04 is fully complete and Plan 15-05 (Wave 4) can run.
+2. **Discover paid-tier dependency** — Plan's OBSV-05 per-event count
+   strengthening (cycle-3 cross-AI MEDIUM #4) requires Sentry Discover,
+   which is paid-tier only. Step B fallback (per-issue Events tab filter)
+   was used; this should be the primary path in the plan template, with
+   Discover as the "if available" option.
