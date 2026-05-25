@@ -2,6 +2,8 @@
 plan: 15-02
 phase: 15-observability-e2e-verify-close
 status: complete
+tasks_completed: 2
+tasks_total: 2
 ---
 
 # 15-02 Summary — verify-sourcemap-names.mjs

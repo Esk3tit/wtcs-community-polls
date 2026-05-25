@@ -3,6 +3,8 @@ plan: 15-03
 phase: 15-observability-e2e-verify-close
 status: complete
 commit: 684797e
+tasks_completed: 1
+tasks_total: 1
 ---
 
 ## Objective

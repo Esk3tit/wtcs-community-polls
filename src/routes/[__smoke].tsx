@@ -11,7 +11,7 @@ interface SmokeSearch {
 }
 
 const RenderThrowSmoke = lazy(() =>
-  import('../components/debug/RenderThrowSmoke').then(m => ({
+  import('@/components/debug/RenderThrowSmoke').then(m => ({
     default: m.RenderThrowSmoke,
   }))
 )

@@ -44,7 +44,10 @@ try {
   process.exit(1);
 }
 
-const entries = await readdir(DIST_ASSETS);
+// `recursive: true` walks nested subdirs (e.g. `dist/assets/vendor/*.js`) so a
+// future Rollup/Vite chunking change can't silently shrink coverage to top-level
+// chunks only. Returns paths relative to DIST_ASSETS.
+const entries = await readdir(DIST_ASSETS, { recursive: true });
 const jsFiles = entries.filter((e) => e.endsWith('.js'));
 
 const contents = await Promise.all(
@@ -60,7 +63,7 @@ const missing = ALLOWLIST.filter((name) => {
 
 if (missing.length > 0) {
   console.error(
-    `[verify-sourcemap-names] FAIL: ${missing.length} name(s) missing from dist/assets/*.js\n` +
+    `[verify-sourcemap-names] FAIL: ${missing.length} name(s) missing from dist/assets/**/*.js\n` +
     missing.map((n) => `  - ${n}`).join('\n') + '\n' +
     'This means vite.config.ts rolldownOptions.output.keepNames may have regressed. ' +
     'Restore the flag or update the allowlist if a name was renamed in source.'
