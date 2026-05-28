@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: — Hygiene & Performance
 status: executing
-stopped_at: Phase 16 UI-SPEC approved
-last_updated: "2026-05-28T16:41:17.971Z"
+stopped_at: Completed 16-03-PLAN.md
+last_updated: "2026-05-28T16:54:33.770Z"
 last_activity: 2026-05-28
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 13
-  completed_plans: 8
+  completed_plans: 9
   percent: 50
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-14 after v1.2 milestone)
 ## Current Position
 
 Phase: 16 (uidn-02-aggressive-perf-budget-pass) — EXECUTING
-Plan: 3 of 7
+Plan: 4 of 7
 Status: Ready to execute
 Last activity: 2026-05-28
 
-Progress: [██████░░░░] 62%
+Progress: [███████░░░] 69%
 
 ## Performance Metrics
 
@@ -50,6 +50,7 @@ Progress: [██████░░░░] 62%
 *Updated after each plan completion*
 | Phase 16 P16-01 | 15m | 4 tasks | 3 files |
 | Phase 16 P02 | 5m | 1 tasks | 1 files |
+| Phase 16 P03 | multi-session | 7 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -64,6 +65,9 @@ Recent decisions affecting v1.3 work (full log in PROJECT.md Key Decisions table
 - Phase 14 W0 Check 1B: U2 outcome (3+4-param overloads both in prod); Migration 14 unconditionally drops the 3-param overload (Cycle-3 Option A)
 - Phase 15 shipped 2026-05-25: 5 plans (smoke fire triggers + sourcemap-names verify script + CI wiring + operator evidence capture + closure), 5 issues closed (#11, #12, #13, #17, #19), evidence in 15-EVIDENCE.md
 - Phase 15 plan-defects recorded for cleanup: (a) sentry-cli v3 removed both `sourcemaps list` and `releases files <release> list` — plan referenced both; (b) OBSV-05 Discover-based per-event count requires paid Sentry tier; per-issue Events filter fallback was used
+- [Phase ?]: PostHog facade as namespace-object so AuthContext/ConsentContext call sites are byte-identical after import-path swap
+- [Phase ?]: PostHogGate renders children as sibling of Suspense boundary to prevent router blanking during lazy-import window
+- [Phase ?]: PostHogProviderInner uses module-scope init so StrictMode double-invoke does not double-flush queue
 
 ### Blockers/Concerns
 
@@ -85,6 +89,6 @@ Items acknowledged and deferred at milestone v1.2 close on 2026-05-14:
 
 ## Session Continuity
 
-Last session: 2026-05-28T16:41:17.966Z
-Stopped at: Phase 16 UI-SPEC approved
+Last session: 2026-05-28T16:54:33.765Z
+Stopped at: Completed 16-03-PLAN.md
 Resume action: `/gsd-discuss-phase 16` (or 17) to scope the next v1.3 hygiene phase

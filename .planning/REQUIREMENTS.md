@@ -52,7 +52,7 @@ UIDN-02 carry-forward perf-budget trigger work. Implements the 5 surviving perf-
 
 - [x] **PERF-02**: Bundle audit baseline captured via `ANALYZE=true npm run build` against the current `main`. Treemap evidence written to `.planning/closure/v1.3-bundle-audit-pre.html` (or similar). Confirms PostHog (`posthog-js/dist/module.full.js`, ~420 KB unminified) is in the main critical-path chunk and that admin routes are already split. Establishes the baseline against which PostHog lazy-load + manualChunks deltas will be measured.
 
-- [ ] **PERF-03**: PostHog converted to a dynamic `import('@/lib/posthog')` (which transitively loads `posthog-js`) inside a consent-gated lazy loader (`<PostHogGate>` mounting a `<Suspense>`-wrapped side-effect loader). Refactor preserves: (a) the GDPR consent-gate fires before any PostHog capture events are sent; (b) the analytics client surface stays available to the app via the synchronous facade (`src/lib/posthog-facade.ts`) — this is a FACADE-ONLY analytics client (no React `PostHogProvider` context in the tree, because no component consumes `usePostHog()` per the consumer audit). Bundle audit post-change confirms ~180–200 KB removed from the critical-path chunk.
+- [x] **PERF-03**: PostHog converted to a dynamic `import('@/lib/posthog')` (which transitively loads `posthog-js`) inside a consent-gated lazy loader (`<PostHogGate>` mounting a `<Suspense>`-wrapped side-effect loader). Refactor preserves: (a) the GDPR consent-gate fires before any PostHog capture events are sent; (b) the analytics client surface stays available to the app via the synchronous facade (`src/lib/posthog-facade.ts`) — this is a FACADE-ONLY analytics client (no React `PostHogProvider` context in the tree, because no component consumes `usePostHog()` per the consumer audit). Bundle audit post-change confirms ~180–200 KB removed from the critical-path chunk.
 
 - [ ] **PERF-04**: `build.rolldownOptions.output.manualChunks` configured in `vite.config.ts` to split `vendor-react` and `vendor-posthog` into named cache-stable chunks. Verifies via re-run of `ANALYZE=true npm run build` that the chunks land at the expected sizes and the app-only chunks don't bloat.
 
@@ -128,7 +128,7 @@ Continues from v1.0's UIDN-01..03. UIDN-03-FOLLOWUP-LIST-CARDS from v1.1 audit t
 | TEST-16 | Phase 15 | Complete |
 | PERF-01 | Phase 16 | Complete |
 | PERF-02 | Phase 16 | Complete |
-| PERF-03 | Phase 16 | Pending |
+| PERF-03 | Phase 16 | Complete |
 | PERF-04 | Phase 16 | Pending |
 | PERF-05 | Phase 16 | Pending |
 | PERF-06 | Phase 16 | Pending |

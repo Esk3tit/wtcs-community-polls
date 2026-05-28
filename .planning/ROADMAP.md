@@ -195,7 +195,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 16-03-PLAN.md — PERF-03: posthog-facade + PostHogProviderInner + PostHogGate (lazy + consent-gated) + main.tsx provider-tree inversion + 2 Wave 0 tests (posthog-facade.test.ts, PostHogGate.test.tsx)
+- [x] 16-03-PLAN.md — PERF-03: posthog-facade + PostHogProviderInner + PostHogGate (lazy + consent-gated) + main.tsx provider-tree inversion + 2 Wave 0 tests (posthog-facade.test.ts, PostHogGate.test.tsx)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -254,7 +254,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 14. Security-Definer Search-Path Migration | 1/1 | Complete | 2026-05-17 |
 | 15. Observability + E2E Verify & Close | 5/5 | Shipped | 2026-05-25 |
-| 16. UIDN-02 Aggressive Perf-Budget Pass | 2/7 | In Progress|  |
+| 16. UIDN-02 Aggressive Perf-Budget Pass | 3/7 | In Progress|  |
 | 17. Planning-Doc + UI Hygiene Sweep | 0/TBD | Not started | - |
 
 | Milestone | Phases | Plans | Status | Shipped |
