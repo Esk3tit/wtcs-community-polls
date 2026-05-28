@@ -1,179 +1,159 @@
 ---
 phase: 16
 reviewers: [gemini, codex]
-reviewed_at: 2026-05-27T21:10:00Z
+reviewed_at: 2026-05-28T04:28:30Z
 plans_reviewed: [16-01-PLAN.md, 16-02-PLAN.md, 16-03-PLAN.md, 16-04-PLAN.md, 16-05-PLAN.md, 16-06-PLAN.md, 16-07-PLAN.md]
-attempted_but_failed: [cursor]
-cycle: 3
+attempted_but_failed: []
+cycle: 4
 ---
 
-# Cross-AI Plan Review — Phase 16: UIDN-02 Aggressive Perf-Budget Pass (Cycle 3 — Re-Review)
+# Cross-AI Plan Review — Phase 16: UIDN-02 Aggressive Perf-Budget Pass (Cycle 4 — Re-Review)
 
-> **Re-review cycle.** Cycle 1 raised 7 verified HIGH concerns; cycle 2 confirmed 6 fully resolved and left 1 residual HIGH (prior HIGH #3 — shell-verification correctness: the D-09 trap was inverted by `pipefail` on an expected-failure command in 16-01, plus two unguarded `tail` pipes in 16-03). The plans were re-planned to fold those fixes. This pass independently re-checks whether the residual HIGH is now FULLY resolved and surfaces any NEW defects introduced by the re-plan.
+> **Re-review cycle.** Cycle 3 confirmed all 7 cycle-1 HIGHs FULLY RESOLVED, then raised TWO NEW HIGH execution defects (16-03 runtime-import grep false-negative; 16-07 Lighthouse stdout teed into a directory `audit-mobile.sh` deletes) plus a MEDIUM (committed log path gitignored). The plans were re-planned at commit `7694f40` to fold those fixes. This pass independently re-checks whether the two NEW HIGHs + MEDIUM are now FULLY resolved, and scans the re-planned files for any NEW defects introduced by the re-plan.
 >
-> Reviewers invoked: **gemini**, **codex**. `claude` skipped (this review ran inside Claude Code — self-review excluded for independence). `cursor` attempted but failed again ("You've hit your usage limit" — empty output, same as cycle 2). `coderabbit` not applicable (it reviews the git working tree/diff, which is clean for a plan-stage review).
+> Reviewers invoked: **gemini**, **codex**. `claude` skipped (this review ran inside Claude Code — self-review excluded for independence). `cursor` not invoked this cycle (usage-limit failures in cycles 2+3; excluded to avoid blocking). `coderabbit` not applicable (it reviews the git working tree/diff, which is clean for a plan-stage review).
 >
-> **The two NEW HIGH findings below were independently verified empirically against the live repository during this pass** (the 16-03 grep false-negative was reproduced returning `3` instead of the asserted `1` for a correct implementation; the 16-07 `tee`-into-deleted-directory race was reproduced losing the entire `=== Summary ===` block, leaving only `EXIT_CODE=0` in the committed log). See **Verification Notes**.
+> **All cycle-3 findings + the one NEW finding below were independently verified empirically against the live repository during this pass.** The 16-03 anchored matcher was reproduced returning exactly `src/components/PostHogProviderInner.tsx` (assertion passes) for a correct PERF-03 layout where the old form returned `3`. The 16-07 mktemp+cp pattern was reproduced preserving the full `=== Summary ===` block. The NEW HIGH (16-07 verify regex vs the indented audit output) was reproduced returning `0` instead of `5` against the real `audit-mobile.sh:65` two-space-indented summary format. See **Verification Notes**.
 
 ## Gemini Review
 
-### Final Assessment: Cycle 3
-The implementation plans are now technically sound, highly defensive, and rigorously verified. The architecture correctly balances aggressive performance optimizations with strict GDPR compliance. The addition of mandatory, human-confirmed empirical gates for GDPR network proof and production Lighthouse audits makes this a low-risk set of changes.
+### Summary (Cycle 4)
+The Cycle 4 re-plan successfully addresses the major defects from Cycle 3. NEW HIGH A (anchoring regression) is resolved by the trailing single-quote anchor + single-string equality assertion. NEW HIGH B (log race condition) is resolved by capturing stdout to a `mktemp` outside the cleaned artifacts directory. The MEDIUM (gitignore) is resolved by the committable `.txt` extension and a non-ignored directory.
 
-### Key Resolution (Residual HIGH #3)
-The shell-verification correctness concern has been resolved by:
-1. Converting all success-path pipe commands to use `bash -o pipefail` to prevent error masking.
-2. Rewriting the expected-failure trap verification in **Task 16-01-04** to capture exit status and output separately, ensuring that a correctly-firing trap is never reported as a false-negative.
+### Prior-HIGH Resolution Table (Gemini)
 
-### Summary of Resolved HIGHs (Gemini)
-1. **`build:analyze` broken:** Fixed to `"ANALYZE=true npm run build"` (16-01).
-2. **D-09 production trap env-var:** Correctly keys on Netlify-native `CONTEXT` (16-01).
-3. **Shell-verification correctness:** Resolved via `pipefail` and separate status capture (16-01/16-03).
-4. **Suspense blanking app-root:** Switched to sibling-loader pattern (16-03).
-5. **GDPR network check optional:** Now a mandatory blocking Playwright gate (16-03).
-6. **Wrong 16-07 deploy assertion:** Correctly asserts `vendor-posthog` absence from initial HTML (16-07).
-7. **Wrong `PROJECT.md` path:** All references updated to `.planning/PROJECT.md` (16-07).
+| Finding | Status | Justification |
+|---|---:|---|
+| NEW HIGH A (16-03) | RESOLVED | 16-03 Task 7 uses the closing-quote-anchored matcher preventing false-positive matches on `-facade`; the `test "$(...)" = "..."` equality check correctly handles multi-line failure cases. |
+| NEW HIGH B (16-07) | RESOLVED | 16-07 Task 2 uses `mktemp` OUTSIDE the artifacts directory to avoid the race with `audit-mobile.sh`'s `rm -rf`; `bash -c` with `${PIPESTATUS[0]}` captures the correct exit code even under a zsh login shell. |
+| MEDIUM (16-07) | RESOLVED | Log path is now `.planning/closure/UIDN-02-audit-mobile-stdout.txt`; the `.txt` extension sidesteps the `*.log` ignore rule and the directory is tracked. |
+
+### Strengths (Gemini)
+- Robust evidence capture: 16-07's `mktemp` + `PIPESTATUS` is a sophisticated fix for a shell-specific failure.
+- Sensitive-data protection: 16-02's Python pre-commit scan decodes the base64 treemap payload before scanning for secrets/absolute paths.
+- Empirical validation: 16-03's mandatory Playwright network gate verifies the GDPR/Perf invariant at runtime, superior to static source analysis.
+- Path precision: 16-07 Task 5 correctly targets `.planning/PROJECT.md` and notes the absence of a root-level `PROJECT.md`.
+
+### Concerns (Gemini)
+- **MEDIUM — "alias spacing defect":** Gemini claims the re-plan inserted a space into `from ' @/lib/posthog'` (with a space after the opening quote) in implementation + verify commands. **→ This is a FALSE POSITIVE — a markdown-rendering artifact in the review prompt, NOT a real defect.** Empirically verified: `grep -rn "' @/" 16-0*-PLAN.md` returns ZERO matches; line 435 of 16-03 reads `from '\''@/lib/posthog'\''` (correct `'@/`, no space). See Verification Notes. Discounted.
+- **LOW — redundant `ANALYZE` in verify:** 16-01 Task 2 verify runs `ANALYZE=true npm run build:analyze` while `build:analyze` already sets `ANALYZE=true`. Redundant but harmless.
 
 ### Risk Assessment (Gemini): LOW
-The plans are ready for approval and execution. (Note: Gemini re-checked only the 7 prior HIGHs and did not independently scan for new defects; it did not contradict the two new HIGHs Codex raised.)
+The re-plan is technically excellent; the identified concerns are minor formatting issues. (Note: Gemini's one MEDIUM was a false positive; it did NOT independently scan for the real NEW HIGH that Codex found.)
 
 ---
 
 ## Codex Review
 
-**Summary**
-The residual Cycle 2 HIGH is resolved: the D-09 expected-failure check now captures status/output separately, and the two 16-03 `tail` pipes now run under `pipefail`. The phase architecture is sound, but I found two new execution defects in verification/evidence capture that should be fixed before handing these plans to an implementer.
+### Summary (Cycle 4)
+Reviewed the re-plan at commit `7694f40`. The two cycle-3 NEW HIGHs are substantively resolved: 16-03 uses an anchored single-path equality check; 16-07 captures Lighthouse stdout to a `mktemp` outside the deleted artifacts directory before copying to a git-trackable `.txt`. The prior MEDIUM gitignore issue is also resolved. Found **one new HIGH verification defect in 16-07**: the stdout verification regex does not match the audit script's INDENTED summary lines, so it falsely fails a correct audit log.
 
-**Strengths**
-- D-09 now correctly guards both `CONTEXT=production` and `NETLIFY_CONTEXT=production`.
-- The prior inverted `pipefail` trap check is fixed in 16-01.
-- The two previously unguarded 16-03 `tail` pipes are now guarded.
-- PostHog lazy-load design is now facade-only, sibling-mounted, and avoids router blanking/remounting.
-- GDPR proof is mandatory via Playwright, not optional.
-- 16-02 now decodes visualizer payloads before sensitive-data scanning.
-- 16-04 threat model now matches function-form `manualChunks` and includes `scheduler`.
+### Prior-HIGH Resolution Table (Codex)
 
-**Concerns**
-- **HIGH — 16-03-PLAN.md:435 has a new false-negative grep in the runtime-import invariant.** The regex `from .@/lib/posthog.` also matches `from '@/lib/posthog-facade'`, so after the correct AuthContext/ConsentContext edits it will count facade imports and fail a correct implementation.
-- **HIGH — 16-07-PLAN.md:122-123 tees `audit-mobile.sh` output directly into `.planning/closure/artifacts/lighthouse/`, but `audit-mobile.sh:28` begins by deleting that directory.** This can unlink the log while `tee` is writing it, leaving no summary or only the later `EXIT_CODE=` line.
-- **MEDIUM — The planned stdout log path is ignored by `.gitignore:49`.** `git check-ignore` confirms `.planning/closure/artifacts/lighthouse/audit-mobile.stdout.log` will not be committed unless force-added or moved.
-- **LOW — 16-06's Admin hover smoke should state the operator must be signed in as an admin;** the Admin link is hidden behind `isAdmin`.
-- **LOW — Minor doc drift remains:** 16-04's objective still says `react + react-dom only`, while the executable task correctly includes `scheduler`.
-
-**Suggestions**
-- Replace the 16-03 import invariant with an exact matcher, e.g. `rg -n "from ['\"]@/lib/posthog['\"]" src`, and assert the single match is `PostHogProviderInner.tsx`.
-- In 16-07, tee Lighthouse output to `mktemp` outside the artifacts directory, append `EXIT_CODE`, then copy it into place after `audit-mobile.sh` finishes.
-- Either move `audit-mobile.stdout.log` outside the ignored `lighthouse/` directory or explicitly require `git add -f`.
-- Add `grep -q '^EXIT_CODE='` to 16-07 Task 2 verification.
-- Add the admin-login precondition to the 16-06 hover smoke.
-
-**Risk Assessment**
-**MEDIUM.** The product/security architecture is now low-risk, and the original residual HIGH is fixed. Remaining risk is execution integrity: one verify command can falsely block a correct PERF-03 implementation, and the final Lighthouse evidence log can be lost or omitted from git.
-
-**Prior-HIGH Resolution Table (Codex)**
-
-| Prior HIGH | Status | Justification |
+| Finding | Status | Justification |
 |---|---:|---|
-| 1. Broken `build:analyze` script | RESOLVED | Uses `ANALYZE=true npm run build`; env reaches `vite build`. |
-| 2. D-09 wrong Netlify env var | RESOLVED | Guards `CONTEXT=production` plus legacy `NETLIFY_CONTEXT=production`. |
-| 3. Shell verification correctness | RESOLVED | Cycle-2 defects fixed: D-09 no longer pipes expected failure under `pipefail`, and 16-03 `tail` pipes are guarded. New shell defects below are separate. |
-| 4. Suspense blanks router | RESOLVED | Children are rendered outside Suspense; loader is a sibling returning `null`. |
-| 5. GDPR network check optional | RESOLVED | Playwright zero-PostHog-before-Allow gate is mandatory. |
-| 6. 16-07 expected `vendor-posthog` in initial HTML | RESOLVED | Now requires `vendor-react` present and `vendor-posthog` absent. |
-| 7. Wrong `PROJECT.md` path | RESOLVED | Targets `.planning/PROJECT.md`; guards against root `PROJECT.md`. |
+| NEW HIGH A — 16-03 runtime-import grep | RESOLVED | 16-03 (line 428) bans the prior unanchored/filter pattern and uses `grep -rln "from '@/lib/posthog'" src/`; the assertion (line 435) is `test "$(...)" = "src/components/PostHogProviderInner.tsx"` so `posthog-facade` no longer matches. |
+| NEW HIGH B — 16-07 stdout teed into deleted dir | RESOLVED | 16-07 (line 127) uses `tmp_log="$(mktemp)"`, tees into the temp file, appends `EXIT_CODE=`, then copies to `.planning/closure/UIDN-02-audit-mobile-stdout.txt` AFTER the audit finishes — avoiding the dir `audit-mobile.sh` deletes at startup. |
+| MEDIUM — committed log path gitignored | RESOLVED | New artifact path is outside `artifacts/lighthouse/` and not `*.log`; `git check-ignore` confirms it is NOT ignored, while the old path is ignored by `.gitignore:3` and `.gitignore:49`. |
 
----
+### Strengths (Codex)
+- PostHog lazy-load architecture is much safer: children render outside Suspense, the loader is side-effect-only, the Playwright network gate is mandatory.
+- Phase 15 invariants repeatedly checked: `sentryVitePlugin`/visualizer mutex, `CONTEXT=production` guard, `verify-sourcemap-names.mjs` after builds.
+- PERF-04's `manualChunks` function-form matcher is boundary-anchored and includes `scheduler`, avoiding the "react substring kitchen sink" risk.
+- PERF-07 verifies the production deploy chunk shape (`vendor-react` present, `vendor-posthog` absent from initial HTML).
+- Evidence capture is generally strong: baseline treemap, byte-size tables, stdout capture, git-trackable closure artifacts.
 
-## Cursor Review
+### Concerns (Codex)
+- **HIGH — 16-07-PLAN.md:145 verifies summary rows with `grep -cE '^(PASS|FAIL) ...'`, but `audit-mobile.sh:65` prints each row with TWO leading spaces (`echo "  $r"`).** A correct log counts as `0`, not `5`, so Task 2's verify FALSELY FAILS a correct Lighthouse audit. **Empirically reproduced this pass (count=0).**
+- **MEDIUM — 16-07 capture snippet (lines 127-131) can abort before `EXIT_CODE=` and `cp` under `set -e` when the audit DEFERs.** `audit-mobile.sh:97` intentionally exits `1` on a threshold miss, and DEFER is an acceptable outcome — so if the snippet is pasted into a strict shell, the non-zero `bash -c` aborts before the `EXIT_CODE` append + `cp`, losing the evidence on the exact (DEFER) path the phase must handle.
+- **MEDIUM — 16-03's stated invariant (no runtime `posthog-js` import outside the lazy path) is broader than its automated check (line 435).** The check catches extra runtime importers of `@/lib/posthog` but does NOT catch a direct `import ... from 'posthog-js'` in some other source file. The Playwright gate would likely catch the runtime effect, but the source-invariant check is incomplete.
 
-_Cursor agent invocation failed again: "You've hit your usage limit." No review produced. Excluded from consensus (same outcome as cycle 2)._
+### Suggestions (Codex)
+- Fix the 16-07 summary-row assertion to allow indentation: `grep -cE '^[[:space:]]*(PASS|FAIL) (home|topics|archive|auth-error|admin):' "$F"`.
+- Make the 16-07 capture snippet `set -e`-safe: initialize `audit_status=0`, run the `bash -c` pipeline with `|| audit_status=$?`, then append `EXIT_CODE` and `cp` unconditionally.
+- Add a direct-runtime-import guard in 16-03 (excluding `src/lib/posthog.ts` + type-only imports) so a future direct `posthog-js` import cannot slip past source verification.
+
+### Risk Assessment (Codex): MEDIUM
+Prior cycle-3 issues are resolved and the architecture is sound, but the new 16-07 whitespace bug is a real execution blocker because it falsely fails correct Lighthouse evidence. Fixing that + hardening the DEFER capture snippet brings the set to LOW execution risk.
 
 ---
 
 ## Verification Notes (empirical, this pass)
 
-Both NEW HIGH findings were reproduced against the live repository — they are not speculative.
+All three cycle-3 findings + the one NEW HIGH were reproduced against the live repository — none are speculative.
 
-### NEW HIGH A — 16-03 runtime-import invariant grep is a false-negative (16-03-PLAN.md:435)
-
-The Task 7 automated verify asserts `test "$(grep -rl "from .@/lib/posthog." src/ | grep -v posthog-facade | xargs grep -l "from .@/lib/posthog." 2>/dev/null | wc -l | tr -d " ")" = "1"`.
-
-Reproduced against a correct post-PERF-03 source layout (AuthContext + ConsentContext import ONLY `@/lib/posthog-facade`; `PostHogProviderInner.tsx` is the sole runtime importer of `@/lib/posthog`; the facade uses `import type`):
-
+### Cycle-3 NEW HIGH A — FULLY RESOLVED (16-03 anchored matcher)
+Simulated a correct PERF-03 layout (AuthContext + ConsentContext import ONLY `@/lib/posthog-facade`; `PostHogProviderInner.tsx` is the sole runtime importer of `@/lib/posthog`; the facade uses `import type`):
 ```
-PIPELINE_COUNT=3   (the verify asserts this must == "1")
-files surviving `grep -v posthog-facade`:
-  src/contexts/ConsentContext.tsx
-  src/contexts/AuthContext.tsx
-  src/components/PostHogProviderInner.tsx
+PLAN'S anchored matcher  →  grep -rln "from '@/lib/posthog'" src/  →  "src/components/PostHogProviderInner.tsx"
+ASSERTION  test "$(...)" = "src/components/PostHogProviderInner.tsx"  →  PASSES (correct impl NOT blocked)
+OLD cycle-2 form (grep -rl ... | grep -v posthog-facade | xargs ...)  →  3  (would have falsely failed)
 ```
+The closing-quote anchor (`posthog'`) means `@/lib/posthog-facade` cannot match. CLOSED.
 
-Root cause: the unanchored pattern `from .@/lib/posthog.` matches `from '@/lib/posthog-facade'` (the trailing `.` matches the `-`). The `grep -v posthog-facade` filter operates on FILENAMES emitted by `grep -rl`, not on matched lines, so AuthContext/ConsentContext (which import the facade only) survive the filter and are counted. A CORRECTLY-implemented PERF-03 therefore fails Task 7's automated gate (`= "1"` is false; the pipeline yields `3`). This is the same verification-correctness defect class as the cycle-2 residual HIGH #3 — a false-negative reintroduced in the "corrected" grep. **Fix (Codex):** use an anchored exact matcher, e.g. `grep -rn "from ['\"]@/lib/posthog['\"]" src/` (anchored with closing quote so `-facade` does not match), and assert the single match is `PostHogProviderInner.tsx`.
-
-### NEW HIGH B — 16-07 tees the Lighthouse stdout log into a directory the audit script deletes (16-07-PLAN.md:122-123)
-
-The Task 2 invocation is:
+### Cycle-3 NEW HIGH B — FULLY RESOLVED (16-07 mktemp+cp)
+Ran the plan's exact capture pattern against a stub `audit-mobile.sh` that does `rm -rf "$ARTIFACTS_DIR"` first and emits the real `=== Summary ===` / 5 per-route lines / `Failed routes:` block:
 ```
-mkdir -p .planning/closure/artifacts/lighthouse
-bash -c 'set -o pipefail; bash .planning/closure/audit-mobile.sh 2>&1 | tee .planning/closure/artifacts/lighthouse/audit-mobile.stdout.log; AUDIT_EXIT=${PIPESTATUS[0]}; echo "EXIT_CODE=${AUDIT_EXIT}" >> .planning/closure/artifacts/lighthouse/audit-mobile.stdout.log'
+committed UIDN-02-audit-mobile-stdout.txt AFTER the run:
+  === Summary === + all 5 per-route lines + EXIT_CODE=1   (COMPLETE — survived the rm -rf)
 ```
+The mktemp lives outside the cleaned dir, so the log survives; `cp` lands the complete file. CLOSED.
 
-But `audit-mobile.sh:28` runs `rm -rf "$ARTIFACTS_DIR"` (where `ARTIFACTS_DIR=".planning/closure/artifacts/lighthouse"`) as its FIRST action, then `mkdir -p` recreates it. Reproduced with a stub audit script that emits the real `=== Summary ===` / per-route / `Failed routes:` lines:
-
+### Cycle-3 MEDIUM — FULLY RESOLVED (gitignore)
 ```
-committed audit-mobile.stdout.log contents AFTER the run:
-  EXIT_CODE=0
+git check-ignore .planning/closure/UIDN-02-audit-mobile-stdout.txt  →  NOT ignored (git-trackable)
+git check-ignore .planning/closure/artifacts/lighthouse/audit-mobile.stdout.log  →  IGNORED (.gitignore:49)
 ```
+The new `.txt` path is also clear of `.gitignore:3` (`*.log`). CLOSED.
 
-The entire `=== Summary ===` block and all 5 per-route Performance scores are LOST. `tee` opens the log before the script runs; the script's `rm -rf` unlinks that inode mid-run; the script's summary is written into the freshly-recreated directory while `tee` keeps writing to the now-orphaned inode; only the final `echo "EXIT_CODE=..." >>` (which runs after the script exits and re-creates/appends to the path) survives in the committed file. This:
-- **Destroys the PERF-07 evidence the entire phase exists to produce** (per-route Lighthouse Perf scores for the v1.3 Rerun section + PASS/DEFER verdict).
-- **Breaks Task 2's own verify** (16-07-PLAN.md:133): `grep -q '=== Summary ===' ... && [ $(grep -cE '^(PASS|FAIL) ...') -eq 5 ]` would fail because neither the Summary block nor the 5 per-route lines survive.
-
-**Fix (Codex):** tee to a `mktemp` path OUTSIDE the artifacts directory, append `EXIT_CODE` there, then copy the complete log into place AFTER `audit-mobile.sh` finishes (and `git add -f` it, since `.gitignore:49` ignores the whole `lighthouse/` subtree — the MEDIUM below).
-
-### MEDIUM confirmed — committed log path is gitignored (16-07; .gitignore:49)
-
-`git check-ignore -v .planning/closure/artifacts/lighthouse/audit-mobile.stdout.log` →
+### NEW HIGH (this cycle) — 16-07 Task 2 verify regex does not match the indented audit summary (16-07-PLAN.md:145)
+`audit-mobile.sh:65` is `for r in "${results[@]}"; do echo "  $r"; done` — each summary row is printed with **two leading spaces**. The 16-07 Task 2 `<verify>` (line 145) asserts:
 ```
-.gitignore:49:.planning/closure/artifacts/lighthouse/    .planning/closure/artifacts/lighthouse/audit-mobile.stdout.log
+[ $(grep -cE '^(PASS|FAIL) (home|topics|archive|auth-error|admin):' "$F") -eq 5 ]
 ```
-The log the plan says it commits is inside the ignored `lighthouse/` subtree. Even if NEW HIGH B is fixed, the log won't be committed without `git add -f` or relocating it (e.g. to `.planning/closure/` directly, alongside the un-ignored `MANIFEST.json` exception at `.gitignore:51`).
+Reproduced against a log in the REAL audit format (two-space-indented rows):
+```
+PLAN regex  ^(PASS|FAIL) ...        →  count = 0   (asserts -eq 5 → FALSELY FAILS a correct audit)
+Codex fix   ^[[:space:]]*(PASS|FAIL) ...  →  count = 5   (correct log accepted)
+```
+This is the SAME defect family as the prior HIGHs: a verify command that blocks a correct implementation. Because the audit log lines are indented, Task 2 of 16-07 would reject a perfectly valid 5-route Lighthouse summary, falsely failing the phase's headline gate. **Fix:** anchor with `^[[:space:]]*` (Codex's suggestion).
+
+### Gemini "alias spacing" MEDIUM — FALSE POSITIVE (discounted)
+`grep -rn "' @/" .../16-0*-PLAN.md` → ZERO matches. The plans use the correct `'@/...` (no space). Gemini's claim is a rendering artifact of how escaped single-quotes (`'\''@/lib/posthog'\''`) displayed in the review prompt — not a defect in the plan files. Not counted.
 
 ---
 
 ## Consensus Summary
 
-Both reviewers agree the **cycle-2 residual HIGH #3 (shell-verification correctness) is now FULLY RESOLVED**: 16-01's D-09 trap captures status+output separately (no `pipefail` inversion on the expected-failure build), and 16-03's two previously-unguarded `tail` pipes now run under `bash -o pipefail -e -c`. All 7 cycle-1 HIGHs are now closed.
+Both reviewers agree the **three cycle-3 findings (NEW HIGH A, NEW HIGH B, MEDIUM gitignore) are now FULLY RESOLVED** — independently confirmed empirically this pass. All 7 original cycle-1 HIGHs plus the 2 cycle-3 NEW HIGHs from prior cycles are closed.
 
-The reviewers diverge on whether NEW defects exist: **Gemini** re-checked only the prior 7 HIGHs and rated the plans LOW (ready to execute). **Codex** independently scanned the re-planned files and surfaced **two NEW HIGH execution defects** (16-03 grep false-negative; 16-07 tee-into-deleted-dir log loss) plus a MEDIUM (gitignored log path) and two LOWs. Both NEW HIGHs were **empirically reproduced this pass** (see Verification Notes) — they are real, not speculative, so the effective risk for execution is Codex's MEDIUM read, not Gemini's LOW. Both are verification/evidence-integrity defects of the same family as the prior HIGH #3 (a verify command that blocks a correct implementation; an evidence-capture command that loses the data the phase must produce) — NOT product-architecture defects.
+The reviewers diverge on whether a NEW defect exists: **Gemini** rated the set LOW (its one MEDIUM was a false-positive alias-spacing misread; it did not independently scan for the real defect). **Codex** found **one NEW HIGH** — the 16-07 Task 2 verify regex (`^(PASS|FAIL)...`) does not tolerate the two-space indentation that `audit-mobile.sh:65` actually emits, so it falsely fails a correct audit log. This was **empirically reproduced this pass** (count=0, not 5). The effective execution risk is Codex's MEDIUM read, not Gemini's LOW. The defect is a verification-correctness issue (a verify command that blocks a correct implementation) — NOT a product-architecture defect.
 
 ### Agreed Strengths
-- D-09 trap now keys on Netlify-native `CONTEXT` (+ legacy `NETLIFY_CONTEXT`) and is fixed against the cycle-2 `pipefail` inversion (Gemini + Codex).
-- `build:analyze` correctly propagates `ANALYZE=true` via the `npm run build` wrapper (Gemini + Codex).
-- PostHog sibling-loader Suspense pattern (children outside the boundary; `PostHogProviderInner` renders `null`) fixes the blanking/remount defect; mandatory Playwright GDPR network gate (Gemini + Codex).
-- 16-07 deploy check asserts `vendor-react` present AND `vendor-posthog` absent, targeting `.planning/PROJECT.md` (Gemini + Codex).
-- 16-02 decodes the gzip/base64 visualizer payload before the sensitive-data scan; 16-04 threat register matches the function-form `scheduler`-inclusive matcher (Codex — both were cycle-2 hygiene items, now folded).
+- The 16-03 anchored runtime-import matcher + single-string equality assertion (both reviewers).
+- The 16-07 `mktemp` + `${PIPESTATUS[0]}` evidence-capture pattern, surviving `audit-mobile.sh`'s `rm -rf` and shell-agnostic on exit code (both reviewers).
+- Phase 15 invariants (sentry/visualizer mutex, `CONTEXT=production` D-09 trap, keepNames allowlist) repeatedly re-checked across plans (both reviewers).
+- PERF-04 boundary-anchored function-form `manualChunks` including `scheduler`; PERF-07 deploy chunk-shape assertion (`vendor-react` present, `vendor-posthog` absent) (both reviewers).
+- 16-02's base64/gzip-decoding sensitive-data pre-commit scan; 16-03's mandatory Playwright GDPR network gate (Gemini).
 
 ### Agreed Concerns
-- **Verification/evidence-capture integrity is still the residual risk axis.** Codex raises two NEW HIGHs (both empirically confirmed); Gemini did not scan for them but does not contradict them. The architecture is sound; the failure mode is a verify command that falsely blocks a correct PERF-03 build (NEW HIGH A) and an evidence-capture command that loses the PERF-07 Lighthouse scores (NEW HIGH B).
+- **Verification-correctness is still the residual risk axis.** The architecture is sound; the failure mode is a verify command that falsely blocks a correct implementation — this cycle, the 16-07 Task 2 indented-summary regex (Codex; empirically confirmed). Gemini did not scan for it but does not contradict it.
 
 ### Divergent Views
-- **Overall risk: Gemini LOW vs Codex MEDIUM.** Gemini reasons from the prior-HIGH closure (all 7 resolved → LOW). Codex reasons from the two new execution defects it found by scanning the re-plan. Because both new defects were empirically reproduced, the execution risk is Codex's MEDIUM: as written, Task 7 of 16-03 would falsely fail a correct implementation, and Task 2 of 16-07 would discard the per-route Lighthouse evidence (and break its own verify gate).
+- **Overall risk: Gemini LOW vs Codex MEDIUM.** Gemini reasons from the cycle-3 closure (all resolved → LOW) and a false-positive formatting note. Codex reasons from the one new execution defect it found by scanning the re-plan against the actual `audit-mobile.sh`. Because the defect was empirically reproduced, the execution risk is Codex's MEDIUM: as written, Task 2 of 16-07 would falsely fail a correct Lighthouse audit.
 
-### HIGH Concerns — Status (2 NEW UNRESOLVED; 7 prior FULLY RESOLVED)
+### HIGH Concerns — Status (1 NEW UNRESOLVED; 2 prior NEW HIGHs + 7 original FULLY RESOLVED)
 
-**All 7 prior HIGHs are FULLY RESOLVED** (verified this pass): #1 build:analyze, #2 D-09 env var, #3 shell-verification correctness (the cycle-2 residual — now closed), #4 Suspense blanking, #5 mandatory GDPR gate, #6 16-07 deploy assertion, #7 16-07 PROJECT.md path. These are closed and NOT counted as open HIGHs.
+**FULLY RESOLVED (verified this pass, NOT counted as open):** all 7 cycle-1 HIGHs (build:analyze, D-09 env var, shell-verification correctness, Suspense blanking, mandatory GDPR gate, 16-07 deploy assertion, PROJECT.md path) + both cycle-3 NEW HIGHs (16-03 grep false-negative; 16-07 tee-into-deleted-dir) + the cycle-3 MEDIUM (gitignored log path).
 
-**2 NEW HIGHs remain UNRESOLVED (raised this cycle, empirically verified, no fix landed yet):**
+**1 NEW HIGH remains UNRESOLVED (raised this cycle, empirically verified, no fix landed yet):**
 
-1. **16-03-PLAN.md:435 — runtime-import invariant grep is a false-negative.** The unanchored pattern `from .@/lib/posthog.` matches `posthog-facade`, and the `grep -v posthog-facade` filter is filename-level not line-level, so a CORRECT PERF-03 implementation yields `3` against the asserted `= "1"` — the automated Task 7 gate would block a correct build. **Fix:** anchor the matcher (`grep -rn "from ['\"]@/lib/posthog['\"]" src/`) so `-facade` cannot match, and assert the single match is `PostHogProviderInner.tsx`.
-
-2. **16-07-PLAN.md:122-123 — Lighthouse stdout log is teed into a directory `audit-mobile.sh:28` deletes mid-run.** Reproduced: only `EXIT_CODE=0` survives in the committed log; the `=== Summary ===` block and all 5 per-route Performance scores are lost — destroying the PERF-07 evidence the phase exists to produce AND failing Task 2's own verify (line 133). **Fix:** tee to a `mktemp` path outside `.planning/closure/artifacts/lighthouse/`, append `EXIT_CODE` there, copy the complete log into place after the script finishes, and `git add -f` (or relocate it out of the gitignored subtree per the MEDIUM below).
+1. **16-07-PLAN.md:145 — Task 2 verify regex `^(PASS|FAIL) (home|topics|archive|auth-error|admin):` does not match `audit-mobile.sh:65`'s two-space-indented summary rows.** A correct 5-route audit log yields count `0` against the asserted `-eq 5`, falsely failing the phase's headline PERF-07 gate. **Fix:** anchor with `^[[:space:]]*(PASS|FAIL) ...`.
 
 ### Recommended next step
-Re-plan with `/gsd:plan-phase 16 --reviews` to fold the two NEW HIGH fixes plus the supporting MEDIUM/LOW items:
-- **HIGH A (16-03 Task 7):** anchor the runtime-import grep so `@/lib/posthog-facade` cannot match the `@/lib/posthog` invariant; assert the single surviving match is `PostHogProviderInner.tsx`.
-- **HIGH B (16-07 Task 2):** capture `audit-mobile.sh` stdout to a `mktemp` outside the `rm -rf`-ed `artifacts/lighthouse/` dir, then copy into place after the script exits.
-- **MEDIUM (16-07 / .gitignore:49):** relocate the committed `audit-mobile.stdout.log` outside the gitignored `lighthouse/` subtree (e.g. directly under `.planning/closure/`) or require `git add -f`; otherwise the evidence log is silently never committed.
-- **LOW (16-06):** state the admin-login precondition for the Admin-link hover smoke (the link is `isAdmin`-gated).
-- **LOW (16-04):** align the objective wording (`react + react-dom only`) with the executable task that correctly includes `scheduler`.
+Re-plan with `/gsd:plan-phase 16 --reviews` to fold the NEW HIGH fix plus the two supporting MEDIUMs:
+- **HIGH (16-07 Task 2 verify, line 145):** change the summary-row count regex to `grep -cE '^[[:space:]]*(PASS|FAIL) (home|topics|archive|auth-error|admin):'` so the two-space indentation `audit-mobile.sh:65` emits is tolerated; a correct 5-route log must yield `5`.
+- **MEDIUM (16-07 capture snippet, lines 127-131):** make the capture `set -e`-safe — initialize `audit_status=0`, run the `bash -c` pipeline with `|| audit_status=$?`, then append `EXIT_CODE` + `cp` unconditionally — so a DEFER (audit exits 1, which is an acceptable outcome) does not abort before the evidence is captured.
+- **MEDIUM (16-03 Task 7, line 435):** add a direct-`from 'posthog-js'` source guard (excluding `src/lib/posthog.ts` and type-only imports) so a future direct `posthog-js` import in a new file cannot slip past the source-invariant check.
+- **LOW (16-01 Task 2 verify):** drop the redundant `ANALYZE=true` prefix on `npm run build:analyze` (the script already sets it) — harmless but tidy.
+- Gemini's "alias spacing" MEDIUM is a false positive (plans use the correct `'@/`) — no action.
