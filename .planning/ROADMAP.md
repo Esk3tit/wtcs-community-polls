@@ -187,7 +187,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 16-01-PLAN.md — PERF-01: rollup-plugin-visualizer devDep + env-gated mutex with sentryVitePlugin + D-09 production-trap throw + build:analyze script
+- [x] 16-01-PLAN.md — PERF-01: rollup-plugin-visualizer devDep + env-gated mutex with sentryVitePlugin + D-09 production-trap throw + build:analyze script
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -254,7 +254,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 14. Security-Definer Search-Path Migration | 1/1 | Complete | 2026-05-17 |
 | 15. Observability + E2E Verify & Close | 5/5 | Shipped | 2026-05-25 |
-| 16. UIDN-02 Aggressive Perf-Budget Pass | 0/7 | Planned | - |
+| 16. UIDN-02 Aggressive Perf-Budget Pass | 1/7 | In Progress|  |
 | 17. Planning-Doc + UI Hygiene Sweep | 0/TBD | Not started | - |
 
 | Milestone | Phases | Plans | Status | Shipped |

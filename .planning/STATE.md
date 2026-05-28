@@ -4,14 +4,14 @@ milestone: v1.3
 milestone_name: — Hygiene & Performance
 status: executing
 stopped_at: Phase 16 UI-SPEC approved
-last_updated: "2026-05-28T04:36:09.661Z"
-last_activity: 2026-05-28 -- Phase 16 planning complete
+last_updated: "2026-05-28T16:34:32.577Z"
+last_activity: 2026-05-28
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 13
-  completed_plans: 6
-  percent: 46
+  completed_plans: 7
+  percent: 50
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-14 after v1.2 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** Phase 15 shipped 2026-05-25 — next: Phase 16 (DBHY-03 dead-symbol cleanup) or Phase 17 (perf budget)
+**Current focus:** Phase 16 — uidn-02-aggressive-perf-budget-pass
 
 ## Current Position
 
-Phase: 16 of 17 — PLANNED (7 plans across 6 waves); ready to execute
-Plan: 16-01..07 created + verified (plan-checker PASS, iteration 2/3); decision-coverage gate 9/9; RESEARCH + VALIDATION + PATTERNS committed
+Phase: 16 (uidn-02-aggressive-perf-budget-pass) — EXECUTING
+Plan: 2 of 7
 Status: Ready to execute
-Last activity: 2026-05-28 -- Phase 16 planning complete
+Last activity: 2026-05-28
 
-Progress: [█████░░░░░] 50% (2 of 4 v1.3 phases shipped; Phase 16 planned)
+Progress: [█████░░░░░] 54%
 
 ## Performance Metrics
 
@@ -48,6 +48,7 @@ Progress: [█████░░░░░] 50% (2 of 4 v1.3 phases shipped; Phas
 | 15 | 5 | multi-session | mixed (operator-driven Wave 3) |
 
 *Updated after each plan completion*
+| Phase 16 P16-01 | 15m | 4 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,6 @@ Items acknowledged and deferred at milestone v1.2 close on 2026-05-14:
 
 ## Session Continuity
 
-Last session: 2026-05-27T23:12:23.499Z
+Last session: 2026-05-28T16:34:32.572Z
 Stopped at: Phase 16 UI-SPEC approved
 Resume action: `/gsd-discuss-phase 16` (or 17) to scope the next v1.3 hygiene phase
