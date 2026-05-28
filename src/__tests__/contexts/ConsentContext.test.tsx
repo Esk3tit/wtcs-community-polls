@@ -3,10 +3,10 @@ import { render, screen, fireEvent, act } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { ConsentProvider } from '@/contexts/ConsentContext'
 import { useConsent } from '@/hooks/useConsent'
-import { posthog } from '@/lib/posthog'
+import { posthog } from '@/lib/posthog-facade'
 import { loadSentryReplayIfConsented } from '@/lib/sentry'
 
-vi.mock('@/lib/posthog', () => ({
+vi.mock('@/lib/posthog-facade', () => ({
   posthog: {
     opt_in_capturing: vi.fn(),
     opt_out_capturing: vi.fn(),

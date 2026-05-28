@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useEffect, useState, useCallback } from 'react'
 import type { ReactNode } from 'react'
-import { posthog } from '@/lib/posthog'
+import { posthog } from '@/lib/posthog-facade'
 import { loadSentryReplayIfConsented } from '@/lib/sentry'
 
 // GDPR opt-IN consent state — single source of truth.
