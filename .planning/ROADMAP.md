@@ -191,7 +191,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 16-02-PLAN.md — PERF-02: capture pre-change bundle baseline at .planning/closure/v1.3-bundle-audit-pre.html (must land before PERF-03)
+- [x] 16-02-PLAN.md — PERF-02: capture pre-change bundle baseline at .planning/closure/v1.3-bundle-audit-pre.html (must land before PERF-03)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -254,7 +254,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 14. Security-Definer Search-Path Migration | 1/1 | Complete | 2026-05-17 |
 | 15. Observability + E2E Verify & Close | 5/5 | Shipped | 2026-05-25 |
-| 16. UIDN-02 Aggressive Perf-Budget Pass | 1/7 | In Progress|  |
+| 16. UIDN-02 Aggressive Perf-Budget Pass | 2/7 | In Progress|  |
 | 17. Planning-Doc + UI Hygiene Sweep | 0/TBD | Not started | - |
 
 | Milestone | Phases | Plans | Status | Shipped |

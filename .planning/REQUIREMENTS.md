@@ -48,9 +48,9 @@ Continues from v1.2's TEST-13 (Playwright @smoke SC4 round-trip).
 
 UIDN-02 carry-forward perf-budget trigger work. Implements the 5 surviving perf-pass changes after research rejected font subsetting and critical CSS as anti-features. Concludes with a single Lighthouse rerun per D-13.
 
-- [ ] **PERF-01**: `rollup-plugin-visualizer@7.0.1` added as dev-dependency. Integrated in `vite.config.ts` `plugins[]` env-gated via `ANALYZE=true` — when set, visualizer runs and Sentry vite plugin is disabled (both require last position, so they're mutually exclusive). Never always-on. `npm run build:analyze` script added.
+- [x] **PERF-01**: `rollup-plugin-visualizer@7.0.1` added as dev-dependency. Integrated in `vite.config.ts` `plugins[]` env-gated via `ANALYZE=true` — when set, visualizer runs and Sentry vite plugin is disabled (both require last position, so they're mutually exclusive). Never always-on. `npm run build:analyze` script added.
 
-- [ ] **PERF-02**: Bundle audit baseline captured via `ANALYZE=true npm run build` against the current `main`. Treemap evidence written to `.planning/closure/v1.3-bundle-audit-pre.html` (or similar). Confirms PostHog (`posthog-js/dist/module.full.js`, ~420 KB unminified) is in the main critical-path chunk and that admin routes are already split. Establishes the baseline against which PostHog lazy-load + manualChunks deltas will be measured.
+- [x] **PERF-02**: Bundle audit baseline captured via `ANALYZE=true npm run build` against the current `main`. Treemap evidence written to `.planning/closure/v1.3-bundle-audit-pre.html` (or similar). Confirms PostHog (`posthog-js/dist/module.full.js`, ~420 KB unminified) is in the main critical-path chunk and that admin routes are already split. Establishes the baseline against which PostHog lazy-load + manualChunks deltas will be measured.
 
 - [ ] **PERF-03**: PostHog converted to a dynamic `import('@/lib/posthog')` (which transitively loads `posthog-js`) inside a consent-gated lazy loader (`<PostHogGate>` mounting a `<Suspense>`-wrapped side-effect loader). Refactor preserves: (a) the GDPR consent-gate fires before any PostHog capture events are sent; (b) the analytics client surface stays available to the app via the synchronous facade (`src/lib/posthog-facade.ts`) — this is a FACADE-ONLY analytics client (no React `PostHogProvider` context in the tree, because no component consumes `usePostHog()` per the consumer audit). Bundle audit post-change confirms ~180–200 KB removed from the critical-path chunk.
 
@@ -126,8 +126,8 @@ Continues from v1.0's UIDN-01..03. UIDN-03-FOLLOWUP-LIST-CARDS from v1.1 audit t
 | TEST-14 | Phase 15 | Complete |
 | TEST-15 | Phase 15 | Complete |
 | TEST-16 | Phase 15 | Complete |
-| PERF-01 | Phase 16 | Pending |
-| PERF-02 | Phase 16 | Pending |
+| PERF-01 | Phase 16 | Complete |
+| PERF-02 | Phase 16 | Complete |
 | PERF-03 | Phase 16 | Pending |
 | PERF-04 | Phase 16 | Pending |
 | PERF-05 | Phase 16 | Pending |
