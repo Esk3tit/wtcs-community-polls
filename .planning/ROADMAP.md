@@ -170,7 +170,20 @@ Plans:
   4. `Navbar.tsx` renders `<picture><source type="image/webp" ...><img src="wtcs-logo.png" ...>` with explicit `width` and `height` attributes; the `wtcs-logo.webp` asset is present in the production `dist/` output
   5. Lighthouse mobile audit results are recorded in `.planning/closure/UIDN-02-mobile-evidence.md § v1.3 Rerun` with per-route scores for all 5 routes; PROJECT.md `Mobile-first responsive design` Key Decision row is updated to reflect the PASS-or-DEFER outcome
 
-**Plans**: TBD
+**Plans**: 7 plans
+Plans:
+- [ ] 16-01-PLAN.md — PERF-01: rollup-plugin-visualizer devDep + env-gated mutex with sentryVitePlugin + D-09 production-trap throw + build:analyze script
+- [ ] 16-02-PLAN.md — PERF-02: capture pre-change bundle baseline at .planning/closure/v1.3-bundle-audit-pre.html (must land before PERF-03)
+- [ ] 16-03-PLAN.md — PERF-03: posthog-facade + PostHogProviderInner + PostHogGate (lazy + consent-gated) + main.tsx provider-tree inversion + 2 Wave 0 tests (posthog-facade.test.ts, PostHogGate.test.tsx)
+- [ ] 16-04-PLAN.md — PERF-04: vite.config.ts manualChunks for vendor-react (react + react-dom only) + vendor-posthog (lazy-only reachable)
+- [ ] 16-05-PLAN.md — PERF-05: manual cwebp PNG→WebP + Navbar.tsx <picture><source><img width/height> wrap with zero-CLS contract
+- [ ] 16-06-PLAN.md — PERF-06: createRouter defaultPreload intent + Navbar Admin Link preload={false} (Pitfall 6 hover-redirect mitigation)
+- [ ] 16-07-PLAN.md — PERF-07: production Lighthouse rerun + UIDN-02-mobile-evidence.md v1.3 Rerun section + PROJECT.md row flip on PASS (or stay ⚠️ on DEFER)
+
+**Wave map** (sequencing is load-bearing — PERF-02 baseline must capture pre-change `posthog-js` in the critical-path chunk):
+- W1: 16-01 (PERF-01) · W2: 16-02 (PERF-02 baseline) · W3: 16-03 (PERF-03) · W4: 16-04 ∥ 16-05 (parallel, disjoint files) · W5: 16-06 (after 16-05 — both edit `Navbar.tsx`) · W6: 16-07 (post-merge, operator-driven)
+- Cross-cutting constraints: preserve Phase 15 `sentryVitePlugin`-last invariant + 7-name `keepNames` allowlist; zero `posthog-js` network requests before consent='allow'; Navbar `<picture>` swap must be zero-CLS (explicit width/height); PERF-07 single-run on production per D-13.
+
 **UI hint**: yes
 
 ---
@@ -207,7 +220,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 14. Security-Definer Search-Path Migration | 1/1 | Complete | 2026-05-17 |
 | 15. Observability + E2E Verify & Close | 5/5 | Shipped | 2026-05-25 |
-| 16. UIDN-02 Aggressive Perf-Budget Pass | 0/TBD | Not started | - |
+| 16. UIDN-02 Aggressive Perf-Budget Pass | 0/7 | Planned | - |
 | 17. Planning-Doc + UI Hygiene Sweep | 0/TBD | Not started | - |
 
 | Milestone | Phases | Plans | Status | Shipped |

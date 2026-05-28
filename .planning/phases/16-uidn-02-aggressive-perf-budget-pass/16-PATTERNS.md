@@ -338,14 +338,26 @@ rolldownOptions: {
 rolldownOptions: {
   output: {
     keepNames: true,
-    manualChunks: (id: string) => {
-      if (/[\\/]node_modules[\\/](react|react-dom)[\\/]/.test(id)) return 'vendor-react'
-      if (/[\\/]node_modules[\\/]posthog-js[\\/]/.test(id)) return 'vendor-posthog'
+    // Object form preferred — Rolldown matches on the resolved package, not path substrings,
+    // which sidesteps Pitfall 2's naive-substring failure modes (e.g. `react-error-boundary`,
+    // `@tanstack/react-router`, `@radix-ui/react-*` all contain the literal `react`).
+    manualChunks: {
+      'vendor-react': ['react', 'react-dom'],
+      'vendor-posthog': ['posthog-js', 'posthog-js/react'],
     },
   },
 },
 ```
-- Matcher anchors on `/node_modules/<pkg>/` boundaries (Pitfall 2 — naive `id.includes('react')` would catch `react-error-boundary`, `@tanstack/react-router`, `@radix-ui/react-*`, etc.). The `posthog-js` package contains both `posthog-js` (main) and `posthog-js/react` (sub-export) — both resolve under `/node_modules/posthog-js/`, so a single matcher covers them.
+
+**Fallback to function form** — only if the object form fails to assign a module correctly (e.g. a transient Rolldown resolver quirk surfaces during PERF-04 verification). The function form must use boundary-anchored regexes that explicitly exclude `@tanstack/react-router`:
+
+```typescript
+manualChunks: (id: string) => {
+  if (/[\\/]node_modules[\\/]react[\\/]/.test(id) || /[\\/]node_modules[\\/]react-dom[\\/]/.test(id)) return 'vendor-react'
+  if (/[\\/]node_modules[\\/]posthog-js[\\/]/.test(id)) return 'vendor-posthog'
+},
+```
+- Both forms agree on the principle: the `posthog-js` package contains both `posthog-js` (main) and `posthog-js/react` (sub-export); the object form lists both keys explicitly, the function-form regex anchors on `/node_modules/posthog-js/` which covers both. Pitfall 2 (naive `id.includes('react')` would catch `react-error-boundary`, `@tanstack/react-router`, `@radix-ui/react-*`) is sidestepped by the object form's package-name keying, or by the boundary-anchored regex in the fallback function form.
 
 **Gotchas:**
 - `keepNames: true` MUST stay. The 7-name allowlist in `scripts/verify-sourcemap-names.mjs:22-30` (`RenderThrowSmoke`, `ConsentProvider`, `ConsentBanner`, `AdminGuard`, `AuthProvider`, `RootLayout`, `AppErrorFallback`) is checked post-build; any of those mangling is a CI failure.

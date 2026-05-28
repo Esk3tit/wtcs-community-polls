@@ -314,22 +314,25 @@ Post-merge, after the Netlify production deploy lands at `https://polls.wtcsmapb
 | A8 | The 7-name keepNames allowlist in `scripts/verify-sourcemap-names.mjs` (RenderThrowSmoke, ConsentProvider, ConsentBanner, AdminGuard, AuthProvider, RootLayout, AppErrorFallback) is untouched by this phase | Phase 15 invariants | NONE — Phase 16 does not rename any of those components |
 | A9 | Lighthouse 13.2.0 mobile audit's Performance score is reproducible to within ±5-10pp on a fresh production deploy (per existing UIDN-02-mobile-evidence.md notes) | PERF-07 | NONE — D-12 already permits DEFER as an acceptable outcome |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **WebP encoding profile.** Should the planner pick `-q 80` lossy or `-lossless`?
    - What we know: PNG is 9915 bytes, RGBA, 226×200, simple logo (likely flat colors).
    - What's unclear: which WebP profile yields the smaller file for this specific image.
    - Recommendation: Plan should specify `cwebp -q 80 -m 6 src/assets/wtcs-logo.png -o src/assets/wtcs-logo.webp` first (high effort, q=80) and fall back to `-lossless` if the lossy output exceeds the PNG. Either outcome ships — the markup is the contract, not the byte count (Pitfall 7).
+   - **RESOLVED:** use `cwebp -q 80 -m 6 src/assets/wtcs-logo.png -o src/assets/wtcs-logo.webp`. If the q=80 output exceeds the PNG size, fall back to `-lossless`. Whichever flag was used must be documented in plan 16-05's SUMMARY at execute-time.
 
 2. **Visualizer output filename strategy.** Should `vite.config.ts` hard-code `dist/stats.html` and rely on a post-step `cp` to land the PERF-02 baseline at `.planning/closure/v1.3-bundle-audit-pre.html`, OR should the filename be parameterized by an env var?
    - What we know: D-09 throws on `ANALYZE=true && NETLIFY_CONTEXT=production`; the visualizer's `filename` is a build-time string.
    - What's unclear: how parameterized the filename should be vs always-static + post-copy.
    - Recommendation: Always-static `dist/stats.html` in `vite.config.ts`. The PERF-02 baseline step is a separate Bash task that runs `ANALYZE=true npm run build` and then `cp dist/stats.html .planning/closure/v1.3-bundle-audit-pre.html`. Simpler, more grep-able, no env-var sprawl.
+   - **RESOLVED:** visualizer always writes to `dist/stats.html` (no env-var parameterization). PERF-02 baseline capture uses `cp dist/stats.html .planning/closure/v1.3-bundle-audit-pre.html` after `ANALYZE=true npm run build`.
 
 3. **Facade public surface — call-site shape.** Should the facade export `posthog.identify(id)` (namespace-style) or `identify(id)` (named)?
    - What we know: Current call sites: `AuthContext.tsx:168` calls `posthog.identify(providerId)`; `AuthContext.tsx:181` calls `posthog.reset()`; `ConsentContext.tsx:55,58` call `posthog.opt_in_capturing()` / `posthog.opt_out_capturing()`.
    - What's unclear: minimizing diff churn at call sites.
    - Recommendation: Export the facade as a namespace object: `export const posthog = { identify, reset, opt_in_capturing, opt_out_capturing }`. Call sites then change only their import (`import { posthog } from '@/lib/posthog'` → `import { posthog } from '@/lib/posthog-facade'`); the call-site text is identical. Lower diff cost; lower review surface.
+   - **RESOLVED:** **namespace-object export** — `export const posthog = { identify, reset, opt_in_capturing, opt_out_capturing, setClient }` in `src/lib/posthog-facade.ts`. Call sites in AuthContext/ConsentContext only change the import path (`@/lib/posthog` → `@/lib/posthog-facade`); the `posthog.identify(...)` / `posthog.reset(...)` etc. property-access syntax stays byte-identical to today. (NOT four separate named-function exports; NOT a namespace-`* as` import.) Verified: `src/lib/posthog.ts:40` exports `posthog` as a named binding pointing at the posthog-js default object — so today's call sites consume a namespace-object-shaped value. The facade mirrors that shape exactly.
 
 ## Environment Availability
 
