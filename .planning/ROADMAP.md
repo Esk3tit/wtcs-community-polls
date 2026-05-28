@@ -169,7 +169,7 @@ Plans:
 
 - PERF-01: `rollup-plugin-visualizer@7.0.1` added as devDep; env-gated via `ANALYZE=true` in `vite.config.ts` `plugins[]`; `npm run build:analyze` script added; visualizer and `sentryVitePlugin` are mutually exclusive via env-gate (both require last position — never both active).
 - PERF-02: Bundle audit baseline captured via `ANALYZE=true npm run build` against current `main`. Treemap evidence written to `.planning/closure/v1.3-bundle-audit-pre.html`. Confirms PostHog (`posthog-js/dist/module.full.js`, ~420 KB unminified) is in the main critical-path chunk; establishes pre-change baseline for delta measurement.
-- PERF-03: PostHog converted to dynamic `import('posthog-js/react')` inside `ConsentProvider` (or equivalent lazy-load location). Preserves: (a) GDPR consent-gate fires before any PostHog capture events are sent; (b) `PostHogProvider` still available to component tree once consent resolves. Bundle audit post-change confirms ~180–200 KB removed from critical-path chunk.
+- PERF-03: PostHog converted to a dynamic `import('@/lib/posthog')` (transitively loading `posthog-js`) inside a consent-gated lazy loader (`<PostHogGate>` mounting a `<Suspense>`-wrapped side-effect loader). Preserves: (a) GDPR consent-gate fires before any PostHog capture events are sent; (b) the analytics client surface stays available via the synchronous facade (`src/lib/posthog-facade.ts`) — FACADE-ONLY client, no React `PostHogProvider` context in the tree (no `usePostHog()` consumers). Bundle audit post-change confirms ~180–200 KB removed from critical-path chunk.
 - PERF-04: `build.rolldownOptions.output.manualChunks` configured in `vite.config.ts` to split `vendor-react` and `vendor-posthog` into named cache-stable chunks. Verified via re-run of `ANALYZE=true npm run build`.
 - PERF-05: `src/assets/wtcs-logo.png` converted to `wtcs-logo.webp` (manual conversion; `vite-imagetools`/`sharp` are explicit Out-of-Scope per research anti-feature determination). `<picture><source type="image/webp"><img>` added in `src/components/layout/Navbar.tsx` with explicit `width`/`height` to prevent CLS. PNG fallback retained for non-WebP user agents.
 - PERF-06: `createRouter({ defaultPreload: 'intent' })` added in `src/main.tsx`. One-line change; covers all `<Link>` navigation app-wide.
@@ -199,7 +199,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 16-04-PLAN.md — PERF-04: vite.config.ts manualChunks for vendor-react (react + react-dom only) + vendor-posthog (lazy-only reachable)
+- [ ] 16-04-PLAN.md — PERF-04: vite.config.ts manualChunks (function form) for vendor-react (react + react-dom + scheduler runtime family) + vendor-posthog (lazy-only reachable)
 - [ ] 16-05-PLAN.md — PERF-05: manual cwebp PNG→WebP + Navbar.tsx <picture><source><img width/height> wrap with zero-CLS contract
 
 **Wave 5** *(blocked on Wave 4 completion)*

@@ -4,6 +4,11 @@
 **Files analyzed:** 14 (5 new code + 1 new binary + 1 new evidence HTML + 7 modified)
 **Analogs found:** 13 / 14 (the new binary `wtcs-logo.webp` is a `cwebp` shell output, no code analog)
 
+> **AUTHORITATIVE-SOURCE NOTE (folds cross-AI review cycle 2).** Where this pattern map and the corresponding `16-NN-PLAN.md` disagree, **the PLAN is authoritative.** Two corrections were folded into this doc but some prose may still echo the superseded design — defer to the PLANs:
+> 1. **PostHog Suspense pattern is SIBLING-loader, NOT child-wrapping.** `PostHogGate` ALWAYS renders `{children}` directly and mounts a null-rendering side-effect loader as a SIBLING inside `<Suspense fallback={null}>`. `PostHogProviderInner` renders `null` (it is NOT a `<PostHogProvider client={posthog}>{children}</PostHogProvider>` wrapper). The old child-wrapping shape was a verified HIGH bug (blanks/remounts the router during the lazy-import window). Authoritative source: `16-03-PLAN.md`.
+> 2. **`vendor-react` is the React runtime family (`react` + `react-dom` + `scheduler`), via the FUNCTION-form matcher as primary.** Authoritative source: `16-04-PLAN.md`.
+> 3. **Facade-only analytics client.** No component consumes `usePostHog()`, so there is no React context provider in the tree once consent resolves. Authoritative source: `16-03-PLAN.md` consumer audit.
+
 ---
 
 ## File Classification
@@ -11,7 +16,7 @@
 | New/Modified File | Role | Data Flow | Closest Analog | Match Quality |
 |-------------------|------|-----------|----------------|---------------|
 | `src/lib/posthog-facade.ts` (new) | utility / module-scope state | event-driven (queue + flush-on-load) | `src/lib/posthog.ts` (module-scope `initialized` guard pattern) | role-match |
-| `src/components/PostHogProviderInner.tsx` (new) | component (default-export, lazy target) | request-response (Provider wrapping children) | `src/components/debug/RenderThrowSmoke` (inner module loaded via `React.lazy`); `posthog-js/react` `PostHogProvider` consumer at `src/main.tsx:95` | role-match |
+| `src/components/PostHogProviderInner.tsx` (new) | component (named-export, lazy target, side-effect loader) | side-effect on lazy-chunk load (init + bridge); renders `null` (NOT a Provider wrapping children) | `src/components/debug/RenderThrowSmoke` (inner module loaded via `React.lazy`) | role-match |
 | `src/components/PostHogGate.tsx` (new) | component (named-export, consent gate) | request-response (conditional render) | `src/routes/[__smoke].tsx:13-17` (lazy + Suspense pattern) and `src/routes/__root.tsx:16, 43-45` (lazy + conditional `<Suspense fallback={null}>`) | exact |
 | `src/__tests__/lib/posthog-facade.test.ts` (new) | test (pure unit) | n/a | `src/__tests__/setup/smoke.test.ts` (minimal vitest shape) + `src/__tests__/contexts/ConsentContext.test.tsx:9-17` (posthog-mock pattern) | role-match |
 | `src/__tests__/components/PostHogGate.test.tsx` (new) | test (component) | n/a | `src/__tests__/layout/Navbar.test.tsx:4-23` (mock-`useAuth`-style consumer test) — adapted for `useConsent` | role-match |
@@ -80,29 +85,27 @@ posthog.reset()
 - `src/routes/[__smoke].tsx:13-17` — the `.then(m => ({ default: m.RenderThrowSmoke }))` destructure that lets `React.lazy` consume a named export.
 - `src/main.tsx:5, 40, 95` — the current static-import + init + `<PostHogProvider client={posthog}>` shape that is being relocated into this new inner module.
 
-**Imports pattern** (model on `src/main.tsx:5-7` but inverted — the static `posthog-js` import now lives ONLY here):
+> CORRECTION (folds cross-AI review): `PostHogProviderInner` is a SIDE-EFFECT-ONLY loader that renders `null` — NOT a `<PostHogProvider>` wrapper. It does NOT import `posthog-js/react` and does NOT take `children`. This is because the consumer audit (`grep -rn "usePostHog" src/`) confirms NO component consumes `usePostHog()` — the app is a facade-only analytics client. The old "wraps children in `<PostHogProvider client={posthog}>`" shape below is superseded; it is what caused the verified HIGH blanking bug. Use the corrected shape.
+
+**Imports pattern** (the static `posthog-js` runtime import now lives ONLY in this lazily-loaded module, transitively via `@/lib/posthog`):
 ```typescript
-// src/main.tsx:5-6 (current)
-import { PostHogProvider } from 'posthog-js/react'
 import { initPostHog } from '@/lib/posthog'
+import { posthog } from '@/lib/posthog-facade'
 ```
-- New inner module copies these two imports verbatim + adds `import { setClient } from '@/lib/posthog-facade'`. This is the only file in the repo that may statically import `posthog-js` (transitively via `posthog-js/react` and via `@/lib/posthog` → `posthog-js`).
+- New inner module imports `initPostHog` (which transitively pulls `posthog-js` into the lazy chunk) and the facade `posthog` namespace object. It does NOT import `PostHogProvider` from `posthog-js/react` — there are no `usePostHog()` consumers, so the React context provider is unnecessary and importing it would needlessly bloat the lazy chunk.
 
-**Module-scope init pattern** (analog `src/main.tsx:40`):
+**Module-scope init + bridge pattern:**
 ```typescript
-const posthog = initPostHog()
+const client = initPostHog()
+posthog.setClient(client)   // bridge → drains the facade queue into the real posthog-js instance
 ```
-- Same call at module scope of the inner. `initialized` guard in `src/lib/posthog.ts:3` makes the call idempotent (StrictMode-safe).
+- These run at MODULE SCOPE (not inside the component body), exactly once per page-load when the lazy chunk first resolves. `initialized` guard in `src/lib/posthog.ts:3` makes `initPostHog()` idempotent (StrictMode-safe), and module evaluation runs once regardless of StrictMode.
 
-**Provider wrap pattern** (analog `src/main.tsx:95-99`):
+**Component shape (side-effect-only loader — renders nothing):**
 ```typescript
-<PostHogProvider client={posthog}>
-  <ConsentProvider>
-    <RouterProvider router={router} />
-  </ConsentProvider>
-</PostHogProvider>
+export function PostHogProviderInner() { return null }
 ```
-- New inner returns the equivalent stripped of the `<ConsentProvider>` and `<RouterProvider>` layers (those stay in `main.tsx`). Shape: `function PostHogProviderInner({ children }: { children: ReactNode }) { return <PostHogProvider client={posthog}>{children}</PostHogProvider> }`.
+- The component renders `null`. Its entire job is the module-scope side effect (init + setClient) that fires when the lazy chunk loads. Rendering `null` is what makes it safe to mount inside a `<Suspense fallback={null}>` boundary without affecting any visible UI.
 
 **Default export exception** (the ONE acceptable default-export in `src/` per CLAUDE.md — React.lazy requires it OR consume a named export via the `.then()` destructure):
 - Two equally-correct options:
@@ -147,7 +150,7 @@ const RenderThrowSmoke = lazy(() =>
 // src/routes/__root.tsx:16 (default-export form — alternative if PostHogProviderInner uses Option A)
 const DebugAuthOverlay = lazy(() => import('@/components/debug/DebugAuthOverlay'))
 ```
-- Module-scope `const LazyPostHogProviderInner = lazy(() => import('@/components/PostHogProviderInner').then(m => ({ default: m.PostHogProviderInner })))`. The dynamic `import('@/components/PostHogProviderInner')` is the ONE site that triggers the lazy chunk fetch; that chunk transitively pulls in `posthog-js` + `posthog-js/react`, which Rolldown groups into the `vendor-posthog` named chunk per `manualChunks` (PERF-04).
+- Module-scope `const LazyPostHogLoader = lazy(() => import('@/components/PostHogProviderInner').then(m => ({ default: m.PostHogProviderInner })))`. The dynamic `import('@/components/PostHogProviderInner')` is the ONE site that triggers the lazy chunk fetch; that chunk transitively pulls in `posthog-js` (via `@/lib/posthog`), which Rolldown groups into the `vendor-posthog` named chunk per `manualChunks` (PERF-04). NOTE: `PostHogProviderInner` is a side-effect-only loader that renders `null` (NOT a `<PostHogProvider>` wrapper) — it does not import `posthog-js/react`, because no component consumes `usePostHog()` (facade-only analytics client).
 
 **Conditional Suspense pattern** (exact analog `src/routes/__root.tsx:39-46`):
 
@@ -162,24 +165,28 @@ const DebugAuthOverlay = lazy(() => import('@/components/debug/DebugAuthOverlay'
   </Suspense>
 )}
 ```
-- For PostHogGate: read `const { state } = useConsent()`; if `state !== 'allow'` return `<>{children}</>` directly; else return `<Suspense fallback={null}><LazyPostHogProviderInner>{children}</LazyPostHogProviderInner></Suspense>`. The `fallback={null}` is non-negotiable per UI-SPEC § Loading & Suspense States (`undecided` / `decline` / `allow` table).
+- For PostHogGate: read `const { state } = useConsent()`; ALWAYS render `{children}` directly, and — only when `state === 'allow'` — ALSO render `<Suspense fallback={null}><LazyPostHogLoader /></Suspense>` as a SIBLING of `{children}` (children are NEVER nested inside the suspending component). The `LazyPostHogLoader` renders `null` (side-effect-only loader — see below), so `fallback={null}` has no visible effect. The `fallback={null}` is non-negotiable per UI-SPEC § Loading & Suspense States (`undecided` / `decline` / `allow` table).
 
-**Component shape:**
+**Component shape (CRITICAL — children are a sibling of `<Suspense>`, never a descendant):**
 ```typescript
 export function PostHogGate({ children }: { children: ReactNode }) {
   const { state } = useConsent()
-  if (state !== 'allow') return <>{children}</>
   return (
-    <Suspense fallback={null}>
-      <LazyPostHogProviderInner>{children}</LazyPostHogProviderInner>
-    </Suspense>
+    <>
+      {children}
+      {state === 'allow' && (
+        <Suspense fallback={null}>
+          <LazyPostHogLoader />
+        </Suspense>
+      )}
+    </>
   )
 }
 ```
 
 **Gotchas:**
 - `PostHogGate` MUST live INSIDE `<ConsentProvider>` (it calls `useConsent`). The current `main.tsx:95-98` has `<PostHogProvider>` ABOVE `<ConsentProvider>` — Phase 16 inverts that ordering per Anti-Pattern #2 in RESEARCH.md.
-- Returning two different JSX shapes (`<>{children}</>` vs `<Suspense>...</Suspense>`) means React sees a tree-shape change and unmounts/remounts on every consent flip. Pitfall 3 in RESEARCH.md notes that ConsentContext's `decline()` already reloads the page on `allow → decline` (`src/contexts/ConsentContext.tsx:73-75`), so the only consumer-visible mount is `undecided → allow` (one-time, before any meaningful state below). Acceptable.
+- CRITICAL — DO NOT nest `{children}` inside the `<Suspense>` boundary (i.e. NEVER `<Suspense fallback={null}><LazyPostHogProviderInner>{children}</LazyPostHogProviderInner></Suspense>`). The earlier child-wrapping design was a verified HIGH bug: while the lazy chunk is in-flight, Suspense replaces the ENTIRE suspending subtree with the `null` fallback, so the router (the `{children}`) BLANKS and remounts during the consent='allow' import window. The correct design renders `{children}` unconditionally as a sibling and mounts a side-effect-only loader (`LazyPostHogLoader`, which renders `null`) inside the Suspense boundary — so the only thing Suspense can replace is `null`, making the import window visually invisible. There is no React-context provider (`PostHogProviderInner` renders `null`, not `<PostHogProvider>{children}</PostHogProvider>`) because no component in the app consumes `usePostHog()` — this is a facade-only analytics client, verified by the Task 5 consumer audit.
 
 ---
 
@@ -238,12 +245,12 @@ vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => mockUseAuth(),
 }))
 ```
-- Adapt for PostHogGate: `const mockUseConsent = vi.fn(); vi.mock('@/hooks/useConsent', () => ({ useConsent: () => mockUseConsent() }))`. Also mock `@/components/PostHogProviderInner` so the lazy import resolves to a stub: `vi.mock('@/components/PostHogProviderInner', () => ({ PostHogProviderInner: ({ children }: { children: ReactNode }) => <div data-testid="lazy-inner-mount">{children}</div> }))`.
+- Adapt for PostHogGate: `const mockUseConsent = vi.fn(); vi.mock('@/hooks/useConsent', () => ({ useConsent: () => mockUseConsent() }))`. Mock `@/components/PostHogProviderInner` as a SIDE-EFFECT spy that renders `null` (it does NOT wrap children — it is a null-rendering loader): `const loaderSpy = vi.fn(); vi.mock('@/components/PostHogProviderInner', () => ({ PostHogProviderInner: () => { loaderSpy(); return null } }))`. The loader's PROOF-OF-MOUNT is the spy call count, not a DOM node (it renders `null`).
 
 **Test cases minimum:**
-1. `state: 'undecided'` → renders children directly; `data-testid="lazy-inner-mount"` NOT in DOM; no `posthog-js` import is triggered (assert via `vi.mock` spy count).
+1. `state: 'undecided'` → renders `{children}` directly (`screen.getByTestId('children')` present); `loaderSpy` NOT called (loader not mounted).
 2. `state: 'decline'` → same as undecided.
-3. `state: 'allow'` → eventually renders `data-testid="lazy-inner-mount"` wrapping children. Use `await screen.findByTestId(...)` because Suspense resolution is async even with mocked modules.
+3. `state: 'allow'` → `{children}` present SYNCHRONOUSLY on the first render (regression guard for the HIGH blanking finding — children are a sibling of Suspense, never blanked), then `await vi.waitFor(() => expect(loaderSpy).toHaveBeenCalled())` because the lazy import resolves async even when mocked.
 
 **Gotcha:** The Navbar test mocks `@tanstack/react-router` (lines 9-15) because Navbar uses `<Link>`. PostHogGate does NOT use `<Link>` — no router mock needed.
 
@@ -315,7 +322,9 @@ export default defineConfig(({ mode }) => ({
 **D-09 throw pattern** (no in-repo analog; new code at module scope of `vite.config.ts`):
 - Insert at the top of the file (BEFORE `defineConfig`), so it fires at config-load time regardless of `mode`:
 ```typescript
-if (process.env.ANALYZE === 'true' && process.env.NETLIFY_CONTEXT === 'production') {
+// CORRECTED (cycle 2): guard CONTEXT (Netlify-native, verified netlify.toml:9) AND legacy NETLIFY_CONTEXT.
+// Keying only on NETLIFY_CONTEXT makes the trap inert in real Netlify CI.
+if (process.env.ANALYZE === 'true' && (process.env.CONTEXT === 'production' || process.env.NETLIFY_CONTEXT === 'production')) {
   throw new Error(
     'Refusing production build with ANALYZE=true: rollup-plugin-visualizer and ' +
     'sentryVitePlugin both require last-position in the Vite plugins array, so ' +
@@ -338,26 +347,29 @@ rolldownOptions: {
 rolldownOptions: {
   output: {
     keepNames: true,
-    // Object form preferred — Rolldown matches on the resolved package, not path substrings,
-    // which sidesteps Pitfall 2's naive-substring failure modes (e.g. `react-error-boundary`,
-    // `@tanstack/react-router`, `@radix-ui/react-*` all contain the literal `react`).
-    manualChunks: {
-      'vendor-react': ['react', 'react-dom'],
-      'vendor-posthog': ['posthog-js', 'posthog-js/react'],
+    // Function form PRIMARY — boundary-anchored /node_modules/<pkg>/ regex gives explicit,
+    // auditable control over exactly which package dirs land in each chunk, and includes
+    // React's own runtime dep `scheduler` in the React family. The object form's Rolldown
+    // behavior is unverified in this repo; the boundary anchor (not `id.includes('react')`)
+    // is what sidesteps Pitfall 2 (`@tanstack/react-router`, `@radix-ui/react-*`,
+    // `@sentry/react`, `react-error-boundary` all contain the literal `react`).
+    manualChunks: (id) => {
+      if (/[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/.test(id)) return 'vendor-react'
+      if (/[\\/]node_modules[\\/]posthog-js[\\/]/.test(id)) return 'vendor-posthog'
     },
   },
 },
 ```
 
-**Fallback to function form** — only if the object form fails to assign a module correctly (e.g. a transient Rolldown resolver quirk surfaces during PERF-04 verification). The function form must use boundary-anchored regexes that explicitly exclude `@tanstack/react-router`:
+**Fallback to object form** — only if the function form proves problematic AND the object form is then empirically verified against the treemap in this repo (do not assume object-form behavior; Rolldown may resolve object-keyed package strings differently than Rollup):
 
 ```typescript
-manualChunks: (id: string) => {
-  if (/[\\/]node_modules[\\/]react[\\/]/.test(id) || /[\\/]node_modules[\\/]react-dom[\\/]/.test(id)) return 'vendor-react'
-  if (/[\\/]node_modules[\\/]posthog-js[\\/]/.test(id)) return 'vendor-posthog'
+manualChunks: {
+  'vendor-react': ['react', 'react-dom'],
+  'vendor-posthog': ['posthog-js', 'posthog-js/react'],
 },
 ```
-- Both forms agree on the principle: the `posthog-js` package contains both `posthog-js` (main) and `posthog-js/react` (sub-export); the object form lists both keys explicitly, the function-form regex anchors on `/node_modules/posthog-js/` which covers both. Pitfall 2 (naive `id.includes('react')` would catch `react-error-boundary`, `@tanstack/react-router`, `@radix-ui/react-*`) is sidestepped by the object form's package-name keying, or by the boundary-anchored regex in the fallback function form.
+- The cache-stable unit for `vendor-react` is the React RUNTIME FAMILY — `react` + `react-dom` + `scheduler` (React's own internal dep) — not literally two packages. The function-form regex's `react|react-dom|scheduler` alternation captures the family; if the object form is used, `scheduler` is typically pulled in transitively but should be confirmed in the treemap. The `posthog-js` package directory contains both `posthog-js` (main) and `posthog-js/react` (sub-export); the `/node_modules/posthog-js/` regex covers both. Pitfall 2 (naive `id.includes('react')`) is sidestepped by the boundary-anchored regex.
 
 **Gotchas:**
 - `keepNames: true` MUST stay. The 7-name allowlist in `scripts/verify-sourcemap-names.mjs:22-30` (`RenderThrowSmoke`, `ConsentProvider`, `ConsentBanner`, `AdminGuard`, `AuthProvider`, `RootLayout`, `AppErrorFallback`) is checked post-build; any of those mangling is a CI failure.
@@ -371,8 +383,8 @@ manualChunks: (id: string) => {
 **Analog (exact, self):** existing `package.json:11` `"build": "tsr generate && tsc -b && vite build"`.
 
 **Script addition pattern:**
-- New script: `"build:analyze": "ANALYZE=true tsr generate && tsc -b && vite build"` (mirror the existing `build` script with the env prefix).
-- D-09 throw protects against `NETLIFY_CONTEXT=production` co-presence; no separate npm-level guard needed.
+- New script: `"build:analyze": "ANALYZE=true npm run build"`. CRITICAL — wrap the WHOLE build in `npm run build`; do NOT use the inline form `ANALYZE=true tsr generate && tsc -b && vite build`, which scopes `ANALYZE` only to `tsr generate` so `vite build` never sees the flag and `dist/stats.html` is never emitted. Re-exporting via `npm run build` propagates `ANALYZE=true` to the entire child process.
+- D-09 throw protects against Netlify production co-presence — it guards `CONTEXT=production` (the var Netlify natively sets, verified netlify.toml:9) AND legacy `NETLIFY_CONTEXT=production`; no separate npm-level guard needed.
 
 **DevDep addition pattern** (analog: existing `package.json:37-62` `devDependencies` block — sorted alphabetically; insert `rollup-plugin-visualizer` between `globals` and `husky` ordering by ASCII):
 ```json
