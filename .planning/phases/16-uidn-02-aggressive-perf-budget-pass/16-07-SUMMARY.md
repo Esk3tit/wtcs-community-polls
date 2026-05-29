@@ -43,7 +43,9 @@ patterns-established:
 requirements-completed: [PERF-07]
 
 # Metrics
-duration: 10min
+duration: ~10min (executor session: Tasks 4-5) / Tasks 1-3 (merge+deploy verify, audit, decision) run by orchestrator
+tasks_completed: 5
+tasks_total: 5
 completed: 2026-05-29
 ---
 

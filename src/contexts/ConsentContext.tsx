@@ -64,9 +64,9 @@ export function ConsentProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (state === 'allow') {
       posthog.opt_in_capturing()
-      // Surface a rejected Replay load instead of swallowing it. Wrap in
-      // Promise.resolve so a non-promise return (e.g. a synchronous stub) never
-      // throws on .catch.
+      // Surface a rejected Replay load instead of swallowing it. loadSentryReplayIfConsented
+      // is async (its body throws become promise rejections, never a synchronous
+      // throw), so Promise.resolve(...) routes every error to .catch.
       Promise.resolve(loadSentryReplayIfConsented()).catch((err) =>
         console.error('[consent] sentry replay load failed:', err),
       )
