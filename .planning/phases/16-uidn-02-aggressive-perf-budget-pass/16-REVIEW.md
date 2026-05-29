@@ -24,7 +24,8 @@ findings:
   warning: 5
   info: 4
   total: 10
-status: issues_found
+status: resolved
+resolution: All 1 Critical + 5 Warning findings fixed (commits 52b5493, bf7ea9c, 61eff5d, cb18c50, 70c1ac8, a8eae1d). Build + 401 unit tests + GDPR e2e gate green post-fix. Info findings (IN-01..IN-04) left as-is.
 ---
 
 # Phase 16: Code Review Report
