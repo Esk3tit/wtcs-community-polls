@@ -62,7 +62,12 @@ export function Navbar() {
               Archive
             </Link>
             {isAdmin && (
-              // Explicit preload={false} — router default is now 'intent', but AdminGuard beforeLoad would redirect non-admins on hover. Hover-redirect leaks the admin route's existence = security leak.
+              // preload={false}: the route is render-guarded by <AdminGuard>
+              // (client-side <Navigate>), not by a route beforeLoad. Preloading
+              // the admin component chunk on hover wastes bandwidth and exposes
+              // the chunk's existence in the network tab. Authorization itself is
+              // enforced server-side via RLS + Edge Functions; this flag is a
+              // bandwidth/discretion measure, not the boundary.
               <Link
                 to="/admin"
                 preload={false}
