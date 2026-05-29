@@ -13,20 +13,29 @@ import type posthogType from 'posthog-js'
 type Client = typeof posthogType
 
 // Safety valve: queue at most this many deferred calls. Calls beyond the cap
-// are silently dropped. Normal sessions will never approach this limit.
+// are dropped. Normal sessions will never approach this limit.
 const QUEUE_CAP = 50
 
 let client: Client | null = null
 const queue: Array<(c: Client) => void> = []
+// Hitting the cap means the lazy chunk almost certainly never resolved — warn
+// once so it is diagnosable, without flooding logs on every subsequent drop.
+let capWarned = false
 
 // Routes a call to the client immediately if it is already set; otherwise
-// enqueues it up to the cap (dropping silently at cap).
+// enqueues it up to the cap (dropping at cap).
 function enqueue(fn: (c: Client) => void): void {
   if (client) {
     fn(client)
     return
   }
-  if (queue.length >= QUEUE_CAP) return
+  if (queue.length >= QUEUE_CAP) {
+    if (!capWarned) {
+      capWarned = true
+      console.warn('[posthog-facade] queue cap reached; dropping deferred calls')
+    }
+    return
+  }
   queue.push(fn)
 }
 
