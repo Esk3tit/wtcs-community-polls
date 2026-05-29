@@ -21,6 +21,17 @@ import { posthog } from '@/lib/posthog-facade'
 // gracefully instead: log and continue without analytics this session.
 try {
   const client = initPostHog()
+  // posthog-js initialises opted-OUT (opt_out_capturing_by_default). The facade
+  // queue may already hold an identify() and/or opt_in_capturing() that other
+  // subtrees enqueued while this chunk was loading; if setClient() drains them
+  // while the client is still opted out, a queued identify() no-ops and the
+  // session's first identify is lost. Opting in HERE — before the drain —
+  // guarantees any queued call lands on an opted-in client regardless of enqueue
+  // order. This component only mounts when consent === 'allow', so the persisted
+  // flag is authoritative.
+  if (window.localStorage.getItem('wtcs_consent') === 'allow') {
+    client.opt_in_capturing()
+  }
   posthog.setClient(client)
 } catch (err) {
   console.error('[posthog] init failed; analytics disabled this session', err)

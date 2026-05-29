@@ -148,3 +148,43 @@ Pass A captured against `https://polls.wtcsmapban.com` (production); Pass B agai
 _Audited: 2026-05-13 against https://polls.wtcsmapban.com (Lighthouse 13.2.0 + Playwright 1.59.1)_
 _Method: 5-route Lighthouse mobile audit + 6-width × 42-PNG matrix (18 unauth-prod + 24 auth-local across adminUser + memberUser contexts); harness at `.planning/closure/audit-{mobile.sh,screenshots.mjs}`_
 _Disposition: DEFER — row stays ⚠️ Revisit; follow-up tied to next perf-budget change_
+
+
+## v1.3 Rerun (2026-05-29)
+
+Phase 16 (the aggressive perf-budget pass) reruns the UIDN-02 Lighthouse audit after plans 01-06 merged and Netlify shipped the post-Phase-16 production deploy (merge commit `cd8e7f9`). The audit ran once against production per D-13 single-run policy; the numbers below are the only ones recorded. The captured stdout (`=== Summary ===` block + `EXIT_CODE=` line) lives at `.planning/closure/UIDN-02-audit-mobile-stdout.txt` (D-27 mktemp+bash-c+cp capture pattern — survives `audit-mobile.sh:28`'s `rm -rf`; `.txt` so it is not gitignored).
+
+### Per-route Lighthouse mobile scores
+
+| Route | Perf | A11y | BP | SEO |
+|-------|------|------|----|-----|
+| home | 90 | 100 | 100 | 92 |
+| topics | 92 | 100 | 100 | 92 |
+| archive | 92 | 100 | 100 | 92 |
+| auth-error | 91 | 100 | 100 | 92 |
+| admin | 91 | 100 | 100 | 92 |
+
+All 5 routes clear Performance ≥ 90 (D-05 strict criterion). `audit-mobile.sh` exit=0 (`Failed routes: 0 / 5`). A11y, BP, and SEO clear every threshold on every route. Values pulled verbatim from the `=== Summary ===` block in `.planning/closure/UIDN-02-audit-mobile-stdout.txt`.
+
+(v1.2 baseline for comparison: `/` 85 → 90 (+5); `/topics` 86 → 92 (+6); `/archive` 88 → 92 (+4); `/auth/error` 85 → 91 (+6); `/admin` 94 → 91 (−3). The four previously-failing routes all cleared the threshold after the Phase 16 perf-budget pass; `/admin` slipped 3pp within the ±5–10pp simulate variance band but remains above 90.)
+
+### Breakpoint matrix
+
+Screenshot matrix unchanged from v1.2 — this phase reruns Lighthouse only per D-13 (single Lighthouse rerun per milestone). No Playwright screenshot capture in Phase 16.
+
+### Verdict
+
+**v1.3 outcome: PASS**
+
+5/5 routes scored Performance ≥ 90. Per D-08, the `Mobile-first responsive design` Key Decision row in `.planning/PROJECT.md` flips ⚠️ Revisit → ✓, and GitHub Issue #18 (UIDN-02 tracking) closes via the closure PR body keyword `Closes #18`.
+
+### Cross-references
+
+- Phase 16 merge commit `cd8e7f9` — the post-Phase-16 production deploy this audit measures (vendor-react present, vendor-posthog absent from initial HTML — lazy gate intact)
+- `.planning/ROADMAP.md § Phase 16: UIDN-02 Aggressive Perf-Budget Pass`
+- GitHub Issue #18 — UIDN-02 tracking issue (state = closed on PASS via the closure PR body `Closes #18`)
+
+---
+_Audited: 2026-05-29 against https://polls.wtcsmapban.com (Lighthouse 13.2.0)_
+_Method: 5-route Lighthouse mobile audit only (D-13 single Lighthouse rerun per milestone); harness at `.planning/closure/audit-mobile.sh`_
+_Disposition: PASS — row flips ⚠️ Revisit → ✓; UIDN-02 issue #18 closes via closure PR `Closes #18`_

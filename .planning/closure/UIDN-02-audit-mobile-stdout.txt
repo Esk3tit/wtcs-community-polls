@@ -1,0 +1,15 @@
+>>> Auditing https://polls.wtcsmapban.com/ -> .planning/closure/artifacts/lighthouse/lh-mobile-home.report.{html,json}
+>>> Auditing https://polls.wtcsmapban.com/topics -> .planning/closure/artifacts/lighthouse/lh-mobile-topics.report.{html,json}
+>>> Auditing https://polls.wtcsmapban.com/archive -> .planning/closure/artifacts/lighthouse/lh-mobile-archive.report.{html,json}
+>>> Auditing https://polls.wtcsmapban.com/auth/error -> .planning/closure/artifacts/lighthouse/lh-mobile-auth-error.report.{html,json}
+>>> Auditing https://polls.wtcsmapban.com/admin -> .planning/closure/artifacts/lighthouse/lh-mobile-admin.report.{html,json}
+
+=== Summary ===
+  PASS home: P=90 A=100 BP=100 SEO=92
+  PASS topics: P=92 A=100 BP=100 SEO=92
+  PASS archive: P=92 A=100 BP=100 SEO=92
+  PASS auth-error: P=91 A=100 BP=100 SEO=92
+  PASS admin: P=91 A=100 BP=100 SEO=92
+Failed routes: 0 / 5
+Updated .planning/closure/artifacts/MANIFEST.json with 52 total entries
+EXIT_CODE=0

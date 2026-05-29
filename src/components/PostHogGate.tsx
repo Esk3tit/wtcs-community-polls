@@ -25,6 +25,9 @@ const LazyPostHogLoader = lazy(() =>
   import('@/components/PostHogProviderInner')
     .then((m) => ({ default: m.PostHogProviderInner }))
     .catch((err) => {
+      // Log locally too (symmetry with PostHogProviderInner's init catch): when
+      // the Sentry DSN is unset (dev), Sentry.captureException leaves no signal.
+      console.error('[posthog] lazy loader import failed; analytics disabled this session', err)
       Sentry.captureException(err)
       return { default: () => null }
     }),

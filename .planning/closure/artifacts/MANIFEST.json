@@ -296,74 +296,74 @@
     },
     {
       "path": ".planning/closure/artifacts/lighthouse/lh-mobile-admin.report.html",
-      "sha256": "7b19a9c1341279079d154bf19f628cccd5d2b7a0e9c127c755e16e13fbe0f722",
-      "sizeBytes": 492072,
-      "recordedAt": "2026-05-13T20:19:13Z",
+      "sha256": "244873c62b487e59c7046e07a9268f2f7ece1c816195c8ef6a4642ab8b89f69f",
+      "sizeBytes": 447475,
+      "recordedAt": "2026-05-29T10:25:56Z",
       "kind": "lighthouse"
     },
     {
       "path": ".planning/closure/artifacts/lighthouse/lh-mobile-archive.report.html",
-      "sha256": "60276fa1f396934712dd120f64c8eaedb731db76472f2f2b95c9d8e1ac66ad79",
-      "sizeBytes": 486419,
-      "recordedAt": "2026-05-13T20:19:13Z",
+      "sha256": "a2811ce665c98d683f80a929577b82a7ea4ddf1a8de5b2b2e9f3b938c8fb49b6",
+      "sizeBytes": 452023,
+      "recordedAt": "2026-05-29T10:25:56Z",
       "kind": "lighthouse"
     },
     {
       "path": ".planning/closure/artifacts/lighthouse/lh-mobile-auth-error.report.html",
-      "sha256": "45d1f780b94e2c251bbaa4c09e6cf153a6315f2038102431e0133ff410d579e2",
-      "sizeBytes": 451900,
-      "recordedAt": "2026-05-13T20:19:13Z",
+      "sha256": "d26004c20974699b77af60b05a56a5abb2b2826b2244811aee439c2f4bc3e012",
+      "sizeBytes": 439843,
+      "recordedAt": "2026-05-29T10:25:56Z",
       "kind": "lighthouse"
     },
     {
       "path": ".planning/closure/artifacts/lighthouse/lh-mobile-home.report.html",
-      "sha256": "0f27fc295f934424ce2a45a5d4da764b1566e8fd627fb31e66f681694e24e455",
-      "sizeBytes": 456803,
-      "recordedAt": "2026-05-13T20:19:13Z",
+      "sha256": "142d1c0858067550439a344c794909da4321d7c25a65d2a8ae60f1a849d7b112",
+      "sizeBytes": 438212,
+      "recordedAt": "2026-05-29T10:25:56Z",
       "kind": "lighthouse"
     },
     {
       "path": ".planning/closure/artifacts/lighthouse/lh-mobile-topics.report.html",
-      "sha256": "65606aa2081678ea1e6d1353700584b0ab44730423ee97caf4fea5b17f947d08",
-      "sizeBytes": 459600,
-      "recordedAt": "2026-05-13T20:19:13Z",
+      "sha256": "f5467e6aebbb35a8c8933b1b1ef9369328cf07c94e1baa072f39a904cfa8c50b",
+      "sizeBytes": 447309,
+      "recordedAt": "2026-05-29T10:25:56Z",
       "kind": "lighthouse"
     },
     {
       "path": ".planning/closure/artifacts/lighthouse/lh-mobile-admin.report.json",
-      "sha256": "078b80193e25fd6183411354118a5cf4d1fc4cf7a648ba58b4cee0156bd65bfc",
-      "sizeBytes": 419178,
-      "recordedAt": "2026-05-13T20:19:13Z",
+      "sha256": "d4dff6f9f5963e28914dbc76d14c08f3967c9a752dc68e2f6ec86ad3f9668866",
+      "sizeBytes": 359514,
+      "recordedAt": "2026-05-29T10:25:56Z",
       "kind": "lighthouse"
     },
     {
       "path": ".planning/closure/artifacts/lighthouse/lh-mobile-archive.report.json",
-      "sha256": "6a25b6ba1b8fcb6f745f0f4a862f6e12cbceae71e27aedd8352af5ec805ac7da",
-      "sizeBytes": 413624,
-      "recordedAt": "2026-05-13T20:19:13Z",
+      "sha256": "21f8a57c5eb06578b31566e43e9d68b69aa9c50edf3455813ff0167812f9549c",
+      "sizeBytes": 364047,
+      "recordedAt": "2026-05-29T10:25:56Z",
       "kind": "lighthouse"
     },
     {
       "path": ".planning/closure/artifacts/lighthouse/lh-mobile-auth-error.report.json",
-      "sha256": "3365691f99c8e3ce6970c5b84cedb1b9f4c404061c13d3edf140ecf8c871ab38",
-      "sizeBytes": 377632,
-      "recordedAt": "2026-05-13T20:19:13Z",
+      "sha256": "609c53960456d9c2e1c37591c1e77aab35ebd86205cf18ec06b81502043decc6",
+      "sizeBytes": 350581,
+      "recordedAt": "2026-05-29T10:25:56Z",
       "kind": "lighthouse"
     },
     {
       "path": ".planning/closure/artifacts/lighthouse/lh-mobile-home.report.json",
-      "sha256": "83b3a549b811c297c7d173b02b469bf207e9e7a9590930ffe7c8aa8c8f958366",
-      "sizeBytes": 382322,
-      "recordedAt": "2026-05-13T20:19:13Z",
+      "sha256": "a092c6969472d6f1eabd7c7c33758da6c388f6d21ca347eca766855c2cd912f6",
+      "sizeBytes": 348158,
+      "recordedAt": "2026-05-29T10:25:56Z",
       "kind": "lighthouse"
     },
     {
       "path": ".planning/closure/artifacts/lighthouse/lh-mobile-topics.report.json",
-      "sha256": "d5306a6804661c186011671117c56bb04a57c3f4839a05afd3531421f326ba08",
-      "sizeBytes": 386884,
-      "recordedAt": "2026-05-13T20:19:13Z",
+      "sha256": "1ea262fc21a16b9631f9a321822e168862c6acda0fc2448a0573e542f6c5484e",
+      "sizeBytes": 359283,
+      "recordedAt": "2026-05-29T10:25:56Z",
       "kind": "lighthouse"
     }
   ],
-  "updatedAt": "2026-05-13T20:19:13Z"
+  "updatedAt": "2026-05-29T10:25:56Z"
 }
