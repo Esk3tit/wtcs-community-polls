@@ -52,10 +52,16 @@ export function MobileNav() {
             </Link>
           </SheetClose>
           {isAdmin && (
-            // No preload — AdminGuard beforeLoad would redirect non-admins on hover. Per-link opt-in only.
+            // preload={false}: the route is render-guarded by <AdminGuard>
+            // (client-side <Navigate>), not by a route beforeLoad. Preloading
+            // the admin component chunk on hover wastes bandwidth and exposes
+            // the chunk's existence in the network tab. Authorization itself is
+            // enforced server-side via RLS + Edge Functions; this flag is a
+            // bandwidth/discretion measure, not the boundary.
             <SheetClose asChild>
               <Link
                 to="/admin"
+                preload={false}
                 className="py-3 text-sm text-foreground hover:text-foreground/80 transition-colors"
                 activeProps={{ className: 'font-medium' }}
               >

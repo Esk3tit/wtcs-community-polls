@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { handleAuthCallback } from '@/lib/auth-helpers'
-import { posthog } from '@/lib/posthog'
+import { posthog } from '@/lib/posthog-facade'
 import { useConsent } from '@/hooks/useConsent'
 import type { Profile } from '@/lib/types/suggestions'
 import * as Sentry from '@sentry/react'
@@ -179,9 +179,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Reset PostHog BEFORE the API call so analytics stop attributing
     // events to the signed-out user even if the server call is slow/fails.
     posthog.reset()
-    supabase.auth.signOut().catch(() => {
-      // Session already cleared from state — worst case the server
-      // session expires naturally
+    supabase.auth.signOut().catch((err) => {
+      // State already cleared; the server session expires naturally. Log so a
+      // persistent sign-out failure (e.g. network) is still diagnosable.
+      console.error('[auth] supabase.signOut() failed post-local-clear:', err)
     })
   }, [])
 

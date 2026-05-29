@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useEffect, useState, useCallback } from 'react'
 import type { ReactNode } from 'react'
-import { posthog } from '@/lib/posthog'
+import { posthog } from '@/lib/posthog-facade'
 import { loadSentryReplayIfConsented } from '@/lib/sentry'
 
 // GDPR opt-IN consent state — single source of truth.
@@ -18,16 +18,14 @@ export interface ConsentContextValue {
   decline: () => void
 }
 
+// Read-only: the render path must stay pure, so this only computes the
+// initial state. A legacy opt-OUT user resolves to 'decline' here; the actual
+// localStorage migration write is deferred to a mount effect.
 function readConsent(): ConsentState {
   if (typeof window === 'undefined') return 'undecided'
   const v = window.localStorage.getItem(STORAGE_KEY)
   if (v === 'allow' || v === 'decline') return v
-  // One-shot migration of legacy opt-OUT users to opt-IN-equivalent decline.
-  if (window.localStorage.getItem(LEGACY_OPT_OUT_KEY) === 'true') {
-    window.localStorage.setItem(STORAGE_KEY, 'decline')
-    window.localStorage.removeItem(LEGACY_OPT_OUT_KEY)
-    return 'decline'
-  }
+  if (window.localStorage.getItem(LEGACY_OPT_OUT_KEY) === 'true') return 'decline'
   return 'undecided'
 }
 
@@ -35,6 +33,19 @@ export const ConsentContext = createContext<ConsentContextValue | undefined>(und
 
 export function ConsentProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<ConsentState>(() => readConsent())
+
+  // One-shot migration of legacy opt-OUT users to opt-IN-equivalent decline.
+  // The write lives in an effect (not the lazy initializer) to keep the render
+  // path pure; the initial 'decline' state is already resolved by readConsent().
+  useEffect(() => {
+    if (
+      window.localStorage.getItem(STORAGE_KEY) === null &&
+      window.localStorage.getItem(LEGACY_OPT_OUT_KEY) === 'true'
+    ) {
+      window.localStorage.setItem(STORAGE_KEY, 'decline')
+      window.localStorage.removeItem(LEGACY_OPT_OUT_KEY)
+    }
+  }, [])
 
   // Cross-tab sync: only fires for OTHER-tab writes, never own-tab.
   useEffect(() => {

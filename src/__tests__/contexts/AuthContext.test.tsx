@@ -11,7 +11,7 @@ const { mockIdentify, mockGetSession, mockOnAuthStateChange } = vi.hoisted(() =>
   mockOnAuthStateChange: vi.fn(),
 }))
 
-vi.mock('@/lib/posthog', () => ({
+vi.mock('@/lib/posthog-facade', () => ({
   posthog: {
     opt_in_capturing: vi.fn(),
     opt_out_capturing: vi.fn(),

@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useTheme } from '@/components/theme-provider'
 import { MobileNav } from '@/components/layout/MobileNav'
 import logo from '@/assets/wtcs-logo.png'
+import webpLogo from '@/assets/wtcs-logo.webp'
 
 export function Navbar() {
   const { user, profile, signOut, signInWithDiscord, isAdmin } = useAuth()
@@ -29,11 +30,16 @@ export function Navbar() {
           className="min-h-[44px] flex items-center"
           aria-label="WTCS Community Suggestions"
         >
-          <img
-            src={logo}
-            alt="WTCS Community Suggestions"
-            className="h-8 w-auto md:h-9"
-          />
+          <picture>
+            <source type="image/webp" srcSet={webpLogo} />
+            <img
+              src={logo}
+              alt="WTCS Community Suggestions"
+              className="h-8 w-auto md:h-9"
+              width={226}
+              height={200}
+            />
+          </picture>
         </Link>
 
         {/* Center: Desktop nav links */}
@@ -56,9 +62,15 @@ export function Navbar() {
               Archive
             </Link>
             {isAdmin && (
-              // No preload — AdminGuard beforeLoad would redirect non-admins on hover. Per-link opt-in only.
+              // preload={false}: the route is render-guarded by <AdminGuard>
+              // (client-side <Navigate>), not by a route beforeLoad. Preloading
+              // the admin component chunk on hover wastes bandwidth and exposes
+              // the chunk's existence in the network tab. Authorization itself is
+              // enforced server-side via RLS + Edge Functions; this flag is a
+              // bandwidth/discretion measure, not the boundary.
               <Link
                 to="/admin"
+                preload={false}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 activeProps={{ className: 'text-foreground' }}
               >
@@ -107,7 +119,7 @@ export function Navbar() {
                     />
                   ) : (
                     <div className="rounded-full w-8 h-8 bg-muted flex items-center justify-center text-sm font-medium text-muted-foreground">
-                      {(profile?.discord_username ?? '?')[0].toUpperCase()}
+                      {(profile?.discord_username?.[0] ?? '?').toUpperCase()}
                     </div>
                   )}
                 </Button>
@@ -116,7 +128,7 @@ export function Navbar() {
                 <div className="px-2 py-1.5">
                   <p className="text-sm font-medium">{profile?.discord_username ?? 'User'}</p>
                 </div>
-                <DropdownMenuItem variant="destructive" onSelect={() => void signOut()}>
+                <DropdownMenuItem variant="destructive" onSelect={() => signOut()}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Sign out
                 </DropdownMenuItem>

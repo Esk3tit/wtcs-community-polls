@@ -2,8 +2,7 @@ import { StrictMode, type ErrorInfo } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import * as Sentry from '@sentry/react'
-import { PostHogProvider } from 'posthog-js/react'
-import { initPostHog } from '@/lib/posthog'
+import { PostHogGate } from '@/components/PostHogGate'
 import { ConsentProvider } from '@/contexts/ConsentContext'
 import { AppErrorFallback } from '@/components/AppErrorFallback'
 import { routeTree } from './routeTree.gen'
@@ -37,9 +36,7 @@ Sentry.init({
   replaysOnErrorSampleRate: 1.0,
 })
 
-const posthog = initPostHog()
-
-const router = createRouter({ routeTree })
+const router = createRouter({ routeTree, defaultPreload: 'intent' })
 
 declare module '@tanstack/react-router' {
   interface Register {
@@ -92,11 +89,11 @@ createRoot(container, {
         })
       }}
     >
-      <PostHogProvider client={posthog}>
-        <ConsentProvider>
+      <ConsentProvider>
+        <PostHogGate>
           <RouterProvider router={router} />
-        </ConsentProvider>
-      </PostHogProvider>
+        </PostHogGate>
+      </ConsentProvider>
     </Sentry.ErrorBoundary>
   </StrictMode>,
 )
