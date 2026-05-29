@@ -56,7 +56,7 @@ UIDN-02 carry-forward perf-budget trigger work. Implements the 5 surviving perf-
 
 - [x] **PERF-04**: `build.rolldownOptions.output.manualChunks` configured in `vite.config.ts` to split `vendor-react` and `vendor-posthog` into named cache-stable chunks. Verifies via re-run of `ANALYZE=true npm run build` that the chunks land at the expected sizes and the app-only chunks don't bloat.
 
-- [ ] **PERF-05**: `src/assets/wtcs-logo.png` converted to `wtcs-logo.webp` (manual conversion — `vite-imagetools`/`sharp` are explicit Out-of-Scope per anti-feature research). `<picture><source type="image/webp"><img></picture>` added in `src/components/layout/Navbar.tsx` (and any other site that renders the logo) with explicit width/height to prevent CLS. PNG fallback retained for Safari < 14 / non-WebP user agents (negligible at current Discord-user base but trivial cost).
+- [x] **PERF-05**: `src/assets/wtcs-logo.png` converted to `wtcs-logo.webp` (manual conversion — `vite-imagetools`/`sharp` are explicit Out-of-Scope per anti-feature research). `<picture><source type="image/webp"><img></picture>` added in `src/components/layout/Navbar.tsx` (and any other site that renders the logo) with explicit width/height to prevent CLS. PNG fallback retained for Safari < 14 / non-WebP user agents (negligible at current Discord-user base but trivial cost).
 
 - [ ] **PERF-06**: `createRouter({ defaultPreload: 'intent' })` added in `src/main.tsx` (or wherever the router is instantiated). One-line change covers all `<Link>` navigation app-wide.
 
@@ -130,7 +130,7 @@ Continues from v1.0's UIDN-01..03. UIDN-03-FOLLOWUP-LIST-CARDS from v1.1 audit t
 | PERF-02 | Phase 16 | Complete |
 | PERF-03 | Phase 16 | Complete |
 | PERF-04 | Phase 16 | Complete |
-| PERF-05 | Phase 16 | Pending |
+| PERF-05 | Phase 16 | Complete |
 | PERF-06 | Phase 16 | Pending |
 | PERF-07 | Phase 16 | Pending |
 | DOCS-05 | Phase 17 | Pending |

@@ -200,7 +200,7 @@ Plans:
 **Wave 4** *(blocked on Wave 3 completion)*
 
 - [x] 16-04-PLAN.md — PERF-04: vite.config.ts manualChunks (function form) for vendor-react (react + react-dom + scheduler runtime family) + vendor-posthog (lazy-only reachable)
-- [ ] 16-05-PLAN.md — PERF-05: manual cwebp PNG→WebP + Navbar.tsx <picture><source><img width/height> wrap with zero-CLS contract
+- [x] 16-05-PLAN.md — PERF-05: manual cwebp PNG→WebP + Navbar.tsx <picture><source><img width/height> wrap with zero-CLS contract
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
@@ -254,7 +254,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 14. Security-Definer Search-Path Migration | 1/1 | Complete | 2026-05-17 |
 | 15. Observability + E2E Verify & Close | 5/5 | Shipped | 2026-05-25 |
-| 16. UIDN-02 Aggressive Perf-Budget Pass | 4/7 | In Progress|  |
+| 16. UIDN-02 Aggressive Perf-Budget Pass | 5/7 | In Progress|  |
 | 17. Planning-Doc + UI Hygiene Sweep | 0/TBD | Not started | - |
 
 | Milestone | Phases | Plans | Status | Shipped |
