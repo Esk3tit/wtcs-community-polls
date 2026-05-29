@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useTheme } from '@/components/theme-provider'
 import { MobileNav } from '@/components/layout/MobileNav'
 import logo from '@/assets/wtcs-logo.png'
+import webpLogo from '@/assets/wtcs-logo.webp'
 
 export function Navbar() {
   const { user, profile, signOut, signInWithDiscord, isAdmin } = useAuth()
@@ -29,11 +30,16 @@ export function Navbar() {
           className="min-h-[44px] flex items-center"
           aria-label="WTCS Community Suggestions"
         >
-          <img
-            src={logo}
-            alt="WTCS Community Suggestions"
-            className="h-8 w-auto md:h-9"
-          />
+          <picture>
+            <source type="image/webp" srcSet={webpLogo} />
+            <img
+              src={logo}
+              alt="WTCS Community Suggestions"
+              className="h-8 w-auto md:h-9"
+              width={226}
+              height={200}
+            />
+          </picture>
         </Link>
 
         {/* Center: Desktop nav links */}
