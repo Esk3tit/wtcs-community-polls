@@ -119,7 +119,7 @@ export function Navbar() {
                     />
                   ) : (
                     <div className="rounded-full w-8 h-8 bg-muted flex items-center justify-center text-sm font-medium text-muted-foreground">
-                      {(profile?.discord_username ?? '?')[0].toUpperCase()}
+                      {(profile?.discord_username?.[0] ?? '?').toUpperCase()}
                     </div>
                   )}
                 </Button>
