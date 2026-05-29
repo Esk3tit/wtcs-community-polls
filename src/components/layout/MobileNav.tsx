@@ -52,10 +52,11 @@ export function MobileNav() {
             </Link>
           </SheetClose>
           {isAdmin && (
-            // No preload — AdminGuard beforeLoad would redirect non-admins on hover. Per-link opt-in only.
+            // Explicit preload={false} — router default is now 'intent', but AdminGuard beforeLoad would redirect non-admins on hover. Hover-redirect leaks the admin route's existence = security leak.
             <SheetClose asChild>
               <Link
                 to="/admin"
+                preload={false}
                 className="py-3 text-sm text-foreground hover:text-foreground/80 transition-colors"
                 activeProps={{ className: 'font-medium' }}
               >

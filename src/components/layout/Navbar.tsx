@@ -62,9 +62,10 @@ export function Navbar() {
               Archive
             </Link>
             {isAdmin && (
-              // No preload — AdminGuard beforeLoad would redirect non-admins on hover. Per-link opt-in only.
+              // Explicit preload={false} — router default is now 'intent', but AdminGuard beforeLoad would redirect non-admins on hover. Hover-redirect leaks the admin route's existence = security leak.
               <Link
                 to="/admin"
+                preload={false}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 activeProps={{ className: 'text-foreground' }}
               >
