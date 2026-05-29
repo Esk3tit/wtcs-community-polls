@@ -18,17 +18,20 @@ import { test, expect } from '@playwright/test'
 // network ingest/decide endpoints — the surface that must stay off the critical
 // path for non-consenting visitors.
 //
-// Explicitly excluded: URLs containing 'posthog-facade' (the thin 771-byte
-// static shim in posthog-facade.ts). That file uses `import type` only, so
-// posthog-js is fully erased at build time — the facade chunk makes zero
-// PostHog network calls and collects nothing. It is intentionally eager so
-// AuthContext/ConsentContext have a synchronous call surface before consent.
+// Keys on artifacts that genuinely represent posthog-js execution rather than a
+// filename substring: (a) the PostHog ingest/decide hosts (these only fire if
+// posthog-js actually ran), and (b) the vendor-posthog library chunk by its
+// stable manualChunks name prefix (vite.config.ts pins posthog-js into
+// `vendor-posthog`; Rolldown preserves that name as the emitted file prefix).
+// The thin static facade (posthog-facade.ts) uses `import type` only, so
+// posthog-js is fully erased from it — its chunk is neither an ingest endpoint
+// nor the vendor-posthog file, so it never matches and needs no substring escape.
 function isHeavyPosthogRequest(url: string): boolean {
-  // Allow the facade shim through — it is not the posthog-js library.
-  if (/posthog-facade/i.test(url)) return false
-  // Catch the lazy posthog-js library chunk (PostHogProviderInner or any future
-  // vendor-posthog split chunk) and all PostHog ingest / decide endpoints.
-  return /posthog/i.test(url)
+  // Ingest/decide endpoints — these only fire if posthog-js actually ran.
+  if (/(\.|\/\/)(i|us|eu)\.posthog\.com/i.test(url)) return true
+  // The lazy posthog-js library chunk, matched by its stable name prefix.
+  if (/\/assets\/vendor-posthog-[^/]+\.js$/i.test(url)) return true
+  return false
 }
 
 test('no posthog network requests before consent Allow; fires after', async ({ page }) => {
@@ -52,6 +55,20 @@ test('no posthog network requests before consent Allow; fires after', async ({ p
   expect(
     posthogRequests,
     `posthog-js library/ingest requests before Allow: ${posthogRequests.join(', ')}`,
+  ).toHaveLength(0)
+
+  // INVARIANT: the vendor-posthog chunk must not be in the initial document's
+  // <link rel="modulepreload"> set — it is only reachable via the consent-gated
+  // PostHogGate, so the browser must never speculatively warm it on load. This
+  // verifies the lazy-load graph claim the vite.config.ts manualChunks comment
+  // makes but nothing else proves.
+  const modulepreloadHrefs = await page.$$eval(
+    'link[rel="modulepreload"]',
+    (links) => links.map((l) => (l as HTMLLinkElement).href),
+  )
+  expect(
+    modulepreloadHrefs.filter((href) => /\/assets\/vendor-posthog-[^/]+\.js$/i.test(href)),
+    `vendor-posthog chunk must be absent from initial modulepreload set: ${modulepreloadHrefs.join(', ')}`,
   ).toHaveLength(0)
 
   // Opt in — this triggers ConsentProvider → PostHogGate state='allow' →
