@@ -64,7 +64,9 @@ export function ConsentProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (state === 'allow') {
       posthog.opt_in_capturing()
-      void loadSentryReplayIfConsented()
+      loadSentryReplayIfConsented().catch((err) =>
+        console.error('[consent] sentry replay load failed:', err),
+      )
     } else if (state === 'decline') {
       posthog.opt_out_capturing()
     }
