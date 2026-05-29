@@ -9,15 +9,25 @@
 // verified defect where nesting children inside the suspending component caused
 // the entire router subtree to blank/remount during the lazy-import window.
 import { lazy, Suspense, type ReactNode } from 'react'
+import * as Sentry from '@sentry/react'
 import { useConsent } from '@/hooks/useConsent'
 
 // Declared at module scope so React.lazy deduplicates the import across renders.
 // Declaring it inside the component body would recreate the reference every
 // render, defeating React.lazy's built-in dedup and triggering repeated fetches.
+//
+// The dynamic import() can reject on its own (chunk fetch / CDN / network
+// failure) before initPostHog even runs. An unguarded rejection would propagate
+// through Suspense to the app-root error boundary and blank the entire app over
+// a non-critical analytics concern. Catch it, report to Sentry, and resolve to a
+// no-op component so the app keeps rendering without analytics this session.
 const LazyPostHogLoader = lazy(() =>
-  import('@/components/PostHogProviderInner').then((m) => ({
-    default: m.PostHogProviderInner,
-  })),
+  import('@/components/PostHogProviderInner')
+    .then((m) => ({ default: m.PostHogProviderInner }))
+    .catch((err) => {
+      Sentry.captureException(err)
+      return { default: () => null }
+    }),
 )
 
 export function PostHogGate({ children }: { children: ReactNode }) {

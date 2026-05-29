@@ -53,9 +53,17 @@ export const posthog = {
     enqueue((c) => c.opt_out_capturing())
   },
   // Called by PostHogProviderInner once the lazy chunk loads: assigns the real
-  // client and synchronously drains the queue so no calls are lost.
+  // client and synchronously drains the queue so no calls are lost. Each drained
+  // call is isolated so a single throwing call cannot abort the rest of the drain.
   setClient(c: Client): void {
     client = c
-    while (queue.length) queue.shift()!(c)
+    while (queue.length) {
+      const fn = queue.shift()!
+      try {
+        fn(c)
+      } catch (err) {
+        console.error('[posthog-facade] error draining queued call:', err)
+      }
+    }
   },
 }

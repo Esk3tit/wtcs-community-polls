@@ -160,15 +160,15 @@ Phase 16's distinguishing feature: the design contract is largely a set of **mea
 
 ## Loading & Suspense States
 
-PostHog is loaded via `React.lazy(() => import(...))` inside `<PostHogGate>` (D-01). The render-naked-children semantic is the contract:
+PostHog is loaded via `React.lazy(() => import(...))` inside `<PostHogGate>` (D-01). The SIBLING-loader semantic is the contract — `{children}` (the router) ALWAYS renders directly and unconditionally; the lazy PostHog loader is mounted as a SEPARATE sibling inside `<Suspense fallback={null}>` only when consent resolves to `'allow'`:
 
 | Consent state | Tree shape | User-visible loading state |
 |---------------|------------|-----------------------------|
-| `'undecided'` | `{children}` rendered directly; PostHogProvider absent from tree | **None** — no spinner, no skeleton, no Suspense fallback |
-| `'decline'` | `{children}` rendered directly; PostHogProvider absent from tree | **None** — `posthog-js` never enters the network graph |
-| `'allow'` | `<Suspense fallback={null}>` wraps `<LazyPostHogProvider>{children}</LazyPostHogProvider>` | **`fallback={null}`** — children stay rendered during the dynamic import. No visible loading indicator. |
+| `'undecided'` | `{children}` rendered directly; PostHog loader absent from tree | **None** — no spinner, no skeleton, no Suspense fallback |
+| `'decline'` | `{children}` rendered directly; PostHog loader absent from tree | **None** — `posthog-js` never enters the network graph |
+| `'allow'` | `{children}` rendered directly (sibling); `<Suspense fallback={null}><LazyPostHogLoader /></Suspense>` mounted ALONGSIDE it | **`fallback={null}`** — `{children}` are siblings of the Suspense boundary, not inside it, so they stay rendered untouched during the dynamic import. No visible loading indicator. |
 
-**Why `fallback={null}` and not a spinner:** PostHogProvider has no rendered surface; it is a context wrapper only. While the lazy import resolves, children render normally with `posthog-facade` queuing identify/reset calls. The user sees no difference between "posthog loaded" and "posthog loading."
+**Why a sibling loader and not child-wrapping:** the loader (`PostHogProviderInner`) renders `null` — it has no rendered surface and wraps no children. Wrapping `{children}` inside the suspending component (the deprecated `<LazyPostHogProvider>{children}</LazyPostHogProvider>` shape) was WRONG: Suspense replaces the entire suspending subtree with the `null` fallback, which would blank/remount the router during the dynamic-import window. Keeping the router as a sibling avoids that defect. While the lazy import resolves, `{children}` render normally with `posthog-facade` queuing identify/reset calls. The user sees no difference between "posthog loaded" and "posthog loading."
 
 **Executor constraint:** Do NOT introduce a Suspense fallback with a spinner, skeleton, or loading toast for the PostHog lazy-load. The contract is that this lazy-load is silent.
 

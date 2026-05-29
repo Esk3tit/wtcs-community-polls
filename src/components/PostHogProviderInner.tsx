@@ -10,6 +10,7 @@
 // The component renders null because nothing in this app calls usePostHog() —
 // there are no React-context consumers, so wrapping children (which would
 // introduce a Suspense remount risk) is both unnecessary and harmful.
+import * as Sentry from '@sentry/react'
 import { initPostHog } from '@/lib/posthog'
 import { posthog } from '@/lib/posthog-facade'
 
@@ -23,6 +24,7 @@ try {
   posthog.setClient(client)
 } catch (err) {
   console.error('[posthog] init failed; analytics disabled this session', err)
+  Sentry.captureException(err)
 }
 
 export function PostHogProviderInner() {

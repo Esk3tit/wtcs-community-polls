@@ -13,29 +13,29 @@ import { visualizer } from 'rollup-plugin-visualizer'
 // before Vite promotes NODE_ENV, so process.env.NODE_ENV would silently disable
 // sourcemap upload on hosts like Netlify that don't pre-set it in the shell.
 
-export default defineConfig(({ mode }) => {
-  // Guard against running an analyze build whenever the Sentry sourcemap chain
-  // would be active, which would displace sentryVitePlugin from last position
-  // and silently skip the OBSV-04 sourcemap-upload chain established in Phase 15.
-  // The Sentry plugin's own `disable: mode !== 'production'` gates on Vite `mode`,
-  // so key the guard on `mode` here so the two cannot diverge — a production-mode
-  // build with ANALYZE set always fails loudly instead of silently dropping uploads.
-  // `CONTEXT` / `NETLIFY_CONTEXT` are still guarded for defense-in-depth: Netlify
-  // natively sets `CONTEXT=production` in production deploys (verified via netlify.toml).
-  if (
-    process.env.ANALYZE === 'true' &&
-    (mode === 'production' ||
-      process.env.CONTEXT === 'production' ||
-      process.env.NETLIFY_CONTEXT === 'production')
-  ) {
-    throw new Error(
-      '[OBSV-04] Cannot run bundle analysis in a production build. ' +
-        'rollup-plugin-visualizer and sentryVitePlugin are mutually exclusive at the last-plugin ' +
-        'position — running both would skip the Phase 15 sourcemap-upload chain and break ' +
-        'Sentry stack-frame resolution. Unset ANALYZE or run bundle analysis locally only.',
-    )
-  }
+// Guard against running an analyze build on a Netlify PRODUCTION deploy, where
+// the Sentry sourcemap chain is active. Swapping sentryVitePlugin for the
+// visualizer there would displace sentryVitePlugin from last position and
+// silently skip the OBSV-04 sourcemap-upload chain established in Phase 15.
+// Key ONLY on Netlify's deploy context: Netlify natively sets `CONTEXT=production`
+// in production deploys (verified via netlify.toml); `NETLIFY_CONTEXT` is kept as
+// a legacy alias. A LOCAL `build:analyze` (production-mode by default, no Netlify
+// CONTEXT) legitimately needs the production bundle to analyze and uploads no
+// sourcemaps — it must NOT throw here.
+if (
+  process.env.ANALYZE === 'true' &&
+  (process.env.CONTEXT === 'production' ||
+    process.env.NETLIFY_CONTEXT === 'production')
+) {
+  throw new Error(
+    '[OBSV-04] Cannot run bundle analysis on a production deploy. ' +
+      'rollup-plugin-visualizer and sentryVitePlugin are mutually exclusive at the last-plugin ' +
+      'position — running both would skip the Phase 15 sourcemap-upload chain and break ' +
+      'Sentry stack-frame resolution. Unset ANALYZE or run bundle analysis locally only.',
+  )
+}
 
+export default defineConfig(({ mode }) => {
   const plugins = [
     tanstackRouter({
       target: 'react',
