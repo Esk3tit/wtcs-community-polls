@@ -128,7 +128,7 @@ export function Navbar() {
                 <div className="px-2 py-1.5">
                   <p className="text-sm font-medium">{profile?.discord_username ?? 'User'}</p>
                 </div>
-                <DropdownMenuItem variant="destructive" onSelect={() => void signOut()}>
+                <DropdownMenuItem variant="destructive" onSelect={() => signOut()}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Sign out
                 </DropdownMenuItem>

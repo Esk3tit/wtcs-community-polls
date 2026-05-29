@@ -179,9 +179,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Reset PostHog BEFORE the API call so analytics stop attributing
     // events to the signed-out user even if the server call is slow/fails.
     posthog.reset()
-    supabase.auth.signOut().catch(() => {
-      // Session already cleared from state — worst case the server
-      // session expires naturally
+    supabase.auth.signOut().catch((err) => {
+      // State already cleared; the server session expires naturally. Log so a
+      // persistent sign-out failure (e.g. network) is still diagnosable.
+      console.error('[auth] supabase.signOut() failed post-local-clear:', err)
     })
   }, [])
 
