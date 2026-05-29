@@ -4,13 +4,13 @@ milestone: v1.3
 milestone_name: — Hygiene & Performance
 status: executing
 stopped_at: Completed 16-03-PLAN.md
-last_updated: "2026-05-29T05:15:26.972Z"
+last_updated: "2026-05-29T05:47:30.558Z"
 last_activity: 2026-05-29
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 13
-  completed_plans: 11
+  completed_plans: 12
   percent: 50
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-14 after v1.2 milestone)
 ## Current Position
 
 Phase: 16 (uidn-02-aggressive-perf-budget-pass) — EXECUTING
-Plan: 6 of 7
+Plan: 7 of 7
 Status: Ready to execute
 Last activity: 2026-05-29
 
-Progress: [█████████░] 85%
+Progress: [█████████░] 92%
 
 ## Performance Metrics
 
@@ -52,6 +52,7 @@ Progress: [█████████░] 85%
 | Phase 16 P02 | 5m | 1 tasks | 1 files |
 | Phase 16 P03 | multi-session | 7 tasks | 11 files |
 | Phase 16 P04 | 20m | 2 tasks | 1 files |
+| Phase 16 P06 | 15min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,8 @@ Recent decisions affecting v1.3 work (full log in PROJECT.md Key Decisions table
 - [Phase ?]: PostHogProviderInner uses module-scope init so StrictMode double-invoke does not double-flush queue
 - [Phase ?]: Function form for manualChunks (not object form) — boundary-anchored regex prevents kitchen-sink contamination
 - [Phase ?]: vendor-react includes scheduler (React runtime dep) — cache-stable unit is the React family
+- [Phase 16]: defaultPreload: 'intent' added at router level; explicit preload={false} on both Admin links (Navbar + MobileNav) preserves V4 Access Control boundary (hover-redirect leak mitigated)
+- [Phase 16]: Task 3 live hover-smoke accepted via static-grep fallback — admin session unavailable locally; plan fallback clause invoked; operator plain-accepted
 
 ### Blockers/Concerns
 
@@ -92,6 +95,6 @@ Items acknowledged and deferred at milestone v1.2 close on 2026-05-14:
 
 ## Session Continuity
 
-Last session: 2026-05-29T05:15:26.966Z
+Last session: 2026-05-29T05:47:30.553Z
 Stopped at: Completed 16-03-PLAN.md
 Resume action: `/gsd-discuss-phase 16` (or 17) to scope the next v1.3 hygiene phase

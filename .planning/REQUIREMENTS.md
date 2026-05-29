@@ -58,7 +58,7 @@ UIDN-02 carry-forward perf-budget trigger work. Implements the 5 surviving perf-
 
 - [x] **PERF-05**: `src/assets/wtcs-logo.png` converted to `wtcs-logo.webp` (manual conversion — `vite-imagetools`/`sharp` are explicit Out-of-Scope per anti-feature research). `<picture><source type="image/webp"><img></picture>` added in `src/components/layout/Navbar.tsx` (and any other site that renders the logo) with explicit width/height to prevent CLS. PNG fallback retained for Safari < 14 / non-WebP user agents (negligible at current Discord-user base but trivial cost).
 
-- [ ] **PERF-06**: `createRouter({ defaultPreload: 'intent' })` added in `src/main.tsx` (or wherever the router is instantiated). One-line change covers all `<Link>` navigation app-wide.
+- [x] **PERF-06**: `createRouter({ defaultPreload: 'intent' })` added in `src/main.tsx` (or wherever the router is instantiated). One-line change covers all `<Link>` navigation app-wide.
 
 - [ ] **PERF-07**: Single Lighthouse mobile rerun executed against the v1.3-post-deploy production build via `audit-mobile.sh` per D-13 (single-run policy). Per-route delta vs the v1.2 baseline recorded in `.planning/closure/UIDN-02-mobile-evidence.md § v1.3 Rerun`. Outcome = PASS (5/5 routes Perf ≥ 90) or DEFER (any route below). On PASS: PROJECT.md `Mobile-first responsive design` Key Decision row flips ⚠️ → ✓; UIDN-02 carry-forward closes. On DEFER: row stays ⚠️ Revisit; follow-up trigger remains D-12 (next perf-budget change). Either outcome is acceptable.
 
@@ -131,7 +131,7 @@ Continues from v1.0's UIDN-01..03. UIDN-03-FOLLOWUP-LIST-CARDS from v1.1 audit t
 | PERF-03 | Phase 16 | Complete |
 | PERF-04 | Phase 16 | Complete |
 | PERF-05 | Phase 16 | Complete |
-| PERF-06 | Phase 16 | Pending |
+| PERF-06 | Phase 16 | Complete |
 | PERF-07 | Phase 16 | Pending |
 | DOCS-05 | Phase 17 | Pending |
 | DOCS-06 | Phase 17 | Pending |
