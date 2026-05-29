@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: — Hygiene & Performance
-status: executing
-stopped_at: Completed 16-07-PLAN.md
-last_updated: "2026-05-29T06:30:00.000Z"
+status: ready_to_plan
+stopped_at: Phase 16 complete (7/7) — ready to discuss Phase 17
+last_updated: 2026-05-29T16:15:41.570Z
 last_activity: 2026-05-29
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 13
+  total_plans: 65
   completed_plans: 13
-  percent: 54
+  percent: 50
 ---
 
 # Project State
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-14 after v1.2 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** Phase 16 — uidn-02-aggressive-perf-budget-pass
+**Current focus:** Phase 17 — planning doc + ui hygiene sweep
 
 ## Current Position
 
-Phase: 16 (uidn-02-aggressive-perf-budget-pass) — EXECUTING (all 7 plans done; awaiting orchestrator phase-level verification + completion)
-Plan: 7 of 7 — complete
-Status: All plans executed; phase completion handled by orchestrator
+Phase: 17
+Plan: Not started
+Status: Ready to plan
 Last activity: 2026-05-29
 
 Progress: [██████████] 100% (plans)
@@ -36,7 +36,7 @@ Progress: [██████████] 100% (plans)
 
 **Velocity:**
 
-- Total plans completed: 6
+- Total plans completed: 13
 - Average duration: mixed (Phase 14: ~3h; Phase 15: orchestrator-driven multi-session)
 - Total execution time: ~3h (Phase 14) + multi-session (Phase 15)
 
@@ -46,6 +46,7 @@ Progress: [██████████] 100% (plans)
 |-------|-------|-------|----------|
 | 14 | 1 | ~3h | ~3h |
 | 15 | 5 | multi-session | mixed (operator-driven Wave 3) |
+| 16 | 7 | - | - |
 
 *Updated after each plan completion*
 | Phase 16 P16-01 | 15m | 4 tasks | 3 files |
