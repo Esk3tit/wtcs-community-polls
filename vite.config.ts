@@ -69,8 +69,32 @@ export default defineConfig(({ mode }) => {
       sourcemap: 'hidden',
       // Preserve original function/class .name through Oxc minifier so Sentry
       // stack frames show source identifiers instead of mangled glyphs.
+      //
+      // manualChunks pins two cache-stable vendor chunks:
+      //   vendor-react — react + react-dom + scheduler (React's own runtime dep);
+      //     all three rarely change and are fetched on every page load, so isolating
+      //     them means app-only rebuilds don't bust the browser cache for this family.
+      //   vendor-posthog — posthog-js (covers posthog-js/react sub-path too);
+      //     kept in its own chunk for cache stability AND to make the lazy-load
+      //     graph verifiable: this chunk must NOT appear in the initial HTML
+      //     modulepreload set (it's only reachable via the consent-gated PostHogGate).
+      // Boundary-anchored function form used (not object form) so the matcher is
+      // explicit about which node_modules/<pkg>/ paths land in each chunk —
+      // `id.includes('react')` is intentionally avoided because it would catch
+      // @tanstack/react-router, @radix-ui/react-*, @sentry/react, etc.
+      // supabase-js and sentry-replay are intentionally left to Rolldown auto-split.
       rolldownOptions: {
-        output: { keepNames: true },
+        output: {
+          keepNames: true,
+          manualChunks: (id) => {
+            if (
+              /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/.test(id)
+            )
+              return 'vendor-react'
+            if (/[\\/]node_modules[\\/]posthog-js[\\/]/.test(id))
+              return 'vendor-posthog'
+          },
+        },
       },
     },
     resolve: {
