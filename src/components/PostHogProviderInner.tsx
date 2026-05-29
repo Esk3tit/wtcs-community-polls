@@ -21,6 +21,16 @@ import { posthog } from '@/lib/posthog-facade'
 // gracefully instead: log and continue without analytics this session.
 try {
   const client = initPostHog()
+  // Opt the client in from PERSISTED consent BEFORE setClient() drains the
+  // facade queue. React runs child effects before parent effects, so the
+  // queued identify() (from AuthContext, a descendant) would otherwise drain
+  // ahead of ConsentContext's opt_in_capturing() and land on a still
+  // opt-out-by-default client — posthog-js no-ops identify while opted out,
+  // losing the first identify of the session. This component only mounts when
+  // consent === 'allow', so the persisted flag is authoritative here.
+  if (window.localStorage.getItem('wtcs_consent') === 'allow') {
+    client.opt_in_capturing()
+  }
   posthog.setClient(client)
 } catch (err) {
   console.error('[posthog] init failed; analytics disabled this session', err)
