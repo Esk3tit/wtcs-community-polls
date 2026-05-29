@@ -260,7 +260,7 @@ REQUIREMENTS.md will track REQ-IDs and phase mapping.
 | GDPR opt-IN consent (Phase 6 rewire from initial opt-OUT) | EU compliance; analytics off until user clicks Allow | ✓ Good (v1.0 — PostHog smoke verified zero pre-Allow events) |
 | Sentry error capture unconditional; Replay consent-gated | Error visibility preserved; Replay PII-sensitive only on Allow | ✓ Good (v1.0 — D-05) |
 | Russian users expected to use VPN (no geo-gating) | Matches sister-site behavior; ISP-level blocks user-side | ✓ Good (v1.0 — no detection logic) |
-| Mobile-first responsive design | Discord users tap links from phones | ⚠️ Revisit (v1.2 rerun — 4/5 routes under threshold; follow-up tied to next perf-budget change per D-12; see .planning/closure/UIDN-02-mobile-evidence.md § v1.2 Rerun) |
+| Mobile-first responsive design | Discord users tap links from phones | ✓ (v1.3 rerun — 5/5 routes Perf ≥ 90; see .planning/closure/UIDN-02-mobile-evidence.md § v1.3 Rerun) |
 | Phase numbering: integers + decimal-insertions | Clear insertion semantics for urgent fixes | — Pending (no decimals used in v1.0/v1.1/v1.2) |
 | Sentry React SDK v10 + ErrorBoundary | Render-phase throws don't ship via ErrorBoundary capture path | ⚠️ Revisit (issue #17 — pivoted to event-handler throw for D-08 verification) |
 | Admin per-poll `results_hidden` + two-way toggle (no window restriction) | Tim's ask reframed during v1.2 scoping from 3-mode enum + one-way reveal to single boolean + symmetric toggle for simplicity | ✓ Good (v1.2 — race-safe conditional UPDATE; voters-only privacy preserved) |
