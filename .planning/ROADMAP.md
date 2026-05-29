@@ -208,7 +208,7 @@ Plans:
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
-- [ ] 16-07-PLAN.md — PERF-07: production Lighthouse rerun + UIDN-02-mobile-evidence.md v1.3 Rerun section + PROJECT.md row flip on PASS (or stay ⚠️ on DEFER)
+- [x] 16-07-PLAN.md — PERF-07: production Lighthouse rerun + UIDN-02-mobile-evidence.md v1.3 Rerun section + PROJECT.md row flip on PASS (or stay ⚠️ on DEFER)
 
 **Wave map** (sequencing is load-bearing — PERF-02 baseline must capture pre-change `posthog-js` in the critical-path chunk):
 
@@ -254,7 +254,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 14. Security-Definer Search-Path Migration | 1/1 | Complete | 2026-05-17 |
 | 15. Observability + E2E Verify & Close | 5/5 | Shipped | 2026-05-25 |
-| 16. UIDN-02 Aggressive Perf-Budget Pass | 6/7 | In Progress|  |
+| 16. UIDN-02 Aggressive Perf-Budget Pass | 7/7 | Complete   | 2026-05-29 |
 | 17. Planning-Doc + UI Hygiene Sweep | 0/TBD | Not started | - |
 
 | Milestone | Phases | Plans | Status | Shipped |

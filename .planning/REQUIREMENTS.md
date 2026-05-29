@@ -60,7 +60,7 @@ UIDN-02 carry-forward perf-budget trigger work. Implements the 5 surviving perf-
 
 - [x] **PERF-06**: `createRouter({ defaultPreload: 'intent' })` added in `src/main.tsx` (or wherever the router is instantiated). One-line change covers all `<Link>` navigation app-wide.
 
-- [ ] **PERF-07**: Single Lighthouse mobile rerun executed against the v1.3-post-deploy production build via `audit-mobile.sh` per D-13 (single-run policy). Per-route delta vs the v1.2 baseline recorded in `.planning/closure/UIDN-02-mobile-evidence.md § v1.3 Rerun`. Outcome = PASS (5/5 routes Perf ≥ 90) or DEFER (any route below). On PASS: PROJECT.md `Mobile-first responsive design` Key Decision row flips ⚠️ → ✓; UIDN-02 carry-forward closes. On DEFER: row stays ⚠️ Revisit; follow-up trigger remains D-12 (next perf-budget change). Either outcome is acceptable.
+- [x] **PERF-07**: Single Lighthouse mobile rerun executed against the v1.3-post-deploy production build via `audit-mobile.sh` per D-13 (single-run policy). Per-route delta vs the v1.2 baseline recorded in `.planning/closure/UIDN-02-mobile-evidence.md § v1.3 Rerun`. Outcome = PASS (5/5 routes Perf ≥ 90) or DEFER (any route below). On PASS: PROJECT.md `Mobile-first responsive design` Key Decision row flips ⚠️ → ✓; UIDN-02 carry-forward closes. On DEFER: row stays ⚠️ Revisit; follow-up trigger remains D-12 (next perf-budget change). Either outcome is acceptable.
 
 ### Documentation Hygiene (DOCS-*)
 
@@ -132,7 +132,7 @@ Continues from v1.0's UIDN-01..03. UIDN-03-FOLLOWUP-LIST-CARDS from v1.1 audit t
 | PERF-04 | Phase 16 | Complete |
 | PERF-05 | Phase 16 | Complete |
 | PERF-06 | Phase 16 | Complete |
-| PERF-07 | Phase 16 | Pending |
+| PERF-07 | Phase 16 | Complete |
 | DOCS-05 | Phase 17 | Pending |
 | DOCS-06 | Phase 17 | Pending |
 | DOCS-07 | Phase 17 | Pending |
