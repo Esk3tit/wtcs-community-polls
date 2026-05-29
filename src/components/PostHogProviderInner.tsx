@@ -13,8 +13,17 @@
 import { initPostHog } from '@/lib/posthog'
 import { posthog } from '@/lib/posthog-facade'
 
-const client = initPostHog()
-posthog.setClient(client)
+// posthog-js .init() touches localStorage, cookies, and navigator — any of which
+// can throw in locked-down/private-mode browsers. An unguarded throw here would
+// reject the dynamic import() and propagate to the app-root error boundary,
+// blanking the entire app over a non-critical analytics concern. Degrade
+// gracefully instead: log and continue without analytics this session.
+try {
+  const client = initPostHog()
+  posthog.setClient(client)
+} catch (err) {
+  console.error('[posthog] init failed; analytics disabled this session', err)
+}
 
 export function PostHogProviderInner() {
   return null
