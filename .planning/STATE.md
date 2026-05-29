@@ -4,13 +4,13 @@ milestone: v1.3
 milestone_name: — Hygiene & Performance
 status: executing
 stopped_at: Completed 16-03-PLAN.md
-last_updated: "2026-05-28T16:54:33.770Z"
-last_activity: 2026-05-28
+last_updated: "2026-05-29T05:06:23.044Z"
+last_activity: 2026-05-29
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 13
-  completed_plans: 9
+  completed_plans: 10
   percent: 50
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-14 after v1.2 milestone)
 ## Current Position
 
 Phase: 16 (uidn-02-aggressive-perf-budget-pass) — EXECUTING
-Plan: 4 of 7
+Plan: 5 of 7
 Status: Ready to execute
-Last activity: 2026-05-28
+Last activity: 2026-05-29
 
-Progress: [███████░░░] 69%
+Progress: [████████░░] 77%
 
 ## Performance Metrics
 
@@ -51,6 +51,7 @@ Progress: [███████░░░] 69%
 | Phase 16 P16-01 | 15m | 4 tasks | 3 files |
 | Phase 16 P02 | 5m | 1 tasks | 1 files |
 | Phase 16 P03 | multi-session | 7 tasks | 11 files |
+| Phase 16 P04 | 20m | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,8 @@ Recent decisions affecting v1.3 work (full log in PROJECT.md Key Decisions table
 - [Phase ?]: PostHog facade as namespace-object so AuthContext/ConsentContext call sites are byte-identical after import-path swap
 - [Phase ?]: PostHogGate renders children as sibling of Suspense boundary to prevent router blanking during lazy-import window
 - [Phase ?]: PostHogProviderInner uses module-scope init so StrictMode double-invoke does not double-flush queue
+- [Phase ?]: Function form for manualChunks (not object form) — boundary-anchored regex prevents kitchen-sink contamination
+- [Phase ?]: vendor-react includes scheduler (React runtime dep) — cache-stable unit is the React family
 
 ### Blockers/Concerns
 
@@ -89,6 +92,6 @@ Items acknowledged and deferred at milestone v1.2 close on 2026-05-14:
 
 ## Session Continuity
 
-Last session: 2026-05-28T16:54:33.765Z
+Last session: 2026-05-29T05:06:19.611Z
 Stopped at: Completed 16-03-PLAN.md
 Resume action: `/gsd-discuss-phase 16` (or 17) to scope the next v1.3 hygiene phase
