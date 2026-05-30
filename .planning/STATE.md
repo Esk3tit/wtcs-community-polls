@@ -4,8 +4,8 @@ milestone: v1.3
 milestone_name: — Hygiene & Performance
 status: executing
 stopped_at: Phase 17 UI-SPEC approved
-last_updated: "2026-05-30T22:16:38.503Z"
-last_activity: 2026-05-30 -- Phase 17 planning complete
+last_updated: "2026-05-30T22:39:09.149Z"
+last_activity: 2026-05-30 -- Phase 17 execution started
 progress:
   total_phases: 4
   completed_phases: 3
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-14 after v1.2 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** Phase 17 — planning doc + ui hygiene sweep
+**Current focus:** Phase 17 — planning-doc-ui-hygiene-sweep
 
 ## Current Position
 
-Phase: 17
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-05-30 -- Phase 17 planning complete
+Phase: 17 (planning-doc-ui-hygiene-sweep) — EXECUTING
+Plan: 1 of 2
+Status: Executing Phase 17
+Last activity: 2026-05-30 -- Phase 17 execution started
 
 Progress: [██████████] 100% (plans)
 
