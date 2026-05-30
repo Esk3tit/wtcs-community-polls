@@ -1,10 +1,11 @@
 ---
 phase: 17
 slug: planning-doc-ui-hygiene-sweep
-status: draft
+status: approved
 shadcn_initialized: true
 preset: new-york / neutral / cssVariables
 created: 2026-05-30
+reviewed_at: 2026-05-30
 ---
 
 # Phase 17 — UI Design Contract
