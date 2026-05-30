@@ -70,14 +70,18 @@ Standard 8-point scale applies. Values referenced in this migration:
 
 All type roles are inherited from the existing design system. No new type scales are introduced.
 
+**Design-chosen weights (2 max):**
+
 | Role | Size | Weight | Line Height | Usage in this phase |
 |------|------|--------|-------------|---------------------|
-| Body | 14px (`text-sm`) | 400 | 1.5 | Row labels, secondary text, dialog copy |
+| Body / Subtext | 14px (`text-sm`) / 12px (`text-xs`) | 400 (regular) | 1.5 / 1.4 | Row labels, secondary text, dialog copy, Discord IDs (monospace), "You" badge |
 | Label | 14px (`text-sm`) | 500 (`font-medium`) | 1.5 | Primary row name text (username, category name) |
-| Subtext | 12px (`text-xs`) | 400 | 1.4 | Discord IDs (monospace), helper copy, "You" badge |
-| Section title | 14–16px (`text-base`) | 600 (`font-semibold`) | 1.0 (`leading-none`) | CardTitle — replaces the existing `<h2 className="text-base font-semibold">` |
 
-**CardTitle note:** The shadcn `CardTitle` primitive renders `leading-none font-semibold` via its own className. The current `<h2 className="text-base font-semibold">` maps directly — same visual weight, same size. After migration the heading lives inside `<CardTitle>` as its children (D-02). The `<h2>` semantic element is dropped; `CardTitle` renders a `<div>`. This is a cosmetic-only change with no heading-hierarchy impact on admin-only screens.
+**Primitive-inherited weight (outside the design palette):**
+
+The `CardTitle` primitive in `src/components/ui/card.tsx` ships `font-semibold` (600) as its own hardcoded className (`leading-none font-semibold`). This is not a design choice introduced by this phase — it is the shadcn new-york CardTitle default. The section heading (`<h2 className="text-base font-semibold">`) in the pre-migration components already renders at 600, so the visual weight is unchanged after migration. Document as: inherited from CardTitle primitive (unchanged). The declared design palette for this phase is exactly 2 weights: 400 + 500.
+
+**Parity verification note:** The executor must confirm via a className/structure diff that no weight class is added or removed from row content elements during migration. Only structural wrapping changes (`<div>` → `<Card>/<CardContent>` etc.) are expected.
 
 ---
 
@@ -251,6 +255,17 @@ No new copy is introduced in this migration. Existing copy is preserved exactly.
 | Error state retry CTA | Retry |
 | Demote action button | Demote |
 | Self-identifier badge | You |
+
+**Demote confirmation dialog (DemoteAdminDialog):** Clicking "Demote" on an admin row opens a confirmation dialog — it does NOT execute immediately. The dialog copy is:
+
+| Element | Copy |
+|---------|------|
+| Dialog title | Demote this admin? |
+| Dialog description | {discord_username} will lose admin access immediately. |
+| Confirm CTA | Demote |
+| Cancel | Cancel |
+
+The confirm CTA uses `variant="destructive"`. Cancel uses `variant="ghost"`. This is an existing behavior — no change in this phase.
 
 ### CategoriesList
 
