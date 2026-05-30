@@ -258,7 +258,7 @@ Plans:
 | 14. Security-Definer Search-Path Migration | 1/1 | Complete | 2026-05-17 |
 | 15. Observability + E2E Verify & Close | 5/5 | Shipped | 2026-05-25 |
 | 16. UIDN-02 Aggressive Perf-Budget Pass | 7/7 | Complete    | 2026-05-29 |
-| 17. Planning-Doc + UI Hygiene Sweep | 2/2 | Complete   | 2026-05-30 |
+| 17. Planning-Doc + UI Hygiene Sweep | 2/2 | Complete    | 2026-05-30 |
 
 | Milestone | Phases | Plans | Status | Shipped |
 |-----------|--------|-------|--------|---------|
