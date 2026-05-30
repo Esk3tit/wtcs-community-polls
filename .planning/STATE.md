@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: — Hygiene & Performance
 status: planning
-stopped_at: Phase 17 context gathered
-last_updated: "2026-05-30T07:04:05.246Z"
+stopped_at: Phase 17 UI-SPEC approved
+last_updated: "2026-05-30T16:51:58.323Z"
 last_activity: 2026-05-29
 progress:
   total_phases: 4
@@ -98,6 +98,6 @@ Items acknowledged and deferred at milestone v1.2 close on 2026-05-14:
 
 ## Session Continuity
 
-Last session: 2026-05-30T07:04:05.241Z
-Stopped at: Phase 17 context gathered
+Last session: 2026-05-30T16:51:58.317Z
+Stopped at: Phase 17 UI-SPEC approved
 Resume action: orchestrator runs Phase 16 phase-level verification + completion
