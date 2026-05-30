@@ -1,11 +1,13 @@
 ---
-status: issues_found
+status: resolved
 phase: 17
 depth: standard
 reviewed: 2026-05-30T23:06:50Z
 critical_count: 0
 warning_count: 1
 info_count: 3
+resolved: 2026-05-30T23:16:00Z
+resolution: WR-01 + IN-02 fixed in fix(17) commit; IN-01/IN-03 accepted as intentional/cosmetic
 ---
 
 # Phase 17 Code Review — Plan B UI Card Migration
