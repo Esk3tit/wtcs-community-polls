@@ -114,9 +114,9 @@ describe('AdminsList', () => {
     await waitFor(() => expect(screen.getByText('Khai')).toBeInTheDocument())
     const promoteBtn = screen.getByRole('button', { name: /promote admin/i })
     fireEvent.click(promoteBtn)
-    // Dialog title is also "Promote admin"
-    const matches = screen.getAllByText(/promote admin/i)
-    expect(matches.length).toBeGreaterThanOrEqual(1)
+    // Radix DialogContent applies role="dialog" + aria-labelledby at runtime from
+    // the DialogTitle wrapper — verify this survives the Card migration (D-05).
+    expect(await screen.findByRole('dialog', { name: /promote admin/i })).toBeInTheDocument()
   })
 })
 
