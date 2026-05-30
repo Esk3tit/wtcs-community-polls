@@ -169,13 +169,13 @@ GitHub milestone: TBD on first push.
 ### Active (carry-forward to v1.3+)
 
 - [ ] **UIDN-02**: Mobile-first Lighthouse Perf threshold — Phase 13 v1.2 rerun complete; 4/5 routes Perf<90 (perf-only); closure trigger per D-12 = next perf-budget change. `Active (Phase 13 v1.2 rerun complete; pending next perf-budget change)` in REQUIREMENTS Phase Traceability.
-- [ ] **UIDN-03-FOLLOWUP-LIST-CARDS**: `AdminsList` / `CategoriesList` / `PromoteAdminDialog` hand-rolled containers → shadcn `Card` (audit transparency note, not a FAIL cell)
+- ✓ **UIDN-03-FOLLOWUP-LIST-CARDS**: `AdminsList` / `CategoriesList` / `PromoteAdminDialog` hand-rolled containers → shadcn `Card` — v1.3 (Phase 17 Plan B; UIDN-04/05). Note: migration demoted two `<h2>` section headings to non-semantic `CardTitle` `<div>`s — accessibility follow-up open (Phase 17 17-REVIEW.md WR-01).
 - [ ] Playwright E2E spec fixture/seed hygiene (issues #11, #12, #13)
 - [ ] Sentry React 19 ErrorBoundary capture transport (issue #17)
 - [ ] Vite/Rolldown sourcemap function-name preservation (issue #19)
-- [ ] VALIDATION.md frontmatter backfill on phases 01–04
-- [ ] Phase 03 VERIFICATION.md retrospective
-- [ ] 17 SUMMARY frontmatter `requirements-completed` declarations
+- ✓ VALIDATION.md frontmatter backfill on phases 01–04 — v1.3 (Phase 17 Plan A; DOCS-05 — audit-confirmed already complete)
+- ✓ Phase 03 VERIFICATION.md retrospective — v1.3 (Phase 17 Plan A; DOCS-06)
+- ✓ 17 SUMMARY frontmatter `requirements-completed` declarations — v1.3 (Phase 17 Plan A; DOCS-07 — audit-confirmed all 15 pre-Phase-05 SUMMARYs populated)
 - [ ] Backfill Phase 04 UAT test 6a evidence (demote click flow — passed off-record on second admin, needs 04-UAT.md update)
 - [ ] Phase 03 UAT tests 2 + 3 with second human (2FA-enabled, non-WTCS-member Discord tester — 2FA must be ON so the gate clears and the non-member check fires)
 - [ ] 7 pre-Phase-11 SECURITY DEFINER advisor warnings (WARN-level, predates v1.0)
@@ -289,4 +289,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-14 — v1.3 Hygiene & Performance milestone scoped (5 work-streams: DB / Test-E2E / Observability / Planning-doc + UI / UIDN-02 aggressive perf pass). Phase numbering continues at Phase 14. Requirements pending REQUIREMENTS.md draft.*
+*Last updated: 2026-05-30 — Phase 17 (planning-doc + UI hygiene sweep) complete: DOCS-05/06/07/08 doc reconciliation + UIDN-04/05 admin shadcn `Card` migration. Verification 7/7 PASS; code review clean of critical/behavioral defects (1 accessibility warning + 3 info, see 17-REVIEW.md). Last phase of v1.3 roadmap.*
