@@ -115,8 +115,17 @@ describe('AdminsList', () => {
     const promoteBtn = screen.getByRole('button', { name: /promote admin/i })
     fireEvent.click(promoteBtn)
     // Radix DialogContent applies role="dialog" + aria-labelledby at runtime from
-    // the DialogTitle wrapper — verify this survives the Card migration (D-05).
+    // the DialogTitle wrapper — verify the Card migration preserves it.
     expect(await screen.findByRole('dialog', { name: /promote admin/i })).toBeInTheDocument()
+  })
+
+  it('exposes the Admins section title as a level-2 heading', async () => {
+    render(<AdminsList />)
+    // CardTitle renders a plain <div>; role="heading" + aria-level keep the
+    // section reachable by screen-reader heading navigation after the Card migration.
+    expect(
+      await screen.findByRole('heading', { level: 2, name: 'Admins' }),
+    ).toBeInTheDocument()
   })
 })
 

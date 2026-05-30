@@ -158,7 +158,9 @@ export function CategoriesList() {
   return (
     <Card className="py-0">
       <CardHeader>
-        <CardTitle className="text-base">Categories</CardTitle>
+        <CardTitle role="heading" aria-level={2} className="text-base">
+          Categories
+        </CardTitle>
         <CardAction>
           <Button
             size="sm"

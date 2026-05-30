@@ -81,7 +81,9 @@ export function AdminsList() {
   return (
     <Card className="py-0">
       <CardHeader>
-        <CardTitle className="text-base">Admins</CardTitle>
+        <CardTitle role="heading" aria-level={2} className="text-base">
+          Admins
+        </CardTitle>
         <CardAction>
           <Button onClick={() => setPromoteOpen(true)} size="sm" className="h-9">
             <UserPlus className="h-4 w-4 mr-1" />
