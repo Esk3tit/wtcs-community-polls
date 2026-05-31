@@ -168,7 +168,7 @@ A community suggestion and opinion-gathering platform for the War Thunder Compet
 - Local imports grouped: contexts → hooks → components → utilities → types
 - CSS imports last (or only in `main.tsx` for `index.css`)
 ### Path Aliases
-- Not configured — relative imports used throughout `src/`
+- `@/*` → `./src/*` — the dominant convention (~117 of 153 `src/` files); configured in `tsconfig.app.json` (`paths`), `vite.config.ts` (`resolve.alias`), and `components.json` (shadcn aliases). Prefer `@/` over relative imports for cross-directory references; a handful of same-directory relative imports remain.
 - Module resolution: `bundler` mode via `tsconfig.app.json`
 ### Module Syntax
 - ESM only (`"type": "module"` in `package.json`)

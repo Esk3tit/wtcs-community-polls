@@ -2,6 +2,13 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { UserMinus, AlertCircle, UserPlus, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardAction,
+  CardContent,
+} from '@/components/ui/card'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 import { deferSetState } from '@/lib/deferSetState'
@@ -78,39 +85,47 @@ export function AdminsList() {
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-semibold">Admins</h2>
-        <Button onClick={() => setPromoteOpen(true)} size="sm" className="h-9">
-          <UserPlus className="h-4 w-4 mr-1" />
-          Promote admin
-        </Button>
-      </div>
+    // py-0 / p-0 cancel shadcn Card's default vertical padding so the list
+    // keeps its pre-migration row density inside the bordered container.
+    // overflow-hidden clips the flush square-cornered rows/skeletons to the
+    // Card's rounded corners so they don't bleed past the bottom radius.
+    <Card className="py-0 overflow-hidden">
+      <CardHeader>
+        <CardTitle role="heading" aria-level={2} className="text-base">
+          Admins
+        </CardTitle>
+        <CardAction>
+          <Button onClick={() => setPromoteOpen(true)} size="sm" className="h-9">
+            <UserPlus className="h-4 w-4 mr-1" />
+            Promote admin
+          </Button>
+        </CardAction>
+      </CardHeader>
 
-      {loading ? (
-        <div className="divide-y border rounded-md">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-[64px] bg-muted/30 animate-pulse"
-              data-testid="admin-skeleton"
-            />
-          ))}
-        </div>
-      ) : (
-        <div className={admins.length === 0 ? '' : 'divide-y border rounded-md'}>
-          {admins.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Users className="h-10 w-10 text-muted-foreground" />
-              <p className="text-lg font-medium text-foreground mt-4">
-                No admins yet.
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Promote one to get started.
-              </p>
-            </div>
-          ) : (
-            admins.map((a) => {
+      <CardContent className="p-0">
+        {loading ? (
+          <div className="divide-y">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-[64px] bg-muted/30 animate-pulse"
+                data-testid="admin-skeleton"
+              />
+            ))}
+          </div>
+        ) : admins.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Users className="h-10 w-10 text-muted-foreground" />
+            <p className="text-lg font-medium text-foreground mt-4">
+              No admins yet.
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Promote one to get started.
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y">
+            {admins.map((a) => {
               // Hide Demote on the acting admin's own row (UI guard against self-demotion).
               const isSelf = user?.id === a.id
               return (
@@ -156,10 +171,10 @@ export function AdminsList() {
                   )}
                 </div>
               )
-            })
-          )}
-        </div>
-      )}
+            })}
+          </div>
+        )}
+      </CardContent>
 
       <PromoteAdminDialog
         open={promoteOpen}
@@ -182,6 +197,6 @@ export function AdminsList() {
           }}
         />
       )}
-    </div>
+    </Card>
   )
 }

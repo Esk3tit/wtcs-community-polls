@@ -99,6 +99,15 @@ describe('CategoriesList', () => {
       screen.getByPlaceholderText('New category name'),
     ).toBeInTheDocument()
   })
+
+  it('exposes the Categories section title as a level-2 heading', async () => {
+    render(<CategoriesList />)
+    // CardTitle renders a plain <div>; role="heading" + aria-level keep the
+    // section reachable by screen-reader heading navigation after the Card migration.
+    expect(
+      await screen.findByRole('heading', { level: 2, name: 'Categories' }),
+    ).toBeInTheDocument()
+  })
 })
 
 describe('CategoriesList error state (MEDIUM #7)', () => {

@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Card, CardContent } from '@/components/ui/card'
 import { useSearchAdminTargets } from '@/hooks/useSearchAdminTargets'
 import { usePromoteAdmin } from '@/hooks/usePromoteAdmin'
 
@@ -85,39 +86,43 @@ export function PromoteAdminDialog({ open, onOpenChange, onPromoted }: Props) {
             />
           </div>
           {results.length > 0 && (
-            <div className="mt-2 border rounded-md divide-y max-h-64 overflow-auto">
-              {results.slice(0, 10).map((r) => (
-                <div
-                  key={r.id}
-                  className="flex items-center gap-2 p-2 hover:bg-accent rounded-md min-h-[44px]"
-                >
-                  {r.avatar_url ? (
-                    <img
-                      src={r.avatar_url}
-                      alt=""
-                      className="h-6 w-6 rounded-full"
-                    />
-                  ) : (
-                    <div className="h-6 w-6 rounded-full bg-muted" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {r.discord_username}
-                    </p>
-                    <p className="text-xs text-muted-foreground font-mono truncate">
-                      {r.discord_id}
-                    </p>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => void handlePromoteTarget(r.id)}
-                    disabled={submitting}
-                  >
-                    Promote
-                  </Button>
+            <Card className="mt-2 max-h-64 overflow-auto py-0">
+              <CardContent className="p-0">
+                <div className="divide-y">
+                  {results.slice(0, 10).map((r) => (
+                    <div
+                      key={r.id}
+                      className="flex items-center gap-2 p-2 hover:bg-accent min-h-[44px]"
+                    >
+                      {r.avatar_url ? (
+                        <img
+                          src={r.avatar_url}
+                          alt=""
+                          className="h-6 w-6 rounded-full"
+                        />
+                      ) : (
+                        <div className="h-6 w-6 rounded-full bg-muted" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {r.discord_username}
+                        </p>
+                        <p className="text-xs text-muted-foreground font-mono truncate">
+                          {r.discord_id}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => void handlePromoteTarget(r.id)}
+                        disabled={submitting}
+                      >
+                        Promote
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </CardContent>
+            </Card>
           )}
           {showNoMatches && (
             <p className="text-xs text-muted-foreground mt-2">
