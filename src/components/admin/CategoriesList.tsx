@@ -19,7 +19,13 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
-import { Card, CardHeader, CardTitle, CardAction, CardContent } from '@/components/ui/card'
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardAction,
+  CardContent,
+} from '@/components/ui/card'
 import { supabase } from '@/lib/supabase'
 import { useCategories } from '@/hooks/useCategories'
 import { useCategoryMutations } from '@/hooks/useCategoryMutations'

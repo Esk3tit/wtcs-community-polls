@@ -2,7 +2,13 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { UserMinus, AlertCircle, UserPlus, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
-import { Card, CardHeader, CardTitle, CardAction, CardContent } from '@/components/ui/card'
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardAction,
+  CardContent,
+} from '@/components/ui/card'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 import { deferSetState } from '@/lib/deferSetState'
