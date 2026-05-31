@@ -1,5 +1,89 @@
 # Milestones
 
+## v1.3 — Hygiene & Performance
+
+**Shipped:** 2026-05-31
+**Phases:** 14 → 17 (4 phases, 15 plans, 19 tasks)
+**Tag:** `v1.3`
+**Production URL:** https://polls.wtcsmapban.com (continuous since v1.0)
+**Known deferred items at close:** 4 accept-as-is tech-debt items across Phases 14–15 + standard v1.4+ carry-forwards (see [milestones/v1.3-MILESTONE-AUDIT.md](milestones/v1.3-MILESTONE-AUDIT.md) §5 and STATE.md Deferred Items)
+
+### Delivered
+
+A pure hygiene-and-performance milestone closing v1.0–v1.2 carry-forward debt across five work-streams — DB security hardening, observability verification, test/E2E closure, planning-doc reconciliation, and an aggressive perf-budget pass — plus the one product-touching axis that flipped the long-standing Mobile-first Key Decision row. Migration 14 hardened all 6 user-owned `SECURITY DEFINER` functions against `search_path` injection; all five outstanding GitHub issues (#11/#12/#13/#17/#19) were smoke-verified and closed; PostHog was lifted off the critical-path chunk behind a consent-gated lazy loader; and the v1.3 Lighthouse rerun cleared 5/5 mobile routes ≥ 90, closing UIDN-02. **23 of 23 requirements satisfied; zero unsatisfied, zero orphaned.** No new product features — mirrors v1.1's "Hygiene & Polish" pattern with a real perf axis added.
+
+### Key Accomplishments
+
+1. **Security-Definer search-path hardening (Phase 14, 1 plan)** — Migration 14 (`00000000000014_harden_security_definer_search_path.sql`, commit `c94c8f7`) rewrites the 6 user-owned pre-Phase-11 `SECURITY DEFINER` functions (`update_profile_after_auth`, `handle_new_user`, `validate_vote_choice`, `increment_vote_count`, `is_current_user_admin`, `profile_self_update_allowed`) via `CREATE OR REPLACE FUNCTION` (OID-stable for trigger refs) with `SET search_path = ''` and fully-qualified `public.*` body references. `is_current_user_admin()` received a body-identical rewrite — machine-enforced pre/post `pg_get_functiondef` diff returned exit 0 (zero drift) — preserving admin RLS semantics across all gated tables. Unconditionally dropped the stale 3-param `update_profile_after_auth` overload found in prod by W0 Check 1B (Cycle-3 Option A). `rls_auto_enable` carved out as Supabase-managed (dashboard-installed event trigger outside repo history). Post-deploy `supabase db lint --linked` returned zero `0011_function_search_path_mutable` WARNs; production smoke vote on polls.wtcsmapban.com PASS. Added a direct SQL regression fixture (`tests/sql/is_current_user_admin_regression.sql`, 6 PASS / 0 FAIL across 4 identity + 2 audit_log RLS branches) and aligned the legacy `11-PATTERNS.md` `vote_counts` skeleton with the shipped REVIEW-FIX-H3 form (DBHY-04).
+
+2. **Observability + E2E verify & close (Phase 15, 5 plans)** — Reframed from implementation to verify-and-close after research confirmed all code fixes already shipped. Landed a smoke harness at `/__smoke?fire=render|dedupe` with a local `Sentry.ErrorBoundary` + `beforeCapture` `boundary: app-root` invariant (OBSV-03/05); built `scripts/verify-sourcemap-names.mjs` — a zero-dep build-time `keepNames: true` regression guard with a 7-name allowlist — and wired it into the CI `lint-and-unit` job (OBSV-04). Operator-driven evidence capture produced 4 Sentry PNGs + 3 CI PASS PNGs + `15-EVIDENCE.md`. Merge PR #35 auto-closed all five GitHub issues (#11 TEST-14, #12 TEST-15, #13 TEST-16, #17 OBSV-03+05, #19 OBSV-04) with per-issue evidence-anchor closure comments; post-merge CI green.
+
+3. **UIDN-02 aggressive perf-budget pass (Phase 16, 7 plans)** — `rollup-plugin-visualizer` added as an `ANALYZE=true` env-gated devDep, mutually exclusive with `sentryVitePlugin` (both need last position) with a production-trap throw (PERF-01/02). PostHog converted to a dynamic `import('@/lib/posthog')` behind a consent-gated `<PostHogGate>` lazy loader, preserving the GDPR gate (zero capture events before Allow) via a synchronous **facade-only** client (`posthog-facade.ts`, no `PostHogProvider` context) — ~187 KB lifted off the critical-path chunk (PERF-03). `manualChunks` (function form, boundary-anchored regex) split `vendor-react` (incl. scheduler) and lazy-only `vendor-posthog` (PERF-04). Logo converted to WebP (`cwebp -q 80`, 56% smaller) inside a zero-CLS `<picture>` with PNG fallback (PERF-05); `defaultPreload: 'intent'` app-wide with `preload={false}` on both Admin links to preserve the V4 access-control boundary (PERF-06). The single production Lighthouse rerun (per D-13) cleared **5/5 mobile routes at Perf ≥ 90** (home 90, topics 92, archive 92, auth-error 91, admin 91) — UIDN-02 closed; the `Mobile-first responsive design` Key Decision flipped ⚠️ Revisit → ✓ (PERF-07, D-08 PASS path).
+
+4. **Planning-doc + UI hygiene sweep (Phase 17, 2 plans)** — VALIDATION.md frontmatter audit-confirmed accurate on Phase 01–04 archives (DOCS-05); Phase 03 VERIFICATION.md retrospective reconciled to `status: retrospective` with a "Subsequent evolution" section naming Migration 14 as the most recent auth-path change (DOCS-06); 15 pre-Phase-05 SUMMARY `requirements-completed` declarations audit-confirmed (DOCS-07); the long-missing v1.1 MILESTONES.md entry written at full structural parity (DOCS-08, manual curation — no CLI auto-extraction per v1.2 RETROSPECTIVE lesson). `AdminsList` / `CategoriesList` / `PromoteAdminDialog` hand-rolled containers migrated to shadcn `<Card>` with Dialog ARIA verified intact (UIDN-04/05); 401 tests green incl. a new `findByRole('dialog')` ARIA assertion.
+
+### Stats
+
+| Metric | Value |
+|--------|-------|
+| Phases | 4 (14–17) |
+| Plans | 15 |
+| Tasks | 19 |
+| Code files changed (excl. `.planning/`) | 39 |
+| Code lines added / removed | +2,768 / −1,793 |
+| PRs merged (phase) | 5 (#30, #35, #39, #41, #42) |
+| PRs merged (supporting) | 3 (#31 lint, #32 eslint-v10, #37 P15 follow-ups) + dependabot #5/#9/#27 |
+| Edge Functions added | 0 |
+| DB Migrations | 1 (Migration 14 — SECURITY DEFINER search-path hardening) |
+| GitHub issues closed | 5 (#11, #12, #13, #17, #19) |
+| Critical-path bundle reduction | ~187 KB (PostHog lazy-loaded) |
+| Timeline | 2026-05-17 → 2026-05-31 (~14 days) |
+
+### Decimal Phases
+
+None for v1.3 — all integer phases (14, 15, 16, 17).
+
+### Key Decisions (with outcomes)
+
+| Decision | Outcome |
+|----------|---------|
+| Migration 14 via `CREATE OR REPLACE FUNCTION` (not `ALTER FUNCTION`) | ✓ Good — preserves OID stability for trigger references; body-identical `is_current_user_admin` diff exit 0 |
+| W0 `rls_auto_enable` carve-out as Supabase-managed | ✓ Good — dashboard-installed event trigger outside repo history; post-deploy lint showed zero WARNs anyway (carve-out kept as documented insurance) |
+| W0 Check 1B: unconditional DROP of stale 3-param `update_profile_after_auth` overload | ✓ Good — removes prod-only overload found by snapshot (Cycle-3 Option A) |
+| Fix-forward migration (no paired rollback) | — Accepted (D-08) — rollback path is `pre-deploy-functiondef-snapshot.sql` under a service-role session |
+| PostHog facade-only client (no `PostHogProvider` context in tree) | ✓ Good — call sites byte-identical after import-path swap; no `usePostHog()` consumers per audit |
+| `<PostHogGate>` lazy + consent-gated, children sibling of `<Suspense>` | ✓ Good — preserves GDPR zero-pre-Allow-events invariant; no router blanking during lazy-import window |
+| `manualChunks` function form (boundary-anchored regex) | ✓ Good — prevents kitchen-sink contamination; vendor-react cache-stable as the React family (incl. scheduler) |
+| `defaultPreload: 'intent'` + `preload={false}` on Admin links | ✓ Good — app-wide hover-preload without leaking the V4 access-control boundary (hover-redirect mitigated) |
+| Single Lighthouse rerun on production (D-13) | ✓ Good — 5/5 routes ≥ 90 in one run; no repeated-run thrash |
+| UIDN-02 closure = aggressive change + accept rerun outcome (D-12, no hard gate) | ✓ Good — outcome landed PASS; `Mobile-first responsive design` row flipped ⚠️ → ✓ (D-08 PASS path) |
+| v1.1 MILESTONES entry manually curated, not CLI auto-extracted (DOCS-08) | ✓ Good — CLI auto-extraction produces noisy "One-liner:" stubs (re-confirmed when seeding this very v1.3 entry); manual curation closes the gap permanently |
+
+### Issues Resolved During Milestone
+
+- **GitHub #11 / #12 / #13** (Playwright E2E fixture/seed hygiene) — closed via PR #35 (TEST-14/15/16 pass in CI on `main`).
+- **GitHub #17** (Sentry React 19 ErrorBoundary render-phase capture) — closed via PR #35 (OBSV-03/05; `boundary: app-root` tag confirmed on deploy-preview event).
+- **GitHub #19** (Vite/Rolldown sourcemap function-name preservation) — closed via PR #35 (OBSV-04; real frame names, not `$M`, verified end-to-end).
+- **UIDN-02** (Mobile-first Lighthouse Perf threshold) — closed; 5/5 routes ≥ 90 on the v1.3 production rerun. v1.0 carry-forward retired.
+- **UIDN-03-FOLLOWUP-LIST-CARDS** — closed; admin list/dialog containers now shadcn `<Card>`.
+- **DOCS-08 v1.1 MILESTONES gap** — closed permanently; the "entry never written" debt that recurred across v1.1/v1.2 is now backfilled.
+
+### Known Tech Debt (carried to v1.4+)
+
+| Item | Status |
+|------|--------|
+| TEST-11 12-cell RLS vitest matrix | Deferred — local gotrue `email_provider_disabled` blocks the run; superseded for `is_current_user_admin` correctness by the direct SQL regression fixture (6 PASS / 0 FAIL) |
+| Migration 14 paired rollback migration | Accepted (D-08 fix-forward) — rollback via functiondef snapshot under service-role session |
+| Phase 15 sentry-cli v3 plan-template defects (×2) | Plan-template notes only (no coverage gap): pin `npx --no-install @sentry/cli@<version>`; mark Sentry Discover "if available" (paid-tier) in future OBSV plans |
+| Phase 17 `<h2>` → `CardTitle` `<div>` demotion | Accessibility follow-up open (17-REVIEW.md WR-01) — UIDN-04/05 migration dropped two section-heading semantics |
+| Phase 04 UAT 6a · Phase 03 UAT 2+3 · local ES256 (1.73.x) | Deferred again at v1.3 scoping (second-human-gated / prod-unaffected) |
+
+### Issues Deferred to v1.4+
+
+See STATE.md "Deferred Items" for the full table (UAT backfills, ES256 local bug, TEST-11 vitest matrix, `profile_self_update_allowed` `current_user` gate). All are documented accept-as-is decisions — no actionable blockers at close.
+
+---
+
 ## v1.2 — Admin Visibility Controls
 
 **Shipped:** 2026-05-14

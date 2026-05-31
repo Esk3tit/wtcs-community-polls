@@ -1,36 +1,34 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.3
-milestone_name: — Hygiene & Performance
-status: "Phase 17 shipped — PR #42"
-stopped_at: Phase 17 UI-SPEC approved
-last_updated: "2026-05-31T06:11:12.559Z"
-last_activity: 2026-05-30
+milestone_name: Hygiene & Performance
+status: Awaiting next milestone
+stopped_at: Milestone v1.3 archived (tag v1.3)
+last_updated: "2026-05-31T19:48:49.105Z"
+last_activity: 2026-05-31 — Milestone v1.3 completed and archived
 progress:
   total_phases: 4
-  completed_phases: 3
-  total_plans: 73
+  completed_phases: 4
+  total_plans: 15
   completed_plans: 15
-  percent: 75
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-14 after v1.2 milestone)
+See: .planning/PROJECT.md (updated 2026-05-31 after v1.3 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** Milestone complete
+**Current focus:** v1.3 — Hygiene & Performance shipped & archived (2026-05-31). Next: `/gsd:new-milestone` to scope v1.4.
 
 ## Current Position
 
-Phase: 17
-Plan: Not started
-Status: Phase 17 shipped — PR #42
-Last activity: 2026-05-30
-
-Progress: [██████████] 100% (plans)
+Phase: Milestone v1.3 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-05-31 — Milestone v1.3 completed and archived
 
 ## Performance Metrics
 
@@ -61,27 +59,11 @@ Progress: [██████████] 100% (plans)
 
 ### Decisions
 
-Recent decisions affecting v1.3 work (full log in PROJECT.md Key Decisions table):
-
-- D-12: UIDN-02 closure trigger = next perf-budget change (not a hard 5/5-route gate); DEFER outcome is acceptable
-- D-13: Single Lighthouse rerun per milestone on production; no repeated runs
-- Phase 14: `CREATE OR REPLACE FUNCTION` (not `ALTER FUNCTION`) for Migration 14 — preserves OID stability for trigger references
-- Phase 14 W0: `rls_auto_enable` carved out as R2 system-owned (dashboard-installed event trigger, not in repo migration history); DBHY-02 acceptance amended to permit one residual `0011` WARN for it (turned out unnecessary — post-deploy lint showed zero WARNs)
-- Phase 14 W0 Check 1B: U2 outcome (3+4-param overloads both in prod); Migration 14 unconditionally drops the 3-param overload (Cycle-3 Option A)
-- Phase 15 shipped 2026-05-25: 5 plans (smoke fire triggers + sourcemap-names verify script + CI wiring + operator evidence capture + closure), 5 issues closed (#11, #12, #13, #17, #19), evidence in 15-EVIDENCE.md
-- Phase 15 plan-defects recorded for cleanup: (a) sentry-cli v3 removed both `sourcemaps list` and `releases files <release> list` — plan referenced both; (b) OBSV-05 Discover-based per-event count requires paid Sentry tier; per-issue Events filter fallback was used
-- [Phase ?]: PostHog facade as namespace-object so AuthContext/ConsentContext call sites are byte-identical after import-path swap
-- [Phase ?]: PostHogGate renders children as sibling of Suspense boundary to prevent router blanking during lazy-import window
-- [Phase ?]: PostHogProviderInner uses module-scope init so StrictMode double-invoke does not double-flush queue
-- [Phase ?]: Function form for manualChunks (not object form) — boundary-anchored regex prevents kitchen-sink contamination
-- [Phase ?]: vendor-react includes scheduler (React runtime dep) — cache-stable unit is the React family
-- [Phase 16]: defaultPreload: 'intent' added at router level; explicit preload={false} on both Admin links (Navbar + MobileNav) preserves V4 Access Control boundary (hover-redirect leak mitigated)
-- [Phase 16]: Task 3 live hover-smoke accepted via static-grep fallback — admin session unavailable locally; plan fallback clause invoked; operator plain-accepted
-- [Phase 16-07]: v1.3 Lighthouse rerun PASS — 5/5 mobile routes Perf ≥ 90 (home 90, topics 92, archive 92, auth-error 91, admin 91) against prod merge cd8e7f9; UIDN-02 closed; Mobile-first responsive design Key Decision flipped ⚠️ Revisit → ✓ (D-08 PASS path)
+v1.3 decisions are now in the canonical PROJECT.md Key Decisions table (10 v1.3 rows added at milestone close — Migration 14 `CREATE OR REPLACE` / `rls_auto_enable` carve-out / fix-forward; PostHog facade + `<PostHogGate>` lazy-load; `manualChunks` function form; `defaultPreload: 'intent'`; D-13 single Lighthouse run; D-12 accept-outcome → UIDN-02 PASS; DOCS-08 manual MILESTONES curation). Full v1.3 retrospective in RETROSPECTIVE.md.
 
 ### Blockers/Concerns
 
-- _(Phase 14 HIGH-RISKs resolved — `increment_vote_count` body was already qualified in production; `is_current_user_admin` body-identical diff PASS post-deploy; `rls_auto_enable` carved out per W0 finding)_
+- _None open. All v1.3 phase risks resolved (Phase 14 HIGH-RISKs cleared at deploy; UIDN-02 PASS). Remaining items are accept-as-is carry-forwards — see Deferred Items below._
 
 ## Deferred Items
 
@@ -99,6 +81,10 @@ Items acknowledged and deferred at milestone v1.2 close on 2026-05-14:
 
 ## Session Continuity
 
-Last session: 2026-05-30T16:51:58.317Z
-Stopped at: Phase 17 UI-SPEC approved
-Resume action: orchestrator runs Phase 16 phase-level verification + completion
+Last session: 2026-05-31 — v1.3 milestone completed and archived (tag v1.3)
+Stopped at: Milestone v1.3 archived; awaiting next milestone
+Resume action: `/gsd:new-milestone` to scope v1.4 (questioning → research → requirements → roadmap)
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone

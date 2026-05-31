@@ -127,6 +127,56 @@
 
 ---
 
+## Milestone: v1.3 — Hygiene & Performance
+
+**Shipped:** 2026-05-31
+**Phases:** 4 (Phases 14–17) | **Plans:** 15 | **Tasks:** 19
+**Timeline:** 2026-05-17 → 2026-05-31 (~14 days)
+**Code:** +2,768 / −1,793 LOC across 39 non-planning files; 5 phase PRs (#30, #35, #39, #41, #42) + supporting (#31, #32, #37) + dependabot (#5, #9, #27); 0 new Edge Functions; 1 new DB migration (Migration 14); ~187 KB lifted off the critical-path chunk
+
+### What Was Built
+
+- **DB security hardening (Phase 14)** — Migration 14 rewrote the 6 user-owned `SECURITY DEFINER` functions with `SET search_path = ''` + fully-qualified bodies; `is_current_user_admin` body-identical (machine-verified `pg_get_functiondef` diff exit 0); stale 3-param overload dropped; zero `0011` advisor WARNs; prod smoke vote PASS; direct SQL regression fixture (6 PASS / 0 FAIL)
+- **Observability + E2E verify-and-close (Phase 15)** — `/__smoke?fire=render|dedupe` harness + `boundary: app-root` invariant; `verify-sourcemap-names.mjs` zero-dep `keepNames` regression guard wired into CI; operator evidence capture; PR #35 auto-closed all five GitHub issues (#11/#12/#13/#17/#19)
+- **Perf-budget pass (Phase 16)** — PostHog moved behind a consent-gated lazy loader via a synchronous facade (~187 KB off critical path, GDPR gate preserved); `manualChunks` vendor split; WebP logo in zero-CLS `<picture>`; `defaultPreload: 'intent'`. Single production Lighthouse rerun cleared 5/5 mobile routes ≥ 90 → UIDN-02 closed, Mobile-first row flipped ⚠️ → ✓
+- **Planning-doc + UI hygiene (Phase 17)** — VALIDATION frontmatter + 15 SUMMARY declarations audit-confirmed; Phase 03 VERIFICATION retrospective reconciled; **v1.1 MILESTONES.md entry finally backfilled** (closes the recurring gap); `AdminsList`/`CategoriesList`/`PromoteAdminDialog` → shadcn `Card` with Dialog ARIA intact; 401 tests green
+
+### What Worked
+
+- **Research-driven scope reframe** — Phase 15 research found the observability/E2E "implementation" work was already shipped in source; reframing to verify-and-close (smoke-test + evidence + issue closure) avoided redundant rebuilds and still closed all five issues with evidence anchors
+- **Machine-enforced invariants for risky migrations** — the `is_current_user_admin` pre/post `pg_get_functiondef` diff (exit 0) turned a HIGH-risk RLS-gating rewrite into a verifiable no-drift change; the SQL regression fixture gave stronger evidence than the (blocked) 12-cell vitest matrix
+- **Facade-only PostHog inversion** — keeping a synchronous facade meant AuthContext/ConsentContext call sites were byte-identical after the import-path swap, so the lazy-load landed without touching consumers or breaking the GDPR zero-pre-Allow invariant
+- **Single-run Lighthouse (D-13) + accept-outcome (D-12)** — the perf pass shipped because it was the right work; the rerun happened to land PASS (5/5 ≥ 90), retiring the long-running UIDN-02 carry-forward cleanly
+- **The v1.1 MILESTONES gap was finally closed** — a dedicated DOCS-08 hard-requirement (manual curation, not CLI) backfilled the entry that slipped through v1.1 and v1.2
+
+### What Was Inefficient
+
+- **CLI MILESTONES auto-extraction is still noisy** — `gsd-sdk query milestone.complete` again produced "One-liner:" / "Case A applied." stubs (this time for the v1.3 entry itself), requiring the same full curated rewrite flagged in v1.2. The lesson recurs every milestone; the CLI seed should be treated as a scaffold, not content
+- **sentry-cli v3 surface drift** — Phase 15 plans referenced `sourcemaps list` and `releases files <release> list`, both removed in v3; OBSV-04(b) fell back to `releases info` indirect proof. Plan templates should pin `npx --no-install @sentry/cli@<version>`
+- **Sentry Discover is paid-tier** — OBSV-05 per-event count via Discover was unavailable on the free plan; the per-issue Events-tab filter served as the primary. Future OBSV plans should mark Discover "if available"
+- **VALIDATION frontmatter promotion lag** — Phases 16 and 17 closed with stale/missing VALIDATION.md markers; the milestone audit initially read `tech_debt` until `/gsd:validate-phase 16` + `17` promoted them (no test generation needed — the markers were stale, not real gaps). The v1.0 "refresh frontmatter on close" lesson still isn't fully automated
+
+### Patterns Established
+
+- **Verify-and-close as a first-class phase shape** — when research shows the code already exists, a phase can legitimately be smoke-test + evidence + issue-closure rather than implementation (Phase 15)
+- **Machine-enforced body-identical migration diffs** — for SECURITY DEFINER / RLS-gating function rewrites, capture pre/post `pg_get_functiondef` and assert a zero diff as a gate
+- **Facade-before-lazy-load** — to defer a heavy vendor lib without touching consumers, front it with a synchronous facade so call sites stay byte-identical across the import-path swap
+- **Treat the CLI milestone entry as a scaffold** — always curate the MILESTONES.md entry by hand against the prior milestone as canonical template (now a verified-across-milestones lesson)
+
+### Key Lessons
+
+1. **The MILESTONES auto-extraction lesson is now confirmed three times (v1.1 gap, v1.2 stubs, v1.3 stubs).** Stop relying on the CLI accomplishment extractor for content — it only ever produces a scaffold. Budget a curation pass every milestone.
+2. **Stale VALIDATION frontmatter masquerades as missing coverage.** Both v1.3 Nyquist "gaps" were stale markers, not real test gaps — closed by a frontmatter-promotion pass. Automating frontmatter refresh at phase-close would have made the milestone audit read `passed` on the first run.
+3. **Research can shrink a milestone.** Phase 15's reframe from implementation to verify-and-close (and the two confirmed perf anti-features — font subsetting, critical CSS) removed real work before it was planned. Front-load research on "is this already done / is this a no-op?".
+4. **Pin external CLI versions in plan templates.** sentry-cli v3 broke two documented commands; a pinned `@sentry/cli@<version>` would have prevented the plan-defect deviations.
+
+### Cost Observations
+
+- **Sessions:** multi-session across the ~14-day window; Phase 15 was orchestrator-driven with operator-in-the-loop evidence capture (Netlify preview + Sentry dashboard screenshots), Phase 16 ran a 6-wave dependency chain
+- **Notable:** the perf pass (Phase 16) delivered the milestone's only user-visible improvement and closed a carry-forward open since v1.0 (UIDN-02). The hygiene phases (14, 17) were low-risk but high-leverage — Migration 14 retired a class of advisor warnings and Phase 17 permanently closed the recurring MILESTONES-entry debt
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -136,6 +186,7 @@
 | v1.0 | ~30+ | 6 | Initial process; cross-AI plan review used in Phases 1 + 3; diagnose-first protocol introduced in Phase 6 |
 | v1.1 | (entry missing — backfill candidate) | 4 (Phases 7–10) | Path-3 carry-forward pattern introduced for evidence-driven UI closures |
 | v1.2 | ~15-20 | 3 (Phases 11–13) | Wave-based plan dependencies in Phase 12; decision-reversal-via-plan-zero pattern (D-01); strict-floor MISS with concrete follow-up trigger (D-12); 4-round PR fix-pass discipline |
+| v1.3 | multi-session | 4 (Phases 14–17) | Verify-and-close phase shape (Phase 15 research reframe); machine-enforced body-identical migration diff (Phase 14); facade-before-lazy-load (Phase 16); v1.1 MILESTONES gap finally backfilled (Phase 17) |
 
 ### Cumulative Quality
 
@@ -144,10 +195,13 @@
 | v1.0 | 378/378 | 47/50 (3 deferred) | n/a (greenfield) |
 | v1.1 | (entry missing) | — | — |
 | v1.2 | TEST-11 (12-cell matrix) + TEST-12 (7+4 cases) + TEST-13 (@smoke SC4) | Phase 12 partial / Phase 13 resolved (0 pending scenarios each) | shadcn `Checkbox` + `Switch` (vendored); Vitest integration scaffolding (no new deps) |
+| v1.3 | 401 unit/component green; `is_current_user_admin` SQL regression fixture (6 PASS / 0 FAIL); `verify-sourcemap-names.mjs` CI guard; #11/#12/#13 E2E green | Verify-and-close (5 GitHub issues closed via evidence) | `scripts/verify-sourcemap-names.mjs` (zero-dep build-time guard); `rollup-plugin-visualizer` (devDep only) |
 
 ### Top Lessons (Verified Across Milestones)
 
 1. **Refresh validation frontmatter as part of phase-complete checklist** — surfaced in v1.0 hygiene tail; v1.2 still has the same risk (Phase 12 UAT `partial` + Phase 13 `resolved` not flipped to `complete`)
 2. **Track GitHub issues against milestone label at file-time** — surfaced in v1.0; v1.2 followed this (3 PRs each tagged)
-3. **Auto-generated milestone entries need curation** — surfaced in v1.2; CLI extraction is best-effort but consistently misses one-liner-less SUMMARY files
+3. **Auto-generated milestone entries need curation** — confirmed across v1.1 (entry missing entirely), v1.2 (empty stubs), and v1.3 (empty stubs again). The CLI seed is a scaffold, never content; budget a hand-curation pass every milestone
 4. **Hard-assert validation commands by default** — surfaced in v1.2 (round 3 of PR review); the conversion exposed a latent count bug. Soft `... | wc -l → N` is brittle
+5. **Stale VALIDATION frontmatter reads as missing coverage** — surfaced in v1.3 (Phases 16/17 closed with stale/missing markers; milestone audit read `tech_debt` until a frontmatter-promotion pass flipped it to `passed` with zero test generation). Automating frontmatter refresh at phase-close would close this permanently — still the unfinished half of lesson 1
+6. **Research can shrink a milestone** — surfaced in v1.3 (Phase 15 verify-and-close reframe + two confirmed perf anti-features). Front-load "is this already done / is this a no-op?" research before planning
