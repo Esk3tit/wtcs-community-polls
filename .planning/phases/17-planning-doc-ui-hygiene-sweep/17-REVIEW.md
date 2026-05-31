@@ -1,162 +1,101 @@
 ---
-status: resolved
+status: clean
 phase: 17
-depth: standard
-reviewed: 2026-05-30T23:06:50Z
+depth: deep
+reviewed: 2026-05-30T00:00:00Z
 critical_count: 0
-warning_count: 1
+warning_count: 0
 info_count: 3
-resolved: 2026-05-30T23:16:00Z
-resolution: WR-01 + IN-02 fixed in fix(17) commit; IN-01/IN-03 accepted as intentional/cosmetic
+files_reviewed: 5
+files_reviewed_list:
+  - src/components/admin/AdminsList.tsx
+  - src/components/admin/CategoriesList.tsx
+  - src/components/admin/PromoteAdminDialog.tsx
+  - src/__tests__/admin/admins-tab.test.tsx
+  - src/__tests__/admin/categories-tab.test.tsx
 ---
 
-# Phase 17 Code Review — Plan B UI Card Migration
+# Phase 17: Code Review Report (iteration 2)
 
-**Reviewed:** 2026-05-30T23:06:50Z
-**Depth:** standard
-**Files reviewed:** 4
-**Status:** issues_found
+**Reviewed:** 2026-05-30
+**Depth:** deep
+**Files Reviewed:** 5
+**Status:** clean (Info-only) — **loop has CONVERGED**
 
 ## Summary
 
-Plan B was a structural-only migration replacing hand-rolled
-`<div className="... border rounded-md">` list containers with the vendored
-shadcn `Card` primitive across three admin components, plus one test update.
+Re-review of the five admin UI-hygiene files after iteration 1's fixes were
+applied. All four iteration-1 fixes are correctly in place and introduced no
+new defects:
 
-I diffed `edd0a9c~1..9c28750` (the three migration commits + the test update)
-and traced behavior end-to-end. **No props, event handlers, refs, state, copy,
-or hooks were dropped or altered** — the migration is faithful on the behavioral
-axis. All `Card`/`CardHeader`/`CardTitle`/`CardAction`/`CardContent` usage is
-correct, and the `py-0` overrides correctly cancel Card's default `py-6`. The
-test change (`getAllByText` length assertion → `findByRole('dialog', { name:
-/promote admin/i })`) is a genuine strengthening, not a weakening.
+1. **Categories heading regression test (resolves prior WR-01)** — Present at
+   `categories-tab.test.tsx:103-110`. Uses
+   `findByRole('heading', { level: 2, name: 'Categories' })`, mirroring
+   `admins-tab.test.tsx:122-129`. `level: 2` matches `aria-level={2}` on the
+   CardTitle (`CategoriesList.tsx:169`). Comment is WHY-only, no plan/phase ID.
+   Asserts the correct thing. CORRECT — the test-coverage asymmetry that was the
+   sole Warning in iteration 1 is now closed.
+2. **Edit-row aria-labels** — `CategoriesList.tsx:273` `Save edit for ${cat.name}`
+   and `:283` `Cancel edit for ${cat.name}`, correctly interpolated. CORRECT.
+3. **Multi-line Card imports** — `AdminsList.tsx:5-11` and `CategoriesList.tsx:22-28`
+   both wrap to multi-line braces; all five names present in both, no name dropped,
+   every imported symbol used. CORRECT.
+4. **WHY comments above `<Card className="py-0">`** — `AdminsList.tsx:88-89` and
+   `CategoriesList.tsx:165-166`. WHY-only (padding override rationale), no
+   phase/plan/round archaeology tags — compliant with the project's
+   no-review-archaeology rule. CORRECT.
 
-The one real defect is an **accessibility regression**: two semantic `<h2>`
-section headings were converted into non-heading `<div>`s (`CardTitle`). The
-components mount via `AdminTabs` under `src/routes/admin/index.tsx`, whose only
-heading is `<h1>Admin</h1>` (verified `src/routes/admin/index.tsx:13`). These
-two `<h2>`s were the page's only second-level headings, so the document outline
-collapses to `h1` only. This is an unintended behavior change for a migration
-scoped as "no accessibility change."
+A fresh deep pass (cross-file: Card component contract in `card.tsx`,
+test/component aria-level alignment, mock/query shape consistency, error-state
+handling, request-sequencing race guards in `AdminsList` refetch, delete-count
+guard logic in `CategoriesList`) found **no Critical and no Warning defects**.
+Per the convergence rule, the loop has **CONVERGED**.
 
-## Warnings
-
-### WR-01: `<h2>` section headings demoted to non-semantic `<div>` (accessibility regression)
-
-**Files:**
-- `src/components/admin/AdminsList.tsx:84`
-- `src/components/admin/CategoriesList.tsx:161`
-
-**Issue:**
-The pre-migration markup used real heading elements (see diff):
-
-```tsx
-<h2 className="text-base font-semibold">Admins</h2>
-<h2 className="text-base font-semibold">Categories</h2>
-```
-
-The migration replaced these with shadcn `CardTitle`:
-
-```tsx
-<CardTitle className="text-base">Admins</CardTitle>
-<CardTitle className="text-base">Categories</CardTitle>
-```
-
-`CardTitle` (verified `src/components/ui/card.tsx:31-39`) renders a plain
-`<div data-slot="card-title">` with **no `role="heading"` and no `aria-level`** —
-it only applies `leading-none font-semibold` styling.
-
-These components mount in tab panels under `src/routes/admin/index.tsx`
-(`AdminTabs` → `CategoriesList` / `AdminsList`). The page's sole heading is
-`<h1>Admin</h1>` (`src/routes/admin/index.tsx:13`); the migrated `<h2>`s were
-the only second-level headings beneath it. After the migration the outline
-collapses from `h1 → h2 (Categories) / h2 (Admins)` to just `h1`. Screen-reader
-users lose heading-based navigation to the "Admins" and "Categories" sections,
-and the visual section titles are no longer exposed as headings in the
-accessibility tree. Accessibility semantics are behavior, so this contradicts
-the phase's "no behavior change" intent.
-
-The new dialog-ARIA test (`admins-tab.test.tsx:119`) guards the *Dialog* title
-role but not the *section* heading role, so this regression is untested.
-
-**Fix:**
-Keep the `CardTitle` for Card layout but restore the heading role and level.
-`CardTitle` spreads `...props` onto its `<div>`, so ARIA attributes pass through:
-
-```tsx
-<CardTitle role="heading" aria-level={2} className="text-base">
-  Admins
-</CardTitle>
-```
-
-Apply the identical change to `CategoriesList.tsx:161` (Categories). Add a
-regression test, e.g.
-`expect(screen.getByRole('heading', { name: 'Admins' })).toBeInTheDocument()`,
-mirroring the existing pattern in `suggestion-form.test.tsx:98`.
+The three Info items below are the carried-over, acceptable-as-is items
+explicitly flagged as non-blocking. They are re-noted for completeness only and
+must NOT block convergence.
 
 ## Info
 
-### IN-01: Row `rounded-md` dropped from promote search results (minor visual delta)
+### IN-01: Empty-state icon margin mismatch between the two lists
 
-**File:** `src/components/admin/PromoteAdminDialog.tsx:95`
+**File:** `src/components/admin/AdminsList.tsx:116` vs `src/components/admin/CategoriesList.tsx:198`
+**Issue:** The empty-state icon in `AdminsList` (`<Users className="h-10 w-10 text-muted-foreground" />`)
+has no bottom margin, while `CategoriesList` adds `mb-3`
+(`<Folder className="h-10 w-10 text-muted-foreground mb-3" />`). Both then add
+`mt-4` on the following `<p>`, so AdminsList spaces the icon only via the
+paragraph's top margin while CategoriesList stacks `mb-3` + `mt-4`. Purely
+cosmetic; the two empty states live on different tabs and are never seen
+side-by-side. Acceptable as-is.
+**Fix:** For pixel-parity, drop `mb-3` from the Folder icon (the paragraph's
+`mt-4` already provides spacing) OR add `mb-3` to the Users icon — pick one and
+apply to both.
 
-**Issue:** Pre-migration each result row carried
-`hover:bg-accent rounded-md`; the migrated row is `hover:bg-accent` (no
-`rounded-md`). With `divide-y` rows inside a rounded `Card`, square-cornered
-hover backgrounds are the conventional shadcn look, so this is almost certainly
-intentional. Flagged only because it is a style delta in a migration billed as
-structure-only.
+### IN-02: Duplicated CardTitle "heading" a11y incantation
 
-**Fix:** No code change required if intentional; otherwise re-add `rounded-md`.
-Note the deliberate visual change in the phase summary either way.
+**File:** `src/components/admin/AdminsList.tsx:92` and `src/components/admin/CategoriesList.tsx:169`
+**Issue:** Both files repeat `<CardTitle role="heading" aria-level={2} className="text-base">`
+to restore heading semantics that shadcn's `CardTitle` (a plain `<div>`, see
+`card.tsx:31-39`) does not provide. The duplication is intentional and small, and
+both call sites are correctly covered by the level-2 heading tests. Acceptable
+as-is.
+**Fix:** Optional — extract a tiny `SectionCardTitle` wrapper if a third admin
+list ever appears. Not worth it for two call sites.
 
-### IN-02: `(D-05)` plan-ID tag in test comment violates no-archaeology rule
+### IN-03: Avatar-fallback inconsistency between AdminsList and PromoteAdminDialog
 
-**File:** `src/__tests__/admin/admins-tab.test.tsx:118-119`
-
-**Issue:** The new test comment reads
-`// ... — verify this survives the Card migration (D-05).` CLAUDE.md (and user
-memory `feedback_no_review_archaeology_in_source`) forbid review-round/plan/
-phase-ID archaeology in source comments; tests live under `src/`. The WHY of the
-comment is fine — only the `(D-05)` tag is the violation.
-
-**Fix:** Drop the `(D-05)` reference:
-`// Radix DialogContent applies role="dialog" + aria-labelledby from the DialogTitle wrapper — verify the Card migration preserves it.`
-
-### IN-03: Card import on a single long line vs. neighboring multi-line style
-
-**Files:**
-- `src/components/admin/AdminsList.tsx:5`
-- `src/components/admin/CategoriesList.tsx:22`
-
-**Issue:** The new Card import is one long line
-(`import { Card, CardHeader, CardTitle, CardAction, CardContent } from '@/components/ui/card'`),
-while the adjacent `Dialog` import in `CategoriesList.tsx:13-20` uses multi-line
-braces. Purely cosmetic; uses the correct `@/` alias and the right import group.
-
-**Fix:** Optional — wrap to multi-line braces to match the neighboring block.
+**File:** `src/components/admin/AdminsList.tsx:141-145` vs `src/components/admin/PromoteAdminDialog.tsx:103-105`
+**Issue:** When `avatar_url` is null, `AdminsList` renders an initial-letter
+fallback (`{(a.discord_username ?? '?')[0]?.toUpperCase()}`), whereas
+`PromoteAdminDialog` renders a blank grey circle
+(`<div className="h-6 w-6 rounded-full bg-muted" />`) with no initial. Cosmetic
+inconsistency only; both are accessible (the avatar is decorative, `alt=""`, and
+the username is shown adjacent). Acceptable as-is.
+**Fix:** Optional — give the Promote dialog the same initial-letter fallback as
+AdminsList for visual consistency.
 
 ---
 
-## Convention adherence (CLAUDE.md)
-
-- `@/` path alias: used for all new imports. PASS
-- One named export per file: unchanged (`AdminsList`, `CategoriesList`,
-  `PromoteAdminDialog`). PASS
-- shadcn new-york `Card` from `src/components/ui/`: correct source. PASS
-- `py-0` / `p-0` overrides correct; `CardAction` correctly placed for the header
-  grid layout (`has-data-[slot=card-action]:grid-cols-[1fr_auto]`). PASS
-- WHY-only comments / no review-round-phase archaeology in `src/`: one violation
-  — see IN-02 (`(D-05)` tag in test).
-
-## No issues found in
-
-- Behavioral correctness: all handlers, refs, state, and hook wiring preserved
-  across all three components (verified against `edd0a9c~1` diff).
-- Empty-state branch in `AdminsList`: the simplified conditional
-  (`admins.length === 0`) now frames the empty state inside `CardContent`,
-  matching `CategoriesList`; behavior unchanged.
-- Security: no new injection/XSS surface; `img` tags retain `alt=""`, snowflake
-  validation (`/^\d{17,19}$/`) untouched in `PromoteAdminDialog`.
-- Test update (`admins-tab.test.tsx`): strengthened from a text-count assertion
-  to a `role="dialog"` accessible-name assertion. Net improvement.
+_Reviewed: 2026-05-30_
+_Reviewer: Claude (gsd-code-reviewer)_
+_Depth: deep_
