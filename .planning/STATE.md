@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: — Hygiene & Performance
-status: milestone_complete
-stopped_at: Milestone complete (Phase 17 was final phase)
-last_updated: 2026-05-30T23:08:37.769Z
-last_activity: 2026-05-30 -- Phase 17 execution started
+status: "Phase 17 shipped — PR #42"
+stopped_at: Phase 17 UI-SPEC approved
+last_updated: "2026-05-31T06:11:12.559Z"
+last_activity: 2026-05-30
 progress:
   total_phases: 4
   completed_phases: 3
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-14 after v1.2 milestone)
 
 Phase: 17
 Plan: Not started
-Status: Milestone complete
+Status: Phase 17 shipped — PR #42
 Last activity: 2026-05-30
 
 Progress: [██████████] 100% (plans)
