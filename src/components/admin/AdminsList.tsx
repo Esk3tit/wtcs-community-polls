@@ -87,7 +87,9 @@ export function AdminsList() {
   return (
     // py-0 / p-0 cancel shadcn Card's default vertical padding so the list
     // keeps its pre-migration row density inside the bordered container.
-    <Card className="py-0">
+    // overflow-hidden clips the flush square-cornered rows/skeletons to the
+    // Card's rounded corners so they don't bleed past the bottom radius.
+    <Card className="py-0 overflow-hidden">
       <CardHeader>
         <CardTitle role="heading" aria-level={2} className="text-base">
           Admins
