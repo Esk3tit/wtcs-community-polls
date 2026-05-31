@@ -91,25 +91,23 @@ Explicitly excluded for v1.4. Documented to prevent scope creep.
 
 ## Traceability
 
-Populated during roadmap creation (Phase numbering continues from v1.3 → starts at **Phase 18**).
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TEST-17 | (pending roadmap) | Pending |
-| TEST-18 | (pending roadmap) | Pending |
-| TEST-19 | (pending roadmap) | Pending |
-| UAT-01 | (pending roadmap) | Pending |
-| UAT-02 | (pending roadmap) | Pending |
-| DBHY-05 | (pending roadmap) | Pending |
-| UIDN-06 | (pending roadmap) | Pending |
-| DEP-01 | (pending roadmap) | Pending |
-| DEP-02 | (pending roadmap) | Pending |
+| TEST-17 | Phase 18 | Pending |
+| TEST-18 | Phase 18 | Pending |
+| TEST-19 | Phase 18 | Pending |
+| UAT-01 | Phase 20 | Pending |
+| UAT-02 | Phase 20 | Pending |
+| DBHY-05 | Phase 19 | Pending |
+| UIDN-06 | Phase 19 | Pending |
+| DEP-01 | Phase 21 | Pending |
+| DEP-02 | Phase 21 | Pending |
 
 **Coverage:**
 - v1.4 requirements: 9 total
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 9 ⚠️ (resolved at roadmap creation)
+- Mapped to phases: 9
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-05-31 — v1.4 Final Closeout (debt-zero mandate; all 9 must reach Validated).*
-*Last updated: 2026-05-31 after initial definition.*
+*Last updated: 2026-05-31 — traceability table populated after roadmap creation (Phases 18–21).*
