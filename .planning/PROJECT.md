@@ -31,9 +31,29 @@ This platform gathers community **opinions**, not binding votes. Nothing on the 
 **v1.2 archives:** [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROADMAP.md) · [milestones/v1.2-REQUIREMENTS.md](milestones/v1.2-REQUIREMENTS.md) (no separate v1.2 audit file; pre-close artifact audit + Phase 13 verification covered this)
 **v1.1 archives:** [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md) · [milestones/v1.1-REQUIREMENTS.md](milestones/v1.1-REQUIREMENTS.md) · [milestones/v1.1-MILESTONE-AUDIT.md](milestones/v1.1-MILESTONE-AUDIT.md)
 
-## Current Milestone
+## Current Milestone: v1.4 — Final Closeout
 
-**Status:** v1.3 — Hygiene & Performance shipped 2026-05-31 (all 23 requirements satisfied; audit verdict `passed`). Next milestone (**v1.4**) not yet scoped — run `/gsd:new-milestone` to begin requirements → research → roadmap.
+**Goal:** Close every outstanding v1 carry-forward — local test-environment repairs, live human UAT, code/migration debt, and test-completeness gaps — so nothing carries past v1.4. Hard debt-zero mandate: no `tech_debt`/DEFER exits. Excludes all V2 product features.
+
+**Target features:**
+
+- **Test-environment repair (real fix)** — Upgrade/pin local supabase-edge-runtime past the 1.73.x ES256 verification bug so `npm run test:integration` runs green; fix local gotrue `email_provider_disabled` config so the TEST-11 12-cell RLS vitest matrix runs green.
+- **Live human UAT** — Execute Phase 03 UAT tests 2+3 (2FA-on, non-WTCS-member Discord tester) and Phase 04 UAT 6a (second-admin demote-click flow); record evidence into `03-UAT.md` / `04-UAT.md`.
+- **Code/migration debt** — New migration replacing the undistinguishing `profile_self_update_allowed` `current_user = session_user` gate with a session-GUC trusted-context flag (STATE.md Deferred Items, Option b); restore the two `<h2>` semantic headings demoted to `CardTitle` `<div>`s during the Phase 17 UIDN-04/05 Card migration (17-REVIEW.md WR-01).
+- **Test completeness** — Implement the deferred manual fault-injection coverage in `e2e/integration/create-poll-results-hidden.test.ts` (line 156).
+- **Dependency hygiene** — Review/merge open dependabot PRs #40 (minor-and-patch group, 15 updates) and #34 (lint-staged 16→17).
+
+**Key context:**
+
+- Phase numbering continues from v1.3 (last phase 17) → v1.4 starts at **Phase 18**.
+- This is the "finish line" milestone — structural sibling of v1.1/v1.3 hygiene passes, but with a hard **debt-zero exit** (no DEFER / `tech_debt` verdicts accepted; the explicit operator mandate is "one and done — finish everything before it").
+- Environment items are REAL repairs (upgrade/config fix + run the real tests green), not alternative-validation substitutes — operator decision at scoping.
+- Human UAT items are executed **live by the operator** this milestone (operator decision); plans must produce exact step-by-step checklists + evidence-recording targets.
+- Completeness sweep at scoping confirmed the canonical carry-forward list is exhaustive: zero open GitHub issues, zero skipped tests, no hidden `v1.4`/`v1.5` markers beyond the known TEST-11 deferral. Net-new surfaced: the fault-injection test gap + two dependabot PRs (both folded in).
+- v1.3 phase work dirs (14–17) archived to `milestones/v1.3-phases/` at v1.4 open (restoring the per-milestone archival convention the v1.3 close skipped).
+- **Out of scope (V2, untouched):** NOTF Discord webhooks, ANLT analytics dashboard, ABSE Turnstile CAPTCHA, VERF-01 (superseded by AUTH-03).
+
+GitHub milestone: TBD on first push.
 
 <details>
 <summary>Previous milestone goals (v1.3 — Hygiene & Performance, shipped 2026-05-31)</summary>
@@ -215,9 +235,9 @@ GitHub milestone: TBD on first push.
 - [ ] `profile_self_update_allowed` `current_user = session_user` gate (Postgres-semantics finding from PR #30; SECURITY DEFINER trigger makes the gate undistinguishing; needs its own migration — see STATE.md Deferred Items)
 - [ ] Phase 17 accessibility follow-up — two `<h2>` section headings demoted to non-semantic `CardTitle` `<div>`s during the UIDN-04/05 Card migration (17-REVIEW.md WR-01)
 
-### Planned for v1.4 (not yet scoped)
+### Scoped for v1.4 (Final Closeout)
 
-Next milestone not yet started. Run `/gsd:new-milestone` to define v1.4 requirements; a fresh REQUIREMENTS.md will track its REQ-IDs and phase mapping. Candidate inputs: the v1.4+ carry-forwards in **Active** above, plus any new product asks.
+v1.4 is now scoped (2026-05-31) as the debt-zero closeout milestone. It absorbs **all** the carry-forwards in **Active** above (test-environment repair, live human UAT, the `profile_self_update_allowed` gate migration, and the Phase 17 a11y heading restore) plus two sweep-surfaced stragglers (the `create-poll-results-hidden.test.ts` fault-injection gap and dependabot PRs #40/#34). REQ-IDs and phase mapping live in `.planning/REQUIREMENTS.md`. As phases complete, these items migrate from **Active** to **Validated (v1.4)**.
 
 ### Deferred to v2 (or later)
 
@@ -325,4 +345,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-31 after v1.3 milestone — Hygiene & Performance shipped (Phases 14–17, 15 plans, 23/23 requirements; audit verdict `passed`). DB SECURITY DEFINER hardening, observability/E2E verify-and-close (#11/#12/#13/#17/#19 closed), PostHog perf-budget pass (UIDN-02 closed — Mobile-first row flipped ⚠️ → ✓), and planning-doc + UI Card hygiene. Next: `/gsd:new-milestone` for v1.4.*
+*Last updated: 2026-05-31 — v1.4 (Final Closeout) scoped. Debt-zero closeout milestone absorbing all v1 carry-forwards (test-env repair, live human UAT, `profile_self_update_allowed` gate migration, Phase 17 a11y heading restore) + two sweep-surfaced stragglers (fault-injection test gap, dependabot #40/#34). Phase numbering continues at **Phase 18**. v1.3 phase dirs archived to `milestones/v1.3-phases/`. Next: define REQUIREMENTS.md → roadmap.*
