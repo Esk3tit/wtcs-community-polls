@@ -91,6 +91,101 @@ Per `REQUIREMENTS.md` § Future Requirements (now archived):
 
 ---
 
+## v1.1 — Hygiene & Polish
+
+**Shipped:** 2026-05-11
+**Phases:** 7 → 10 (4 phases, 16 plans)
+**Tag:** `v1.1`
+**Production URL:** https://polls.wtcsmapban.com (continuous since v1.0)
+**Known deferred items at close:** 2 (UIDN-02 + UIDN-03 deferred via Path-3; carry-forward tokens tracked in v1.1-ROADMAP.md § Issues Deferred)
+
+### Delivered
+
+A maintenance/closure cycle with no new user-visible features. Production at https://polls.wtcsmapban.com is functionally identical to v1.0. The four phases tightened observability (OBSV-01/02), fixed E2E test honesty (TEST-07/08/09/10), captured deferred UI closure evidence (UIDN-04), and reconciled all v1.0 milestone-audit planning-artifact tech debt (DOCS-01/02/03/04). Two requirements (UIDN-02 mobile-first audit, UIDN-03 shadcn audit) were intentionally deferred to v1.2 via Path-3 acceptance — evidence captured, decision rows stay ⚠️ Revisit. 11/11 in-scope requirements satisfied (UIDN-02 + UIDN-03 deferred-accepted within Path-3).
+
+### Key Accomplishments
+
+1. **Observability hardening (Phase 7, 3 plans)** — React 19 `createRoot` error hooks wired to capture render-phase throws; Rolldown `keepNames: true` configured so sourcemap `names[]` arrays preserve function identifiers (eliminates Sentry's minified `$M` frames); env-gated `/__smoke` route + `RenderThrowSmoke` canary; deploy-preview Sentry event confirmed `mechanism.type === 'auto.function.react.error_handler'` + manual belt capture. OBSV-01 + OBSV-02 closed. Bundle cost +6.24% gzip (D-14 ship-anyway: observability gain outweighs free-tier bandwidth).
+
+2. **E2E test hygiene (Phase 8, 4 plans)** — Three failing Playwright specs fixed: `admin-create.spec.ts`, `browse-respond.spec.ts`, `filter-search.spec.ts` migrated to `[E2E]`-scoped locators; `freshPoll` Playwright test-scoped fixture with try/catch/finally + AggregateError cleanup; ESLint `no-restricted-syntax` rule (E2E-SCOPE-1) prevents unscoped list locators; `e2e/README.md` + `npm run e2e` added. Second-human evidence for Phase 03 UAT tests 2+3 appended to `03-UAT.md` (test-dev-account, 2FA-enabled non-member, 2026-05-03). TEST-07/08/09/10 all closed.
+
+3. **UI closure evidence (Phase 9, 4 plans)** — UIDN-04 atomic reconciliation: `components.json` `"new-york"` declared canonical, `DESIGN-SYSTEM.md` ADR-001 + PROJECT.md Constraints updated in one atomic commit. UIDN-02 and UIDN-03 selected Path-3 (defer to v1.2) — evidence archived at `.planning/closure/` with sha256-pinned MANIFEST. UIDN-02 hard-gate: Lighthouse Perf 5/5 routes below 90. UIDN-03 hard-gate: 4 native-`<button>` FAIL cells in `SearchBar.tsx`, `SuggestionForm.tsx`, `ImageInput.tsx`. Follow-up tokens set for v1.2.
+
+4. **Planning hygiene backfill (Phase 10, 5 plans)** — All v1.0 phase directories (01–04) brought to post-Phase-05 planning-artifact schema: VALIDATION.md frontmatter migrated from `status: draft` to `status: complete`; retroactive `03-VERIFICATION.md` written; 9 SUMMARY `requirements-completed` declarations backfilled (≥2-of-3-sources D-08 cross-check); Phase 04 UAT 6a off-record demote-admin evidence appended. DOCS-01/02/03/04 closed.
+
+### Stats
+
+| Metric | Value |
+|--------|-------|
+| Phases | 4 |
+| Plans | 16 |
+| Non-planning files changed | 64 |
+| Lines added / removed (non-planning) | +1,148 / −575 |
+| Planning files changed | 197 |
+| Lines added / removed (planning) | +23,502 / −1,006 |
+| Total commits | 196 |
+| PRs merged | 4 (#21, #22, #24, #25) |
+| Edge Functions added | 0 |
+| DB Migrations | 0 |
+| Timeline | 2026-04-29 → 2026-05-11 (13 days) |
+
+### Decimal Phases
+
+None for v1.1 — all integer phases (7, 8, 9, 10). No urgent fixes required mid-cycle insertion semantics.
+
+### Key Decisions (with outcomes)
+
+| Decision | Outcome |
+|----------|---------|
+| D-08 (Phase 7): Manual deploy-preview evidence over CI-automated Sentry assertion | ✓ Good — single deploy-preview event closed OBSV-01 + OBSV-02; $0/mo budget constraint makes CI Sentry provisioning impractical |
+| D-09 (Phase 7): OBSV-02 acceptance amended from `__name(...)` grep to literal-function-declaration grep | ✓ Good — Rolldown's Oxc minifier preserves names via literal `function Name(...)` (not esbuild helper idiom); verified empirically |
+| D-14 (Phase 7): Ship-anyway on bundle-size overrun (+6.24% gzip vs 1.5% target) | ⚠️ Revisit — observability gain justified at v1.1; but bundle growth continued into v1.2/v1.3, triggering an aggressive perf-budget pass in v1.3 (Phase 16 UIDN-02 aggressive split + Lighthouse rerun) |
+| D-11 (Phase 8): Async second-human evidence not blocking for Phase 8 closure | ⚠️ Revisit — async reconciliation gap discovered in v1.1 milestone audit (TEST-07..10 REQUIREMENTS.md checkboxes + 08-03-SUMMARY frontmatter never updated when evidence arrived); closed inline 2026-05-11; the pattern recurred in v1.2 (async evidence + deferred reconciliation) |
+| Tri-branch Path-3 (Phase 9 plans 03/04): plan acceptance = clean pass / defer / override | ✓ Good — UIDN-02 and UIDN-03 deferred cleanly to v1.2 with carry-forward tokens; both eventually closed in v1.2 (UIDN-03 Phase 12 sweep) and v1.3 (UIDN-02 Lighthouse rerun PASS) |
+| D-05 (Phase 10): Phase 10 does NOT close TEST-10 | ✓ Good — clear ownership boundary enforced (Phase 8 D-13); Phase 8 reconciliation closed inline in v1.1 audit |
+| D-07/D-08 (Phase 10): REQ-ID declared in SUMMARY only when ≥2 of 3 sources agree | ✓ Good — surfaced 2 single-source VOTE-* candidates for explicit user resolution; prevents fabricated REQ-IDs |
+| UIDN-04 ADR-001 (Phase 9 D-01): shadcn style canonicality = `new-york` per `components.json` | ✓ Good — 3-surface atomic flip unblocked UIDN-03; ADR-001 documents the reasoning for future readers; still canonical at v1.3 |
+
+### Issues Resolved During Milestone
+
+- **OBSV-01** (Sentry render-phase capture) — React 19 `createRoot` error hooks wired; deploy-preview event confirms capture path (issue #17 partially closed; residual transport investigation carried to v1.3 Phase 15)
+- **OBSV-02** (un-mangled stack frames) — Rolldown `keepNames: true` configured; sourcemap `names[]` preserve identifiers; bundle delta documented (issue #19 partially closed; full sourcemap-names verification carried to v1.3 Phase 15)
+- **TEST-07** (3 failing Playwright specs) — `admin-create` / `browse-respond` / `filter-search` migrated to `[E2E]`-scoped locators; CI green (issues #11, #12, #13 closed)
+- **TEST-08** (ESLint E2E-SCOPE-1 rule) — `no-restricted-syntax` rule prevents unscoped list locators landing in `e2e/tests/`
+- **TEST-09** (freshPoll fixture) — Playwright test-scoped fixture with try/catch/finally + AggregateError cleanup
+- **TEST-10** (Phase 03 UAT 2+3 second-human evidence) — test-dev-account ran both tests on production 2026-05-03; evidence appended to `03-UAT.md` § Second-Human Verification
+- **UIDN-04** (shadcn canonicality discrepancy) — `components.json` `"new-york"` declared canonical; ADR-001 authored; PROJECT.md + CLAUDE.md propagated atomically
+- **DOCS-01** (VALIDATION frontmatter on phases 01-04) — 4 files migrated from `status: draft` to `status: complete + nyquist_compliant: true`
+- **DOCS-02** (retroactive 03-VERIFICATION.md) — Full peer-template closure record written for Phase 03
+- **DOCS-03** (9 SUMMARY `requirements-completed` declarations) — All 9 in-scope SUMMARY files declare REQ-IDs per ≥2-of-3-sources cross-check; 2 VOTE-* discrepancies surfaced and resolved by user sign-off (2026-05-07)
+- **DOCS-04** (Phase 04 UAT 6a off-record evidence) — Demote-admin click flow PASS recorded via MapCommittee (Discord 290377966251409410)
+- v1.1 milestone audit async-reconciliation gap closed inline (TEST-07..10 REQUIREMENTS.md + 08-03-SUMMARY frontmatter — commit `3dc02ff`)
+
+### Known Gaps Carried Forward
+
+- **UIDN-02** — Lighthouse Perf 5/5 routes below 90 target (mobile-first). Path-3 defer. Follow-up: "v1.2 perf budget hit + Plan 02 harness hydration-wait fix". Evidence: `.planning/closure/UIDN-02-mobile-evidence.md`.
+- **UIDN-03** — 4 native-`<button>` FAIL cells (`SearchBar.tsx`, `SuggestionForm.tsx`, `ImageInput.tsx`). Path-3 defer. Follow-up: "v1.2 cleanup of 4 native-button drifts + authenticated Pass-A capture". Evidence: `.planning/closure/UIDN-03-shadcn-audit.md`.
+
+### Known Tech Debt
+
+- OBSV-01 residual: Sentry React 19 ErrorBoundary render-phase transport question not fully closed — the deploy-preview event confirmed the current hook path works, but the full SDK v10 transport investigation (issue #17 full scope) is carried to v1.3 Phase 15.
+- OBSV-02 residual: Vite/Rolldown sourcemap function-name preservation (issue #19 full scope) carried to v1.3 Phase 15 for automated verification.
+- Async reconciliation pattern: Phase 8 + Phase 10 both experienced async-evidence / deferred-frontmatter-update drift, caught and closed in the v1.1 audit. The pattern recurred in v1.2. v1.3 Phase 17 DOCS-07 added a systematic requirements-completed audit to prevent future drift.
+- Out-of-scope from v1.0 audit tech_debt: fake admin Discord IDs in prod seed + leftover `[E2E] Test:` polls remain OPEN (data hygiene, not planning-artifact scope).
+
+### Issues Deferred to v1.2+
+
+- **UIDN-02** — Mobile-first Lighthouse Perf rerun after v1.2 perf-budget hit. Harness hydration-wait fix is the immediate prerequisite. Carry-forward token set.
+- **UIDN-03** — v1.2 cleanup of 4 native-`<button>` drifts + authenticated Pass-A screenshot capture so `shadcn/ui new-york + Tailwind CSS v4` Key Decision row can flip ⚠️ → ✓.
+- **Admin Visibility Controls (SEED-002)** — Per-suggestion results visibility toggle for admins (Tim's ask). Captured in `.planning/seeds/SEED-002-admin-controlled-results-visibility.md`; planned for v1.2.
+
+---
+
+*ROADMAP archive: [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md)*
+*REQUIREMENTS archive: [milestones/v1.1-REQUIREMENTS.md](milestones/v1.1-REQUIREMENTS.md)*
+
+---
+
 ## v1.0 — Launch-Ready MVP
 
 **Shipped:** 2026-04-28

@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: — Hygiene & Performance
-status: ready_to_plan
-stopped_at: Phase 16 complete (7/7) — ready to discuss Phase 17
-last_updated: "2026-05-29T16:15:41.570Z"
-last_activity: 2026-05-29
+status: "Phase 17 shipped — PR #42"
+stopped_at: Phase 17 UI-SPEC approved
+last_updated: "2026-05-31T06:11:12.559Z"
+last_activity: 2026-05-30
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 13
-  completed_plans: 13
-  percent: 100
+  total_plans: 73
+  completed_plans: 15
+  percent: 75
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-14 after v1.2 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** Phase 17 — planning doc + ui hygiene sweep
+**Current focus:** Milestone complete
 
 ## Current Position
 
 Phase: 17
 Plan: Not started
-Status: Ready to plan
-Last activity: 2026-05-29
+Status: Phase 17 shipped — PR #42
+Last activity: 2026-05-30
 
 Progress: [██████████] 100% (plans)
 
@@ -36,7 +36,7 @@ Progress: [██████████] 100% (plans)
 
 **Velocity:**
 
-- Total plans completed: 13
+- Total plans completed: 15
 - Average duration: mixed (Phase 14: ~3h; Phase 15: orchestrator-driven multi-session)
 - Total execution time: ~3h (Phase 14) + multi-session (Phase 15)
 
@@ -47,6 +47,7 @@ Progress: [██████████] 100% (plans)
 | 14 | 1 | ~3h | ~3h |
 | 15 | 5 | multi-session | mixed (operator-driven Wave 3) |
 | 16 | 7 | - | - |
+| 17 | 2 | - | - |
 
 *Updated after each plan completion*
 | Phase 16 P16-01 | 15m | 4 tasks | 3 files |
@@ -98,6 +99,6 @@ Items acknowledged and deferred at milestone v1.2 close on 2026-05-14:
 
 ## Session Continuity
 
-Last session: 2026-05-29T06:30:00.000Z
-Stopped at: Completed 16-07-PLAN.md (all 7 Phase 16 plans done)
+Last session: 2026-05-30T16:51:58.317Z
+Stopped at: Phase 17 UI-SPEC approved
 Resume action: orchestrator runs Phase 16 phase-level verification + completion

@@ -1,7 +1,7 @@
 ---
 phase: 03-response-integrity
 verified: 2026-04-08T05:00:00Z
-status: resolved
+status: retrospective
 score: 3/3 requirements verified; retroactive closure artifact backfilled 2026-05-07
 retroactive: true
 retroactive_rationale: |
@@ -19,7 +19,7 @@ deferred_items:
 **Phase Goal:** A community member who is a WTCS Discord server member can submit exactly one response per suggestion, protected by rate limiting — while non-members are rejected at OAuth callback.
 
 **Verified:** 2026-04-08 (retroactive — artifact backfilled 2026-05-07)
-**Status:** resolved
+**Status:** retrospective
 **Re-verification:** Phase 05 launch hardening transitively re-verified Phase 03 deliverables; see `.planning/phases/05-launch-hardening/05-VERIFICATION.md`.
 
 ---
@@ -89,6 +89,25 @@ All 3 requirements satisfied. Phase 05 transitive re-verification covers Phase 0
 **UAT Tests 2 + 3** (Non-Member Login Rejection + Error Page Invite Link) were deferred at v1.0 ship because the original executor's burner Discord account lacked 2FA — the 2FA gate triggered before the not-in-server rejection path could be exercised.
 
 Per Phase 10 CONTEXT.md D-05: Phase 10 does NOT re-run these tests AND does NOT claim TEST-10 closure. Ownership lives in Phase 8 (D-13 runbook at `.planning/phases/08-e2e-test-hygiene/08-UAT-10-SCRIPT.md`; TEST-10 in REQUIREMENTS.md and 08-VERIFICATION.md). Phase 8 has appended Second-Human Verification evidence to `03-UAT.md`, but Phase 8's TEST-10 verdict and REQUIREMENTS.md TEST-10 checkbox remain open as of Phase 10 ship — those are Phase 8's reconciliations to make. From Phase 10's perspective, tests 2 + 3 are DEFERRED, full stop.
+
+---
+
+## Subsequent evolution
+
+This VERIFICATION.md verifies Phase 03 as-shipped (v1.0, 2026-04-28). The auth path it covers — Discord OAuth guild-membership gate, `update_profile_after_auth` RPC, `profile_self_update_allowed` trigger, and the downstream `is_current_user_admin` helper — has since evolved through the following post-Phase-03 migrations. The most recent auth-path change is Migration 14.
+
+| Migration | Name | What changed | Auth-relevance |
+|-----------|------|--------------|----------------|
+| 3 — `guild_membership` | Guild membership column and updated RPC | Added `guild_member BOOLEAN` to `profiles`; rewrote `profile_self_update_allowed` to block client-side `guild_member` writes; rewrote `update_profile_after_auth` to 4-param signature accepting `p_guild_member`. | **Auth-path** — this is Phase 03's own migration; listed for completeness. The 4-param `update_profile_after_auth` is the live callable form. |
+| 4 — `fix_trigger_rpc_context` | Allow SECURITY DEFINER RPCs to modify protected columns | Rewrote `profile_self_update_allowed` trigger to skip protected-column checks when `current_user != session_user` (i.e., inside a SECURITY DEFINER context). Without this fix, `update_profile_after_auth` could not write `mfa_verified` or `guild_member`. | **Auth-path** — directly affects the correctness of the `update_profile_after_auth` → `profile_self_update_allowed` call chain at every login. |
+| 5 — `admin_phase4` | Phase 4 admin schema bundle | Introduced `is_current_user_admin()` SECURITY DEFINER helper (checking `is_admin` only at this point); added admin-bypass branches on `votes` and `vote_counts` SELECT RLS policies. | **Auth-path** — introduces `is_current_user_admin()`, which gates all admin-bypass RLS. Later corrected by Migration 9. |
+| 6 — `update_poll_rpc_error_codes` | RPC error code alignment | Replaced free-form RAISE EXCEPTION messages in `update_poll_with_choices` with stable SQLSTATE codes. | **Non-auth, listed for completeness** — poll CRUD RPC only; no auth-path surface touched. |
+| 7 — `fix_pr_review` | PR review fixes | `cardinality()` guard on poll RPCs; REVOKE EXECUTE FROM PUBLIC on SECURITY DEFINER RPCs (GRANT to service_role only); FOR UPDATE lock in `update_poll_with_choices`. | **Partially auth-path** — REVOKE/GRANT narrows the callable surface of SECURITY DEFINER functions to service_role, closing a PostgREST bypass vector. The poll-RPC cardinality fix is non-auth. |
+| 8 — `null_choices_guard` | Null choices guard | COALESCE(cardinality(p_choices), 0) in both poll RPCs to prevent NULL-bypass. | **Non-auth** — poll input validation only; no auth-path surface touched. |
+| 9 — `admin_integrity_rls` | Admin integrity RLS alignment | Rewrote `is_current_user_admin()` to check `is_admin AND mfa_verified AND guild_member` (previously `is_admin` only). Aligns the DB helper with the Edge Function `requireAdmin` check so admin-bypass RLS cannot be exploited after a guild-membership lapse. | **Auth-path** — closes a privilege-escalation gap: an admin who lost guild membership after re-auth could bypass `requireAdmin` via direct PostgREST calls. This tightens the RLS invariant that Phase 03 established. |
+| 14 — `harden_security_definer_search_path` (DBHY-01) | SECURITY DEFINER search_path hardening | Rewrote `update_profile_after_auth`, `profile_self_update_allowed`, `is_current_user_admin`, `handle_new_user`, `increment_vote_count`, and `validate_vote_choice` with `SET search_path = ''` and fully-qualified body references. Dropped the stale 3-param `update_profile_after_auth` overload. Clears six `0011_function_search_path_mutable` Supabase advisor WARNs. | **Auth-path (most recent)** — `update_profile_after_auth` and `is_current_user_admin` are the core Phase 03 auth RPCs. Hardening their search_path prevents search_path-injection attacks that could redirect schema lookups to attacker-controlled objects in a later-positioned schema. The 3-param overload drop removes a dead code path that could have been called with the old signature. Shipped in Phase 14 (v1.3 DB hygiene). |
+
+**Migrations 10–13** (v1.2 `results_hidden` + audit log + demote_admin_guarded) are non-auth schema changes (admin visibility controls, audit integrity, admin demotion race fix). They do not touch the guild-membership gate, `update_profile_after_auth`, or the `is_current_user_admin` auth-path verified by Phase 03. Listed as out-of-scope for this Subsequent evolution section.
 
 ---
 

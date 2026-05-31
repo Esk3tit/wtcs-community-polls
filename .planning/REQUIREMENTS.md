@@ -66,21 +66,21 @@ UIDN-02 carry-forward perf-budget trigger work. Implements the 5 surviving perf-
 
 Continues from v1.1's DOCS-01 through DOCS-04.
 
-- [ ] **DOCS-05**: VALIDATION.md frontmatter refreshed on Phase 01, 02, 03, 04 archives — `status: complete`, `nyquist_compliant: true`. Phase 05/06 already complete. Surfaces from v1.0 RETROSPECTIVE Lesson 1 ("Refresh validation frontmatter as part of `complete` step").
+- [x] **DOCS-05**: VALIDATION.md frontmatter refreshed on Phase 01, 02, 03, 04 archives — `status: complete`, `nyquist_compliant: true`. Phase 05/06 already complete. Surfaces from v1.0 RETROSPECTIVE Lesson 1 ("Refresh validation frontmatter as part of `complete` step").
 
-- [ ] **DOCS-06**: Phase 03 VERIFICATION.md retrospective written. Status `retrospective`. Captures: Phase 03 deliverables (guild membership + rate limiting) shipped + UAT 4/4 + Phase 05 transitive re-verification. Includes a "Subsequent evolution" section listing migrations 3–9 that touched the auth path post-Phase 03 (most recently Migration 14 from DBHY-01 — `update_profile_after_auth` + `is_current_user_admin` rewrite — for accuracy at write-time).
+- [x] **DOCS-06**: Phase 03 VERIFICATION.md retrospective written. Status `retrospective`. Captures: Phase 03 deliverables (guild membership + rate limiting) shipped + UAT 4/4 + Phase 05 transitive re-verification. Includes a "Subsequent evolution" section listing migrations 3–9 that touched the auth path post-Phase 03 (most recently Migration 14 from DBHY-01 — `update_profile_after_auth` + `is_current_user_admin` rewrite — for accuracy at write-time).
 
-- [ ] **DOCS-07**: 17 SUMMARY frontmatter `requirements-completed` declarations backfilled across phases 02 + 03-02 + 04-02/04-04 + 01-04. Cross-referenced against VERIFICATION.md / archive REQUIREMENTS to confirm REQ-ID coverage. Surfaces from v1.0 RETROSPECTIVE Lesson 1.
+- [x] **DOCS-07**: 17 SUMMARY frontmatter `requirements-completed` declarations backfilled across phases 02 + 03-02 + 04-02/04-04 + 01-04. Cross-referenced against VERIFICATION.md / archive REQUIREMENTS to confirm REQ-ID coverage. Surfaces from v1.0 RETROSPECTIVE Lesson 1.
 
-- [ ] **DOCS-08**: v1.1 MILESTONES.md entry written. Manual curation — `gsd-sdk query milestone.complete` auto-extraction produces noisy stubs (lesson from v1.2 RETROSPECTIVE). Uses v1.2 MILESTONES.md entry as the canonical template. Closes the v1.1-shaped "entry never written" gap permanently (RETROSPECTIVE flagged as v1.3+ hygiene candidate).
+- [x] **DOCS-08**: v1.1 MILESTONES.md entry written. Manual curation — `gsd-sdk query milestone.complete` auto-extraction produces noisy stubs (lesson from v1.2 RETROSPECTIVE). Uses v1.2 MILESTONES.md entry as the canonical template. Closes the v1.1-shaped "entry never written" gap permanently (RETROSPECTIVE flagged as v1.3+ hygiene candidate).
 
 ### UI Hygiene (UIDN-*)
 
 Continues from v1.0's UIDN-01..03. UIDN-03-FOLLOWUP-LIST-CARDS from v1.1 audit transparency note.
 
-- [ ] **UIDN-04**: `AdminsList.tsx` + `CategoriesList.tsx` outer hand-rolled `<div>` containers replaced with shadcn `<Card>/<CardHeader>/<CardTitle>/<CardContent>` wrappers. Card composition follows shadcn's documented pattern — one `<Card>` per list section, rows inside `<CardContent>` with `divide-y` for visual separation. Anti-pattern: do NOT wrap each row in its own `<Card>` (creates over-segmentation). Snapshot tests will churn (className-only diffs from utility-class additions); update snapshots in the same commit; review diffs explicitly to confirm no structural regressions.
+- [x] **UIDN-04**: `AdminsList.tsx` + `CategoriesList.tsx` outer hand-rolled `<div>` containers replaced with shadcn `<Card>/<CardHeader>/<CardTitle>/<CardContent>` wrappers. Card composition follows shadcn's documented pattern — one `<Card>` per list section, rows inside `<CardContent>` with `divide-y` for visual separation. Anti-pattern: do NOT wrap each row in its own `<Card>` (creates over-segmentation). Snapshot tests will churn (className-only diffs from utility-class additions); update snapshots in the same commit; review diffs explicitly to confirm no structural regressions.
 
-- [ ] **UIDN-05**: `PromoteAdminDialog.tsx` search-results inner container replaced with shadcn `<Card>/<CardContent>` (if Phase 17 audit confirms the original UIDN-03 flag still applies). Same Card composition pattern as UIDN-04. Accessibility check: confirm dialog ARIA roles + `aria-labelledby` survive the migration (Card primitive uses generic `<div>` — no role conflict with the parent Dialog).
+- [x] **UIDN-05**: `PromoteAdminDialog.tsx` search-results inner container replaced with shadcn `<Card>/<CardContent>` (if Phase 17 audit confirms the original UIDN-03 flag still applies). Same Card composition pattern as UIDN-04. Accessibility check: confirm dialog ARIA roles + `aria-labelledby` survive the migration (Card primitive uses generic `<div>` — no role conflict with the parent Dialog).
 
 ## Future Requirements (deferred to v1.4+)
 
@@ -133,12 +133,12 @@ Continues from v1.0's UIDN-01..03. UIDN-03-FOLLOWUP-LIST-CARDS from v1.1 audit t
 | PERF-05 | Phase 16 | Complete |
 | PERF-06 | Phase 16 | Complete |
 | PERF-07 | Phase 16 | Complete |
-| DOCS-05 | Phase 17 | Pending |
-| DOCS-06 | Phase 17 | Pending |
-| DOCS-07 | Phase 17 | Pending |
-| DOCS-08 | Phase 17 | Pending |
-| UIDN-04 | Phase 17 | Pending |
-| UIDN-05 | Phase 17 | Pending |
+| DOCS-05 | Phase 17 | Complete |
+| DOCS-06 | Phase 17 | Complete |
+| DOCS-07 | Phase 17 | Complete |
+| DOCS-08 | Phase 17 | Complete |
+| UIDN-04 | Phase 17 | Complete |
+| UIDN-05 | Phase 17 | Complete |
 
 *(UIDN-05 may close as no-op if Phase 17 audit confirms PromoteAdminDialog already meets the Card pattern.)*
 

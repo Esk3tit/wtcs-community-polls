@@ -243,7 +243,10 @@ Plans:
   4. `AdminsList.tsx` and `CategoriesList.tsx` render shadcn `<Card>` wrappers — `npm run lint` and `tsc -b` pass with zero errors; `vitest --update-snapshots` produces only className-level diffs in snapshot files with no structural regressions
   5. `PromoteAdminDialog.tsx` search-results container uses `<Card>/<CardContent>` OR is confirmed to already meet the pattern (UIDN-05 closed as no-op after audit), with ARIA roles verified intact in either case
 
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [x] 17-01-PLAN.md — Doc hygiene sweep (DOCS-05/06/07/08): VALIDATION frontmatter audit, 03-VERIFICATION retrospective + Subsequent evolution, SUMMARY requirements-completed backfill, v1.1 MILESTONES entry
+- [x] 17-02-PLAN.md — UI Card migration (UIDN-04/05): AdminsList + CategoriesList + PromoteAdminDialog hand-rolled containers → shadcn Card
 **UI hint**: yes
 
 ---
@@ -255,11 +258,11 @@ Plans:
 | 14. Security-Definer Search-Path Migration | 1/1 | Complete | 2026-05-17 |
 | 15. Observability + E2E Verify & Close | 5/5 | Shipped | 2026-05-25 |
 | 16. UIDN-02 Aggressive Perf-Budget Pass | 7/7 | Complete    | 2026-05-29 |
-| 17. Planning-Doc + UI Hygiene Sweep | 0/TBD | Not started | - |
+| 17. Planning-Doc + UI Hygiene Sweep | 2/2 | Complete    | 2026-05-30 |
 
 | Milestone | Phases | Plans | Status | Shipped |
 |-----------|--------|-------|--------|---------|
 | v1.0 | 1–6 | 32/32 | ✅ Shipped | 2026-04-28 |
 | v1.1 | 7–10 | 16/16 | ✅ Shipped | 2026-05-11 |
 | v1.2 | 11–13 | 17/17 | ✅ Shipped | 2026-05-14 |
-| v1.3 | 14–17 | 6/TBD | 🔄 In progress | - |
+| v1.3 | 14–17 | 6/8 | 🔄 In progress | - |
