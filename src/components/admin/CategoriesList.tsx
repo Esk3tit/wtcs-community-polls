@@ -19,6 +19,13 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardAction,
+  CardContent,
+} from '@/components/ui/card'
 import { supabase } from '@/lib/supabase'
 import { useCategories } from '@/hooks/useCategories'
 import { useCategoryMutations } from '@/hooks/useCategoryMutations'
@@ -155,157 +162,165 @@ export function CategoriesList() {
     !loading && !error && categories.length === 0 && !newRowActive
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-semibold">Categories</h2>
-        <Button
-          size="sm"
-          className="h-9"
-          onClick={handleStartNew}
-          disabled={newRowActive || submitting}
-        >
-          <Plus className="h-4 w-4 mr-1" />
-          New category
-        </Button>
-      </div>
-
-      {loading ? (
-        <div className="divide-y">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-[56px] bg-muted/30 animate-pulse"
-              data-testid="category-skeleton"
-            />
-          ))}
-        </div>
-      ) : showEmpty ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Folder className="h-10 w-10 text-muted-foreground mb-3" />
-          <p className="text-lg font-medium text-foreground mt-4">
-            No categories yet.
-          </p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Create one to organize suggestions.
-          </p>
-          <Button className="mt-4" size="sm" onClick={handleStartNew}>
+    // py-0 / p-0 cancel shadcn Card's default vertical padding so the list
+    // keeps its pre-migration row density inside the bordered container.
+    <Card className="py-0">
+      <CardHeader>
+        <CardTitle role="heading" aria-level={2} className="text-base">
+          Categories
+        </CardTitle>
+        <CardAction>
+          <Button
+            size="sm"
+            className="h-9"
+            onClick={handleStartNew}
+            disabled={newRowActive || submitting}
+          >
             <Plus className="h-4 w-4 mr-1" />
             New category
           </Button>
-        </div>
-      ) : (
-        <div className="divide-y border rounded-md">
-          {newRowActive && (
-            <div className="flex items-center justify-between p-4 min-h-[56px] gap-3">
-              <Input
-                ref={newInputRef}
-                value={newRowValue}
-                onChange={(e) => setNewRowValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') void handleSaveNew()
-                  if (e.key === 'Escape') handleCancelNew()
-                }}
-                placeholder="New category name"
-                className="h-9 text-sm"
-              />
-              <div className="flex items-center gap-1">
-                <Button
-                  size="icon"
-                  variant="default"
-                  className="h-9 w-9"
-                  aria-label="Save new category"
-                  onClick={() => void handleSaveNew()}
-                  disabled={submitting}
-                >
-                  <Check className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-9 w-9"
-                  aria-label="Cancel new category"
-                  onClick={handleCancelNew}
-                  disabled={submitting}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-          {categories.map((cat) => {
-            const isEditing = editingId === cat.id
-            return (
+        </CardAction>
+      </CardHeader>
+
+      <CardContent className="p-0">
+        {loading ? (
+          <div className="divide-y">
+            {Array.from({ length: 4 }).map((_, i) => (
               <div
-                key={cat.id}
-                className="flex items-center justify-between p-4 min-h-[56px] gap-3"
-              >
-                {isEditing ? (
-                  <>
-                    <Input
-                      ref={editInputRef}
-                      value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') void handleSaveEdit(cat.id)
-                        if (e.key === 'Escape') handleCancelEdit()
-                      }}
-                      className="h-9 text-sm"
-                    />
-                    <div className="flex items-center gap-1">
-                      <Button
-                        size="icon"
-                        variant="default"
-                        className="h-9 w-9"
-                        aria-label={`Save ${cat.name}`}
-                        onClick={() => void handleSaveEdit(cat.id)}
-                        disabled={submitting}
-                      >
-                        <Check className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-9 w-9"
-                        aria-label={`Cancel ${cat.name}`}
-                        onClick={handleCancelEdit}
-                        disabled={submitting}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-sm font-medium">{cat.name}</span>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-9 w-9"
-                        aria-label={`Edit category ${cat.name}`}
-                        disabled={submitting}
-                        onClick={() => handleStartEdit(cat)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-9 w-9 text-destructive hover:text-destructive"
-                        aria-label={`Delete category ${cat.name}`}
-                        disabled={submitting}
-                        onClick={() => void handleAskDelete(cat)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </>
-                )}
+                key={i}
+                className="h-[56px] bg-muted/30 animate-pulse"
+                data-testid="category-skeleton"
+              />
+            ))}
+          </div>
+        ) : showEmpty ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Folder className="h-10 w-10 text-muted-foreground mb-3" />
+            <p className="text-lg font-medium text-foreground mt-4">
+              No categories yet.
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Create one to organize suggestions.
+            </p>
+            <Button className="mt-4" size="sm" onClick={handleStartNew}>
+              <Plus className="h-4 w-4 mr-1" />
+              New category
+            </Button>
+          </div>
+        ) : (
+          <div className="divide-y">
+            {newRowActive && (
+              <div className="flex items-center justify-between p-4 min-h-[56px] gap-3">
+                <Input
+                  ref={newInputRef}
+                  value={newRowValue}
+                  onChange={(e) => setNewRowValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') void handleSaveNew()
+                    if (e.key === 'Escape') handleCancelNew()
+                  }}
+                  placeholder="New category name"
+                  className="h-9 text-sm"
+                />
+                <div className="flex items-center gap-1">
+                  <Button
+                    size="icon"
+                    variant="default"
+                    className="h-9 w-9"
+                    aria-label="Save new category"
+                    onClick={() => void handleSaveNew()}
+                    disabled={submitting}
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-9 w-9"
+                    aria-label="Cancel new category"
+                    onClick={handleCancelNew}
+                    disabled={submitting}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-            )
-          })}
-        </div>
-      )}
+            )}
+            {categories.map((cat) => {
+              const isEditing = editingId === cat.id
+              return (
+                <div
+                  key={cat.id}
+                  className="flex items-center justify-between p-4 min-h-[56px] gap-3"
+                >
+                  {isEditing ? (
+                    <>
+                      <Input
+                        ref={editInputRef}
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') void handleSaveEdit(cat.id)
+                          if (e.key === 'Escape') handleCancelEdit()
+                        }}
+                        className="h-9 text-sm"
+                      />
+                      <div className="flex items-center gap-1">
+                        <Button
+                          size="icon"
+                          variant="default"
+                          className="h-9 w-9"
+                          aria-label={`Save edit for ${cat.name}`}
+                          onClick={() => void handleSaveEdit(cat.id)}
+                          disabled={submitting}
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-9 w-9"
+                          aria-label={`Cancel edit for ${cat.name}`}
+                          onClick={handleCancelEdit}
+                          disabled={submitting}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-sm font-medium">{cat.name}</span>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-9 w-9"
+                          aria-label={`Edit category ${cat.name}`}
+                          disabled={submitting}
+                          onClick={() => handleStartEdit(cat)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-9 w-9 text-destructive hover:text-destructive"
+                          aria-label={`Delete category ${cat.name}`}
+                          disabled={submitting}
+                          onClick={() => void handleAskDelete(cat)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </CardContent>
 
       <Dialog
         open={!!deleteTarget}
@@ -342,6 +357,6 @@ export function CategoriesList() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </Card>
   )
 }
