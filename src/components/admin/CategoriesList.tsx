@@ -262,7 +262,7 @@ export function CategoriesList() {
                           size="icon"
                           variant="default"
                           className="h-9 w-9"
-                          aria-label={`Save ${cat.name}`}
+                          aria-label={`Save edit for ${cat.name}`}
                           onClick={() => void handleSaveEdit(cat.id)}
                           disabled={submitting}
                         >
@@ -272,7 +272,7 @@ export function CategoriesList() {
                           size="icon"
                           variant="ghost"
                           className="h-9 w-9"
-                          aria-label={`Cancel ${cat.name}`}
+                          aria-label={`Cancel edit for ${cat.name}`}
                           onClick={handleCancelEdit}
                           disabled={submitting}
                         >
