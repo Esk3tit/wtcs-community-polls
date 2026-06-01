@@ -186,6 +186,12 @@ ON CONFLICT (id) DO NOTHING;
 -- a live delete-sentinel would block the compensating DELETE in afterEach.
 -- ============================================================
 
+-- Asymmetry note: the TABLE is dropped+recreated (its shape may change across
+-- runs, so DROP converges it), while the trigger FUNCTIONS below are CREATE OR
+-- REPLACE (signature is stable, so replace-in-place is safe). Do not "simplify"
+-- this table to CREATE IF NOT EXISTS — that reintroduces the shape-drift the DROP
+-- exists to prevent.
+--
 -- DROP first: a prior run may have left the table in an older shape
 -- (e.g. poll_id-keyed). Dropping guarantees the current (fault_title, ...)
 -- schema on every apply — convergent re-seed, not just idempotent.
