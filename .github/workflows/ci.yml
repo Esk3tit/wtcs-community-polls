@@ -41,7 +41,8 @@ jobs:
       - name: Verify sourcemap function names preserved
         run: node scripts/verify-sourcemap-names.mjs
       # D-16 §4 — non-blocking supply-chain check. Promotable to blocking
-      # once the launch-week advisory noise floor is understood.
+      # once the launch-week advisory noise floor is understood. Owner: project
+      # maintainer; review by 2026-07-01 (drop `|| true` or document why it stays).
       - name: npm audit (non-blocking)
         run: npm audit --audit-level=high || true
 
