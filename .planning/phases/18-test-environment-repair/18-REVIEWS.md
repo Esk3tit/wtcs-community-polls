@@ -1,25 +1,123 @@
 ---
 phase: 18
 reviewers: [gemini, codex, cursor]
-reviewed_at: 2026-06-01T04:40:47Z
-review_cycle: 2
+reviewed_at: 2026-06-01T05:20:00Z
+review_cycle: 3
 plans_reviewed: [18-01-PLAN.md, 18-02-PLAN.md, 18-03-PLAN.md]
-prior_cycle_highs: 3
-prior_cycle_highs_resolved: 3
-current_cycle_highs_unresolved: 1
+prior_cycle_highs: 1
+prior_cycle_highs_resolved: 1
+current_cycle_highs_unresolved: 0
 ---
 
 # Cross-AI Plan Review — Phase 18: Test-Environment Repair
+
+> **Cycle 3 (re-review).** The plans were revised after cycle 2 to resolve the one remaining HIGH
+> (H-NEW-1: branch (a) poll-ID resolution made audit-only; `polls` lookup forbidden for id resolution).
+> Three external reviewers (Gemini, Codex, Cursor) independently re-reviewed the revised plans.
+> Claude (self) was skipped for independence. Load-bearing factual claims were verified against the
+> live repo before synthesis.
+
+---
+
+# CYCLE 3 — Re-review of revised plans (2026-06-01)
+
+## Prior-HIGH disposition (consensus: H-NEW-1 FULLY RESOLVED)
+
+| Prior HIGH | Gemini | Codex | Cursor | Synthesis |
+|---|---|---|---|---|
+| **H-NEW-1** — Branch (a) `actualPollId` resolution ambiguity (`polls` lookup vs audit row) | RESOLVED | RESOLVED | RESOLVED | **FULLY RESOLVED (plan-level).** The cycle-2 ambiguous "or" fallback at old PLAN line 212 is GONE. 18-03 Task 3 now mandates **AUDIT-ONLY** resolution for BOTH branches — `audit_log` filtered on `action='poll_created'` AND `after->>'title'=faultTitle` AND `actor_id` AND `created_at>=startedAt`, with `actualPollId = matchedRow.target_id`. Branch (a) **explicitly forbids** any `from('polls').select()...eq('title', ...)` for id resolution (the poll is absent after the compensating DELETE); `polls` is consulted in branch (a) ONLY to assert absence (`maybeSingle()` null). A grep-checkable acceptance criterion enforces this (PLAN line 232). |
+
+**Live-repo verification of the load-bearing premise (verified by synthesizer, independently re-confirmed by Cursor):**
+- `supabase/functions/create-poll/index.ts` `poll_created` audit row sets `target_id = pollId` AND `after = { title, category_id, results_hidden: false }` (lines 161–168). So `after->>'title'` carries the title correlator and `target_id` IS the poll id — branch (a) needs **no** `polls` lookup even though the poll row is gone.
+- `poll_created_orphaned` row carries `after = { results_hidden_intended: true, results_hidden_actual: false, reason: 'compensation_delete_failed' }` (lines 189–198) — exactly branch (b)'s assertion.
+- `audit_log.after` is `JSONB` (migration `00000000000010_results_hidden_audit.sql:54`), so the `after->>'title'` operator filter is valid SQL.
+- `cron-sweep.yml` has NO `setup-cli` step and NO CLI version pin — the cycle-2 Gemini "5th pin" claim (HIGH-4) remains a confirmed **false positive**; there is no 5th pin to align.
+
+H-NEW-1 is **FULLY RESOLVED at the plan level** — the fix is concrete, grep-verifiable, and backed by the verified live EF audit contract. (Repo files are not yet patched — these are plans; the 18-03 Task 4 gate re-verifies after execution.)
+
+---
+
+## Gemini Review (cycle 3)
+
+**Verdict:** Ready for execution. Overall risk LOW.
+
+- **H-NEW-1: RESOLVED.** Cited 18-03 Task 3 Action Step 6 ("AUDIT-ONLY … DO NOT resolve `actualPollId` via a `polls` lookup … `polls` consulted in branch (a) ONLY to assert absence") and the matching acceptance criterion.
+- **No new HIGH.** Serialization (`fileParallelism: false`), fail-closed guard (`\set ON_ERROR_STOP on` + CI `-v ON_ERROR_STOP=1`), and convergent schema (`DROP TABLE IF EXISTS` before `CREATE TABLE`) are all present and correct.
+- LOW: `afterEach` uses `.delete().neq('fault_title','')` as a global clear — safe under serialization; a title-prefix filter would be marginally more defensive but is not required for correctness.
+- Risk: LOW.
+
+## Codex Review (cycle 3)
+
+**Verdict:** Prior HIGH closed; no new HIGH. Overall risk LOW.
+
+- **H-NEW-1: RESOLVED.** Confirmed the plan states `poll_created` carries `target_id=pollId` and `after={title,…}`, branch (a) resolves audit-only on `after->>'title'=T_a` + actor + `created_at>=startedAt`, and the action section explicitly says "DO NOT resolve `actualPollId` via a `polls` lookup." Directly addresses the prior null-after-DELETE failure mode.
+- **No new HIGH found.** Concurrency, cleanup, seed fail-closed, version-pin, and audit-row resolution risks all have explicit implementation + verification steps.
+- MEDIUM: the executor must use a valid PostgREST/Supabase filter form for `after->>'title'`; the plan is conceptually correct but the acceptance criteria must catch a malformed filter.
+- LOW: 18-01 still uses bare `supabase stop && supabase start` while 18-02/18-03 standardize on `npm exec supabase --`; not a blocker because later waves re-establish pinned parity before the gate.
+- LOW: `.delete().neq('fault_title','')` is fine given non-empty `NOT NULL` titles.
+- Risk: LOW (residual risk is execution correctness, not plan design).
+
+## Cursor Review (cycle 3)
+
+**Verdict:** Proceed with execution; no plan revision required for H-NEW-1. Plan-design risk LOW, execution risk MEDIUM.
+
+- **H-NEW-1: RESOLVED.** Independently re-read `create-poll/index.ts` lines 161–168 and confirmed `target_id` is the poll id and `after.title` is the correlator — no `polls` lookup required. Confirmed the cycle-2 ambiguous "or" at old line 212 is gone; branch (a) forbids the `polls` id lookup, branch (b) uses the same audit-only path "for symmetry," and a grep acceptance rule enforces it.
+- **No new HIGH.** Reviewed candidate concerns (stale 18-PATTERNS.md wildcard snippet, unspecified PostgREST JSONB filter form, `actor_id` acquisition, inter-wave PR split) and rated each MEDIUM/LOW — none a verifiable threat to phase goals given current plan text + grep acceptance rules.
+- MEDIUM: `18-PATTERNS.md`/`18-RESEARCH.md` still document the obsolete `poll_id` wildcard sentinel + "newest `poll_created`" lookup (copy-paste trap); 18-03 mitigates with "ADAPT, do not copy" but the docs remain.
+- MEDIUM: the supabase-js/PostgREST filter form for `after->>'title'` isn't spelled out (e.g. `.filter('after->>title','eq',faultTitle)`); failure mode is loud (no match), not false-green.
+- MEDIUM: CI confirmation remains manual (acceptable per VALIDATION.md); inter-wave file-ownership split if waves ship as separate PRs.
+- LOW: 18-01 restart command inconsistency; branch (a) `cleanupPoll` on already-deleted poll is harmless.
+- Risk: plan-design LOW, execution MEDIUM.
+
+---
+
+## Consensus Summary (cycle 3)
+
+**All three reviewers independently agree H-NEW-1 is FULLY RESOLVED and there are ZERO new HIGH concerns.** The revised 18-03 plan removes the cycle-2 ambiguous `polls`-or-audit fallback and mandates audit-only `actualPollId` resolution for both branches, with a grep-enforced acceptance criterion forbidding the `polls` id lookup in branch (a). The synthesizer verified — and Cursor independently re-confirmed — the load-bearing premise against the live `create-poll` EF: the `poll_created` audit row carries both `target_id` (the poll id) and `after.title` (the correlator), so branch (a) genuinely never needs a `polls` lookup, and `audit_log.after` is JSONB so the filter is valid.
+
+### Agreed Strengths
+- H-NEW-1 fix is concrete and grep-verifiable; the audit-only premise is backed by the live EF audit contract — all three reviewers.
+- All prior-cycle HIGH mitigations (CLI four-pin alignment + `npm exec` parity, `fileParallelism: false` serialization, title-scoped fault rows, `try/finally` + unconditional `afterEach` clear, `ON_ERROR_STOP` fail-closed guard, convergent `DROP TABLE IF EXISTS` re-seed) remain present with matching acceptance criteria + a Task 4 gate — all three.
+- Production safety intact: fault DDL lives only in `seed.sql`, never a migration (`grep` confirms 0 matches in `supabase/migrations/`) — all three.
+
+### Agreed / Highest-Priority Concerns
+
+**HIGH (unresolved): NONE.** No reviewer raised a new HIGH; all three rated plan-design risk LOW.
+
+**MEDIUM (raised by 2+ reviewers):**
+- The supabase-js/PostgREST filter form for the `after->>'title'` JSONB lookup is not spelled out in 18-03 Task 3 (Codex, Cursor). Conceptually correct and JSONB-valid; failure mode is a loud no-match, not a false-green. A one-line query-shape snippet in Task 3 would de-risk execution.
+- Stale `18-PATTERNS.md` / `18-RESEARCH.md` wildcard + "newest `poll_created`" snippets are a copy-paste trap during Task 3 (Cursor; Gemini-adjacent). 18-03's "ADAPT, do not copy" + grep acceptance (no wildcard / no unfiltered "newest") mitigate it, but the docs remain obsolete.
+- Inter-wave file-ownership / CI fail-open window if 18-02 and 18-03 ship as separate PRs — ship 18-01–03 on one phase branch (Cursor).
+
+**LOW:**
+- 18-01 uses bare `supabase stop && supabase start` while later waves standardize on `npm exec supabase --` (Codex, Cursor) — re-established before the gate, harmless in wave 1.
+- `afterEach` global `.delete().neq('fault_title','')` clear is safe given serialization + `NOT NULL` titles (Gemini, Codex).
+
+### Divergent Views
+- **New-HIGH count:** Gemini = 0, Codex = 0, Cursor = 0. **Unanimous.**
+- **Overall risk:** Gemini LOW, Codex LOW, Cursor LOW (plan-design) / MEDIUM (execution). The only divergence is whether to surface residual execution-correctness risk as a separate layer — all three agree plan-design risk is LOW and no revision is required.
+
+### Cycle-3 verdict
+The one cycle-2 HIGH (**H-NEW-1**) is **FULLY RESOLVED** in the revised plans (1 of 1 closed). **No new HIGH concerns.** All three reviewers recommend proceeding to execution with no further plan revision required; the remaining items are MEDIUM/LOW execution-ergonomics hardening (optional). The 18-03 Task 4 gate re-verifies every mitigation against the live codebase post-execution.
+
+### Recommended Next Step
+No plan revision required. Proceed to execution under the debt-zero mandate:
+
+```
+/gsd:execute-phase 18
+```
+
+Optional (non-blocking) hardening before/during execution: add a one-line PostgREST `after->>'title'` filter-shape snippet to 18-03 Task 3, and mark the wildcard/"newest" block in `18-PATTERNS.md` as obsolete to remove the copy-paste trap.
+
+---
+
+# CYCLE 2 — Re-review of revised plans (2026-06-01)
 
 > **Cycle 2 (re-review).** The plans were revised after cycle 1 to address three HIGH concerns
 > (CLI version skew across all four pins; global fault state vs Vitest parallelism;
 > fail-safe/fail-closed fault state + seed guard). Three external reviewers (Gemini, Codex, Cursor)
 > independently re-reviewed the revised plans. Claude (self) was skipped for independence.
 > Load-bearing factual claims were verified against the live repo before synthesis.
-
----
-
-# CYCLE 2 — Re-review of revised plans (2026-06-01)
 
 ## Prior-HIGH disposition (consensus: all three RESOLVED in revised plan text)
 
