@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Final Closeout
 status: executing
-stopped_at: Completed 18-02-PLAN.md
-last_updated: "2026-06-01T05:25:37.805Z"
+stopped_at: Completed 18-03-PLAN.md
+last_updated: "2026-06-01T22:45:00.000Z"
 last_activity: 2026-06-01
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
-  percent: 0
+  completed_plans: 3
+  percent: 25
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-05-31 after v1.3 milestone)
 
 ## Current Position
 
-Phase: 18 (test-environment-repair) — EXECUTING
-Plan: 2 of 3
-Status: Ready to execute
+Phase: 18 (test-environment-repair) — COMPLETE
+Plan: 3 of 3 (all complete)
+Status: Phase complete; next phase: 19
 Last activity: 2026-06-01
 
 ```
@@ -60,6 +60,7 @@ Last activity: 2026-06-01
 | Phase 16 P06 | 15min | 3 tasks | 3 files |
 | Phase 16 P07 | 10min | 2 tasks | 4 files |
 | Phase 18 P02 | 6min | 1 tasks | 4 files |
+| Phase 18 P03 | 25min | 4 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,7 @@ v1.3 decisions are now in the canonical PROJECT.md Key Decisions table (10 v1.3 
 - TEST-17/18 = REAL environment repairs (upgrade/config fix + harnesses actually run green), not alternative-validation substitutes
 - UAT-01/02 = executed live by the operator with real accounts; E2E mocking is not a substitute
 - [Phase ?]: CLI v2.102.0 resolved as single pin for all four locations; edge-runtime v1.74.0 confirmed via docker ps
+- [Phase 18-03]: Title-scoped fault rows (fault_title = poll title token) replace global wildcard UUID — concurrent files unaffected; audit-only poll-id resolution via poll_created row target_id for absent-poll branches; fileParallelism: false for defense-in-depth serialization; fail-closed guard via \set ON_ERROR_STOP on + CI -v ON_ERROR_STOP=1
 
 ### Blockers/Concerns
 
@@ -85,7 +87,7 @@ Items from v1.3 now absorbed into v1.4 scope (no longer deferred — must be res
 |----------|------|-----------|-------|
 | test_env | Local ES256 bug (1.73.x edge-runtime) | TEST-17 | 18 |
 | test_env | TEST-11 12-cell vitest run (gotrue email config) | TEST-18 | 18 |
-| test_completeness | Fault-injection gap in create-poll-results-hidden.test.ts | TEST-19 | 18 |
+| test_completeness | Fault-injection gap in create-poll-results-hidden.test.ts | TEST-19 | 18 ✓ DONE |
 | db_hardening | `profile_self_update_allowed` current_user gate (Option b: session GUC) | DBHY-05 | 19 |
 | a11y | Two `<h2>` headings demoted to CardTitle `<div>` (17-REVIEW.md WR-01) | UIDN-06 | 19 |
 | uat_gaps | Phase 03 UAT tests 2+3 (non-member tester, 2FA on) | UAT-01 | 20 |
@@ -97,11 +99,12 @@ Items from v1.3 now absorbed into v1.4 scope (no longer deferred — must be res
 
 ## Session Continuity
 
-Last session: 2026-06-01T05:25:37.801Z
-Stopped at: Completed 18-02-PLAN.md
-Resume action: `/gsd:plan-phase 18` to plan the Test-Environment Repair phase
+Last session: 2026-06-01T22:45:00.000Z
+Stopped at: Completed 18-03-PLAN.md
+Resume action: Execute Phase 19 (db-hardening-a11y-sweep)
 
 ## Operator Next Steps
 
-- Plan Phase 18 with `/gsd:plan-phase 18`
-- Phases execute in order: 18 → 19 → 20 → 21 (Phase 20 is human-executed; Phase 21 is independent of 19/20 but runs last to avoid merge conflict noise)
+- Phase 18 complete — all 3 plans done (TEST-17, TEST-18, TEST-19 all green)
+- Phases execute in order: 19 → 20 → 21 (Phase 20 is human-executed; Phase 21 is independent of 19/20 but runs last to avoid merge conflict noise)
+- CI confirmation of 18-03 changes deferred to PR creation (ci.yml only triggers on PR/main push)
