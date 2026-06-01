@@ -165,9 +165,13 @@ describe('create-poll results_hidden path', () => {
     const startedAt = new Date().toISOString()
 
     try {
-      await adminClients.serviceRole
+      const { error: armErr } = await adminClients.serviceRole
         .from('test_fault_config')
         .insert({ fault_title: faultTitle, fail_operation: 'update' })
+      // Assert the arm landed: a silent INSERT failure (RLS drift, CHECK-constraint
+      // change, missing table) leaves the trigger dormant, so create-poll would 200
+      // and the 500 assertion below would fail pointing at the EF, not the real cause.
+      expect(armErr).toBeNull()
 
       const result = await invokeEF({
         client: adminClients.authed,
@@ -226,12 +230,15 @@ describe('create-poll results_hidden path', () => {
     try {
       // Arm BOTH operations for this title — UPDATE blocked first, then the
       // compensating DELETE also blocked.
-      await adminClients.serviceRole
+      const { error: armErr } = await adminClients.serviceRole
         .from('test_fault_config')
         .insert([
           { fault_title: faultTitle, fail_operation: 'update' },
           { fault_title: faultTitle, fail_operation: 'delete' },
         ])
+      // Both sentinels must land, else the trigger never fires and the 500
+      // assertion below would misattribute the failure to the EF.
+      expect(armErr).toBeNull()
 
       const result = await invokeEF({
         client: adminClients.authed,
