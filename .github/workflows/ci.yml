@@ -124,7 +124,8 @@ jobs:
           cache: 'npm'
       - run: npm ci
       # D-16 §1 — Supabase CLI pinned to exact version (matches Plan 05-07
-      # deploy-edge-functions.yml and cron-sweep.yml).
+      # deploy-edge-functions.yml). cron-sweep.yml has no setup-cli step (it
+      # uses curl), so there is nothing to keep in sync there.
       - uses: supabase/setup-cli@v2
         with:
           version: 2.102.0

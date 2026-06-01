@@ -30,7 +30,7 @@ jobs:
         with:
           version: 2.102.0
       # --use-api skips Docker (Pitfall 9 fix) and deploys all functions under supabase/functions/.
-      # No function-name arg = deploy-all mode (all 15 EFs).
+      # No function-name arg = deploy-all mode (every function under supabase/functions/).
       # --no-verify-jwt is required because this Supabase project signs JWTs with
       # ES256 (asymmetric), but the EF gateway's verify_jwt validator only handles
       # HS256 (symmetric). Each function does its own auth via supabase.auth.getUser().
