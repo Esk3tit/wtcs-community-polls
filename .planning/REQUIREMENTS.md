@@ -19,7 +19,7 @@ This document tracks the v1.4 milestone requirements. After v1.0 (43 of 45 reqs)
 
 Continues from v1.3's TEST-16. These repair the two local test harnesses that prior milestones could not run, plus close a deferred test-completeness gap.
 
-- [ ] **TEST-17**: Local supabase-edge-runtime upgraded/pinned past the 1.73.x ES256 JWT-verification bug so `npm run test:integration` runs green locally and in CI — no skips, no xfail. The specific edge-runtime version that resolves ES256 verification is identified during plan-phase research and pinned in the local Supabase config. Closes the "Local ES256 verification bug" carry-forward.
+- [x] **TEST-17**: Local supabase-edge-runtime upgraded/pinned past the 1.73.x ES256 JWT-verification bug so `npm run test:integration` runs green locally and in CI — no skips, no xfail. The specific edge-runtime version that resolves ES256 verification is identified during plan-phase research and pinned in the local Supabase config. Closes the "Local ES256 verification bug" carry-forward.
 
 - [ ] **TEST-18**: Local gotrue `email_provider_disabled` configuration fixed so the **TEST-11** 12-cell RLS invariant vitest matrix executes green (12 PASS / 0 FAIL) locally and in CI. This supersedes the v1.3 SQL-regression-fixture stopgap for `is_current_user_admin()` by restoring the full matrix as the primary evidence. Closes the "TEST-11 12-cell vitest run" carry-forward.
 
@@ -93,7 +93,7 @@ Explicitly excluded for v1.4. Documented to prevent scope creep.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TEST-17 | Phase 18 | Pending |
+| TEST-17 | Phase 18 | Complete |
 | TEST-18 | Phase 18 | Pending |
 | TEST-19 | Phase 18 | Pending |
 | UAT-01 | Phase 20 | Pending |
