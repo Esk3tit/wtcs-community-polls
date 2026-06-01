@@ -3,8 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Final Closeout
 status: planning
-last_updated: "2026-05-31"
-last_activity: 2026-05-31
+stopped_at: Phase 18 context gathered
+last_updated: "2026-06-01T01:54:36.607Z"
+last_activity: 2026-05-31 — v1.4 roadmap created (4 phases, 9 requirements)
 progress:
   total_phases: 4
   completed_phases: 0
@@ -66,6 +67,7 @@ Last activity: 2026-05-31 — v1.4 roadmap created (4 phases, 9 requirements)
 v1.3 decisions are now in the canonical PROJECT.md Key Decisions table (10 v1.3 rows added at milestone close — Migration 14 `CREATE OR REPLACE` / `rls_auto_enable` carve-out / fix-forward; PostHog facade + `<PostHogGate>` lazy-load; `manualChunks` function form; `defaultPreload: 'intent'`; D-13 single Lighthouse run; D-12 accept-outcome → UIDN-02 PASS; DOCS-08 manual MILESTONES curation). Full v1.3 retrospective in RETROSPECTIVE.md.
 
 **v1.4 operator decisions (locked at scoping):**
+
 - TEST-17/18 = REAL environment repairs (upgrade/config fix + harnesses actually run green), not alternative-validation substitutes
 - UAT-01/02 = executed live by the operator with real accounts; E2E mocking is not a substitute
 
@@ -93,8 +95,8 @@ Items from v1.3 now absorbed into v1.4 scope (no longer deferred — must be res
 
 ## Session Continuity
 
-Last session: 2026-05-31 — v1.4 roadmap created (4 phases: 18–21; 9 requirements mapped)
-Stopped at: Roadmap written; ready for phase planning
+Last session: 2026-06-01T01:54:36.602Z
+Stopped at: Phase 18 context gathered
 Resume action: `/gsd:plan-phase 18` to plan the Test-Environment Repair phase
 
 ## Operator Next Steps
