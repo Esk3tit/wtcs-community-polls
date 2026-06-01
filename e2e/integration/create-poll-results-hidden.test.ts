@@ -33,9 +33,14 @@ describe('create-poll results_hidden path', () => {
   afterEach(async () => {
     // Clear any armed fault row FIRST and unconditionally — a test that threw
     // before its finally ran must not leave a sentinel that blocks cleanup DELETEs
-    // on the next test. (.neq('') satisfies supabase-js's "delete requires a filter"
-    // rule and deletes all rows.)
-    await adminClients.serviceRole.from('test_fault_config').delete().neq('fault_title', '')
+    // on the next test. Scope the wipe to THIS suite's own title prefix so the
+    // cleanup stays title-scoped (the design invariant): a future second file
+    // arming its own sentinels with `fileParallelism` re-enabled must not have its
+    // rows deleted by a create-poll afterEach firing mid-flight here.
+    await adminClients.serviceRole
+      .from('test_fault_config')
+      .delete()
+      .like('fault_title', '[TEST-M5-FAULT-%')
     if (createdPollId) {
       // audit_log has no FK to polls.id; DELETE explicitly before cleanupPoll.
       await adminClients.serviceRole.from('audit_log').delete().eq('target_id', createdPollId)
