@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: supabase/setup-cli@v2
         with:
-          version: 2.92.1
+          version: 2.102.0
       # --use-api skips Docker (Pitfall 9 fix) and deploys all functions under supabase/functions/.
       # No function-name arg = deploy-all mode (all 15 EFs).
       # --no-verify-jwt is required because this Supabase project signs JWTs with

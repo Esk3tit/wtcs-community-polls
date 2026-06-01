@@ -59,7 +59,7 @@ jobs:
       # Same pinned Supabase CLI version as the e2e job (avoids local-stack drift).
       - uses: supabase/setup-cli@v2
         with:
-          version: 2.92.1
+          version: 2.102.0
       - name: Start Supabase local stack (applies migrations + supabase/seed.sql)
         run: supabase start
       - name: Wait for stack ready
@@ -127,7 +127,7 @@ jobs:
       # deploy-edge-functions.yml and cron-sweep.yml).
       - uses: supabase/setup-cli@v2
         with:
-          version: 2.92.1
+          version: 2.102.0
       # M4 step 1 — `supabase start` bootstraps migrations AND applies
       # supabase/seed.sql automatically on first start. No `supabase db
       # reset` needed; the fresh Docker stack has an empty DB.
