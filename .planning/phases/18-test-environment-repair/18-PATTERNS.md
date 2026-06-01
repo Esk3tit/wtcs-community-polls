@@ -96,9 +96,11 @@ This comment documents the coupling — both jobs must be updated together.
 
 ### `e2e/fixtures/seed.sql` (utility, new guarded DDL section for TEST-19)
 
+> **Authoritative source:** `18-03-PLAN.md` Task 1. The excerpts below were updated after cross-AI plan convergence to the **title-scoped, fail-closed** design (REVIEWS HIGH-2/HIGH-3). The earlier global-wildcard sentinel (`poll_id = '00000000-…'`) is **superseded** — do not reintroduce it. If this file and the PLAN ever disagree, the PLAN wins.
+
 **Analog:** Same file — the existing `app.e2e_seed_allowed` guard block and the existing `INSERT INTO public.polls` DDL.
 
-**Existing guard block pattern** (lines 22–28) — all new DDL must run inside this existing guard or add a second identical check:
+**Existing guard block pattern** (lines 22–28) — all new DDL runs after this existing guard:
 ```sql
 DO $$
 BEGIN
@@ -109,6 +111,8 @@ BEGIN
 END $$;
 ```
 
+**Fail-closed hardening (REVIEWS HIGH-3):** the guard above only ABORTS the file when psql stops on error. Add `\set ON_ERROR_STOP on` as the first line of `seed.sql` (before the guard), and pass `-v ON_ERROR_STOP=1` on both CI `psql -f e2e/fixtures/seed.sql` steps — otherwise `psql -f` prints the `RAISE EXCEPTION` and CONTINUES past it, defeating fail-closed.
+
 **Existing DDL style** — uses `IF NOT EXISTS` / `ON CONFLICT` for idempotency (lines 44–168). Fault injection DDL follows the same pattern, using `CREATE TABLE IF NOT EXISTS` and `CREATE OR REPLACE FUNCTION` / `DROP TRIGGER IF EXISTS` + `CREATE TRIGGER`.
 
 **Existing RLS-disable pattern** — no existing example in seed.sql (all tables use RLS by default). The `test_fault_config` table disables RLS explicitly so the service-role supabase-js client can INSERT/DELETE without a policy:
@@ -116,35 +120,40 @@ END $$;
 ALTER TABLE public.test_fault_config DISABLE ROW LEVEL SECURITY;
 ```
 
-**New section to append** (place at the very end of the file, after the last `ON CONFLICT` block at line 168):
+**New section to append** (place at the very end of the file, after the last `ON CONFLICT` block at line 168). Fault rows key on the poll's unique **title token** (`fault_title`), NOT a global poll-UUID wildcard — so a concurrent file arming a different title is unaffected, and `DROP TABLE IF EXISTS` makes the re-seed convergent against a stale wildcard-shaped table:
 ```sql
 -- ============================================================
 -- Fault Injection: test_fault_config + BEFORE UPDATE/DELETE triggers on polls
 -- LOCAL E2E ONLY — never present in production (guarded by app.e2e_seed_allowed
--- check at top of this file).
--- Wildcard sentinel: row with poll_id = '00000000-0000-0000-0000-000000000000'
--- blocks ALL polls UPDATEs/DELETEs while armed. Test cases MUST disarm before
--- any afterEach cleanup that touches the polls table.
+-- check at top of this file; that guard is fail-closed via \set ON_ERROR_STOP on).
+-- Title-scoped: a test arms a row keyed by the unique poll title it is about to
+-- create, so the trigger fires ONLY for that poll and concurrent files with other
+-- titles are unaffected. Test cases MUST disarm (try/finally) before any afterEach
+-- cleanup that touches the polls table.
 -- ============================================================
-CREATE TABLE IF NOT EXISTS public.test_fault_config (
-  poll_id        uuid  NOT NULL,
+-- DROP first: a prior run may have created the table with the OLD wildcard shape
+-- (poll_id, fail_operation); dropping guarantees the current (fault_title, ...)
+-- shape on every apply (convergent re-seed, not just idempotent).
+DROP TABLE IF EXISTS public.test_fault_config;
+CREATE TABLE public.test_fault_config (
+  fault_title    text  NOT NULL,
   fail_operation text  NOT NULL CHECK (fail_operation IN ('update', 'delete')),
   created_at     timestamptz NOT NULL DEFAULT now(),
-  PRIMARY KEY (poll_id, fail_operation)
+  PRIMARY KEY (fault_title, fail_operation)
 );
+TRUNCATE public.test_fault_config;  -- clear stale sentinels (belt-and-suspenders)
 ALTER TABLE public.test_fault_config DISABLE ROW LEVEL SECURITY;
 
 CREATE OR REPLACE FUNCTION public.fault_inject_polls_before_update()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY INVOKER AS $$
 BEGIN
-  -- Fires when poll_id = NEW.id OR wildcard sentinel '00000000-...' is armed.
-  -- SECURITY INVOKER: runs with caller's privileges — no privilege escalation.
+  -- Fires only when a row matches this poll's title. Empty table = no-op for all
+  -- roles. SECURITY INVOKER: runs with caller's privileges — no escalation.
   IF EXISTS (
     SELECT 1 FROM public.test_fault_config
-    WHERE fail_operation = 'update'
-      AND (poll_id = NEW.id OR poll_id = '00000000-0000-0000-0000-000000000000'::uuid)
+    WHERE fail_operation = 'update' AND fault_title = NEW.title
   ) THEN
-    RAISE EXCEPTION 'fault_inject: deliberate UPDATE failure on poll %', NEW.id;
+    RAISE EXCEPTION '[FAULT-INJECT] deliberate UPDATE failure on poll %', NEW.id;
   END IF;
   RETURN NEW;
 END;
@@ -159,10 +168,9 @@ RETURNS TRIGGER LANGUAGE plpgsql SECURITY INVOKER AS $$
 BEGIN
   IF EXISTS (
     SELECT 1 FROM public.test_fault_config
-    WHERE fail_operation = 'delete'
-      AND (poll_id = OLD.id OR poll_id = '00000000-0000-0000-0000-000000000000'::uuid)
+    WHERE fail_operation = 'delete' AND fault_title = OLD.title
   ) THEN
-    RAISE EXCEPTION 'fault_inject: deliberate DELETE failure on poll %', OLD.id;
+    RAISE EXCEPTION '[FAULT-INJECT] deliberate DELETE failure on poll %', OLD.id;
   END IF;
   RETURN OLD;
 END;
@@ -176,6 +184,8 @@ CREATE TRIGGER fault_inject_polls_delete
 ---
 
 ### `e2e/integration/create-poll-results-hidden.test.ts` (test, append 2 new `it()` blocks for TEST-19)
+
+> **Authoritative source:** `18-03-PLAN.md` Task 3. The excerpts below were updated after cross-AI plan convergence to the **title-scoped + `try/finally` + audit-only-resolution** design (REVIEWS HIGH-2/HIGH-3/H-NEW-1). The earlier wildcard sentinel (`SENTINEL_ID = '00000000-…'`) and "newest `poll_created`" lookup are **superseded** — do not reintroduce them. If this file and the PLAN ever disagree, the PLAN wins.
 
 **Analog:** Same file — existing 4 test cases at lines 56–163.
 
@@ -191,7 +201,7 @@ import {
 } from './helpers'
 ```
 
-**describe / state pattern** (lines 25–39) — shared `adminClients` + `createdPollId` + `beforeAll` + `afterEach` already handle audit_log cleanup then poll cleanup. The 2 new test cases set `createdPollId` the same way as existing tests:
+**describe / state pattern** (lines 25–39) — the shared `afterEach` is HARDENED (REVIEWS HIGH-3): its FIRST statement unconditionally clears `test_fault_config`, so a thrown assertion can never leave a fault row armed for the next test. Only then does it run the existing audit + poll cleanup:
 ```typescript
 describe('create-poll results_hidden path', () => {
   let adminClients: IntegrationClients
@@ -202,6 +212,10 @@ describe('create-poll results_hidden path', () => {
   })
 
   afterEach(async () => {
+    // Clear any armed fault row FIRST and unconditionally — a test that threw
+    // before its finally ran must not poison the next test. (.neq('') satisfies
+    // supabase-js's "delete needs a filter" rule = delete all rows.)
+    await adminClients.serviceRole.from('test_fault_config').delete().neq('fault_title', '')
     if (createdPollId) {
       // audit_log has no FK to polls.id; DELETE explicitly before cleanupPoll.
       await adminClients.serviceRole.from('audit_log').delete().eq('target_id', createdPollId)
@@ -264,39 +278,44 @@ const { data: pollRow, error: selErr } = await adminClients.serviceRole
 Branch (a) — UPDATE fails, compensating DELETE succeeds:
 ```typescript
   it('results_hidden=true: UPDATE failure rolls back poll; only poll_created audit row emitted', async () => {
-    const SENTINEL_ID = '00000000-0000-0000-0000-000000000000'
+    // Unique title token THIS test arms against — trigger matches NEW.title/OLD.title,
+    // so concurrent files with other titles are unaffected (no global wildcard).
+    const faultTitle = `[TEST-M5-FAULT-A] ${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
+    const startedAt = new Date().toISOString()
 
-    // Arm UPDATE sentinel before invoking EF (poll_id unknown until EF runs).
-    // The wildcard sentinel blocks ALL polls UPDATEs while armed.
-    // Integration suite runs single-worker/sequential — no cross-test interference.
-    await adminClients.serviceRole
-      .from('test_fault_config')
-      .insert({ poll_id: SENTINEL_ID, fail_operation: 'update' })
+    try {
+      await adminClients.serviceRole
+        .from('test_fault_config')
+        .insert({ fault_title: faultTitle, fail_operation: 'update' })
 
-    const result = await invokeEF({
-      client: adminClients.authed,
-      name: 'create-poll',
-      body: buildBody({ results_hidden: true }),
-    })
-    expect(result.status).toBe(500)
+      const result = await invokeEF({
+        client: adminClients.authed,
+        name: 'create-poll',
+        body: buildBody({ title: faultTitle, results_hidden: true }),
+      })
+      expect(result.status).toBe(500)
+    } finally {
+      // Disarm even if the assertion above threw — a stuck fault row would block
+      // afterEach's cleanup DELETE and poison the rest of the suite (REVIEWS HIGH-3).
+      await adminClients.serviceRole
+        .from('test_fault_config')
+        .delete()
+        .eq('fault_title', faultTitle)
+    }
 
-    // Disarm sentinel before any cleanup — afterEach calls cleanupPoll which
-    // DELETEs from polls; the sentinel must not block that cleanup DELETE.
-    await adminClients.serviceRole
-      .from('test_fault_config')
-      .delete()
-      .match({ poll_id: SENTINEL_ID, fail_operation: 'update' })
-
-    // poll_created audit row was written BEFORE the UPDATE attempt (create-poll/index.ts:158).
-    // Retrieve the actual poll_id from the audit log (the EF wrote it there).
-    const { data: recentAudit } = await adminClients.serviceRole
+    // Resolve the poll id AUDIT-ONLY (REVIEWS H-NEW-1): the poll is ABSENT here after
+    // the compensating DELETE, so a polls lookup would return null → false-green.
+    // The poll_created audit row (written BEFORE the UPDATE attempt) carries both the
+    // title (after->>'title') and the id (target_id = pollId). Filter by title + actor
+    // + time window — never "newest poll_created" (REVIEWS HIGH-2).
+    const { data: createdRow } = await adminClients.serviceRole
       .from('audit_log')
-      .select('*')
+      .select('target_id')
       .eq('action', 'poll_created')
-      .order('created_at', { ascending: false })
-      .limit(1)
-    expect(recentAudit).toHaveLength(1)
-    const actualPollId = recentAudit![0].target_id as string
+      .eq('after->>title', faultTitle)
+      .gte('created_at', startedAt)
+      .single()
+    const actualPollId = createdRow!.target_id as string
     createdPollId = actualPollId
 
     const rows = await readAuditLog({
@@ -307,7 +326,8 @@ Branch (a) — UPDATE fails, compensating DELETE succeeds:
     expect(rows[0].action).toBe('poll_created')
     expect(rows.find((r) => r.action === 'poll_created_orphaned')).toBeUndefined()
 
-    // Compensating DELETE succeeded — poll must NOT exist in polls table.
+    // Compensating DELETE succeeded — poll must NOT exist. (polls is consulted ONLY
+    // for this absence assertion, never to resolve the id.)
     const { data: pollRow } = await adminClients.serviceRole
       .from('polls')
       .select('id')
@@ -320,39 +340,44 @@ Branch (a) — UPDATE fails, compensating DELETE succeeds:
 Branch (b) — UPDATE fails AND compensating DELETE fails:
 ```typescript
   it('results_hidden=true: UPDATE+DELETE failure emits poll_created + poll_created_orphaned', async () => {
-    const SENTINEL_ID = '00000000-0000-0000-0000-000000000000'
+    const faultTitle = `[TEST-M5-FAULT-B] ${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
+    const startedAt = new Date().toISOString()
 
-    // Arm BOTH sentinels — UPDATE blocked first, then compensating DELETE also blocked.
-    await adminClients.serviceRole
-      .from('test_fault_config')
-      .insert([
-        { poll_id: SENTINEL_ID, fail_operation: 'update' },
-        { poll_id: SENTINEL_ID, fail_operation: 'delete' },
-      ])
+    try {
+      // Arm BOTH operations for THIS title — UPDATE blocked first, then the
+      // compensating DELETE also blocked.
+      await adminClients.serviceRole
+        .from('test_fault_config')
+        .insert([
+          { fault_title: faultTitle, fail_operation: 'update' },
+          { fault_title: faultTitle, fail_operation: 'delete' },
+        ])
 
-    const result = await invokeEF({
-      client: adminClients.authed,
-      name: 'create-poll',
-      body: buildBody({ results_hidden: true }),
-    })
-    expect(result.status).toBe(500)
+      const result = await invokeEF({
+        client: adminClients.authed,
+        name: 'create-poll',
+        body: buildBody({ title: faultTitle, results_hidden: true }),
+      })
+      expect(result.status).toBe(500)
+    } finally {
+      // Disarm both even if the assertion threw (REVIEWS HIGH-3). The delete
+      // sentinel MUST be gone before afterEach's cleanupPoll DELETEs the orphan.
+      await adminClients.serviceRole
+        .from('test_fault_config')
+        .delete()
+        .eq('fault_title', faultTitle)
+    }
 
-    // Disarm BOTH sentinels before cleanup — afterEach cleanupPoll needs to
-    // DELETE the orphaned poll from polls table; the delete sentinel must be
-    // gone first.
-    await adminClients.serviceRole
-      .from('test_fault_config')
-      .delete()
-      .match({ poll_id: SENTINEL_ID })
-
-    // Retrieve actual poll_id from audit log.
-    const { data: recentAudit } = await adminClients.serviceRole
+    // Audit-only id resolution — same path as branch (a) for symmetry (REVIEWS
+    // H-NEW-1), scoped by title + time window (not "newest").
+    const { data: createdRow } = await adminClients.serviceRole
       .from('audit_log')
-      .select('*')
-      .in('action', ['poll_created', 'poll_created_orphaned'])
-      .order('created_at', { ascending: false })
-      .limit(2)
-    const actualPollId = recentAudit![0].target_id as string
+      .select('target_id')
+      .eq('action', 'poll_created')
+      .eq('after->>title', faultTitle)
+      .gte('created_at', startedAt)
+      .single()
+    const actualPollId = createdRow!.target_id as string
     createdPollId = actualPollId
 
     const rows = await readAuditLog({
@@ -376,8 +401,8 @@ Branch (b) — UPDATE fails AND compensating DELETE fails:
       .eq('id', actualPollId)
       .single()
     expect(pollRow!.results_hidden).toBe(false)
-    // afterEach will delete audit_log rows then call cleanupPoll to remove
-    // the orphaned poll (sentinels already disarmed above).
+    // afterEach unconditionally clears test_fault_config, then deletes audit_log
+    // rows and calls cleanupPoll to remove the orphaned poll.
   })
 ```
 
@@ -397,12 +422,21 @@ BEGIN
   END IF;
 END $$;
 ```
-The new DDL section runs after this guard fires — it does not need a second guard because the script aborts at the `DO $$ ... $$` block if the setting is absent.
+The new DDL section runs after this guard, AND the guard is made fail-closed: `\set ON_ERROR_STOP on` is the first line of `seed.sql` and both CI `psql -f` steps pass `-v ON_ERROR_STOP=1`, so the `RAISE EXCEPTION` aborts the whole file instead of psql continuing past it (REVIEWS HIGH-3).
 
 ### afterEach cleanup sequence
 **Source:** `e2e/integration/create-poll-results-hidden.test.ts` lines 33–40
 **Apply to:** Both new fault-injection test cases
-Cleanup order must be: (1) disarm test_fault_config sentinels, (2) let afterEach delete audit_log rows, (3) let afterEach call cleanupPoll. The afterEach already handles steps 2 and 3; step 1 must happen inside the test body before setting `createdPollId`, or in a dedicated `afterEach` that runs before the shared one. Since the shared afterEach is the last registered handler, disarming inside the test body is the safest order.
+Two layers of safety (REVIEWS HIGH-3):
+1. **In-test `try/finally`:** each fault test disarms its own `fault_title` rows in a `finally` block, so a thrown assertion mid-test still releases the fault before anything else runs.
+2. **Hardened shared `afterEach`:** its FIRST statement unconditionally deletes ALL `test_fault_config` rows, BEFORE the `if (createdPollId)` audit-delete + `cleanupPoll` block. This is the backstop if a test threw before its `finally` was reached.
+
+Resulting order on every test: (1) `finally` disarms this test's fault rows → (2) afterEach unconditionally clears `test_fault_config` → (3) afterEach deletes `audit_log` rows → (4) afterEach `cleanupPoll`. The orphaned-poll DELETE in step 4 can never be blocked by a stale `delete` fault row.
+
+### single-thread integration runner
+**Source:** `vitest.config.integration.ts` (`test` block)
+**Apply to:** TEST-19 (defense-in-depth alongside title-scoping)
+Add `fileParallelism: false` (or `pool: 'forks'` + `poolOptions.forks.singleFork: true`) so integration files sharing the one real Postgres DB run one at a time. Title-scoping already prevents cross-file collisions; serialization removes the race window entirely (REVIEWS HIGH-2).
 
 ### Exact CLI version pin pattern
 **Source:** `.github/workflows/ci.yml` lines 60–62 and 128–130
