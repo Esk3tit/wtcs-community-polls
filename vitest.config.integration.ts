@@ -15,5 +15,12 @@ export default defineConfig({
     include: ['e2e/integration/**/*.test.ts'],
     passWithNoTests: false,
     testTimeout: 30_000,
+    // Integration files share one real Postgres DB and arm fault triggers that
+    // are scoped per-test by poll title but still exist in shared DB state.
+    // Running files one at a time removes the race window where a sibling file
+    // could hit an armed trigger or observe a stale audit row from a concurrent
+    // file. Title-scoping provides correctness even if parallelism is later
+    // re-enabled; serialization is defense-in-depth.
+    fileParallelism: false,
   },
 })
