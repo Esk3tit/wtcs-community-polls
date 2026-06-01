@@ -1,7 +1,7 @@
 ---
 phase: 18-test-environment-repair
 reviewed: 2026-05-31T00:00:00Z
-depth: standard
+depth: deep
 files_reviewed: 7
 files_reviewed_list:
   - .github/workflows/ci.yml
@@ -12,70 +12,75 @@ files_reviewed_list:
   - supabase/config.toml
   - vitest.config.integration.ts
 findings:
-  critical: 1
+  critical: 0
   warning: 5
-  info: 4
+  info: 5
   total: 10
 status: issues_found
 ---
 
-# Phase 18: Code Review Report
+# Phase 18: Code Review Report (DEEP)
 
 **Reviewed:** 2026-05-31
-**Depth:** standard
+**Depth:** deep
 **Files Reviewed:** 7
 **Status:** issues_found
 
 ## Summary
 
-Reviewed the test-environment-repair phase: CI workflow correctness, the fail-closed
-fault-injection seed (`e2e/fixtures/seed.sql`), the fault-injection integration test,
-`config.toml` auth/per-function `verify_jwt` overrides, the integration vitest config,
-and `package.json`.
+Phase 18 repairs the integration test environment: it bumps the Supabase CLI pin
+2.92.1/2.98.2 → 2.102.0 across all three workflows and `package.json`, adds the
+`[auth.email]` block to `config.toml` (so `signInWithPassword` works for fixture
+users), hardens both CI psql seed steps with `-v ON_ERROR_STOP=1`, adds an in-file
+`\set ON_ERROR_STOP on` guard to `e2e/fixtures/seed.sql`, and introduces the
+title-scoped fault-injection infrastructure (table + two BEFORE triggers on
+`public.polls`) plus six new test cases in `create-poll-results-hidden.test.ts`.
 
-The fail-closed seed guard, title-scoped triggers, `SECURITY INVOKER` functions, and the
-test's `try/finally` disarm logic are well-constructed and the stale-sentinel cleanup
-(DROP+CREATE+TRUNCATE) is sound. However the review surfaces one BLOCKER: the
-`fault_inject_polls_*` triggers are installed as **permanent objects on `public.polls`**
-by a seed that runs against any DB where `app.e2e_seed_allowed=true` is set — and more
-importantly, `config.toml` is missing `verify_jwt = false` overrides for three deployed
-Edge Functions, which means the integration/E2E auth path for those functions does NOT
-match production and will 401 before the function's own auth runs. Several WARNINGs cover
-unchecked test setup inserts, a non-fail-fast `supabase start`, and stale/misleading
-workflow comments that will mislead future debugging.
+Cross-file tracing confirms the core call chains are sound: the integration suite
+invokes only `create-poll` and `toggle-results-visibility` (verified by grepping
+`name:` across all three `e2e/integration/*.test.ts` files), **both of which carry
+`verify_jwt = false` in `config.toml`**. The 500-status assertions in the fault
+tests correctly map to the create-poll EF contract (post-RPC UPDATE failure →
+compensating DELETE → HTTP 500, verified against `supabase/functions/create-poll/index.ts`).
+The CI `ON_ERROR_STOP` fail-closed path is now genuinely fail-closed on both the
+in-file `\set` and the psql `-v` flag.
+
+**No BLOCKERs.** The prior CR-01 (the three EFs lacking `verify_jwt=false`) is
+**downgraded** — see WR-NEW-1 below. The real defects are test-reliability and
+shared-DB-state hazards introduced by the new fault infrastructure, plus stale
+cross-reference comments that phase 18 edited around without correcting.
 
 ## Critical Issues
 
-### CR-01: `config.toml` omits `verify_jwt = false` for three deployed Edge Functions — local auth path diverges from production
+None.
 
-**File:** `supabase/config.toml:41-78` (and by omission: `submit-vote`, `get-upload-url`, `search-admin-targets`)
-**Issue:**
-The file's own header comment (lines 34-40) states the intent: every EF does its own JWT
-validation, production deploys all pass `--no-verify-jwt`, and these per-function entries
-"align the local stack so `npm run test:integration` exercises the same auth path as prod."
+The prior review's CR-01 does not survive deep analysis. See WR-NEW-1.
 
-But of the 16 deployable functions under `supabase/functions/`, only 13 have a
-`[functions.<name>] verify_jwt = false` block. Three are missing:
+## Warnings
 
-- `submit-vote`
-- `get-upload-url`
-- `search-admin-targets`
+### WR-NEW-1: CR-01 downgraded — three EFs missing `verify_jwt=false` is a latent fidelity gap, not a false-green cause
 
-`deploy-edge-functions.yml:39` deploys ALL functions with `--no-verify-jwt`, so in
-production these three run their own auth. Locally, the gateway defaults to
-`verify_jwt = true` for them, and (per the file's own comment) the local edge runtime
-falls back to HS256 verification on ES256-issued user tokens and returns **401 before the
-function runs**. Any current or future integration/E2E test that invokes these three
-functions through an authed client will fail against the local stack for a reason that
-does not exist in production — a false-red that masks real regressions, or (if a test is
-written to tolerate the 401) a false-green that never exercises the real function. This
-is exactly the production/local auth-path divergence the section was added to prevent;
-it is incompletely applied.
+**File:** `supabase/config.toml:41-78`
+**Issue:** `submit-vote`, `get-upload-url`, and `search-admin-targets` have no
+`[functions.<name>]` block with `verify_jwt = false`. The prior review flagged this
+as a BLOCKER (false-green risk). Deep cross-file tracing refutes the BLOCKER
+severity on two independent grounds:
+1. **Not exercised.** Grepping `name:` across all three integration test files shows
+   the suite invokes only `create-poll` and `toggle-results-visibility`. Votes are
+   seeded directly via the service-role client (`helpers.ts` `seedBaselineVote` /
+   `castVote`), never through `submit-vote`. `get-upload-url` and
+   `search-admin-targets` are invoked by neither the integration nor the smoke suite.
+2. **Not modified by phase 18.** `git diff e12bee9..HEAD -- supabase/config.toml`
+   shows phase 18 added only the `[auth.email]` block; the `[functions.*]` table is
+   untouched. This is a pre-existing latent gap, not a regression this phase introduced.
 
-`submit-vote` is the highest-value gap: it is the rate-limited core mutation and the most
-likely next integration-test target.
-
-**Fix:** Add the three missing blocks (alphabetical placement is fine):
+It is still a **real local/prod fidelity gap**: the moment anyone writes an
+integration test that invokes `submit-vote` (the rate-limited, highest-risk EF) via
+a user JWT, the local edge runtime will reject the ES256 token with 401 *before the
+EF runs*, producing a confusing false-red. Worth fixing for completeness, but it is
+a WARNING, not a BLOCKER, and not the cause of any current false-green.
+**Fix:** Add the three missing blocks so the local override table matches the
+deploy-time `--no-verify-jwt` (which already covers all 16 functions):
 ```toml
 [functions.submit-vote]
 verify_jwt = false
@@ -86,165 +91,207 @@ verify_jwt = false
 [functions.search-admin-targets]
 verify_jwt = false
 ```
-Consider adding a CI guard that asserts every directory under `supabase/functions/`
-(excluding `_shared`) has a matching `[functions.<name>]` block, so a newly-added EF
-cannot silently drift out of alignment again.
 
-## Warnings
+### WR-01: Fault arm-row INSERTs discard `{ error }`, masking arm failures as EF-behavior failures
 
-### WR-01: Fault-injection triggers become permanent `public.polls` objects, gated only by a runtime GUC, not by environment
-
-**File:** `e2e/fixtures/seed.sql:209-242`
-**Issue:**
-The `\set ON_ERROR_STOP on` + `app.e2e_seed_allowed` guard prevents the *seed* from
-running on a hosted DB. But once it does run (the GUC is just a session setting any
-operator could set), it installs `fault_inject_polls_before_update` /
-`..._before_delete` as `CREATE OR REPLACE FUNCTION` + `CREATE TRIGGER` on
-`public.polls` — these are durable schema objects that persist beyond the psql session,
-on every row of every UPDATE/DELETE to `polls`, for the life of the database. They are
-dormant only because `test_fault_config` is empty. The fail-closed guard protects the
-moment of seeding; it does NOT protect against the triggers being left installed on a DB
-that is later promoted, dumped/restored, or pointed at by something other than the
-ephemeral CI stack. The defense is "don't seed prod," but the artifact left behind is a
-live `RAISE EXCEPTION` trigger on the production-shaped `polls` table.
-
-**Fix:** Either (a) wrap the entire fault-injection block in the same
-`app.e2e_seed_allowed` check at *runtime inside the trigger* (cheap guard:
-`IF current_setting('app.e2e_seed_allowed', true) IS DISTINCT FROM 'true' THEN RETURN NEW/OLD; END IF;`
-as the first statement, so an accidentally-promoted trigger is inert without the GUC), or
-(b) document and enforce a teardown that DROPs the triggers/functions/table at end of the
-CI run. Option (a) is strongly preferred — it makes the trigger itself fail-safe rather
-than relying on the table staying empty.
-
-### WR-02: Fault-row `INSERT` results are never checked — a failed arm produces a misleading false-green/false-red
-
-**File:** `e2e/integration/create-poll-results-hidden.test.ts:168-171, 229-234`
-**Issue:**
-The two fault tests insert into `test_fault_config` without inspecting the returned
-`{ error }`:
+**File:** `e2e/integration/create-poll-results-hidden.test.ts:168-170, 229-234`
+**Issue:** Both fault tests insert the arm row(s) without checking the returned
+`error`:
 ```ts
 await adminClients.serviceRole
   .from('test_fault_config')
   .insert({ fault_title: faultTitle, fail_operation: 'update' })
+// no destructure, no error check
 ```
-If this INSERT silently fails (RLS unexpectedly enabled, table renamed by a future seed
-edit, PK/CHECK violation, transient error), the trigger never arms, the EF's UPDATE
-succeeds, and `expect(result.status).toBe(500)` fails — but with a confusing message that
-points at the EF rather than at the un-armed fault. Worse, if the status assertion were
-ever loosened, an un-armed run would pass while testing nothing. Supabase-js does not
-throw on DB errors; it returns them.
-
-**Fix:** Capture and assert the insert error before invoking the EF:
+If the INSERT silently fails (RLS re-enabled by a future migration, CHECK-constraint
+drift on `fail_operation`, PK collision, or `test_fault_config` simply absent because
+the fixture seed step was skipped), the trigger never fires, `create-poll` returns
+200 instead of 500, and the test fails at `expect(result.status).toBe(500)` — but
+with a symptom ("EF didn't fail") that points the debugger at the EF, not at the
+real cause (the arm never happened). A false-red that wastes investigation time, and
+in the symmetric case where the EF *coincidentally* 500s for another reason, a
+false-green. Every other service-role call in this suite checks its error; these two
+are the exceptions.
+**Fix:** Destructure and assert:
 ```ts
 const { error: armErr } = await adminClients.serviceRole
   .from('test_fault_config')
   .insert({ fault_title: faultTitle, fail_operation: 'update' })
 expect(armErr).toBeNull()
 ```
-Apply to both the FAULT-A single insert and the FAULT-B array insert.
 
-### WR-03: `supabase start` failure is not fail-fast; readiness loop can mask a broken stack as a timeout
+### WR-02: `.single()` audit lookups feed non-null assertions; a missing row throws a raw TypeError instead of a clear assertion
 
-**File:** `.github/workflows/ci.yml:64, 135` (and the wait loops at 66-76, 137-153)
-**Issue:**
-`run: supabase start` has no explicit failure handling, and the subsequent "Wait for
-stack ready" step polls `/rest/v1/` for 120s then `exit 1`. If `supabase start` partially
-fails (e.g., one container crashes) the job will burn the full 120s and report a generic
-"did not become ready" rather than surfacing the actual start error. The `supabase status
-|| true` on failure swallows the status exit code. This is a debuggability defect that
-will cost real time on a flaky-stack day.
+**File:** `e2e/integration/create-poll-results-hidden.test.ts:193-200, 253-260`
+**Issue:** Both fault tests resolve the poll id via an audit-log `.single()` whose
+`error` is discarded, then immediately apply `!`:
+```ts
+const { data: createdRow } = await adminClients.serviceRole
+  .from('audit_log')
+  .select('target_id')
+  .eq('action', 'poll_created')
+  .eq('after->>title', faultTitle)
+  .gte('created_at', startedAt)
+  .single()
+const actualPollId = createdRow!.target_id as string
+```
+If `create-poll` returned 500 *before* writing the `poll_created` audit row (e.g., the
+RPC itself failed, not the post-RPC UPDATE — the EF returns 500 at index.ts:148
+before any audit write), `createdRow` is `null` and `createdRow!.target_id` throws
+`Cannot read properties of null`. That surfaces as an opaque TypeError, not as the
+diagnostic "expected a poll_created audit row, found none." It also means
+`createdPollId` is never set, so `afterEach`'s `cleanupPoll` is skipped and the
+orphaned poll (branch B) leaks into the shared DB.
+**Fix:** Check the error and the row before dereferencing:
+```ts
+const { data: createdRow, error: auditErr } = await adminClients.serviceRole...single()
+expect(auditErr).toBeNull()
+expect(createdRow).not.toBeNull()
+const actualPollId = createdRow!.target_id as string
+```
 
-**Fix:** The `supabase start` step already fails the job on a non-zero exit (default
-bash `-e` behavior for `run:` single commands), which is fine — but the wait loop's
-final diagnostics should not swallow errors. Replace `supabase status || true` with a
-real dump (`supabase status` without `|| true`, or `docker ps -a` + container logs) so a
-crashed container is visible. Optionally tee `supabase start` output to a log and upload
-it on failure, mirroring the preview-log artifact pattern already present (lines 253-260).
+### WR-03: Wipe-all `afterEach` on the shared `test_fault_config` makes `fileParallelism: false` load-bearing for correctness, not just defense-in-depth
 
-### WR-04: `afterEach` ordering depends on an undocumented invariant; a delete-sentinel left armed by a *different* file would still poison cleanup
+**File:** `e2e/integration/create-poll-results-hidden.test.ts:38` and
+`vitest.config.integration.ts:24`
+**Issue:** The `afterEach` unconditionally deletes **every** row in the shared
+`test_fault_config` table:
+```ts
+await adminClients.serviceRole.from('test_fault_config').delete().neq('fault_title', '')
+```
+The seed comment and the vitest config both describe title-scoping as the correctness
+mechanism and serialization as mere "defense-in-depth" (`vitest.config.integration.ts:19-24`).
+But this wipe-all is **not** title-scoped: it deletes arm rows belonging to any other
+file too. Deep tracing confirms only `create-poll-results-hidden.test.ts` arms faults
+today (the other two integration files never touch `test_fault_config`), so the
+hazard is dormant. However, the moment a second file arms a fault row and
+`fileParallelism` is re-enabled (the config comment explicitly anticipates this:
+"Title-scoping provides correctness even if parallelism is later re-enabled"), a
+`create-poll` `afterEach` firing mid-flight in file A will delete file B's armed
+sentinel and silently disarm B's fault — a false-green. The stated invariant
+("serialization is defense-in-depth") is false: serialization is currently
+**load-bearing** for this wipe-all.
+**Fix:** Scope the cleanup delete to this file's own titles, consistent with the
+title-scoped design — e.g. delete only rows whose `fault_title` matches the suite's
+`[TEST-M5-FAULT-` prefix:
+```ts
+await adminClients.serviceRole
+  .from('test_fault_config')
+  .delete()
+  .like('fault_title', '[TEST-M5-FAULT-%')
+```
+Or document in `vitest.config.integration.ts` that serialization is **required**, not
+defense-in-depth, and remove the misleading "even if parallelism is later re-enabled"
+claim.
 
-**File:** `e2e/integration/create-poll-results-hidden.test.ts:33-45`
-**Issue:**
-`afterEach` clears `test_fault_config` unconditionally first (good), then deletes the
-poll. This file's own `try/finally` already disarms per-test, so the `afterEach` clear is
-belt-and-suspenders for *this* file. But `vitest.config.integration.ts:24` sets
-`fileParallelism: false` "as defense-in-depth," explicitly contemplating future
-parallelism. Under parallelism, this `afterEach` does
-`.delete().neq('fault_title', '')` — it wipes the ENTIRE shared `test_fault_config`
-table, including sentinels a concurrent file legitimately armed. The comment frames this
-as a safety feature, but it is actually cross-file interference waiting to happen the
-moment `fileParallelism` is flipped back on. The title-scoping correctness argument does
-NOT cover this global TRUNCATE-style delete.
+### WR-04: Durable fault triggers on `public.polls` are gated only by an empty config table — every integration poll UPDATE/DELETE now runs an EXISTS subquery, and the safety rests entirely on the table staying empty
 
-**Fix:** Scope the `afterEach` clear to titles this file owns, or document that
-`fileParallelism: false` is load-bearing (not merely defense-in-depth) for the
-unconditional global delete. Minimal fix: track armed titles in the test and delete only
-those, or filter by the file's title prefix (`[TEST-M5`). At minimum, correct the
-`vitest.config.integration.ts:19-24` comment to state that serialization is *required*,
-not optional, given this global-delete pattern.
+**File:** `e2e/fixtures/seed.sql:206-242`
+**Issue:** The two BEFORE triggers are unconditionally attached to `public.polls` and
+fire `FOR EACH ROW` on every UPDATE and DELETE for all roles. Their only dormancy
+guarantee is that `test_fault_config` is empty. Deep tracing shows the blast radius:
+`toggle-results-visibility.test.ts` UPDATEs polls and `vote-counts-rls.test.ts` +
+both helpers DELETE polls via `cleanupPoll` — so every poll mutation in the entire
+integration suite now passes through `fault_inject_polls_before_update/delete` and
+executes `SELECT 1 FROM public.test_fault_config`. If any test leaks an arm row
+(see WR-01/WR-02 leak paths, or a crash between INSERT and the `finally` disarm), a
+**different, unrelated** test that happens to mutate a poll with the same title is
+silently failed. The triggers are also durable schema objects living in the same DB
+as the dev seed; only the `app.e2e_seed_allowed` guard at the top of the file keeps
+them out of a misdirected hosted apply. A defense-in-depth in-trigger GUC check
+would make the fault path fail-closed even if the table somehow shipped non-empty.
+**Fix:** Add a GUC short-circuit as the first statement in both trigger functions so
+an empty/absent GUC makes the trigger a guaranteed no-op regardless of table contents:
+```sql
+IF current_setting('app.e2e_fault_enabled', true) IS DISTINCT FROM 'true' THEN
+  RETURN NEW; -- (RETURN OLD in the delete trigger)
+END IF;
+```
 
-### WR-05: Misleading workflow comments reference a CLI pin in `cron-sweep.yml` that does not exist
+### WR-05: ci.yml cross-reference comment cites a cron-sweep.yml CLI pin that does not exist; deploy-edge-functions.yml comment says "15 EFs" but there are 16
 
-**File:** `.github/workflows/ci.yml:126-127`, `.github/workflows/deploy-edge-functions.yml:32` (referenced focus: "version pin consistency across the 4 Supabase CLI pins")
-**Issue:**
-`ci.yml:126-127` says the pin "matches Plan 05-07 deploy-edge-functions.yml and
-cron-sweep.yml." `cron-sweep.yml` does **not** use `supabase/setup-cli` and has no
-version pin at all — it invokes the function via plain `curl`. There are only **three**
-Supabase CLI pins in the repo (ci.yml ×2 sites, deploy-edge-functions.yml ×1) plus the
-`package.json` devDependency (`supabase: 2.102.0`), all consistent at `2.102.0`. The
-review focus mentions "4 Supabase CLI pins"; the 4th (cron-sweep) does not exist as a CLI
-pin. Not a runtime bug, but the comment will send a future maintainer hunting for a
-nonexistent pin to keep in sync, and obscures that `package.json` is the actual 4th
-version site to track.
+**File:** `.github/workflows/ci.yml:126-127` and
+`.github/workflows/deploy-edge-functions.yml:33`
+**Issue:** Two stale cross-references in files phase 18 edited (the CLI version on the
+adjacent line was bumped, so these comments were in the diff's blast radius and not
+corrected):
+1. `ci.yml:126-127` — "Supabase CLI pinned to exact version (matches Plan 05-07
+   deploy-edge-functions.yml **and cron-sweep.yml**)." Confirmed via grep:
+   `cron-sweep.yml` uses `curl` to hit the close-expired-polls endpoint and contains
+   **no `supabase/setup-cli` step and no version pin at all**. The cross-reference is
+   to a pin that does not exist, so a future maintainer "keeping them in sync" has
+   nothing to sync.
+2. `deploy-edge-functions.yml:33` — "No function-name arg = deploy-all mode (all 15
+   EFs)." `ls supabase/functions/ | grep -v _shared | wc -l` = **16**. The count drifted
+   when a function was added without updating the comment.
 
-**Fix:** Correct the comments to reference the real co-pinned sites: the two `ci.yml`
-jobs, `deploy-edge-functions.yml`, and the `package.json` `supabase` devDependency.
-Remove the `cron-sweep.yml` reference (it uses curl, no CLI). If keeping all four CLI
-versions in lockstep matters, add a CI check comparing `setup-cli` versions against
-`package.json`.
+These are pre-existing comment-rot items (git blame: April 19-20, before e12bee9),
+but they live on lines adjacent to phase-18 edits and are actively misleading.
+**Fix:** In `ci.yml`, drop "and cron-sweep.yml" (cron-sweep has no CLI step), leaving
+the deploy-edge-functions.yml reference. In `deploy-edge-functions.yml`, change "15
+EFs" to "16 EFs" (or, better, "all functions under supabase/functions/" to avoid
+re-drifting).
 
 ## Info
 
-### IN-01: Deploy comment understates the Edge Function count
+### IN-01: `submit-vote` rate-limit + service-role write path is documented but never integration-tested
 
-**File:** `.github/workflows/deploy-edge-functions.yml:33-34`
-**Issue:** Comment says "deploy-all mode (all 15 EFs)". There are 16 deployable functions
-under `supabase/functions/` (excluding `_shared`). The CLAUDE.md architecture notes also
-say "16 functions at v1.0." Stale count.
-**Fix:** Update to "all 16 EFs" or drop the explicit count to avoid future drift.
+**File:** `e2e/integration/helpers.ts:199-273`
+**Issue:** `seedBaselineVote`/`castVote` insert into `votes` directly via service-role,
+explicitly bypassing the `submit-vote` EF "to avoid coupling every test to that EF's
+rate-limit + validation surface." Reasonable for setup, but it means the one EF with
+an external dependency (Upstash Redis sliding window) and the project's core
+anti-manipulation guarantee has zero integration coverage. Combined with WR-NEW-1
+(no local `verify_jwt=false`), submit-vote is the least-tested high-risk surface.
+**Fix:** Track a follow-up to add a `submit-vote` integration test once WR-NEW-1's
+config block lands; out of scope for phase 18.
 
-### IN-02: `::add-mask::` on the deterministic DB URL is partially ineffective
+### IN-02: `[functions.*]` override table will silently drift from the deployed function set
 
-**File:** `.github/workflows/ci.yml:98, 190`
-**Issue:** Masking the full `db_url` connection string only masks the exact full string;
-if any later step logs a substring (host, port, or the `postgres:postgres` credential
-alone) it will not be masked. The values are local-stack deterministic defaults so the
-exposure is low, and the comment (186-190) acknowledges this. Noted for completeness.
-**Fix:** No action required for local-only deterministic creds; if defense-in-depth is
-desired, also `::add-mask::` the bare `postgres:postgres` credential fragment.
+**File:** `supabase/config.toml:41-78`
+**Issue:** The override table is a hand-maintained list of 13 of 16 functions
+(see WR-NEW-1). There is no check that it stays in sync with `supabase/functions/`.
+The deploy workflow uses `--no-verify-jwt` globally, so prod is fine; only the local
+stack depends on this list, and the only signal of drift is a confusing local 401.
+**Fix:** Optional — a lint/test asserting every dir under `supabase/functions/`
+(minus `_shared`) has a `verify_jwt = false` block would make drift fail loud.
 
-### IN-03: `fileParallelism: false` comment oversells "defense-in-depth"
+### IN-03: `npm audit --audit-level=high || true` non-fail-fast is undated
 
-**File:** `vitest.config.integration.ts:19-24`
-**Issue:** The comment claims title-scoping "provides correctness even if parallelism is
-later re-enabled; serialization is defense-in-depth." This is contradicted by the
-global-delete pattern in WR-04 — serialization is currently load-bearing for the
-unconditional `test_fault_config` wipe in `afterEach`. (Cross-reference WR-04.)
-**Fix:** Soften the comment or fix the global delete so the claim becomes true.
+**File:** `.github/workflows/ci.yml:46, 75, 152`
+**Issue:** Three `|| true` swallows. The `npm audit` one is documented as
+"promotable to blocking once the launch-week advisory noise floor is understood" but
+has no date/owner, so it will sit non-blocking indefinitely. The two `supabase status
+|| true` calls are diagnostic-only inside a step that then `exit 1`s, so they are
+benign (the `|| true` only prevents the diagnostic itself from masking the real
+exit-1). Acceptable as-is; flagging only the undated audit TODO.
+**Fix:** Add an owner/date or tracking issue to the `npm audit` promotion comment.
 
-### IN-04: `[auth]` redirect allow-list is minimal but correct for local-only
+### IN-04: Fault-injection trigger functions are `CREATE OR REPLACE` but the table is `DROP TABLE ... CREATE`, an asymmetry worth a one-line note
 
-**File:** `supabase/config.toml:14-17`
-**Issue:** `site_url` and `additional_redirect_urls` only cover `localhost:5173`. This is
-correct for the local stack (E2E/integration run against localhost), and the Discord
-provider block reads secrets from env. No defect — flagged only to confirm the auth
-section was reviewed and found correct for its local-only scope. The `[auth.email]`
-`enable_signup`/`enable_confirmations` settings are appropriately scoped local-only with a
-clear WHY comment (24-32).
-**Fix:** None.
+**File:** `e2e/fixtures/seed.sql:192-242`
+**Issue:** The table is `DROP TABLE IF EXISTS ... CREATE TABLE` (described as
+"convergent re-seed") while the trigger *functions* are `CREATE OR REPLACE` and the
+triggers are `DROP TRIGGER IF EXISTS ... CREATE`. The mix is correct (functions can be
+replaced in place; the table is dropped to converge its shape), but the asymmetry
+isn't explained and a future editor might "simplify" the table to `CREATE IF NOT
+EXISTS` and reintroduce the shape-drift the DROP exists to prevent.
+**Fix:** One-line comment: table is dropped (shape may change across runs); functions
+are replaced (signature stable).
+
+### IN-05: `TRUNCATE` after `DROP TABLE ... CREATE TABLE` is provably dead
+
+**File:** `e2e/fixtures/seed.sql:202`
+**Issue:** `TRUNCATE public.test_fault_config` immediately follows a `DROP TABLE IF
+EXISTS ... CREATE TABLE`, so the table is guaranteed empty when TRUNCATE runs — the
+statement can never remove a row. The inline comment acknowledges this is deliberate
+"belt-and-suspenders" against a future edit that swaps DROP back to `CREATE IF NOT
+EXISTS`. Harmless dead code kept intentionally as a guard; noted for completeness.
+**Fix:** None required; keep with the IN-04 clarifying comment, or remove if the DROP
+is considered permanent.
 
 ---
 
 _Reviewed: 2026-05-31_
 _Reviewer: Claude (gsd-code-reviewer)_
-_Depth: standard_
+_Depth: deep_
