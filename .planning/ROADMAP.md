@@ -121,7 +121,7 @@ Full phase details (goals, requirement summaries, success criteria, plans, wave 
   3. The fault-injection branch in `e2e/integration/create-poll-results-hidden.test.ts` (post-RPC UPDATE failure path, previously a comment-only deferral at ~line 156) is implemented as an executable test case and passes green (TEST-19)
 **Plans**: 3 plans
 Plans:
-- [ ] 18-01-PLAN.md — Add `[auth.email]` section to config.toml; fix gotrue email_provider_disabled (TEST-18)
+- [x] 18-01-PLAN.md — Add `[auth.email]` section to config.toml; fix gotrue email_provider_disabled (TEST-18)
 - [ ] 18-02-PLAN.md — Bump Supabase CLI version pin in ci.yml to resolve ES256 edge-runtime bug (TEST-17)
 - [ ] 18-03-PLAN.md — Implement fault-injection DDL in seed.sql + two new test cases in create-poll-results-hidden.test.ts (TEST-19)
 
@@ -163,7 +163,7 @@ Plans:
 | 15. Observability + E2E Verify & Close | 5/5 | Shipped | 2026-05-25 |
 | 16. UIDN-02 Aggressive Perf-Budget Pass | 7/7 | Complete    | 2026-05-29 |
 | 17. Planning-Doc + UI Hygiene Sweep | 2/2 | Complete    | 2026-05-30 |
-| 18. Test-Environment Repair | 0/3 | In progress | - |
+| 18. Test-Environment Repair | 1/3 | In Progress|  |
 | 19. DB Migration + A11y Restore | 0/TBD | Not started | - |
 | 20. Live Human UAT | 0/TBD | Not started | - |
 | 21. Dependency Hygiene | 0/TBD | Not started | - |
