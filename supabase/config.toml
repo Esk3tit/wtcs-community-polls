@@ -76,3 +76,12 @@ verify_jwt = false
 
 [functions.demote-admin]
 verify_jwt = false
+
+[functions.submit-vote]
+verify_jwt = false
+
+[functions.get-upload-url]
+verify_jwt = false
+
+[functions.search-admin-targets]
+verify_jwt = false
