@@ -600,7 +600,7 @@ CREATE TRIGGER fault_inject_polls_delete
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Exact CLI version to pin (TEST-17)**
    - What we know: Current CLI HEAD bundles edge-runtime v1.74.0; CLI v2.92.1 bundles v1.73.3
