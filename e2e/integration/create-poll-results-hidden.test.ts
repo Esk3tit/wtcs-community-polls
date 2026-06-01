@@ -194,13 +194,19 @@ describe('create-poll results_hidden path', () => {
     // attempt) carries both the title (after->>'title') and the id (target_id).
     // Filter by title + time window — not "newest poll_created" — to avoid
     // stealing rows from a concurrent file.
-    const { data: createdRow } = await adminClients.serviceRole
+    const { data: createdRow, error: auditErr } = await adminClients.serviceRole
       .from('audit_log')
       .select('target_id')
       .eq('action', 'poll_created')
       .eq('after->>title', faultTitle)
       .gte('created_at', startedAt)
       .single()
+    // Diagnose a missing poll_created row clearly instead of letting the `!`
+    // below throw an opaque "Cannot read properties of null". A missing row means
+    // create-poll 500'd before writing the audit row (RPC failure, not post-RPC
+    // UPDATE) — surface that, don't mask it as a TypeError.
+    expect(auditErr).toBeNull()
+    expect(createdRow).not.toBeNull()
     const actualPollId = createdRow!.target_id as string
     // afterEach will delete the audit row and call cleanupPoll using this id.
     createdPollId = actualPollId
@@ -257,13 +263,20 @@ describe('create-poll results_hidden path', () => {
 
     // Audit-only id resolution — same path as branch (a) for symmetry,
     // scoped by title + time window (not "newest").
-    const { data: createdRow } = await adminClients.serviceRole
+    const { data: createdRow, error: auditErr } = await adminClients.serviceRole
       .from('audit_log')
       .select('target_id')
       .eq('action', 'poll_created')
       .eq('after->>title', faultTitle)
       .gte('created_at', startedAt)
       .single()
+    // A missing poll_created row here would mean the DELETE-failure branch never
+    // created the (now orphaned) poll — fail with a clear message rather than an
+    // opaque TypeError on the `!` below. When the row IS present, set createdPollId
+    // FIRST (before the absence/state assertions further down) so afterEach always
+    // cleans up the orphaned poll this branch deliberately leaves behind.
+    expect(auditErr).toBeNull()
+    expect(createdRow).not.toBeNull()
     const actualPollId = createdRow!.target_id as string
     createdPollId = actualPollId
 
