@@ -1,11 +1,116 @@
 ---
 phase: 18
 reviewers: [gemini, codex, cursor]
-reviewed_at: 2026-05-31T00:00:00Z
+reviewed_at: 2026-06-01T04:40:47Z
+review_cycle: 2
 plans_reviewed: [18-01-PLAN.md, 18-02-PLAN.md, 18-03-PLAN.md]
+prior_cycle_highs: 3
+prior_cycle_highs_resolved: 3
+current_cycle_highs_unresolved: 1
 ---
 
 # Cross-AI Plan Review — Phase 18: Test-Environment Repair
+
+> **Cycle 2 (re-review).** The plans were revised after cycle 1 to address three HIGH concerns
+> (CLI version skew across all four pins; global fault state vs Vitest parallelism;
+> fail-safe/fail-closed fault state + seed guard). Three external reviewers (Gemini, Codex, Cursor)
+> independently re-reviewed the revised plans. Claude (self) was skipped for independence.
+> Load-bearing factual claims were verified against the live repo before synthesis.
+
+---
+
+# CYCLE 2 — Re-review of revised plans (2026-06-01)
+
+## Prior-HIGH disposition (consensus: all three RESOLVED in revised plan text)
+
+| Prior HIGH | Gemini | Codex | Cursor | Synthesis |
+|---|---|---|---|---|
+| **HIGH-1** — Local/CI CLI version skew (4 divergent pins) | RESOLVED | RESOLVED | RESOLVED | **FULLY RESOLVED (plan-level).** 18-02 resolves ONE stable `RESOLVED_VER` and applies it byte-identically to all four pins (`ci.yml` ×2, `deploy-edge-functions.yml`, `package.json`/lockfile), forbids stale `2.92.1`/`2.98.2`, rejects prereleases, and adds an `npx supabase --version` parity check + edge-runtime ≥ v1.74.0 evidence requirement before trusting local green. |
+| **HIGH-2** — Global fault state vs Vitest file parallelism | RESOLVED | RESOLVED | RESOLVED | **FULLY RESOLVED (plan-level).** 18-03 Task 2 adds `fileParallelism: false` to `vitest.config.integration.ts` AND 18-03 Task 1/3 replace the global wildcard sentinel + "newest `poll_created`" lookup with per-test **title-scoped** fault rows + title/actor/time-scoped audit lookup (defense-in-depth). |
+| **HIGH-3** — Fault not fail-safe + seed guard not fail-closed under `psql` | RESOLVED | RESOLVED | RESOLVED | **FULLY RESOLVED (plan-level).** 18-03 adds `try/finally` disarm + unconditional `afterEach` clear of `test_fault_config` (first statement, before poll cleanup), `\set ON_ERROR_STOP on` at the top of `seed.sql`, `-v ON_ERROR_STOP=1` on both CI `psql` steps (lines ~107 & ~207), and `TRUNCATE test_fault_config` on re-seed. |
+
+All three cycle-1 HIGHs are **FULLY RESOLVED at the plan level** — concrete, grep-verifiable mitigations now exist in the revised plan text, with explicit acceptance criteria the executor must meet. (Repo files are not yet patched — these are plans, not landed code — but plan-design closure is what this review gate measures; the gate task in 18-03 re-verifies after execution.)
+
+---
+
+## Gemini Review (cycle 2)
+
+**Verdict:** APPROVED WITH CAVEATS.
+
+- HIGH-1/2/3: all RESOLVED (four-pin alignment + parity check; serialization + title-scoping; `try/finally` + `ON_ERROR_STOP` belt-and-suspenders).
+- **Raised HIGH-4 (REFUTED on verification):** claimed `.github/workflows/cron-sweep.yml` is a 5th divergent CLI pin omitted from 18-02's alignment, citing the `ci.yml:127` comment that references `cron-sweep.yml`. **Verified against the live repo: FALSE POSITIVE.** `cron-sweep.yml` contains NO `supabase/setup-cli` step and pins NO CLI version — it only `curl`s the `close-expired-polls` EF endpoint with repo secrets. There is no 5th pin to align; the `ci.yml:127` comment is stale historical prose, not an actual pin. HIGH-4 is **not a real concern** and does not count.
+- MEDIUM-1: redundant stack restarts across waves 1→2 (latency, not correctness).
+- LOW-1: branch (a) audit title resolution could be brittle if the `after` JSONB payload format changes.
+- Risk: LOW.
+
+## Codex Review (cycle 2)
+
+**Verdict:** Prior HIGHs RESOLVED; **no new HIGH found.** Execution risk MEDIUM until two sharp edges are tightened.
+
+- HIGH-1/2/3: RESOLVED (single version contract across local+CI+deploy; serialization + title scoping; in-file `ON_ERROR_STOP` + CI flag).
+- MEDIUM: 18-02 uses prose `supabase stop && supabase start`; a global Supabase CLI earlier in `PATH` could start the stack with the wrong binary while `npx supabase --version` only proves the npm binary. Use `npm exec supabase -- ...` consistently.
+- MEDIUM: 18-03 audit lookup leaves a fallback that could degrade to actor/time-only; the repo's `poll_created.after` DOES carry `title`, so the plan should *require* `after->>'title' = faultTitle` rather than leave fallback ambiguity. (Same root issue Cursor flags as H-NEW-1.)
+- MEDIUM: `CREATE TABLE IF NOT EXISTS test_fault_config` is idempotent for clean state but NOT convergent from a partial old wildcard `(poll_id, fail_operation)` table — a stale local table of the wrong shape would survive and break the revised trigger. Add `DROP TABLE IF EXISTS` / schema-convergence before `CREATE TABLE`.
+- LOW: `created_at >= startedAt` clock-skew brittleness; `.neq('fault_title','')` vs `.not('fault_title','is',null)`.
+- Risk: LOW–MEDIUM. **No new HIGH.**
+
+## Cursor Review (cycle 2)
+
+**Verdict:** Cycle-1 HIGH-1/2/3 RESOLVED in revised plan text. **Recommend approve after one small 18-03 Task 3 clarification.** Flags one NEW HIGH (execution-risk) + one conditional HIGH.
+
+- **H-NEW-1 (HIGH, execution-risk) — Branch (a) poll-ID resolution is ambiguous.** 18-03 Task 3 step 6 offers a fallback to resolve `actualPollId` "by selecting from `polls` where `title = faultTitle` (branch b) **or** from the `poll_created` audit row." But branch (a) requires the poll to be **absent** after the compensating DELETE — an executor following the `polls` fallback literally for branch (a) gets null and either fails or picks the wrong row → false-green or flake. Fix is a one-line clarification: **mandate audit-only resolution for branch (a)** (filter `audit_log` on `action='poll_created'`, `after->>'title'`, `actor_id`, `created_at >= startedAt`) and forbid the `polls` lookup when asserting absence. **VERIFIED** against 18-03-PLAN.md line 212 — the ambiguous "or" fallback clause is present.
+- **H-NEW-2 (conditional) — TEST-17 "gateway ES256 verified" vs perpetual `verify_jwt = false`.** Plans keep all nine `verify_jwt = false` entries and require recording edge-runtime ≥ v1.74.0, but no step re-runs a single integration call with gateway JWT verification ON to prove the ES256 fix at the gateway. Cursor explicitly: *"Tag as HIGH only if your bar is 'prove ES256 at gateway'; otherwise MEDIUM."* Under the project's locked definition (prod uses `--no-verify-jwt`, EFs self-validate; TEST-17 = pinned runtime + aligned prod auth path), this is **MEDIUM**, not HIGH.
+- MEDIUM: `18-PATTERNS.md` still documents the wildcard/newest lookup (copy-paste risk); inter-wave CI fail-open window if waves ship as separate PRs; manual CI confirmation dependency; trigger surface on `polls` for all roles (mitigated by serialization + title uniqueness + cleanup ordering).
+- Risk: plan-design vs cycle-1 HIGHs LOW (once executed); execution/executor-misread MEDIUM–HIGH (H-NEW-1); overall MEDIUM.
+
+---
+
+## Consensus Summary (cycle 2)
+
+**All three reviewers agree the three cycle-1 HIGH concerns are RESOLVED in the revised plans.** The disagreement is only on whether any NEW HIGH exists:
+
+- **Gemini** raised HIGH-4 (`cron-sweep.yml` 5th pin) → **REFUTED on live-repo verification** (no `setup-cli`, no CLI pin in that file). Does not count.
+- **Codex** found **no new HIGH** (rates execution risk MEDIUM).
+- **Cursor** raised **H-NEW-1** (branch (a) poll-ID resolution ambiguity) as an execution-risk HIGH, and **H-NEW-2** (TEST-17 gateway-vs-runtime evidence) as HIGH-only-if-the-bar-is-gateway-proof (otherwise MEDIUM → MEDIUM under this project's locked TEST-17 definition).
+
+### Agreed Strengths
+- Three cycle-1 HIGHs each have concrete, grep-verifiable mitigations in the revised plan text — all three reviewers.
+- HIGH-1 fix is complete on paper: the fourth pin (`package.json`) was the missing piece; deploy workflow included; prerelease rejection + edge-runtime evidence required beyond "suite went green" — Gemini + Codex + Cursor.
+- HIGH-2 dual mitigation (serialization + title-scoped triggers/audit) is correct given `poll_created.after` already carries `title` — all three.
+- HIGH-3 belt-and-suspenders (in-file `\set ON_ERROR_STOP on` + CI `-v ON_ERROR_STOP=1`) + `TRUNCATE` on re-seed clears crashed-run sentinels — all three.
+- File-ownership discipline (18-02 does not touch the `psql` lines; 18-03 owns `ON_ERROR_STOP`) and explicit "ADAPT, don't copy the wildcard from 18-PATTERNS" reduce regression risk — Cursor.
+
+### Agreed / Highest-Priority Concerns
+
+**HIGH (unresolved, counts) — H-NEW-1: Branch (a) poll-ID resolution ambiguity (Cursor HIGH; Codex same root issue at MEDIUM). VERIFIED.**
+18-03 Task 3 step 6 (PLAN line 212) lets the executor resolve `actualPollId` "by selecting from `polls` where `title = faultTitle` (branch b) **or** from the `poll_created` audit row filtered by actor + `created_at >= startedAt`." For **branch (a)** the poll is intentionally **absent** (compensating DELETE succeeded), so a `polls` lookup returns null and can produce a false-green or a wrong-row assertion. Two of three reviewers independently flagged the audit-lookup fallback as under-specified. **Fix (one-line clarification):** mandate audit-only resolution for branch (a) — `audit_log` filtered on `action='poll_created'`, `after->>'title' = faultTitle`, `actor_id`, `created_at >= startedAt` — and forbid the `polls` lookup when asserting poll absence. Mitigation is NOT yet landed in the plan → this HIGH is **unresolved** this cycle.
+
+**MEDIUM (raised by 2+ reviewers):**
+- `npm exec supabase -- ...` vs bare `supabase ...` — a global CLI earlier in `PATH` could start the stack on the wrong binary while the parity check only proves the npm binary (Codex; Cursor-adjacent). Tighten 18-02 to use `npm exec supabase --` for stop/start/version.
+- `test_fault_config` DDL is idempotent but not convergent from a partial OLD wildcard `(poll_id, …)` table; add `DROP TABLE IF EXISTS` / schema convergence (Codex).
+- Stale `18-PATTERNS.md` wildcard/newest documentation is a copy-paste trap during Task 3 (Cursor); 18-03 mitigates with "ADAPT, don't copy" but the doc remains.
+- Inter-wave CI fail-open window (seed without `ON_ERROR_STOP` between 18-02 and 18-03) if waves ship as separate PRs — ship 18-01–03 in one PR (Cursor).
+- TEST-17 closure is "pinned runtime + prod-aligned auth path," not "ES256 proven at gateway" — acceptable under the locked TEST-17 definition; flag for milestone audit (Cursor H-NEW-2, downgraded to MEDIUM).
+
+### Divergent Views
+- **New-HIGH count:** Gemini = 1 (HIGH-4, refuted); Codex = 0; Cursor = 1 (H-NEW-1) + 1 conditional (H-NEW-2). After live verification: HIGH-4 is a false positive (no CLI pin in `cron-sweep.yml`); H-NEW-2 is MEDIUM under the project's TEST-17 definition. The one real, unresolved HIGH is **H-NEW-1**.
+- **Overall risk:** Gemini LOW, Codex LOW–MEDIUM, Cursor MEDIUM — divergence driven by how much weight each puts on the branch (a) execution-trap; all three rate plan-design-vs-cycle-1-HIGHs as LOW once executed.
+
+### Cycle-2 verdict
+Cycle-1 HIGH-1, HIGH-2, HIGH-3 → **FULLY RESOLVED** in the revised plans (3 of 3 closed). **One new HIGH remains unresolved: H-NEW-1** (branch (a) audit-only poll-ID resolution — a one-line clarification in 18-03 Task 3). Gemini's HIGH-4 was refuted on verification; Cursor's H-NEW-2 is MEDIUM under the locked TEST-17 definition.
+
+### Recommended Next Step
+Feed this review back into planning and apply the H-NEW-1 one-line fix (plus the MEDIUM `npm exec` and `DROP TABLE IF EXISTS` hardening):
+
+```
+/gsd:plan-phase 18 --reviews
+```
+
+After the branch (a) clarification lands, the phase is clear to execute under the debt-zero mandate; the 18-03 Task 4 gate re-verifies all mitigations against the live codebase post-execution.
+
+---
+
+# CYCLE 1 — Initial review (archived below)
 
 Three external reviewers (Gemini, Codex, Cursor) independently reviewed the three Phase 18 plans. Claude (self) was skipped for independence per the review workflow. Load-bearing factual claims were verified against the live repo before synthesis (see Consensus Summary).
 
@@ -174,7 +279,7 @@ The main gaps are **local/CI CLI parity (D-04 + L-03)**, **Vitest file-level par
 
 ---
 
-## Consensus Summary
+## Consensus Summary (cycle 1)
 
 Three reviewers agree the plans are **well-researched, correctly sequenced, and minimal**, with accurate root-cause mapping and proportionate threat models. The disagreement is on execution rigor for a debt-zero closeout: Gemini rates overall risk LOW and says "proceed"; Codex and Cursor both withhold approval until specific HIGH-severity gaps are closed. All three HIGH concerns below were **verified against the live repo** during synthesis and are confirmed real (not speculative).
 
@@ -205,7 +310,7 @@ The disarm path is not specified as `try/finally` and `afterEach` does not uncon
 - **Overall risk:** Gemini rates the phase LOW risk and recommends proceeding with Wave 1; Codex rates 18-03 HIGH and says "do not execute as-is"; Cursor rates overall MEDIUM. The divergence is explained by depth of repo inspection — Gemini took the plan's "suite runs sequentially" claim at face value, while Codex and Cursor checked `vitest.config.integration.ts` and found no parallelism control. The verified evidence supports the Codex/Cursor position.
 - **Trigger interference severity:** Gemini rated parallel-test trigger interference LOW ("research says sequential"); Codex/Cursor rated the same underlying issue HIGH because the config does not enforce sequential execution. The config check resolves this in favor of HIGH.
 
-### Recommended Next Step
+### Recommended Next Step (cycle 1)
 Three HIGH concerns remain unresolved (none addressed yet — plans not revised). Feed this review back into planning:
 
 ```
