@@ -168,8 +168,8 @@ export function CategoriesList() {
     // Card's rounded corners so they don't bleed past the bottom radius.
     <Card className="py-0 overflow-hidden">
       <CardHeader>
-        <CardTitle role="heading" aria-level={2} className="text-base">
-          Categories
+        <CardTitle asChild className="text-base">
+          <h2>Categories</h2>
         </CardTitle>
         <CardAction>
           <Button
