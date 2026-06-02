@@ -1,181 +1,203 @@
 ---
 phase: 19
 reviewers: [codex, gemini, cursor]
-reviewed_at: 2026-06-02T08:26:00Z
+reviewed_at: 2026-06-02T15:41:09Z
 plans_reviewed: [19-01-PLAN.md, 19-02-PLAN.md, 19-03-PLAN.md]
 self_skipped: claude
 unavailable: [opencode, qwen]
 coderabbit_skipped: "reviews working-tree diff, not planning artifacts — N/A for plan review"
+cycle: 2
+cycle_1_highs: 2
+current_high: 0
 ---
 
 # Cross-AI Plan Review — Phase 19: DB Migration + A11y Restore
 
-Three external reviewers ran to completion (codex gpt-5.5, gemini, cursor). Claude
-skipped as self. opencode and qwen are not installed. coderabbit reviews the git
-working-tree diff rather than planning artifacts, so it is not applicable to a plan
-review.
+> **Cycle 2 of convergence loop.** Plans were REPLANNED after cycle 1 to address two HIGH concerns:
+> (1) weak RPC success-path proof, and (2) `update_profile_after_auth` trust-boundary residual.
+> This cycle re-reviews the updated plans and adjudicates the disposition of both prior HIGHs.
+>
+> **Outcome: both cycle-1 HIGHs FULLY RESOLVED. Zero open HIGH concerns. All three reviewers approve for execution.**
 
 ## Codex Review (gpt-5.5)
 
 ## Summary
 
-The plans are well-scoped and mostly aligned with Phase 19, but Plan 19-01 has one potentially blocking SQL correctness issue: `current_setting(..., true) != 'on'` is not null-safe. PostgreSQL documents that missing settings return `NULL` when `missing_ok=true`, and `NULL != 'on'` will not enter the branch. That can fail open for direct client updates unless handled with `IS DISTINCT FROM` or `COALESCE`. The frontend/a11y plan is solid.
+The updated plans are materially stronger. Cycle-1 HIGH #1 is fully closed: the ordered flip→confirm→RPC→read-back test makes the RPC success path meaningful and prevents a no-op false green. Cycle-1 HIGH #2 is also resolved as a Phase 19 planning HIGH: the plan now makes the RPC grant explicit, documents the trust boundary, and records the caller-supplied MFA/guild-state issue as an accepted residual with rationale. The residual is not technically fixed, but for DBHY-05's stated scope it no longer reads as an unexamined blocker.
 
 ## Strengths
 
-- Good phase split: migration/test work, UI/a11y work, then validation/deploy checks.
-- `CREATE OR REPLACE` preserves trigger function OIDs, which is the right migration shape.
-- Transaction-local `set_config(..., true)` is the right pooling-safe direction; PostgreSQL scopes it to the current transaction.
-- Immutable profile fields remain outside the trusted-context gate.
-- `CardTitle asChild` matches the repo's existing `Button`/`Badge` Radix `Slot.Root` pattern.
-- Heading tests already assert `getByRole('heading', { level: 2 })`, so UIDN-06 has a meaningful validator.
+- Correct root-cause fix: `current_user = session_user` is fully removed and replaced with a transaction-local GUC discriminator.
+- Good pooling safety: `set_config(..., true)` is the right choice for PgBouncer/transaction pooling.
+- Strong regression coverage for protected columns: `mfa_verified`, `is_admin`, and `guild_member` direct updates are all covered.
+- The RPC proof is now valid: service-role flip to `false`, precondition read-back, RPC write to `true`, postcondition read-back.
+- Explicit `REVOKE EXECUTE FROM PUBLIC` + `GRANT EXECUTE TO authenticated` is a real improvement over implicit PUBLIC execute.
+- UIDN-06 plan is clean and idiomatic: `CardTitle asChild` via `Slot.Root` matches existing `Button`/`Badge` patterns.
+- Plan 03 correctly separates local migration verification from production deploy tracking instead of pretending local push satisfies prod deploy.
 
 ## Concerns
 
-- **HIGH:** `IF current_setting('app.trusted_profile_update', true) != 'on' THEN` is unsafe if the setting is absent. PostgreSQL returns `NULL` for absent settings with `missing_ok=true`; use `IS DISTINCT FROM 'on'` or `COALESCE(..., '') <> 'on'`. (See divergence note in Consensus — for *custom* GUCs Postgres returns `''`, not NULL.)
-- **HIGH:** The RPC success test may not prove the trusted path if `memberUser` already has `mfa_verified=true` and `guild_member=true`. A no-op protected-column update can pass even if the GUC bypass is broken.
-- **HIGH:** The GUC approach blocks direct PostgREST table updates from setting the flag, but the trust boundary becomes `update_profile_after_auth`. If that RPC is executable by ordinary authenticated clients and trusts caller-supplied `p_mfa_verified` / `p_guild_member`, this phase closes `is_admin` direct escalation but may still leave 2FA/guild-state spoofing through the RPC.
-- **MEDIUM:** Cleanup only restoring `mfa_verified` and `guild_member` is insufficient. The red-state `is_admin=true` direct-update test can leave `memberUser` admin unless `is_admin=false` is restored.
-- **MEDIUM:** `guild_member` is protected but not directly tested. The test should cover all protected columns changed by this trigger branch.
-- **MEDIUM:** Plan 03 mixes local and linked/production commands. `db push` is remote by default; `db lint --linked` lints the linked project, not the local stack.
-- **LOW:** Grep gates are useful but brittle. If built-ins are fully qualified as `pg_catalog.set_config`, the proposed "contains `PERFORM set_config`" gate may false-fail.
+- **MEDIUM:** The GUC-leak guard should be folded into the same `it()` as the RPC success proof. If implemented as a separate test after `beforeEach`, it may no longer prove "post-RPC same-client no leak" cleanly.
+- **MEDIUM:** Several verification commands pipe through `grep`, `head`, or `tail`, which can mask failing exit codes without `pipefail`. This is especially risky for `npm run test:integration | tail -20` and lint checks.
+- **MEDIUM:** Plan 03 still has wording drift between "`supabase db push`" and the safer local command `supabase migration up`. Since target confusion matters for DB migrations, align the plan language to one command.
+- **MEDIUM:** The allowed-column sanity test only asserting `error === null` can false-green on a zero-row update. It should read back `discord_username` to prove the allowed update actually applied.
+- **LOW:** The plan says unqualified `set_config` / `current_setting` would fail under `SET search_path = ''`; PostgreSQL still searches `pg_catalog` implicitly. The qualification is still good, but the rationale is overstated.
+- **LOW:** `getByRole('heading', { level: 2 })` alone would also pass for ARIA role/level. The grep checks cover this, but adding `expect(heading.tagName).toBe('H2')` would make the unit assertion self-contained.
 
 ## Suggestions
 
-- Implement the gate as `IF pg_catalog.current_setting('app.trusted_profile_update', true) IS DISTINCT FROM 'on' THEN ...`.
-- In the RPC test, first use service-role to set `mfa_verified=false` and/or `guild_member=false`, then call `update_profile_after_auth(... true ...)`, assert `error` is null, and read the row back to confirm protected values changed.
-- Add a post-RPC direct update attempt using the same authed client and expect rejection (proves the transaction-local flag did not leak across HTTP requests).
-- Reset `memberUser` in `beforeEach`/`afterEach`, including `is_admin=false`, `mfa_verified=true`, `guild_member=true`.
-- Parameterize direct protected-column rejection tests for `is_admin`, `mfa_verified`, `guild_member`.
-- Split Plan 03 into local validation and production release (explicit normal-order `supabase db push --linked` + `db lint --linked --fail-on warning` + smoke).
-- Explicitly document or fix `update_profile_after_auth` grants; if it is a trusted server path, consider revoking public/authenticated execute and routing through an Edge Function that validates Discord state server-side.
+- Put the post-RPC direct protected-column rejection at the end of the ordered RPC test case itself.
+- Change shell verification to preserve failures, e.g. `set -o pipefail` or avoid piping test/lint commands.
+- Rename Plan 03 references consistently to `supabase migration up` for local apply, or explicitly require `supabase db push --local` if that is the intended CLI path.
+- Add grant verification after migration apply: `anon` cannot execute `update_profile_after_auth`; `authenticated` can.
+- In the allowed-column test, read back `discord_username` via service role and assert it changed.
+- Keep "no live users" rationale in planning/threat-model docs, not necessarily in the database `COMMENT`, which can become stale.
 
 ## Risk Assessment
 
-**HIGH as written.** Once the gate null-handling and the RPC/direct tests are strengthened, the implementation risk drops substantially; the remaining larger risk is whether `update_profile_after_auth` itself is a trustworthy boundary.
+Overall risk: **MEDIUM-low**.
+
+The core DBHY-05 implementation approach is sound, and the two prior HIGHs are no longer open HIGHs in the current plan. Remaining risk is mostly execution hygiene: making sure verification commands cannot false-green, keeping local/prod migration targets unambiguous, and tightening a couple of tests so they prove what they claim.
 
 ---
 
 ## Gemini Review
 
-### 1. Summary
-The plans are well-structured and align with the "debt-zero" mandate of v1.4. The transition to a session-GUC trusted-context flag is the correct architectural choice for Supabase/PostgREST environments. The UI plan correctly employs Radix polymorphism to resolve the heading hierarchy. However, a critical logic flaw in the SQL gate implementation must be addressed.
+# Phase 19 Plan Review — Cycle 2
 
-### 2. Strengths
-- **Regression-First Engineering**: Plan 19-01 includes a specific regression test (`profile-trigger-gate.test.ts`) to prove the fix.
-- **Transaction-Local Scoping**: `is_local=true` for `set_config` ensures the GUC is cleared on `COMMIT`/`ROLLBACK`, preventing poisoned connections under PgBouncer.
-- **Polymorphic Restoration**: `asChild` for `CardTitle` is the idiomatic shadcn/ui approach.
-- **Security Best Practices**: `SECURITY DEFINER` + `SET search_path = ''` maintains hardening standards.
+The implementation plans for Phase 19 have been revised to address the high-priority concerns from Cycle 1. The focus is on hardening the database security gate (DBHY-05) and restoring semantic heading hierarchy (UIDN-06).
 
-### 3. Concerns
-- **HIGH: SQL Null Logic Bypass**: `current_setting('...', true) != 'on'` — if missing, `current_setting` returns `NULL`, `NULL != 'on'` is `NULL`, treated as FALSE in `IF`, so the gate block is skipped on direct client updates, **leaving the privilege escalation path open.** (See divergence note — contested for custom GUCs.)
-- **MEDIUM: Radix Slot Export**: Plan refers to `Slot.Root`. Standard export from `@radix-ui/react-slot` is `Slot`. Verify the project's import.
-- **MEDIUM: Function Overloading**: `CREATE OR REPLACE` overloads (rather than replaces) if the parameter list changed since migration 14, potentially leaving the vulnerable version active.
-- **LOW: Package Naming**: Verify `radix-ui` vs scoped `@radix-ui/react-slot` in `package.json`.
+## Summary
+The revised plans are high-quality, surgical, and robust. They successfully address the gaps in test validity and trust-boundary documentation identified in the previous cycle. The database migration correctly implements a transaction-local GUC mechanism that is both PgBouncer-safe and resilient to `search_path` hardening. The integration test suite is now significantly more rigorous, providing empirical proof of the security fix. The UI changes follow established polymorphic patterns (`asChild`) to restore accessibility without visual regression.
 
-### 4. Suggestions
-- Fix the gate with `IS DISTINCT FROM` or `COALESCE(current_setting(..., true), '') != 'on'`.
-- Schema-qualify `pg_catalog.set_config` / `pg_catalog.current_setting` given `search_path=''`.
-- Verify `Slot` import in `card.tsx`.
-- Add a test for a non-protected column (e.g. `display_name`) to prove normal updates still work when the GUC is absent.
+## Strengths
+- **Rigorous RPC Proof:** The integration test now uses an "ordered flip-then-call" assertion. By explicitly forcing the protected columns to a different state via `serviceRole` before the RPC call, the test proves that the RPC actually commits the new values, rather than just returning a no-op success.
+- **Trust Boundary Hardening:** The migration now includes an explicit `REVOKE EXECUTE FROM PUBLIC` and `GRANT EXECUTE TO authenticated` for the `update_profile_after_auth` RPC. This, combined with the new `COMMENT ON FUNCTION`, makes the trust boundary auditable and documented.
+- **GUC Security:** The use of `is_local = true` (transaction-local) and `pg_catalog` qualification for built-ins (`current_setting`, `set_config`) demonstrates a deep understanding of Postgres security in a hardened `search_path = ''` environment.
+- **Leak Protection:** The inclusion of a post-RPC direct update attempt in the same test suite provides a critical guard against GUC leakage across pooled connections.
+- **Semantic UI Refactor:** The `asChild` implementation in `CardTitle` uses the existing `Slot.Root` pattern from `Button`/`Badge`, ensuring consistency and providing a clean path to restore `<h2>` semantics.
 
-### 5. Risk Assessment: MEDIUM
-Architecturally sound; the `NULL` logic issue is a silent failure that would persist the vulnerability. Once corrected to `IS DISTINCT FROM`, risk drops to **LOW**. UI changes are low-risk. **Verification Note**: success hinges on the integration test failing *before* the fix and passing *after* — ensure the runner hits the local DB, not cached state.
+## Concerns
+- **None (High/Medium).** The plans are well-aligned with requirements and previous feedback.
+- **LOW: Test Failure Expectation:** The plan correctly notes that `npm run test:integration` will be RED until the push in 19-03. This is a standard part of the Wave structure, but requires the operator to ignore the initial failure during the "Act" phase of Wave 1.
+
+## Suggestions
+- **Migration Metadata:** When creating `00000000000015_trusted_profile_update_guc.sql`, ensure the timestamp/numbering follows the exact sequential order of your local migrations folder if there are any un-pushed intermediate files.
+- **Test Output:** During `19-03`, pay close attention to the regex match in the rejection assertions to ensure the `RAISE EXCEPTION` messages in the trigger match the `toMatch` patterns in the test.
+
+## Cycle 1 Follow-up
+
+### 1. Weak RPC success-path proof
+**Status: FULLY RESOLVED.**
+Plan 19-01 Task 2 now implements a three-step proof (flip to known-different state → call RPC → verify change). This eliminates the risk of a "false positive" success where the RPC returns 200 but the trigger silently blocked the write.
+
+### 2. update_profile_after_auth trust-boundary residual
+**Status: FULLY RESOLVED.**
+The plan now treats the RPC as a hardened, single-writer gateway. It revokes public access, grants authenticated access, adds a `COMMENT ON FUNCTION` documenting that the RPC trusts client-supplied flags, and updates the threat model (T-19-07) to explicitly accept this residual risk for v1.4. This satisfies the mandate to document and harden the trust boundary without expanding scope to a full server-side Discord re-validation refactor.
+
+## Risk Assessment: LOW
+The plan is highly surgical and follows established project patterns. The regression tests are comprehensive, covering both the fix validity and potential side effects like GUC leakage.
+
+**Verdict: Approved. Proceed to Execution.**
 
 ---
 
 ## Cursor Review
 
-# Cross-AI Plan Review: Phase 19 — DB Migration + A11y Restore
+# Cross-AI Plan Review — Phase 19 (Cycle 2)
 
 ## 1. Summary
 
-The three plans are **well-aligned with the codebase and locked decisions (D-01–D-07)**. Migration 15 correctly targets the real bug in migration 14 (`IF current_user = session_user` is never true inside a `SECURITY DEFINER` trigger), the transaction-local GUC pattern matches an existing repo precedent (`app.e2e_seed_allowed` in `e2e/fixtures/seed.sql`), and the UI work mirrors `button.tsx` / `badge.tsx` exactly. The main gaps are **documentation/acceptance drift** (SC2 vs local-only push), a **misleading afterAll comment** (service role bypasses trigger via the `WHEN` clause, not RLS), and **incomplete regression coverage** (`guild_member` and allowed-column paths).
+The replanned Phase 19 set is **substantially stronger** than cycle 1 and is **ready to execute** with only minor clarifications. **19-01** correctly targets the real bypass (the `current_user = session_user` check is always false inside `SECURITY DEFINER`; see migration 14) and pairs Migration 15 with a regression suite that would have caught today's live behavior. The **ordered RPC proof** (service-role flip → precondition read → RPC → post read-back) plus the **post-RPC GUC-leak guard** fully addresses cycle 1's weak success-path concern. The **trust-boundary residual** on caller-supplied `p_mfa_verified` / `p_guild_member` is no longer an unmitigated HIGH for this phase: it is explicitly granted, commented, threat-modeled as **T-19-07 (accepted)**, and scoped out of DBHY-05 with sound rationale (pre-existing OAuth design, no live users). **19-02** is tight and aligned with existing `Slot.Root` patterns. **19-03** correctly separates local closure from prod deploy and fixes the local-push / linked-lint mismatch from cycle 1.
 
 ## 2. Strengths
 
-- **Correct root-cause analysis** — migration 14's inverted gate: protected checks run only when `current_user = session_user`, but in the trigger `current_user` is always the definer owner and `session_user` is `authenticated`, so the block never runs.
-- **GUC design matches constraints.** Transaction-local `set_config(..., true)` + `current_setting(..., missing_ok=true)` + `!= 'on'` gate is the right pairing.
-- **Precedent in-repo.** `app.e2e_seed_allowed` already uses the same `current_setting(..., true) IS DISTINCT FROM 'true'` pattern in seed SQL.
-- **Migration hygiene.** `CREATE OR REPLACE`, no `DROP FUNCTION`, `SET search_path = ''`, grep gates.
-- **Regression test would catch the bug.** Direct `authed` update succeeds today; post-fix must error. RED pre-push, GREEN post-push.
-- **Admin paths won't break.** `demote_admin_guarded` is `SECURITY INVOKER`, revoked from `authenticated`; trigger `WHEN` limits firing to `role = authenticated`.
-- **UIDN-06 plan is minimal and conventional.**
-- **Threat model is substantive** (T-19-02 GUC via PostgREST, T-19-03 PgBouncer/`is_local`, T-19-05 OID/CREATE OR REPLACE).
+- **Accurate severity model:** Plans and threat register treat the protected-column branch as **actively bypassed**, not "suspected dead code," matching migration 14 behavior and RLS (`00000000000001_rls.sql` allows authenticated self-UPDATE on all columns; protection is trigger-only).
+- **Cycle-1 HIGH #1 closure is sound:** Case (e) cannot pass on a no-op: baseline `memberUser` is `mfa_verified: true`, `guild_member: true`; the test forces `false`, confirms, RPC to `true`, read-back. Case (f) validates transaction-local GUC scope across requests.
+- **Implementation discipline:** `pg_catalog` qualification under `SET search_path = ''`, `IS DISTINCT FROM 'on'` (matches `e2e/fixtures/seed.sql:30`), `CREATE OR REPLACE` only, `set_config(..., true)` for transaction locality — all aligned with D-01–D-04 and migration 14 patterns.
+- **Grant hardening:** `REVOKE EXECUTE FROM PUBLIC` + `GRANT … TO authenticated` makes the RPC boundary auditable (T-19-06); matches how production actually calls it (`auth-helpers.ts` via authenticated session).
+- **Test harness fit:** Reuses `mintClients` / `vote-counts-rls.test.ts` precedent; `vitest.config.integration.ts` already includes `e2e/integration/**/*.test.ts`; `fileParallelism: false` helps `afterAll` cleanup vs sibling suites.
+- **Service-role setup is viable:** Trigger is `WHEN (current_setting('role') = 'authenticated')` (`00000000000002_triggers.sql:41–45`), so service-role fixture resets do **not** fire `profile_self_update_allowed` — the ordered RPC test's step-1 flip is valid post-migration.
+- **19-02 minimalism:** Polymorphic `CardTitle` mirrors `button.tsx` / `badge.tsx`; call-site change is small; existing `getByRole('heading', { level: 2 })` assertions become true semantic tests after removing ARIA shims.
+- **19-03 closure hygiene:** Local apply + local lint + integration green + smoke; prod `--linked` explicitly deferred; separate verification rows for SC2 halves.
 
 ## 3. Concerns
 
-| Severity | Concern |
-|----------|---------|
-| **MEDIUM** | **SC2 vs Plan 19-03 scope.** ROADMAP SC2 says migration "deploys to production" with zero new advisor WARNs. Plan 19-03 applies via **local** push and runs `db lint --linked`. Phase closure must not treat local push alone as satisfying SC2 unless verification explicitly defers prod to milestone ship. |
-| **MEDIUM** | **`afterAll` cleanup rationale is wrong in the plan text.** Plan says service role "bypasses the trigger." Service role bypasses **RLS**, not triggers. Cleanup works because the trigger `WHEN (current_setting('role') = 'authenticated')` means service-role JWT updates **do not fire** the trigger. Wrong mental model risks a future broken teardown. |
-| **MEDIUM** | **Incomplete protected-column coverage.** Plan tests `mfa_verified` and `is_admin` only; `guild_member` is in the same guarded set and is auth-flow critical. |
-| **LOW** | **No test that benign self-updates still work** (`discord_username` / `avatar_url` via `authed` should still succeed). |
-| **LOW** | **19-01 must_haves wording (line 18)** says trigger checks `current_setting(...) = 'on'`; implementation uses `!= 'on'`. Acceptance text is ambiguous. |
-| **LOW** | **Stale STATE.md framing** still claims protected-column branch is "likely dead" — contradicted by RLS policy + trigger enforcement. |
-| **LOW** | **Plan 19-03 lint verify inconsistency** — action uses `db lint --linked`; automated verify uses `db lint` without `--linked`. |
-| **LOW** | **Wave 1 RED tests** — CI on a branch before 19-03 could fail unless workflow gates integration on migration apply. |
+| Severity | Concern | Cycle-1 HIGH status |
+|----------|---------|---------------------|
+| **—** | **#1 Weak RPC success-path proof** | **FULLY RESOLVED** — flip→precondition→RPC→read-back + GUC-leak guard; structural `node -e` checks encode the ordering. |
+| **—** | **#2 `update_profile_after_auth` trust boundary** | **FULLY RESOLVED for Phase 19 scope** — not an open plan HIGH. Documented residual (T-19-07), COMMENT, explicit EXECUTE grant, honest deferral of server-side Discord re-validation. Remains a **product/security backlog item** before real users, not a blocker to ship DBHY-05. |
+| **MEDIUM** | **19-01 cleanup rationale is slightly imprecise:** It says service-role succeeds because "the GUC-gated protected-column branch only enforces against the authenticated direct-client path." More precisely, the trigger **does not run at all** for `service_role` due to `WHEN (current_setting('role') = 'authenticated')`. Executors who misunderstand this may debug failed flips incorrectly. | N/A |
+| **MEDIUM** | **No integration assertion that `anon` cannot call `update_profile_after_auth` after REVOKE** — grant change is migration-only verified by grep; a one-line `clients.anon.rpc(...)` expect-error would lock T-19-06 at runtime. | Partial hardening proof only |
+| **MEDIUM** | **`.planning/STATE.md` still claims protected branch is "likely dead code" / RLS blocks direct UPDATE** — contradicts `19-CONTEXT.md` and live schema. Plans don't include a STATE.md touch-up; risks future planners reintroducing wrong assumptions. | N/A |
+| **LOW** | **Threat ID collision:** 19-01 uses T-19-06/07 for EXECUTE grant and caller-trust residual; 19-02 reuses T-19-06/07 for CardTitle/ARIA. Cross-plan traceability is muddy. | N/A |
+| **LOW** | **19-03 Task 2 verify:** `grep … \|\| echo "LINT CLEAN"` exits 0 when WARN lines exist (grep success). Human acceptance criteria still require zero WARNs — automate with `! grep -q WARN` or parse `supabase db lint` exit code. | N/A |
+| **LOW** | **`src/lib/auth-helpers.ts` comment** ("sets mfa_verified server-side") overstates trust — values are client-derived before RPC. Plan documents this in SQL COMMENT but doesn't refresh the TS comment. | N/A |
 
-**Security-specific (addressed, residuals noted):**
-
-| Severity | Concern |
-|----------|---------|
-| **LOW** | Treat GUC name as a **single-writer contract** (only `update_profile_after_auth`); any future `SECURITY DEFINER` fn exposing `set_config` on the same GUC reopens the path. |
-| **LOW** | `!= 'on'` vs empty string — **correct**: unset GUC → `''` → enforcement runs. |
-| **LOW** | PgBouncer transaction pooling — `is_local=true` is the right mitigation. |
+**Do not re-raise:** SQL NULL bypass on custom GUCs — plan's `IS DISTINCT FROM` + `missing_ok=true` is appropriate defense-in-depth.
 
 ## 4. Suggestions
 
-- Clarify SC2 in 19-03 verification (prod deploy satisfied at milestone ship; Phase 19 proves local apply + lint + integration + smoke).
-- Fix afterAll documentation: restore via `serviceRole` because trigger `WHEN` excludes `service_role`, not because triggers are bypassed.
-- Add fourth integration case: direct `authed` UPDATE to `guild_member: false` → same error pattern.
-- Add fifth case: `authed` UPDATE `{ discord_username }` only → `error === null` (proves gate doesn't block allowed columns).
-- Align 19-01 acceptance line 18 with D-02.
-- Make 19-03 lint command consistent.
-- Phase verify checklist: explicit "prod migration applied" row separate from "local migration applied."
+- **19-01 Task 2:** Add one sentence in the test file header (not the forbidden phrase): *"Fixture resets use `serviceRole` because `on_profile_self_update` has `WHEN (current_setting('role') = 'authenticated')`."* Cite `00000000000002_triggers.sql`.
+- **19-01 Task 2 (optional):** `it('rejects anon RPC callers', …)` with `mintClients` anon client — cheap proof of REVOKE.
+- **19-01 / phase close:** Update `.planning/STATE.md` DBHY-05 blurb to match CONTEXT severity (bypassed branch, not dead code; RLS does not column-restrict).
+- **19-03 Task 2 verify:** Replace grep-or-echo with a failing check when WARN/ERROR lines appear, or rely on `supabase db lint` non-zero exit if available.
+- **Milestone tracking (outside Phase 19):** Add a v1.4+ requirement or backlog row for "server-side Discord MFA/guild re-validation at RPC or Edge Function" so T-19-07 is not only in SQL COMMENT — especially given v1.4 **debt-zero** framing.
+- **19-02:** After `asChild`, optionally assert `data-slot="card-title"` on the `<h2>` in one test — guards Slot merge regressions (not required for UIDN-06).
 
 ## 5. Risk Assessment
 
-**Overall: MEDIUM (implementation LOW, verification/closure MEDIUM)**
+**Overall: LOW–MEDIUM**
 
-- **Implementation risk is LOW.** Small SQL change following migration 14 patterns; admin/service-role paths unlikely to regress.
-- **Security closure risk is LOW** once migration 15 is applied: GUC approach is sound for PostgREST; transaction-local scope addresses pooling; inverted `!= 'on'` handles unset GUC correctly with `missing_ok=true`. The integration test **would have caught** the original bug.
-- **Verification/closure risk is MEDIUM** because (1) SC2 prod wording not executed in 19-03, (2) coverage skips `guild_member` and allowed-column sanity, (3) misleading afterAll/docs.
+| Area | Level | Justification |
+|------|-------|----------------|
+| **DB security fix (DBHY-05)** | **Low** once Migration 15 is applied | GUC design matches decisions; regression matrix covers both gate directions, no-op RPC false positives, and cross-request GUC leakage. Trigger `WHEN` clause preserves service-role fixture ergonomics. |
+| **Residual RPC spoofing (T-19-07)** | **Medium (accepted)** | Real architectural limit: any authenticated client can call `update_profile_after_auth` with arbitrary booleans. Mitigated for now by no users + documentation; **must** be revisited before meaningful production adoption. **Not** a Phase 19 plan failure. |
+| **UIDN-06 (19-02)** | **Low** | Established Radix pattern; tests already assert heading role/level. |
+| **Deploy / verify (19-03)** | **Low–Medium** | Human checkpoints and env export are appropriate; prod deferral is explicit. Weak automated lint grep is a process risk, not a security risk. |
 
-**GUC direct answers:** sound; client cannot set GUC via normal supabase-js APIs; transaction-local holds under PgBouncer; inverted logic handles `search_path=''` and empty `current_setting` correctly (`'' != 'on'` runs checks).
+**Phase goal attainment:** Plans satisfy ROADMAP SC1 (reachable branch + regression proof), SC3 (semantic `<h2>`), and SC2 **local half** (lint + smoke). SC2 prod half is correctly deferred with tracking rows — no false closure from local-only push.
+
+## Cycle-1 HIGH Verdicts (explicit)
+
+1. **Weak RPC success-path proof** → **FULLY RESOLVED** in current 19-01 Task 2 / must_haves / 19-03 Task 3 failure modes.
+2. **`update_profile_after_auth` trust-boundary residual** → **FULLY RESOLVED as an accepted, documented Phase 19 disposition** (not an unresolved HIGH against these plans). Treat as **open MEDIUM project risk** until server-side Discord re-validation ships; do **not** block Phase 19 execution on it given stated scope and "no live users."
+
+**Recommendation:** Approve plans for execution; apply the MEDIUM suggestions (trigger `WHEN` comment, optional anon-RPC test, STATE.md alignment) during Wave 1 if cheap, otherwise at phase verify.
 
 ---
 
 ## Consensus Summary
 
+All three reviewers (Codex gpt-5.5, Gemini, Cursor) independently approve the cycle-2 plans for execution and agree that **both cycle-1 HIGH concerns are FULLY RESOLVED**. No reviewer raised any new HIGH concern. Overall risk lands LOW to MEDIUM-low.
+
+### Cycle-1 HIGH Disposition
+
+- **HIGH #1 — Weak RPC success-path proof:** **FULLY RESOLVED** (3/3 reviewers). The rewritten 19-01 Task 2 flips protected columns to a known-different state via service-role first, confirms the flip (precondition read-back), calls the RPC, then reads back and asserts the change applied — making a no-op silent block impossible to false-green. The post-RPC GUC-leak guard adds cross-request scope validation.
+- **HIGH #2 — `update_profile_after_auth` trust-boundary residual:** **FULLY RESOLVED for Phase 19 scope** (3/3 reviewers). `REVOKE EXECUTE FROM PUBLIC` + `GRANT EXECUTE TO authenticated`, the `COMMENT ON FUNCTION` documenting the trust boundary, and threat entries T-19-06 (explicit grant) / T-19-07 (accepted documented residual) together close this as a Phase 19 planning HIGH. Codex and Cursor note the underlying caller-supplied-flag trust remains an **accepted MEDIUM project risk** (server-side Discord re-validation deferred as a larger auth refactor, justified by no live users) — explicitly NOT a blocker for DBHY-05.
+
+**current_high = 0**
+
 ### Agreed Strengths (2+ reviewers)
-- Correct root-cause fix for migration 14's inverted `current_user = session_user` gate.
-- Transaction-local `set_config(..., is_local=true)` is the right pooling-safe (PgBouncer) mechanism.
-- `CREATE OR REPLACE` migration shape preserves function OIDs / matches Phase 14 hygiene (`SET search_path = ''`, no `DROP`, grep gates).
-- `CardTitle asChild` Radix polymorphism is the idiomatic shadcn/ui fix for UIDN-06, with existing `getByRole('heading', { level: 2 })` assertions as a validator.
-- Regression-first design: the integration test is RED pre-fix, GREEN post-fix, and would have caught the original bypass.
 
-### Agreed Concerns (raised by 2+ reviewers)
-- **Incomplete protected-column test coverage** (codex + cursor, MEDIUM): `guild_member` is in the guarded set but not directly tested; add a `guild_member` rejection case and an allowed-column (`discord_username`) sanity case.
-- **SC2 / production-deploy gap** (codex + cursor, MEDIUM): Plan 19-03 applies the migration locally and lints `--linked`; phase closure must not mark SC2 (prod deploy) done from local push alone. CONTEXT already accepts normal ship order with no users — so this is a closure-tracking item, not a blocker.
-- **`db push` / `db lint` local-vs-linked command inconsistency in Plan 19-03** (codex + cursor, MEDIUM/LOW).
-- **Defensive null-safety hardening** (codex + gemini, raised HIGH; see divergence): adopt `IS DISTINCT FROM 'on'` and `pg_catalog.`-qualify the GUC built-ins regardless of the divergence outcome — it is strictly safer and matches the in-repo precedent.
+- Ordered flip→confirm→RPC→read-back test is a rigorous, valid RPC success proof (all 3).
+- `REVOKE … FROM PUBLIC` + `GRANT … TO authenticated` makes the trust boundary explicit and auditable (all 3).
+- Transaction-local GUC (`set_config(..., true)`) is the correct PgBouncer/pooling-safe choice (all 3).
+- `pg_catalog` qualification of built-ins under `search_path = ''` shows correct hardening discipline (all 3).
+- Post-RPC GUC-leak guard protects against cross-connection GUC bleed (all 3).
+- 19-02 `CardTitle asChild` via `Slot.Root` is idiomatic and matches existing `Button`/`Badge` patterns (all 3).
+- 19-03 correctly separates local migration verification from production deploy (Codex, Cursor).
 
-### Divergent Views — REQUIRES ADJUDICATION (resolved below)
-- **The "SQL NULL bypass" HIGH (codex + gemini) vs cursor's "correct as written."**
-  Codex and gemini both flag `current_setting('app.trusted_profile_update', true) != 'on'` as a fail-open HIGH, claiming an unset setting returns `NULL`, and `NULL != 'on'` → `NULL` → gate skipped. Cursor explicitly disagrees, stating that for a *custom* run-time parameter the three-arg `missing_ok=true` form returns the **empty string `''`** (not NULL), so `'' != 'on'` → TRUE → the gate fires correctly when the flag is absent.
+### Agreed Concerns (2+ reviewers) — all MEDIUM or below, none HIGH
 
-  **Adjudication (verified against the repo): cursor is correct for this case.** The project already relies on exactly this behavior at `e2e/fixtures/seed.sql:30` — `current_setting('app.e2e_seed_allowed', true) IS DISTINCT FROM 'true'` works precisely because an unset *custom* GUC yields `''`, and the seed has shipped functioning. The NULL-return behavior codex/gemini cite applies to certain recognized built-in parameters, not to unrecognized custom `app.*` GUCs. Therefore the plan's `!= 'on'` logic does **not** fail open, and this is **not a confirmed open HIGH**.
+- **MEDIUM — Allowed-column sanity test can false-green on a zero-row update:** assert a read-back of `discord_username` rather than only `error === null` (Codex; Cursor via stronger runtime proofs).
+- **MEDIUM — No runtime assertion that `anon` cannot call the RPC after REVOKE:** add a one-line `clients.anon.rpc(...)` expect-error to lock T-19-06 at runtime (Codex grant-verification suggestion; Cursor explicit).
+- **MEDIUM — Verification-command false-green risk:** piping through `grep`/`head`/`tail` and `grep || echo "LINT CLEAN"` can mask failing exit codes; use `set -o pipefail` or `! grep -q WARN` (Codex, Cursor).
+- **LOW — Overstated `search_path=''` rationale:** `pg_catalog` is still searched implicitly; qualification is good practice but the "would fail" justification is too strong (Codex, Cursor).
+- **LOW — Heading assertion could be self-contained:** add `expect(heading.tagName).toBe('H2')` / `data-slot` assertion (Codex, Cursor).
 
-  However, the recommended remediation (`IS DISTINCT FROM 'on'` + `pg_catalog.` qualification) is still worth adopting: it is behaviorally identical for the safe case, defends against any environment edge case, and matches the existing `IS DISTINCT FROM` precedent in seed.sql. Recommended as a MEDIUM hardening, not a blocker.
+### Divergent Views
 
-- **`Slot.Root` vs `Slot` import (gemini).** Gemini flags `Slot.Root` as possibly wrong (standard export is `Slot`). Codex and cursor both observe the repo's existing `button.tsx`/`badge.tsx` already use the `Slot.Root` form (newer `radix-ui` umbrella package convention), so this matches local convention. Low risk — executor should mirror the existing components; the grep/build gate will catch a genuine mismatch.
-
-### Genuinely Open HIGH Concerns
-Two HIGHs raised by codex are NOT contested by the other reviewers and remain open as written:
-
-1. **Weak RPC success-path proof (codex, HIGH).** If `memberUser` already has `mfa_verified=true`/`guild_member=true`, the RPC "trusted path" test is a no-op write that passes even if the GUC bypass is broken. The test must first flip the protected values to a different state via service-role, then call `update_profile_after_auth(...)`, and read back to confirm the change actually took effect. This is a test-validity gap that undermines the DBHY-05 proof.
-
-2. **`update_profile_after_auth` trust-boundary residual (codex, HIGH; cursor LOW-as-residual).** Closing direct PostgREST escalation shifts the entire trust boundary onto the RPC. If `update_profile_after_auth` is executable by ordinary authenticated clients and trusts caller-supplied `p_mfa_verified` / `p_guild_member`, a member could still spoof 2FA / guild state through the RPC. The plan should explicitly document the RPC's grants and the source of truth for those fields (server-derived vs caller-supplied), or route through an Edge Function that validates Discord state server-side. Cursor treats the GUC-name single-writer contract as LOW residual, but codex's framing of the RPC body trusting its own arguments is a distinct, unaddressed escalation surface.
-
-Both are **test/verification and trust-boundary hardening items**, addressable within the phase. Neither is a confirmed code defect that fails the migration, but both leave the security proof incomplete as planned.
+- **Migration target wording (`supabase db push` vs `supabase migration up` / `--local`):** Codex flags wording drift as MEDIUM and wants one canonical local command; Gemini and Cursor did not raise it (Cursor notes 19-03 already fixed the cycle-1 local-push/linked-lint mismatch). Worth a quick alignment pass during execution.
+- **STATE.md staleness:** Cursor uniquely flags that `.planning/STATE.md` still calls the protected branch "likely dead code," contradicting CONTEXT/live schema, and recommends a touch-up. Not raised by Codex/Gemini.
+- **Overall risk rating:** Gemini rates LOW; Codex MEDIUM-low; Cursor LOW–MEDIUM. Convergent in substance (execution-hygiene risk only), minor wording difference.
