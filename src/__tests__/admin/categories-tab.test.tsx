@@ -102,8 +102,7 @@ describe('CategoriesList', () => {
 
   it('exposes the Categories section title as a level-2 heading', async () => {
     render(<CategoriesList />)
-    // CardTitle renders a plain <div>; role="heading" + aria-level keep the
-    // section reachable by screen-reader heading navigation after the Card migration.
+    // CardTitle asChild renders a native <h2> — no ARIA override needed.
     expect(
       await screen.findByRole('heading', { level: 2, name: 'Categories' }),
     ).toBeInTheDocument()
