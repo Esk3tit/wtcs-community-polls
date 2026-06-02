@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.4
-milestone_name: Final Closeout
-status: planning
-stopped_at: Phase 18 context gathered
-last_updated: "2026-06-01T01:54:36.607Z"
-last_activity: 2026-05-31 — v1.4 roadmap created (4 phases, 9 requirements)
+milestone_name: — Final Closeout
+status: ready_to_plan
+stopped_at: Phase 18 complete (3/3) — ready to discuss Phase 19
+last_updated: 2026-06-02T03:06:09.055Z
+last_activity: 2026-06-01
 progress:
   total_phases: 4
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 80
+  completed_plans: 3
+  percent: 25
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-31 after v1.3 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** v1.4 — Final Closeout (Phases 18–21). Roadmap created 2026-05-31. Next: `/gsd:plan-phase 18`.
+**Current focus:** Phase 19 — db migration + a11y restore
 
 ## Current Position
 
-Phase: 18 (not started — roadmap defined)
-Plan: —
-Status: Roadmap created; awaiting phase planning
-Last activity: 2026-05-31 — v1.4 roadmap created (4 phases, 9 requirements)
+Phase: 19
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-06-02
 
 ```
 [Phase 18] [Phase 19] [Phase 20] [Phase 21]
@@ -51,6 +51,7 @@ Last activity: 2026-05-31 — v1.4 roadmap created (4 phases, 9 requirements)
 | 15 | 5 | multi-session | mixed (operator-driven Wave 3) |
 | 16 | 7 | - | - |
 | 17 | 2 | - | - |
+| 18 | 3 | - | - |
 
 *Updated after each plan completion*
 | Phase 16 P16-01 | 15m | 4 tasks | 3 files |
@@ -59,6 +60,8 @@ Last activity: 2026-05-31 — v1.4 roadmap created (4 phases, 9 requirements)
 | Phase 16 P04 | 20m | 2 tasks | 1 files |
 | Phase 16 P06 | 15min | 3 tasks | 3 files |
 | Phase 16 P07 | 10min | 2 tasks | 4 files |
+| Phase 18 P02 | 6min | 1 tasks | 4 files |
+| Phase 18 P03 | 25min | 4 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -70,6 +73,8 @@ v1.3 decisions are now in the canonical PROJECT.md Key Decisions table (10 v1.3 
 
 - TEST-17/18 = REAL environment repairs (upgrade/config fix + harnesses actually run green), not alternative-validation substitutes
 - UAT-01/02 = executed live by the operator with real accounts; E2E mocking is not a substitute
+- [Phase ?]: CLI v2.102.0 resolved as single pin for all four locations; edge-runtime v1.74.0 confirmed via docker ps
+- [Phase 18-03]: Title-scoped fault rows (fault_title = poll title token) replace global wildcard UUID — concurrent files unaffected; audit-only poll-id resolution via poll_created row target_id for absent-poll branches; fileParallelism: false for defense-in-depth serialization; fail-closed guard via \set ON_ERROR_STOP on + CI -v ON_ERROR_STOP=1
 
 ### Blockers/Concerns
 
@@ -83,7 +88,7 @@ Items from v1.3 now absorbed into v1.4 scope (no longer deferred — must be res
 |----------|------|-----------|-------|
 | test_env | Local ES256 bug (1.73.x edge-runtime) | TEST-17 | 18 |
 | test_env | TEST-11 12-cell vitest run (gotrue email config) | TEST-18 | 18 |
-| test_completeness | Fault-injection gap in create-poll-results-hidden.test.ts | TEST-19 | 18 |
+| test_completeness | Fault-injection gap in create-poll-results-hidden.test.ts | TEST-19 | 18 ✓ DONE |
 | db_hardening | `profile_self_update_allowed` current_user gate (Option b: session GUC) | DBHY-05 | 19 |
 | a11y | Two `<h2>` headings demoted to CardTitle `<div>` (17-REVIEW.md WR-01) | UIDN-06 | 19 |
 | uat_gaps | Phase 03 UAT tests 2+3 (non-member tester, 2FA on) | UAT-01 | 20 |
@@ -95,11 +100,12 @@ Items from v1.3 now absorbed into v1.4 scope (no longer deferred — must be res
 
 ## Session Continuity
 
-Last session: 2026-06-01T01:54:36.602Z
-Stopped at: Phase 18 context gathered
-Resume action: `/gsd:plan-phase 18` to plan the Test-Environment Repair phase
+Last session: 2026-06-01T22:45:00.000Z
+Stopped at: Completed 18-03-PLAN.md
+Resume action: Execute Phase 19 (db-hardening-a11y-sweep)
 
 ## Operator Next Steps
 
-- Plan Phase 18 with `/gsd:plan-phase 18`
-- Phases execute in order: 18 → 19 → 20 → 21 (Phase 20 is human-executed; Phase 21 is independent of 19/20 but runs last to avoid merge conflict noise)
+- Phase 18 complete — all 3 plans done (TEST-17, TEST-18, TEST-19 all green)
+- Phases execute in order: 19 → 20 → 21 (Phase 20 is human-executed; Phase 21 is independent of 19/20 but runs last to avoid merge conflict noise)
+- CI confirmation of 18-03 changes deferred to PR creation (ci.yml only triggers on PR/main push)
