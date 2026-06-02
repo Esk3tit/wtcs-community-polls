@@ -226,12 +226,16 @@ GitHub milestone: TBD on first push.
 - ✓ **UIDN-04** — `AdminsList` / `CategoriesList` → shadcn `<Card>` — v1.3 (Phase 17)
 - ✓ **UIDN-05** — `PromoteAdminDialog` search-results → shadcn `<Card>`; Dialog ARIA verified intact — v1.3 (Phase 17)
 
+### Validated (v1.4 — Final Closeout)
+
+- ✓ TEST-17 — Local supabase-edge-runtime ES256 verification bug fixed via a unified Supabase CLI pin (2.102.0 → edge-runtime v1.74.0) across all four pin locations; local/CI runtime skew closed — Phase 18
+- ✓ TEST-18 — Local gotrue `email_provider_disabled` fixed (`[auth.email]` in config.toml); the TEST-11 12-cell RLS vitest matrix runs green (26/26 integration) locally and on CI (PR #43) — Phase 18
+- ✓ TEST-19 — Deferred `create-poll` fault-injection coverage implemented (fail-safe, title-scoped, serialized; fail-closed seed guard) — Phase 18
+
 ### Active (carry-forward to v1.4+)
 
 - [ ] Backfill Phase 04 UAT test 6a evidence (demote click flow — passed off-record on second admin, needs 04-UAT.md update; second-admin-gated)
 - [ ] Phase 03 UAT tests 2 + 3 with second human (2FA-enabled, non-WTCS-member Discord tester — 2FA must be ON so the gate clears and the non-member check fires)
-- [ ] Local supabase-edge-runtime ES256 verification bug (1.73.x; affects `npm run test:integration` only; production unaffected; awaiting upstream Supabase fix)
-- [ ] TEST-11 12-cell RLS vitest matrix run (local gotrue `email_provider_disabled` blocks the run; superseded for `is_current_user_admin` correctness by the v1.3 SQL regression fixture — 6 PASS / 0 FAIL)
 - [ ] `profile_self_update_allowed` `current_user = session_user` gate (Postgres-semantics finding from PR #30; SECURITY DEFINER trigger makes the gate undistinguishing; needs its own migration — see STATE.md Deferred Items)
 - [ ] Phase 17 accessibility follow-up — two `<h2>` section headings demoted to non-semantic `CardTitle` `<div>`s during the UIDN-04/05 Card migration (17-REVIEW.md WR-01)
 
@@ -345,4 +349,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-31 — v1.4 (Final Closeout) scoped. Debt-zero closeout milestone absorbing all v1 carry-forwards (test-env repair, live human UAT, `profile_self_update_allowed` gate migration, Phase 17 a11y heading restore) + two sweep-surfaced stragglers (fault-injection test gap, dependabot #40/#34). Phase numbering continues at **Phase 18**. v1.3 phase dirs archived to `milestones/v1.3-phases/`. Next: define REQUIREMENTS.md → roadmap.*
+*Last updated: 2026-06-02 — Phase 18 (Test-Environment Repair) complete: TEST-17/18/19 validated (ES256 CLI-pin unification, gotrue `[auth.email]` fix, fail-safe fault-injection coverage); shipped as PR #43 (CI green, CodeRabbit APPROVED). Next: Phase 19 — DB Migration + A11y Restore (DBHY-05 session-GUC gate + UIDN-06 heading restore).*
