@@ -144,8 +144,8 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 19-01-PLAN.md — Write Migration 15 SQL + integration test for DBHY-05 gate paths (DBHY-05)
-- [ ] 19-02-PLAN.md — Add CardTitle asChild polymorphism + restore <h2> call sites + update test comments (UIDN-06)
+- [x] 19-01-PLAN.md — Write Migration 15 SQL + integration test for DBHY-05 gate paths (DBHY-05)
+- [x] 19-02-PLAN.md — Add CardTitle asChild polymorphism + restore <h2> call sites + update test comments (UIDN-06)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -186,7 +186,7 @@ Plans:
 | 16. UIDN-02 Aggressive Perf-Budget Pass | 7/7 | Complete    | 2026-05-29 |
 | 17. Planning-Doc + UI Hygiene Sweep | 2/2 | Complete    | 2026-05-30 |
 | 18. Test-Environment Repair | 3/3 | Complete    | 2026-06-02 |
-| 19. DB Migration + A11y Restore | 0/3 | Not started | - |
+| 19. DB Migration + A11y Restore | 2/3 | In Progress|  |
 | 20. Live Human UAT | 0/TBD | Not started | - |
 | 21. Dependency Hygiene | 0/TBD | Not started | - |
 
