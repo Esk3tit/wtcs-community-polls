@@ -21,6 +21,16 @@ enabled = true
 client_id = "env(SUPABASE_AUTH_DISCORD_CLIENT_ID)"
 secret = "env(SUPABASE_AUTH_DISCORD_SECRET)"
 
+[auth.email]
+# enable_signup = true → GOTRUE_EXTERNAL_EMAIL_ENABLED=true in gotrue container.
+# Required so signInWithPassword works for fixture users in the integration suite.
+# Default (absent section) = false = email_provider_disabled error on every
+# authed mintClients() call. Local-only: production uses Discord OAuth exclusively.
+enable_signup = true
+# enable_confirmations = false → GOTRUE_MAILER_AUTOCONFIRM=true.
+# Fixture users are pre-confirmed in seed.sql (email_confirmed_at = now()).
+enable_confirmations = false
+
 # Every EF performs its own JWT validation (requireAdmin in admin-auth.ts,
 # getUser for non-admin callers; cron-secret for close-expired-polls). The
 # platform-layer JWT check is redundant — and worse, the local edge runtime
@@ -65,4 +75,13 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.demote-admin]
+verify_jwt = false
+
+[functions.submit-vote]
+verify_jwt = false
+
+[functions.get-upload-url]
+verify_jwt = false
+
+[functions.search-admin-targets]
 verify_jwt = false

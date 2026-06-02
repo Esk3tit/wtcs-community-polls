@@ -12,6 +12,7 @@ This roadmap delivers a Discord-authenticated community suggestion and opinion-g
 - ✅ **v1.1 — Hygiene & Polish** — Phases 7–10 (shipped 2026-05-11) — see [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md) and [GitHub milestone v1.1](https://github.com/Esk3tit/wtcs-community-polls/milestone/1)
 - ✅ **v1.2 — Admin Visibility Controls** — Phases 11–13 (shipped 2026-05-14) — see [MILESTONES.md](MILESTONES.md) and [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROADMAP.md)
 - ✅ **v1.3 — Hygiene & Performance** — Phases 14–17 (shipped 2026-05-31) — see [MILESTONES.md](MILESTONES.md) and [milestones/v1.3-ROADMAP.md](milestones/v1.3-ROADMAP.md)
+- 🚧 **v1.4 — Final Closeout** — Phases 18–21 (in progress)
 
 ## Phases
 
@@ -71,6 +72,15 @@ Full v1.3 phase details (goals, plans, success criteria, wave structure) preserv
 
 </details>
 
+### 🚧 v1.4 — Final Closeout (In Progress)
+
+**Milestone Goal:** Close every outstanding v1 carry-forward — local test-environment repairs, live human UAT, code/migration debt, and test-completeness gaps — so nothing carries past v1.4. Hard debt-zero mandate: no `tech_debt`/DEFER exits.
+
+- [ ] **Phase 18: Test-Environment Repair** - Fix the two broken local test harnesses (ES256 edge-runtime bug, gotrue email config) and implement the deferred fault-injection test
+- [ ] **Phase 19: DB Migration + A11y Restore** - Replace the undistinguishing `profile_self_update_allowed` gate with a session-GUC trusted-context flag and restore two `<h2>` semantic headings
+- [ ] **Phase 20: Live Human UAT** - Execute Phase 03 UAT tests 2+3 (non-member tester) and Phase 04 UAT 6a (second-admin demote) live with required accounts
+- [ ] **Phase 21: Dependency Hygiene** - Review, validate, and merge dependabot PRs #40 (15-package group) and #34 (lint-staged 16→17)
+
 ## Phase Details
 
 <details>
@@ -101,6 +111,50 @@ Full phase details (goals, requirement summaries, success criteria, plans, wave 
 
 </details>
 
+### Phase 18: Test-Environment Repair
+**Goal**: All local test harnesses run green — the ES256 edge-runtime bug is patched, the TEST-11 RLS vitest matrix executes (12 PASS / 0 FAIL), and the deferred fault-injection test path is implemented and covered
+**Depends on**: Phase 17 (v1.3 complete)
+**Requirements**: TEST-17, TEST-18, TEST-19
+**Success Criteria** (what must be TRUE):
+  1. `npm run test:integration` completes with 0 skips and 0 failures on the local stack after the edge-runtime upgrade/pin (TEST-17)
+  2. The TEST-11 12-cell RLS invariant vitest matrix runs 12 PASS / 0 FAIL locally and in CI — no xfail, no skip — after the gotrue email_provider_disabled config is resolved (TEST-18)
+  3. The fault-injection branch in `e2e/integration/create-poll-results-hidden.test.ts` (post-RPC UPDATE failure path, previously a comment-only deferral at ~line 156) is implemented as an executable test case and passes green (TEST-19)
+**Plans**: 3 plans
+Plans:
+- [ ] 18-01-PLAN.md — Add `[auth.email]` section to config.toml; fix gotrue email_provider_disabled (TEST-18)
+- [ ] 18-02-PLAN.md — Bump Supabase CLI version pin in ci.yml to resolve ES256 edge-runtime bug (TEST-17)
+- [ ] 18-03-PLAN.md — Implement fault-injection DDL in seed.sql + two new test cases in create-poll-results-hidden.test.ts (TEST-19)
+
+### Phase 19: DB Migration + A11y Restore
+**Goal**: The `profile_self_update_allowed` security gate correctly distinguishes RPC-mediated updates from direct client updates via a session-GUC trusted-context flag, and the two semantic `<h2>` headings are restored without regressing the shadcn Card structure
+**Depends on**: Phase 18 (repaired TEST-11 matrix available as validator for DBHY-05 regression coverage)
+**Requirements**: DBHY-05, UIDN-06
+**Success Criteria** (what must be TRUE):
+  1. A new migration ships that replaces the `current_user = session_user` gate in `profile_self_update_allowed` with a session-GUC flag set by `update_profile_after_auth` — the protected-column branch is proven reachable and correct via a regression test (not left as suspected dead code) (DBHY-05)
+  2. The migration deploys to production with zero new Supabase advisor WARNs and the existing `submit-vote` smoke round-trip remains PASS (DBHY-05)
+  3. The two `<h2>` headings in `AdminsList` and `CategoriesList` (demoted to `CardTitle` `<div>` during Phase 17) are restored to semantic heading elements, verified by an accessibility assertion (role or axe query), with the shadcn `<Card>` structure intact (UIDN-06)
+**Plans**: TBD
+
+### Phase 20: Live Human UAT
+**Goal**: The operator has executed both second-human-gated UAT scenarios live — non-member server-gate rejection (Phase 03 tests 2+3) and second-admin demote flow (Phase 04 test 6a) — and recorded concrete evidence in the respective UAT files
+**Depends on**: Phase 19 (code-stable state before live testing)
+**Requirements**: UAT-01, UAT-02
+**Success Criteria** (what must be TRUE):
+  1. Phase 03 UAT tests 2 and 3 are executed live with a 2FA-on, non-WTCS-member Discord account; the server-side membership gate correctly blocks the non-member; evidence (screenshot or screen-recording reference + pass/fail verdict) is recorded in `03-UAT.md` § Second-Human Verification (UAT-01)
+  2. Phase 04 UAT test 6a (demote-click flow) is executed live with a real second admin account; the demote action succeeds and the self-demote guard remains intact; evidence is recorded in `04-UAT.md` (UAT-02)
+  3. Both UAT files show no remaining "pending" or "deferred" scenarios after the evidence is recorded
+**Plans**: TBD
+
+### Phase 21: Dependency Hygiene
+**Goal**: Both open dependabot PRs are reviewed, validated against breaking-change notes, CI-green, and merged — closing the door on lingering dependency-update debt for the final v1 milestone
+**Depends on**: Phase 18 (CI green and test suite healthy before merging dependency bumps)
+**Requirements**: DEP-01, DEP-02
+**Success Criteria** (what must be TRUE):
+  1. Dependabot PR #40 (minor-and-patch group, 15 packages) is merged with lint + typecheck + unit + E2E all green; no build-pipeline regressions (DEP-01)
+  2. Dependabot PR #34 (lint-staged 16→17) is merged after the `lint-staged` config is validated against v17 breaking changes; pre-commit hook runs correctly post-merge (DEP-02)
+  3. No open dependabot PRs remain for the v1 carry-forward list after both merges
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -109,6 +163,10 @@ Full phase details (goals, requirement summaries, success criteria, plans, wave 
 | 15. Observability + E2E Verify & Close | 5/5 | Shipped | 2026-05-25 |
 | 16. UIDN-02 Aggressive Perf-Budget Pass | 7/7 | Complete    | 2026-05-29 |
 | 17. Planning-Doc + UI Hygiene Sweep | 2/2 | Complete    | 2026-05-30 |
+| 18. Test-Environment Repair | 0/3 | In progress | - |
+| 19. DB Migration + A11y Restore | 0/TBD | Not started | - |
+| 20. Live Human UAT | 0/TBD | Not started | - |
+| 21. Dependency Hygiene | 0/TBD | Not started | - |
 
 | Milestone | Phases | Plans | Status | Shipped |
 |-----------|--------|-------|--------|---------|
@@ -116,3 +174,4 @@ Full phase details (goals, requirement summaries, success criteria, plans, wave 
 | v1.1 | 7–10 | 16/16 | ✅ Shipped | 2026-05-11 |
 | v1.2 | 11–13 | 17/17 | ✅ Shipped | 2026-05-14 |
 | v1.3 | 14–17 | 15/15 | ✅ Shipped | 2026-05-31 |
+| v1.4 | 18–21 | 0/TBD | 🚧 In progress | - |

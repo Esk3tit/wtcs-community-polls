@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.3
-milestone_name: Hygiene & Performance
-status: Awaiting next milestone
-stopped_at: Milestone v1.3 archived (tag v1.3)
-last_updated: "2026-05-31T19:48:49.105Z"
-last_activity: 2026-05-31 — Milestone v1.3 completed and archived
+milestone: v1.4
+milestone_name: Final Closeout
+status: planning
+stopped_at: Phase 18 context gathered
+last_updated: "2026-06-01T01:54:36.607Z"
+last_activity: 2026-05-31 — v1.4 roadmap created (4 phases, 9 requirements)
 progress:
   total_phases: 4
-  completed_phases: 4
-  total_plans: 15
-  completed_plans: 15
-  percent: 100
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,24 +21,29 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-31 after v1.3 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** v1.3 — Hygiene & Performance shipped & archived (2026-05-31). Next: `/gsd:new-milestone` to scope v1.4.
+**Current focus:** v1.4 — Final Closeout (Phases 18–21). Roadmap created 2026-05-31. Next: `/gsd:plan-phase 18`.
 
 ## Current Position
 
-Phase: Milestone v1.3 complete
+Phase: 18 (not started — roadmap defined)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-05-31 — Milestone v1.3 completed and archived
+Status: Roadmap created; awaiting phase planning
+Last activity: 2026-05-31 — v1.4 roadmap created (4 phases, 9 requirements)
+
+```
+[Phase 18] [Phase 19] [Phase 20] [Phase 21]
+[  0%    ] [  0%    ] [  0%    ] [  0%    ]
+```
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 15
+- Total plans completed (v1.3): 15
 - Average duration: mixed (Phase 14: ~3h; Phase 15: orchestrator-driven multi-session)
 - Total execution time: ~3h (Phase 14) + multi-session (Phase 15)
 
-**By Phase:**
+**By Phase (v1.3):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
@@ -61,30 +66,40 @@ Last activity: 2026-05-31 — Milestone v1.3 completed and archived
 
 v1.3 decisions are now in the canonical PROJECT.md Key Decisions table (10 v1.3 rows added at milestone close — Migration 14 `CREATE OR REPLACE` / `rls_auto_enable` carve-out / fix-forward; PostHog facade + `<PostHogGate>` lazy-load; `manualChunks` function form; `defaultPreload: 'intent'`; D-13 single Lighthouse run; D-12 accept-outcome → UIDN-02 PASS; DOCS-08 manual MILESTONES curation). Full v1.3 retrospective in RETROSPECTIVE.md.
 
+**v1.4 operator decisions (locked at scoping):**
+
+- TEST-17/18 = REAL environment repairs (upgrade/config fix + harnesses actually run green), not alternative-validation substitutes
+- UAT-01/02 = executed live by the operator with real accounts; E2E mocking is not a substitute
+
 ### Blockers/Concerns
 
-- _None open. All v1.3 phase risks resolved (Phase 14 HIGH-RISKs cleared at deploy; UIDN-02 PASS). Remaining items are accept-as-is carry-forwards — see Deferred Items below._
+- _None open at roadmap creation. All v1.3 phase risks resolved. v1.4 requirements are carry-forwards with known remediation paths._
 
 ## Deferred Items
 
-Items acknowledged and deferred at milestone v1.2 close on 2026-05-14:
+Items from v1.3 now absorbed into v1.4 scope (no longer deferred — must be resolved this milestone per debt-zero mandate):
 
-| Category | Item | Status | Notes |
-|----------|------|--------|-------|
-| uat_gaps | Phase 12 12-UAT.md | partial | 0 pending scenarios — file status string drift; live tests all pass |
-| uat_gaps | Phase 13 13-HUMAN-UAT.md | resolved | 0 pending scenarios — verifier confirmed UAT 3/3 pass; status field reads `resolved` not `complete` |
-| v1.4+ | Phase 04 UAT 6a backfill | deferred | second-admin live test; deferred again at v1.3 scoping |
-| v1.4+ | Phase 03 UAT tests 2+3 | deferred | non-member tester gated; deferred again at v1.3 scoping |
-| v1.4+ | Local ES256 bug (1.73.x) | deferred | prod unaffected; awaiting upstream Supabase fix |
-| v1.4+ | TEST-11 12-cell vitest run | deferred | local gotrue `email_provider_disabled`; same precedent as Local ES256. Phase 14 Task 07b regression fixture covers the is_current_user_admin correctness question with stronger evidence. |
-| v1.4+ | `profile_self_update_allowed` `current_user = session_user` gate | deferred | Postgres-semantics finding from coderabbit on PR #30 (declined as out-of-scope for hardening phase). Inside a SECURITY DEFINER trigger, `current_user` always resolves to function owner — gate can't distinguish direct client UPDATEs from RPC-mediated UPDATEs. Function pre-dates Phase 14 (migration 4); preserved verbatim under hardening-only invariant. In practice the protected-column branch is likely dead code because table-level RLS blocks direct client UPDATEs to protected columns. Remediation options: (a) drop SECURITY DEFINER from trigger; (b) pass an explicit trusted-context flag from `update_profile_after_auth` (session GUC) and check that flag instead. Option (b) more robust; needs its own migration. |
+| Category | Item | v1.4 Req | Phase |
+|----------|------|-----------|-------|
+| test_env | Local ES256 bug (1.73.x edge-runtime) | TEST-17 | 18 |
+| test_env | TEST-11 12-cell vitest run (gotrue email config) | TEST-18 | 18 |
+| test_completeness | Fault-injection gap in create-poll-results-hidden.test.ts | TEST-19 | 18 |
+| db_hardening | `profile_self_update_allowed` current_user gate (Option b: session GUC) | DBHY-05 | 19 |
+| a11y | Two `<h2>` headings demoted to CardTitle `<div>` (17-REVIEW.md WR-01) | UIDN-06 | 19 |
+| uat_gaps | Phase 03 UAT tests 2+3 (non-member tester, 2FA on) | UAT-01 | 20 |
+| uat_gaps | Phase 04 UAT 6a (second-admin demote click flow) | UAT-02 | 20 |
+| dep_hygiene | Dependabot PR #40 (15-package minor+patch group) | DEP-01 | 21 |
+| dep_hygiene | Dependabot PR #34 (lint-staged 16→17) | DEP-02 | 21 |
+
+**DBHY-05 remediation context (from v1.3 STATE.md):** Inside a `SECURITY DEFINER` trigger, `current_user` always resolves to the function owner — the `current_user = session_user` gate in `profile_self_update_allowed` cannot distinguish direct client UPDATEs from RPC-mediated UPDATEs. Option (b) selected: `update_profile_after_auth` sets an explicit trusted-context flag (session GUC) and `profile_self_update_allowed` checks that flag instead. This needs its own migration. The protected-column branch is likely dead code in practice (table-level RLS blocks direct client UPDATEs) — the regression test must prove the branch is reachable and correct.
 
 ## Session Continuity
 
-Last session: 2026-05-31 — v1.3 milestone completed and archived (tag v1.3)
-Stopped at: Milestone v1.3 archived; awaiting next milestone
-Resume action: `/gsd:new-milestone` to scope v1.4 (questioning → research → requirements → roadmap)
+Last session: 2026-06-01T01:54:36.602Z
+Stopped at: Phase 18 context gathered
+Resume action: `/gsd:plan-phase 18` to plan the Test-Environment Repair phase
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- Plan Phase 18 with `/gsd:plan-phase 18`
+- Phases execute in order: 18 → 19 → 20 → 21 (Phase 20 is human-executed; Phase 21 is independent of 19/20 but runs last to avoid merge conflict noise)
