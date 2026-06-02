@@ -176,16 +176,18 @@ Consequences:
 - The regression test (D-05) is a **real exploit guard**: it should demonstrate
   the fix flips a protected-column client UPDATE from *silently accepted* →
   *rejected*. Worth confirming the pre-fix behavior to make the guard meaningful.
-- **Flag for the owner:** current production may be exposed. Consider whether the
-  migration warrants expedited deployment ahead of the rest of the phase.
+- **Production exposure is a non-issue — there are no users yet.** No expedited /
+  out-of-band deployment needed; the migration ships as normal phase work in the
+  standard order. The severity reframing matters only because it makes the
+  regression test a meaningful guard, not because of live risk.
 
 </specifics>
 
 <deferred>
 ## Deferred Ideas
 
-None — discussion stayed within phase scope. (The "expedite to prod" point above
-is about *sequencing* the in-scope migration, not new scope.)
+None — discussion stayed within phase scope. (No expedited-deployment carve-out:
+there are no users yet, so the bypass carries no live risk — ships in normal order.)
 
 </deferred>
 
