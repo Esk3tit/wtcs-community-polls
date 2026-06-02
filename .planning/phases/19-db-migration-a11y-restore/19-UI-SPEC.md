@@ -1,10 +1,11 @@
 ---
 phase: 19
 slug: db-migration-a11y-restore
-status: draft
+status: approved
 shadcn_initialized: true
 preset: new-york / Neutral / Inter
 created: 2026-06-02
+reviewed_at: 2026-06-02
 ---
 
 # Phase 19 — UI Design Contract
