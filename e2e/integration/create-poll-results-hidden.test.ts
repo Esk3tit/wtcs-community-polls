@@ -13,6 +13,7 @@
 // because the response does NOT carry the row. The `choices` field is a
 // plain `string[]` per the live RPC contract — NOT `{ text }[]`.
 
+import { randomUUID } from 'node:crypto'
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
 import {
   mintClients,
@@ -166,7 +167,7 @@ describe('create-poll results_hidden path', () => {
   it('results_hidden=true: UPDATE failure rolls back poll; only poll_created audit row emitted', async () => {
     // Unique title token this test arms against — the trigger matches NEW.title/
     // OLD.title, so concurrent files with different titles are unaffected.
-    const faultTitle = `[TEST-M5-FAULT-A] ${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
+    const faultTitle = `[TEST-M5-FAULT-A] ${Date.now()}-${randomUUID().slice(0, 8)}`
     const startedAt = new Date().toISOString()
 
     try {
@@ -212,6 +213,11 @@ describe('create-poll results_hidden path', () => {
     // UPDATE) — surface that, don't mask it as a TypeError.
     expect(auditErr).toBeNull()
     expect(createdRow).not.toBeNull()
+    // Fail closed if the audit row exists but target_id is null/empty — otherwise
+    // createdPollId would be set to a falsy value, afterEach cleanup would no-op,
+    // and the orphaned poll could leak (false pass). create-poll writes target_id
+    // = pollId only after the RPC succeeds, so a null here is a real anomaly.
+    expect(createdRow!.target_id).toBeTruthy()
     const actualPollId = createdRow!.target_id as string
     // afterEach will delete the audit row and call cleanupPoll using this id.
     createdPollId = actualPollId
@@ -235,7 +241,7 @@ describe('create-poll results_hidden path', () => {
   })
 
   it('results_hidden=true: UPDATE+DELETE failure emits poll_created + poll_created_orphaned', async () => {
-    const faultTitle = `[TEST-M5-FAULT-B] ${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
+    const faultTitle = `[TEST-M5-FAULT-B] ${Date.now()}-${randomUUID().slice(0, 8)}`
     const startedAt = new Date().toISOString()
 
     try {
@@ -282,6 +288,11 @@ describe('create-poll results_hidden path', () => {
     // cleans up the orphaned poll this branch deliberately leaves behind.
     expect(auditErr).toBeNull()
     expect(createdRow).not.toBeNull()
+    // Fail closed if the audit row exists but target_id is null/empty — otherwise
+    // createdPollId would be set to a falsy value, afterEach cleanup would no-op,
+    // and the orphaned poll could leak (false pass). create-poll writes target_id
+    // = pollId only after the RPC succeeds, so a null here is a real anomaly.
+    expect(createdRow!.target_id).toBeTruthy()
     const actualPollId = createdRow!.target_id as string
     createdPollId = actualPollId
 
