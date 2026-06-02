@@ -133,7 +133,11 @@ Plans:
   1. A new migration ships that replaces the `current_user = session_user` gate in `profile_self_update_allowed` with a session-GUC flag set by `update_profile_after_auth` — the protected-column branch is proven reachable and correct via a regression test (not left as suspected dead code) (DBHY-05)
   2. The migration deploys to production with zero new Supabase advisor WARNs and the existing `submit-vote` smoke round-trip remains PASS (DBHY-05)
   3. The two `<h2>` headings in `AdminsList` and `CategoriesList` (demoted to `CardTitle` `<div>` during Phase 17) are restored to semantic heading elements, verified by an accessibility assertion (role or axe query), with the shadcn `<Card>` structure intact (UIDN-06)
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 19-01-PLAN.md — Write Migration 15 SQL + integration test for DBHY-05 gate paths (DBHY-05)
+- [ ] 19-02-PLAN.md — Add CardTitle asChild polymorphism + restore <h2> call sites + update test comments (UIDN-06)
+- [ ] 19-03-PLAN.md — [BLOCKING] supabase db push + advisor lint + integration test green + smoke verify (DBHY-05)
 
 ### Phase 20: Live Human UAT
 **Goal**: The operator has executed both second-human-gated UAT scenarios live — non-member server-gate rejection (Phase 03 tests 2+3) and second-admin demote flow (Phase 04 test 6a) — and recorded concrete evidence in the respective UAT files
@@ -164,7 +168,7 @@ Plans:
 | 16. UIDN-02 Aggressive Perf-Budget Pass | 7/7 | Complete    | 2026-05-29 |
 | 17. Planning-Doc + UI Hygiene Sweep | 2/2 | Complete    | 2026-05-30 |
 | 18. Test-Environment Repair | 3/3 | Complete    | 2026-06-02 |
-| 19. DB Migration + A11y Restore | 0/TBD | Not started | - |
+| 19. DB Migration + A11y Restore | 0/3 | Not started | - |
 | 20. Live Human UAT | 0/TBD | Not started | - |
 | 21. Dependency Hygiene | 0/TBD | Not started | - |
 
