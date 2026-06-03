@@ -29,10 +29,10 @@ describe('profile_self_update_allowed trigger gate (DBHY-05)', () => {
   })
 
   // Re-baseline memberUser before every case so cases are order-independent.
-  // serviceRole writes succeed on the GUC-gated path because the trigger's
-  // protected-column branch only enforces against the authenticated direct-client
-  // path — serviceRole bypasses RLS entirely, so it operates as the function
-  // owner context where the GUC check does not apply.
+  // serviceRole writes skip the trigger because on_profile_self_update is
+  // declared WHEN (current_setting('role') = 'authenticated'); a service_role
+  // connection has role='service_role', so the trigger body (and its GUC gate)
+  // never executes. This is a trigger-WHEN bypass, NOT an RLS bypass.
   beforeEach(async () => {
     await clients.serviceRole
       .from('profiles')
