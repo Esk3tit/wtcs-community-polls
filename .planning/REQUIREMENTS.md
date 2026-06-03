@@ -37,13 +37,13 @@ The two second-human-gated UAT items deferred since v1.0/v1.1. Executed live by 
 
 Continues from v1.3's DBHY-04 (Migration 14 family).
 
-- [ ] **DBHY-05**: The undistinguishing `profile_self_update_allowed` `current_user = session_user` gate is replaced via a new migration. Because the function runs inside a `SECURITY DEFINER` trigger, `current_user` always resolves to the function owner, so the gate cannot distinguish direct client `UPDATE`s from RPC-mediated ones. Implement STATE.md **Option b**: `update_profile_after_auth` sets an explicit trusted-context flag (session GUC) and `profile_self_update_allowed` checks that flag instead. The protected-column branch is proven reachable and correct via a regression test (not left as suspected dead code). Closes the PR #30 finding carry-forward.
+- [x] **DBHY-05**: The undistinguishing `profile_self_update_allowed` `current_user = session_user` gate is replaced via a new migration. Because the function runs inside a `SECURITY DEFINER` trigger, `current_user` always resolves to the function owner, so the gate cannot distinguish direct client `UPDATE`s from RPC-mediated ones. Implement STATE.md **Option b**: `update_profile_after_auth` sets an explicit trusted-context flag (session GUC) and `profile_self_update_allowed` checks that flag instead. The protected-column branch is proven reachable and correct via a regression test (not left as suspected dead code). Closes the PR #30 finding carry-forward.
 
 ### UI & Design / Accessibility (UIDN-*)
 
 Continues from v1.3's UIDN-05.
 
-- [ ] **UIDN-06**: The two `<h2>` section headings demoted to non-semantic `CardTitle` `<div>`s during the Phase 17 UIDN-04/05 Card migration (`AdminsList` / `CategoriesList`; 17-REVIEW.md WR-01) are restored to semantic heading elements without regressing the shadcn `<Card>` structure. Heading hierarchy verified via an accessibility assertion (role/axe). Closes the "Phase 17 accessibility follow-up" carry-forward.
+- [x] **UIDN-06**: The two `<h2>` section headings demoted to non-semantic `CardTitle` `<div>`s during the Phase 17 UIDN-04/05 Card migration (`AdminsList` / `CategoriesList`; 17-REVIEW.md WR-01) are restored to semantic heading elements without regressing the shadcn `<Card>` structure. Heading hierarchy verified via an accessibility assertion (role/axe). Closes the "Phase 17 accessibility follow-up" carry-forward.
 
 ### Dependency Hygiene (DEP-*)
 
@@ -98,8 +98,8 @@ Explicitly excluded for v1.4. Documented to prevent scope creep.
 | TEST-19 | Phase 18 | Complete |
 | UAT-01 | Phase 20 | Pending |
 | UAT-02 | Phase 20 | Pending |
-| DBHY-05 | Phase 19 | Pending |
-| UIDN-06 | Phase 19 | Pending |
+| DBHY-05 | Phase 19 | Complete |
+| UIDN-06 | Phase 19 | Complete |
 | DEP-01 | Phase 21 | Pending |
 | DEP-02 | Phase 21 | Pending |
 

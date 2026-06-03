@@ -1,5 +1,5 @@
 ---
-status: partial
+status: complete
 phase: 19-db-migration-a11y-restore
 source: [19-VERIFICATION.md]
 started: 2026-06-03T21:22:41Z
