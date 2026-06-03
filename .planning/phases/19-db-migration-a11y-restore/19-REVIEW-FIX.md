@@ -1,51 +1,66 @@
 ---
 phase: 19-db-migration-a11y-restore
-fixed_at: 2026-06-03T00:00:00Z
-review_path: .planning/phases/19-db-migration-a11y-restore/19-REVIEW.md
-iteration: 1
-findings_in_scope: 3
-fixed: 2
-skipped: 1
-status: partial
+generated: 2026-06-03
+fix_scope: all
+auto: true
+iteration: 2
+findings_in_scope: 4
+fixed: 1
+skipped: 3
+status: all_actionable_fixed
 ---
 
-# Phase 19: Code Review Fix Report
+# Phase 19 — Code Review Fix Report (--fix --all --auto --depth=deep)
 
-**Fixed at:** 2026-06-03
-**Source review:** .planning/phases/19-db-migration-a11y-restore/19-REVIEW.md
-**Iteration:** 1
+This run re-reviewed Phase 19 at deep depth after the first fix pass (WR-01, WR-02
+already applied; WR-03 accepted), then applied the remaining in-scope Info finding.
+`--all` brought the four Info items into fix scope.
 
-**Summary:**
-- Findings in scope: 3 (WR-01, WR-02, WR-03)
-- Fixed: 2 (WR-01, WR-02)
-- Skipped: 1 (WR-03 — accepted residual, won't-fix this phase)
+> Supersedes the iteration-1 report (WR-01/WR-02 fixed, WR-03 skipped). Those
+> warning-level fixes remain committed (`76f000f`, `0d0e03e`).
 
-## Fixed Issues
+## Re-review result (iteration 1 of this run)
 
-### WR-01: Integration test comment states an incorrect reason for why serviceRole bypasses the trigger
+A fresh deep review (`19-REVIEW.md`, commit `b981517`) returned **`status: clean`** —
+0 Critical, 0 Warning, 4 Info. It verified on disk that the prior fixes hold:
 
-**Files modified:** `e2e/integration/profile-trigger-gate.test.ts`
-**Commit:** 76f000f
-**Applied fix:** Replaced the incorrect `beforeEach` rationale ("serviceRole bypasses RLS entirely, so it operates as the function owner context where the GUC check does not apply") with the correct trigger-WHEN explanation: `on_profile_self_update` is declared `WHEN (current_setting('role') = 'authenticated')`, so a `service_role` connection (role='service_role') never executes the trigger body or its GUC gate. The comment now explicitly states this is a trigger-WHEN bypass, NOT an RLS bypass. The other serviceRole references the review cross-cited (afterAll restore at ~48-49 and case (e) ordered proof at ~95-101) do not repeat the false rationale, so no further edits in those spots were needed.
+- **WR-01** resolved — `profile-trigger-gate.test.ts` comment correctly attributes
+  serviceRole's trigger skip to the trigger's `WHEN (current_setting('role') =
+  'authenticated')` clause (cross-checked against `00000000000002_triggers.sql:41-45`).
+- **WR-02** resolved — `is_admin` immutability check is in the always-enforced block
+  (migration 15:85-87), outside the GUC-gated branch (93-101).
+- **WR-03** reclassified as accepted residual / Info (documented in the function
+  COMMENT, PROJECT.md, and 19-SECURITY.md).
 
-### WR-02: GUC bypass widens trust to is_admin, not just the columns the RPC writes
+Deep adversarial checks that came back clean: NULL-safety of all protected/immutable
+columns (all `NOT NULL`, so unconditional `!=` checks can't be skipped by three-valued
+logic), the `SECURITY DEFINER` role/GUC interaction (no `SET ROLE`, so the trigger still
+fires and depends on the `is_local=true` flag), and test-mock fidelity.
 
-**Files modified:** `supabase/migrations/00000000000015_trusted_profile_update_guc.sql`
-**Commit:** 0d0e03e
-**Applied fix:** Moved the `is_admin` immutability check out of the GUC-gated branch and into the always-enforced immutable-columns block, alongside id/discord_id/created_at. `mfa_verified` and `guild_member` remain inside the GUC-gated branch (those are the only columns `update_profile_after_auth` writes). The exception message wording `'Cannot change is_admin via client'` was preserved verbatim so integration test case (b)'s regex (`/is_admin via client/i`) still matches. Function signatures, `search_path`, `pg_catalog` qualification, and the REVOKE/GRANT were left untouched. The `COMMENT ON FUNCTION public.profile_self_update_allowed` body was updated to accurately describe is_admin as unconditional (it previously grouped is_admin with the GUC-gated columns).
+## Findings in scope (--all → Info included)
 
-**Verification note:** This migration is PL/pgSQL; no standalone parser is available without connecting to the database (forbidden by scope this phase). Tier 1 (re-read) confirmed balanced IF/END IF blocks, intact `$$` delimiters, and the preserved exception message. The orchestrator will re-apply the migration (`supabase db reset`) and re-run the integration suite for full semantic verification.
+| ID | Severity | Disposition | Action |
+|----|----------|-------------|--------|
+| IN-01 | Info | skipped (no defect) | `discord_username` unconditional in the RPC is intentional and tested (case d); "None required" per review. |
+| IN-02 | Info | **FIXED** (`a92b038`) | Dropped the "pre-migration" temporal qualifier from the `CardContent` rationale comment in `AdminsList.tsx` and `CategoriesList.tsx`. Kept the WHY (cancel shadcn Card padding to preserve compact row density). Aligns with the project's WHY-only / no-temporal-rot source-comment convention (CLAUDE.md). |
+| IN-03 | Info | skipped (accepted trade-off) | `CardTitle` typed as `ComponentProps<"div">` while rendering `<h2>` via Slot is the established shadcn `asChild` pattern (button.tsx/badge.tsx). No change. |
+| IN-04 | Info | skipped (organizational nit) | Vitest spec under `e2e/integration/` is correctly Vitest (helper header documents the distinction). Optional relocation only; no change. |
 
-## Skipped Issues
+## Verification of the IN-02 fix
 
-### WR-03: Residual trust boundary — caller-supplied p_mfa_verified / p_guild_member are not server-validated
+- `eslint` on both files — clean.
+- `tsc -b --noEmit` (pre-commit hook) — clean.
+- `admins-tab.test.tsx` + `categories-tab.test.tsx` — 14/14 pass (heading-level assertions intact).
+- Change is comment-text-only; no behavioral surface touched.
 
-**File:** `supabase/migrations/00000000000015_trusted_profile_update_guc.sql:42-51, 112-120`
-**Reason:** skipped (won't-fix this phase). The review's own Fix block states: "Track as a follow-up. The COMMENT at lines 112-120 already records the residual accurately; no change required for this phase." This is an accepted residual (tracked as T-19-07), already documented in the migration COMMENT and PROJECT.md. The durable fix (server-side MFA/guild re-validation via an Edge Function, then dropping the `authenticated` EXECUTE grant in favor of `service_role`-only) is out of scope for phase 19. The RPC's trust model and EXECUTE grants were left unchanged.
-**Original issue:** `update_profile_after_auth` trusts the caller-supplied `p_mfa_verified` / `p_guild_member` booleans verbatim. An authenticated user can call the RPC directly via PostgREST and self-attest these flags regardless of real Discord state, because the RPC sets the trusted GUC and the trigger then permits the write. DBHY-05 explicitly scopes this as an accepted residual.
+## --auto convergence (iteration 2)
 
----
+The pre-fix review was already `clean`; IN-02 was the sole actionable in-scope finding and
+is now resolved. The only remaining Info items (IN-01, IN-03, IN-04) are non-actionable
+"accepted / matches-established-pattern / organizational" observations — they will persist
+as Info on any future review by design and are not defects. The auto loop has therefore
+converged: no actionable findings remain. A further full deep-review pass was intentionally
+skipped (the lone change was a comment-word removal validated by lint + tsc + the affected
+unit tests; outcome would be identical `clean`). Iterations used: 2 of max 3.
 
-_Fixed: 2026-06-03_
-_Fixer: Claude (gsd-code-fixer)_
-_Iteration: 1_
+**Status:** all actionable findings fixed (1/1). 3 non-actionable Info items left as-is.
