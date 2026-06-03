@@ -78,6 +78,13 @@ BEGIN
   IF NEW.created_at != OLD.created_at THEN
     RAISE EXCEPTION 'Cannot change created_at';
   END IF;
+  -- is_admin is NEVER set by any self-update RPC, so it stays unconditional
+  -- alongside the other immutable columns rather than inside the GUC-gated
+  -- branch. This keeps the trusted-context bypass scoped to the columns
+  -- update_profile_after_auth actually writes (mfa_verified, guild_member).
+  IF NEW.is_admin != OLD.is_admin THEN
+    RAISE EXCEPTION 'Cannot change is_admin via client';
+  END IF;
 
   -- Check trusted-context flag set by update_profile_after_auth.
   -- missing_ok=true (second arg) returns '' when the GUC is absent
@@ -85,9 +92,6 @@ BEGIN
   -- null-safe; gate fires (protected checks run) when the flag is absent.
   IF pg_catalog.current_setting('app.trusted_profile_update', true) IS DISTINCT FROM 'on' THEN
     -- Direct client update — enforce protected column restrictions
-    IF NEW.is_admin != OLD.is_admin THEN
-      RAISE EXCEPTION 'Cannot change is_admin via client';
-    END IF;
     IF NEW.mfa_verified != OLD.mfa_verified THEN
       RAISE EXCEPTION 'Cannot change mfa_verified via client -- use update_profile_after_auth RPC';
     END IF;
@@ -103,11 +107,12 @@ $$;
 
 
 COMMENT ON FUNCTION public.profile_self_update_allowed IS
-  'Guards profile self-update: blocks id/discord_id/created_at unconditionally; '
-  'blocks is_admin/mfa_verified/guild_member when app.trusted_profile_update GUC is absent '
+  'Guards profile self-update: blocks id/discord_id/created_at/is_admin unconditionally; '
+  'blocks mfa_verified/guild_member when app.trusted_profile_update GUC is absent '
   '(direct client write). update_profile_after_auth sets the GUC (transaction-local, '
-  'is_local=true) before its UPDATE so the protected-column checks are skipped on the '
-  'RPC path. IS DISTINCT FROM ''on'' is used for null-safe gate evaluation.';
+  'is_local=true) before its UPDATE so the GUC-gated checks are skipped on the '
+  'RPC path. is_admin stays unconditional because no self-update RPC writes it. '
+  'IS DISTINCT FROM ''on'' is used for null-safe gate evaluation.';
 
 COMMENT ON FUNCTION public.update_profile_after_auth(BOOLEAN, TEXT, TEXT, BOOLEAN) IS
   'SECURITY DEFINER RPC: sets the transaction-local GUC app.trusted_profile_update '
