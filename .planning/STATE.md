@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Final Closeout
-status: "Phase 19 shipped — PR #45 (code-only)"
-stopped_at: Phase 19 UI-SPEC approved
-last_updated: "2026-06-04T04:42:27.627Z"
-last_activity: 2026-06-03
+status: "Phase 19 merged to main (PR #45); planning history merged — ready for Phase 20"
+stopped_at: Phase 19 complete, shipped + merged to main (PR #45) — ready to discuss Phase 20
+last_updated: "2026-06-04T00:00:00.000Z"
+last_activity: 2026-06-04
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 80
   completed_plans: 6
-  percent: 25
+  percent: 50
 ---
 
 # Project State
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-05-31 after v1.3 milestone)
 
 Phase: 20
 Plan: Not started
-Status: Phase 19 shipped — PR #45 (code-only)
-Last activity: 2026-06-03
+Status: Phase 19 merged to main (PR #45 code + planning history) — ready to discuss Phase 20
+Last activity: 2026-06-04
 
 ```
 [Phase 18] [Phase 19] [Phase 20] [Phase 21]
