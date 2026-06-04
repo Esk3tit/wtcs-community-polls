@@ -86,13 +86,15 @@ export function AdminsList() {
 
   return (
     // py-0 / p-0 cancel shadcn Card's default vertical padding so the list
-    // keeps its pre-migration row density inside the bordered container.
+    // keeps its compact row density inside the bordered container; the
+    // CardHeader re-adds its own pt-4 pb-3 so the section title still has
+    // breathing room above it and a gap before the first row.
     // overflow-hidden clips the flush square-cornered rows/skeletons to the
     // Card's rounded corners so they don't bleed past the bottom radius.
     <Card className="py-0 overflow-hidden">
-      <CardHeader>
-        <CardTitle role="heading" aria-level={2} className="text-base">
-          Admins
+      <CardHeader className="pt-4 pb-3">
+        <CardTitle asChild className="text-base">
+          <h2>Admins</h2>
         </CardTitle>
         <CardAction>
           <Button onClick={() => setPromoteOpen(true)} size="sm" className="h-9">
