@@ -27,7 +27,7 @@ human_verification:
 
 **Phase Goal:** Replace the non-functional `profile_self_update_allowed` caller-identity gate with a session-GUC trusted-context flag (DBHY-05), and restore two `<h2>` semantic headings in AdminsList/CategoriesList that Phase 17 demoted to ARIA-workaround divs (UIDN-06).
 **Verified:** 2026-06-03T22:00:00Z
-**Status:** human_needed
+**Status:** passed (human-verification items confirmed via orchestrator-executed suites this session — unit 403/403, integration 32/32, @smoke 6/6 — and user-approved; "evidence is good enough")
 **Re-verification:** No — initial verification
 
 ## Goal Achievement
