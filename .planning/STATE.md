@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Final Closeout
-status: ready_to_plan
-stopped_at: Phase 18 complete (3/3) — ready to discuss Phase 19
-last_updated: 2026-06-02T03:06:09.055Z
-last_activity: 2026-06-01
+status: "Phase 19 shipped — PR #45 (code-only)"
+stopped_at: Phase 19 UI-SPEC approved
+last_updated: "2026-06-04T04:42:27.627Z"
+last_activity: 2026-06-03
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 80
-  completed_plans: 3
+  completed_plans: 6
   percent: 25
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-31 after v1.3 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** Phase 19 — db migration + a11y restore
+**Current focus:** Phase 20 — live human uat
 
 ## Current Position
 
-Phase: 19
+Phase: 20
 Plan: Not started
-Status: Ready to plan
-Last activity: 2026-06-02
+Status: Phase 19 shipped — PR #45 (code-only)
+Last activity: 2026-06-03
 
 ```
 [Phase 18] [Phase 19] [Phase 20] [Phase 21]
@@ -52,6 +52,7 @@ Last activity: 2026-06-02
 | 16 | 7 | - | - |
 | 17 | 2 | - | - |
 | 18 | 3 | - | - |
+| 19 | 3 | - | - |
 
 *Updated after each plan completion*
 | Phase 16 P16-01 | 15m | 4 tasks | 3 files |
@@ -100,8 +101,8 @@ Items from v1.3 now absorbed into v1.4 scope (no longer deferred — must be res
 
 ## Session Continuity
 
-Last session: 2026-06-01T22:45:00.000Z
-Stopped at: Completed 18-03-PLAN.md
+Last session: 2026-06-02T09:05:02.488Z
+Stopped at: Phase 19 UI-SPEC approved
 Resume action: Execute Phase 19 (db-hardening-a11y-sweep)
 
 ## Operator Next Steps

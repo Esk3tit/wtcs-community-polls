@@ -231,13 +231,13 @@ GitHub milestone: TBD on first push.
 - ✓ TEST-17 — Local supabase-edge-runtime ES256 verification bug fixed via a unified Supabase CLI pin (2.102.0 → edge-runtime v1.74.0) across all four pin locations; local/CI runtime skew closed — Phase 18
 - ✓ TEST-18 — Local gotrue `email_provider_disabled` fixed (`[auth.email]` in config.toml); the TEST-11 12-cell RLS vitest matrix runs green (26/26 integration) locally and on CI (PR #43) — Phase 18
 - ✓ TEST-19 — Deferred `create-poll` fault-injection coverage implemented (fail-safe, title-scoped, serialized; fail-closed seed guard) — Phase 18
+- ✓ DBHY-05 — `profile_self_update_allowed` privilege-escalation gate fixed: Migration 15 replaces the permanently-false `current_user = session_user` check (always false inside a SECURITY DEFINER trigger) with a transaction-local GUC flag (`app.trusted_profile_update`, `set_config(..., is_local=true)`) set by `update_profile_after_auth`; null-safe `IS DISTINCT FROM 'on'` gate, `pg_catalog`-qualified built-ins under `search_path=''`, explicit REVOKE/GRANT EXECUTE. Applied to local stack, advisor lint clean, integration test proves both gate directions (6/6, incl. ordered RPC proof + GUC-leak guard). **Accepted residual (T-19-07):** `update_profile_after_auth` still trusts caller-supplied `p_mfa_verified`/`p_guild_member` (computed client-side from Discord OAuth, not re-derived server-side) — pre-existing since migration 02, not widened by Phase 19, no live users; server-side re-validation (Edge Function with the user's provider token) deferred to a future auth refactor. Tracked in the function's `COMMENT ON FUNCTION` and `19-SECURITY.md`. Prod `--linked` deploy deferred to milestone ship — Phase 19
+- ✓ UIDN-06 — Two `<h2>` section headings restored in AdminsList/CategoriesList: CardTitle made polymorphic via `asChild`/`Slot.Root` (same pattern as button.tsx/badge.tsx), replacing the Phase 17 `<div role="heading" aria-level={2}>` ARIA workaround with native `<h2>` — Phase 19
 
 ### Active (carry-forward to v1.4+)
 
 - [ ] Backfill Phase 04 UAT test 6a evidence (demote click flow — passed off-record on second admin, needs 04-UAT.md update; second-admin-gated)
 - [ ] Phase 03 UAT tests 2 + 3 with second human (2FA-enabled, non-WTCS-member Discord tester — 2FA must be ON so the gate clears and the non-member check fires)
-- [ ] `profile_self_update_allowed` `current_user = session_user` gate (Postgres-semantics finding from PR #30; SECURITY DEFINER trigger makes the gate undistinguishing; needs its own migration — see STATE.md Deferred Items)
-- [ ] Phase 17 accessibility follow-up — two `<h2>` section headings demoted to non-semantic `CardTitle` `<div>`s during the UIDN-04/05 Card migration (17-REVIEW.md WR-01)
 
 ### Scoped for v1.4 (Final Closeout)
 
@@ -349,4 +349,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-02 — Phase 18 (Test-Environment Repair) complete: TEST-17/18/19 validated (ES256 CLI-pin unification, gotrue `[auth.email]` fix, fail-safe fault-injection coverage); shipped as PR #43 (CI green, CodeRabbit APPROVED). Next: Phase 19 — DB Migration + A11y Restore (DBHY-05 session-GUC gate + UIDN-06 heading restore).*
+*Last updated: 2026-06-03 — Phase 19 (DB Migration + A11y Restore) complete: DBHY-05 (Migration 15 session-GUC trusted-context gate, applied to local stack, lint clean, integration 6/6 incl. ordered RPC proof + GUC-leak guard) and UIDN-06 (CardTitle `asChild` polymorphism restoring native `<h2>` headings) validated. Suites green (unit 403/403, integration 32/32, @smoke 6/6); code review 0 blockers. Prod `--linked` migration deploy deferred to v1.4 milestone ship. Next: Phase 20 — Live Human UAT (Phase 03 UAT 2+3 non-member tester + Phase 04 UAT 6a second-admin demote).*
