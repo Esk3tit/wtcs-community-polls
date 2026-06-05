@@ -1,7 +1,7 @@
 ---
 phase: 20
 reviewers: [gemini, codex, cursor]
-reviewed_at: 2026-06-05T00:00:00Z
+reviewed_at: 2026-06-05T20:15:00Z
 plans_reviewed: [20-01-PLAN.md, 20-02-PLAN.md, 20-03-PLAN.md]
 cycles:
   - cycle: 1
@@ -33,6 +33,12 @@ cycles:
     plans_reviewed: [20-01-PLAN.md, 20-02-PLAN.md, 20-03-PLAN.md]
     reviewed_at: 2026-06-05T19:30:00Z
     high_concerns_raised: 2
+    high_concerns_resolved_next_cycle: 2
+  - cycle: 6
+    reviewers: [gemini, codex]
+    plans_reviewed: [20-01-PLAN.md, 20-02-PLAN.md, 20-03-PLAN.md]
+    reviewed_at: 2026-06-05T20:15:00Z
+    high_concerns_raised: 0
 ---
 
 # Cross-AI Plan Review — Phase 20: Live Human UAT
@@ -681,3 +687,77 @@ Codex rates 20-01 **LOW**, 20-02 **HIGH-as-written / LOW-after-verifier-fix**, 2
 4. **(MEDIUM)** In 20-03, prefer a clean rewrite of the top-level Phase 20 ROADMAP entry over an appended parenthetical.
 
 **Net remaining HIGH after Cycle 5: 2** (20-03 unscoped ROADMAP plan-count verifier false-fail; 20-02 unanchored `UAT-02 Phase 20 Closure` verifier false-fail). Both are acceptance-grep defects in the plans' self-checks — the substantive documentation edits are correct; the plans would false-fail their own verification on a correct execution unless the greps are scoped/anchored. The two Cycle 4 HIGHs are FULLY RESOLVED.
+
+---
+
+## Cycle 5 → Cycle 6: status of the prior HIGH concerns
+
+| Cycle 5 HIGH | Status in Cycle 6 | Verification |
+|---|---|---|
+| **20-03 ROADMAP plan-count verifier false-fails** (unscoped `grep -c "Plans\*\*: 3 plans"` expects 1, but Phases 18/19 already match → global count 3) | **FULLY RESOLVED** | 20-03-PLAN.md now scopes the check to the Phase 20 block: `awk '/^### Phase 20:/{f=1} /^### Phase 21:/{f=0} f' ROADMAP.md \| grep -c "Plans\*\*: 3 plans"` expecting 1, plus a paired scoped `"Plans\*\*: 2 plans"` = 0 (PLAN lines 216-217, 266-267, success criterion line 223). The plan explicitly documents "DO NOT use a GLOBAL grep ... Phases 18 and 19 already carry 'Plans**: 3 plans'" and cites "review HIGH — Cycle 5". Orchestrator re-ran against live `ROADMAP.md`: GLOBAL `3 plans` count = 2 today (proving the old verifier was genuinely broken); Phase-20-scoped `3 plans` = 0 / `2 plans` = 1 pre-execution (flips to 1/0 after a correct edit). The scoped verifier is correct. |
+| **20-02 closure-phrase verifier false-fails** (unanchored `grep -c "UAT-02 Phase 20 Closure"` expects 1, but the phrase is deliberately written 3×: heading + Current-Test note + 2a pointer) | **FULLY RESOLVED** | 20-02-PLAN.md now anchors the check to the heading only: `grep -c "^## UAT-02 Phase 20 Closure$"` expecting 1 (PLAN lines 147, 158, 199). The plan explicitly notes "the plan deliberately writes the phrase ... in THREE places ... so the UNANCHORED grep returns 3 after a correct edit, NOT 1. Anchor to `^## ...$`" and cites "review HIGH — Cycle 5". Orchestrator re-ran against live `04-UAT.md`: heading-anchored count = 0 pre-execution (correct; section not yet written → 1 post-edit); the anchored data-row check `^      result: deferred$` = 1 matches the plan's stated expectation. Verifier is correct. |
+
+**Both Cycle 5 HIGHs are FULLY RESOLVED in the Cycle 6 plans, independently verified against the live `ROADMAP.md` / `04-UAT.md` files.** The associated Cycle 5 MEDIUMs (20-02 redundant blockquote-excluded `result: deferred` grep; 20-03 append-vs-rewrite ROADMAP wording) are now documented in-plan as expected behavior with the robust anchored check retained — folded down, not blocking.
+
+---
+
+> Reviewers: Gemini, Codex. Claude skipped (self-review excluded — running inside Claude Code CLI). Cursor attempted but failed again (account usage limit — consistent with Cycles 2/3/4/5). CodeRabbit attempted but returned "No files found for review" — the working tree is clean and this is an unexecuted, documentation-only planning phase with no diff to review. The orchestrator independently re-ran every disputed grep/`awk` verifier against the live `ROADMAP.md` / `04-UAT.md` / plan files before writing the consensus.
+
+## Gemini Review (Cycle 6)
+
+Gemini assessed all three plans and concluded the plans are **"exceptionally well-crafted," with correct dependency ordering and an additive supersession strategy that preserves historical integrity** — risk **LOW**, no HIGH or MEDIUM concerns identified.
+
+- **Historical integrity:** Adheres strictly to the preserve-history convention (D-04/D-10/D-11), using resolution pointers rather than destructive edits.
+- **Narrow technical claims:** Praises 20-01's research task to re-verify exact line numbers and the correct narrowing of the Migration 14/15 scope (`handle_new_user` is not gated by the membership check).
+- **Terminology reconciliation:** Proactively reconciles "server-side gate" (roadmap) vs. "client-side guild check" (implementation).
+- **Robust verification:** Calls out the anchored greps and blockquote exclusion as "a sophisticated understanding of how to audit YAML-in-Markdown structures reliably."
+- **Concerns (LOW only):** Line-number drift between Task 1 and Task 2; minor regex-verification fragility if manual formatting differs slightly. Suggests `git diff` as a final visual verification step.
+
+Gemini's verdict: **LOW risk, no remaining HIGH or MEDIUM, ready for execution.**
+
+## Codex Review (Cycle 6)
+
+Codex spot-checked the live repo artifacts and states up front: **"I did not find a blocking HIGH issue."** It confirms the plans are "strong and unusually explicit about preserving history while reconciling debt-zero rollups," and raises only audit-consistency MEDIUM/LOW items:
+
+- **20-01 (LOW risk):** MEDIUM — ROADMAP still says "screenshot or screen-recording reference" while the plan chooses narrative+verdict (D-05 allows this, but a strict verifier may question it). LOW — `git log` for gate files not explicitly captured; frontmatter `updated:` stays stale. Confirms live `auth-helpers.ts` non-member branch at lines 191-202, RPC at line 209.
+- **20-02 (MEDIUM risk):** MEDIUM — `re_run_partial: 0` while `re_run_passed: 8` / `re_run_at: 2026-04-25` may read inconsistently (the off-record 6a pass was not part of that re-run); preserved `deferred`/`partial`/`pending` prose could confuse a naive grep audit. LOW — frontmatter `updated:` stale.
+- **20-03 (MEDIUM risk):** MEDIUM — top-level Phase 20 ROADMAP line is appended-to rather than cleanly rewritten; progress shows `0/3 | Not started` and stays stale unless a later workflow step checks the boxes. LOW — "locked at scoping" rewrites should explicitly say "superseded by D-01/D-02"; `Validated` vs `Complete` vocabulary mix.
+
+Codex rates 20-01 **LOW**, 20-02 **MEDIUM**, 20-03 **MEDIUM** — **no HIGH on any plan.**
+
+## Consensus Summary (Cycle 6)
+
+### Orchestrator verification of the Cycle 5 fixes
+
+| Cycle 5 HIGH fix | Files checked | Verdict |
+|---|---|---|
+| 20-03 Phase-20-scoped plan-count verifier | live `ROADMAP.md` (lines ~125/143/165) + 20-03-PLAN.md | **FULLY RESOLVED.** GLOBAL `Plans**: 3 plans` = 2 (old unscoped check expecting 1 was genuinely broken); Phase-20-scoped `awk \| grep` correctly isolates the block (3 plans = 0 / 2 plans = 1 pre-execution → 1/0 post-edit). |
+| 20-02 heading-anchored closure verifier | live `04-UAT.md` + 20-02-PLAN.md | **FULLY RESOLVED.** `grep -c "^## UAT-02 Phase 20 Closure$"` = 0 pre-execution (correct; → 1 post-edit); plan documents the deliberate 3× unanchored occurrence as expected. Anchored `^      result: deferred$` = 1 matches plan expectation. |
+
+### Agreed Strengths (both reviewers)
+- Both Cycle 5 HIGH verifier defects are fully fixed; the acceptance greps are now scoped/anchored and will not false-fail a correct execution.
+- The additive "verbatim-preserve + rollup-supersede" strategy (D-04) correctly preserves history while clearing debt-zero markers across all three plans.
+- 20-01's narrow Migration-14 claim and live source anchors (auth-helpers.ts non-member branch + RPC) are factually accurate.
+- Dependency ordering is correct: 20-03 runs after 20-01/20-02; milestone artifacts updated only after evidence files are reconciled.
+
+### Agreed / Confirmed Concerns
+
+**HIGH:** None. Both reviewers explicitly report zero blocking HIGH concerns this cycle; the two Cycle 5 HIGHs are FULLY RESOLVED and independently re-verified.
+
+**MEDIUM (non-blocking audit-precision items — neither reviewer treats these as execution blockers)**
+- 20-02 re-run summary semantics: `re_run_passed: 8` with `re_run_at: 2026-04-25` could read inconsistently against the later off-record 6a pass. Mitigation: a one-line clarifying note (Codex suggestion) — does not affect the substantive edits.
+- 20-03 top-level Phase 20 ROADMAP entry appended-to rather than cleanly rewritten (carry-over LOW/MEDIUM since Cycle 4).
+- 20-01 ROADMAP "screenshot or screen-recording reference" wording vs. the chosen D-05 narrative+verdict artifact.
+
+**LOW**
+- Frontmatter `updated:` dates preserved as original-run metadata (both 03-UAT.md / 04-UAT.md); line-number drift risk between Task 1 re-confirmation and Task 2 edits; `Validated` vs `Complete` status-vocabulary mix in the traceability table.
+
+### Divergent Views
+- **Overall readiness.** Gemini: LOW / approved, no remaining HIGH or MEDIUM, proceed. Codex: no blocking HIGH; rates 20-02/20-03 MEDIUM on audit-consistency polish. The orchestrator's verification confirms both Cycle 5 HIGHs are fixed and no new HIGH exists. Net: **0 remaining HIGH.** The MEDIUMs are optional pre-execution polish, not blockers.
+
+### Recommended actions before execution (Cycle 6 — all OPTIONAL, none blocking)
+1. **(MEDIUM, optional)** In 20-02, add a one-line clarifier that `re_run_passed: 8` refers to the 2026-04-25 re-run only and the 6a pass was formalized separately via Phase 20 closure.
+2. **(MEDIUM, optional)** In 20-03, prefer a clean rewrite of the top-level Phase 20 ROADMAP entry over the appended parenthetical, and confirm a post-plan owner updates the `0/3` progress/checkboxes (verify-phase responsibility, already noted in-plan).
+3. **(LOW, optional)** Decide explicitly whether frontmatter `updated:` is preserved-as-original or bumped to the Phase 20 closure date, and whether `Validated`/`Complete` vocabulary is intentional.
+
+**Net remaining HIGH after Cycle 6: 0.** Both Cycle 5 HIGH verifier defects (20-03 unscoped ROADMAP plan-count; 20-02 unanchored `UAT-02 Phase 20 Closure`) are FULLY RESOLVED and independently re-verified against the live files. No new HIGH was raised by either reviewer. Remaining items are optional MEDIUM/LOW audit-precision polish. The plans are execution-ready.
