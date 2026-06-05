@@ -78,7 +78,7 @@ Full v1.3 phase details (goals, plans, success criteria, wave structure) preserv
 
 - [x] **Phase 18: Test-Environment Repair** - Fix the two broken local test harnesses (ES256 edge-runtime bug, gotrue email config) and implement the deferred fault-injection test
 - [x] **Phase 19: DB Migration + A11y Restore** - Replace the undistinguishing `profile_self_update_allowed` gate with a session-GUC trusted-context flag and restore two `<h2>` semantic headings
-- [ ] **Phase 20: Live Human UAT** - Execute Phase 03 UAT tests 2+3 (non-member tester) and Phase 04 UAT 6a (second-admin demote) live with required accounts
+- [ ] **Phase 20: Live Human UAT** - Execute Phase 03 UAT tests 2+3 (non-member tester) and Phase 04 UAT 6a (second-admin demote) live with required accounts (closed by accepting the pre-existing live evidence; see 03/04-UAT.md closure sections — no fresh run this milestone)
 - [ ] **Phase 21: Dependency Hygiene** - Review, validate, and merge dependabot PRs #40 (15-package group) and #34 (lint-staged 16→17)
 
 ## Phase Details
@@ -161,13 +161,18 @@ Plans:
   1. Phase 03 UAT tests 2 and 3 are executed live with a 2FA-on, non-WTCS-member Discord account; the server-side membership gate correctly blocks the non-member; evidence (screenshot or screen-recording reference + pass/fail verdict) is recorded in `03-UAT.md` § Second-Human Verification (UAT-01)
   2. Phase 04 UAT test 6a (demote-click flow) is executed live with a real second admin account; the demote action succeeds and the self-demote guard remains intact; evidence is recorded in `04-UAT.md` (UAT-02)
   3. Both UAT files show no remaining "pending" or "deferred" scenarios after the evidence is recorded
+  4. *(Phase 20 closure note)* UAT-01 and UAT-02 are closed by accepting the pre-existing live PASS evidence per D-01/D-02 (UAT-01: 2026-05-03 second-human run; UAT-02: MapCommittee Off-Record 6a PASS during the v1.0→v1.1 transition) with the gate path verified unchanged — no fresh live runs were performed this milestone.
 
-**Plans**: 2 plans
+**Plans**: 3 plans
 Plans:
 **Wave 1** *(both plans are independent — run in parallel)*
 
 - [x] 20-01-PLAN.md — Record D-03 acceptance basis in 03-UAT.md and reconcile skipped: 2 rollup (UAT-01)
 - [x] 20-02-PLAN.md — Formalize Off-Record Verification PASS in 04-UAT.md and clear deferred: 1 rollup (UAT-02)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 20-03-PLAN.md — Flip UAT-01/02 to Validated in REQUIREMENTS.md (rewrite the global "this milestone" framing per D-01/D-02) + ROADMAP closure annotations
 
 ### Phase 21: Dependency Hygiene
 
