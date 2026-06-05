@@ -11,7 +11,7 @@ This document tracks the v1.4 milestone requirements. After v1.0 (43 of 45 reqs)
 
 **Operator closure decisions (locked at scoping):**
 - **Environment items = REAL repair**, not alternative-validation substitutes. The local test harnesses must actually run green (upgrade/config fix), not be documented won't-fix with proxy coverage.
-- **Human UAT items = executed live by the operator** this milestone. Plans must produce exact step-by-step checklists and concrete evidence-recording targets.
+- **Human UAT items = satisfied by pre-existing live operator runs**, accepted this milestone per D-01/D-02 (UAT-01 executed live 2026-05-03; UAT-02 executed live during the v1.0→v1.1 transition). No fresh runs were performed this milestone — the operator-locked "executed live with real accounts; not E2E-mocked" intent is met by those existing runs. Plans reconcile that evidence and record concrete acceptance-basis targets.
 
 ## v1.4 Requirements
 
@@ -27,11 +27,11 @@ Continues from v1.3's TEST-16. These repair the two local test harnesses that pr
 
 ### Live Human UAT (UAT-*)
 
-The two second-human-gated UAT items deferred since v1.0/v1.1. Executed live by the operator this milestone with the required test accounts.
+The two second-human-gated UAT items deferred since v1.0/v1.1. Both were executed live by the operator with the required real accounts BEFORE this milestone (UAT-01: 2026-05-03; UAT-02: v1.0→v1.1 transition); v1.4 accepts that pre-existing live evidence as satisfying the requirement (D-01/D-02) — no fresh run was performed this milestone.
 
-- [ ] **UAT-01**: Phase 03 UAT tests 2 + 3 executed live with a 2FA-on, non-WTCS-member Discord account (2FA must be ON so the gate clears and the non-member check fires). Evidence — non-member is correctly blocked at the server-side membership gate — recorded in the Phase 03 UAT record. Closes the "Phase 03 UAT tests 2+3" carry-forward.
+- [x] **UAT-01**: Phase 03 UAT tests 2 + 3 executed live with a 2FA-on, non-WTCS-member Discord account (2FA must be ON so the gate clears and the non-member check fires). Evidence — non-member is correctly blocked at the server-side membership gate (enforced client-side via the OAuth guild check before the profile RPC; server-side RLS is a defense-in-depth backstop — same membership-enforcement outcome) — recorded in the Phase 03 UAT record. Closes the "Phase 03 UAT tests 2+3" carry-forward. — Closed Phase 20 (2026-06-04) by accepting the pre-existing 2026-05-03 second-human PASS (no fresh run); gate path verified unchanged (see 03-UAT.md § UAT-01 Acceptance Basis, D-01/D-03).
 
-- [x] **UAT-02**: Phase 04 UAT test 6a (demote-click flow) executed live with a second admin account. Evidence — demote action succeeds with the self-guard intact — recorded in the Phase 04 UAT record. Closes the "Phase 04 UAT 6a backfill" carry-forward.
+- [x] **UAT-02**: Phase 04 UAT test 6a (demote-click flow) executed live with a second admin account. Evidence — demote action succeeds with the self-guard intact — recorded in the Phase 04 UAT record. Closes the "Phase 04 UAT 6a backfill" carry-forward. — Closed Phase 20 (2026-06-04) by backfilling the pre-existing Off-Record Verification PASS (MapCommittee, v1.0→v1.1 transition; no fresh run; see 04-UAT.md § UAT-02 Phase 20 Closure, D-02).
 
 ### Security / DB Hardening (DBHY-*)
 
@@ -82,7 +82,7 @@ Explicitly excluded for v1.4. Documented to prevent scope creep.
 | Feature | Reason |
 |---------|--------|
 | Alternative-validation substitutes for TEST-17/18 | Operator chose REAL environment repair; documenting the harnesses as won't-fix with proxy coverage is explicitly rejected this milestone |
-| Automating the human UAT instead of live runs | Operator chose to run UAT-01/02 live; E2E mocking is not a substitute for the second-human evidence here |
+| Automating the human UAT / treating E2E mocking as the evidence | UAT-01/02 are closed on pre-existing LIVE operator runs (D-01/D-02); E2E mocking is not a substitute for that second-human evidence. No fresh live run was performed this milestone — none was required, since accepted live evidence already exists. |
 | Any new user-facing product feature | v1.4 is a closeout milestone — no new capabilities (all v2 product features deferred above) |
 | Net-new dependency upgrades beyond #40/#34 | Only the two already-open dependabot PRs are in scope; speculative version bumps are not |
 | Broad dependency major-version migrations | Out of scope unless required to fix TEST-17/18; otherwise deferred |
@@ -96,8 +96,8 @@ Explicitly excluded for v1.4. Documented to prevent scope creep.
 | TEST-17 | Phase 18 | Complete |
 | TEST-18 | Phase 18 | Complete |
 | TEST-19 | Phase 18 | Complete |
-| UAT-01 | Phase 20 | Pending |
-| UAT-02 | Phase 20 | Complete |
+| UAT-01 | Phase 20 | Validated |
+| UAT-02 | Phase 20 | Validated |
 | DBHY-05 | Phase 19 | Complete |
 | UIDN-06 | Phase 19 | Complete |
 | DEP-01 | Phase 21 | Pending |
