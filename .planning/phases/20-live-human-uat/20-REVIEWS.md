@@ -15,6 +15,12 @@ cycles:
     plans_reviewed: [20-01-PLAN.md, 20-02-PLAN.md, 20-03-PLAN.md]
     reviewed_at: 2026-06-05T00:00:00Z
     high_concerns_raised: 2
+    high_concerns_resolved_next_cycle: 1
+  - cycle: 3
+    reviewers: [gemini, codex]
+    plans_reviewed: [20-01-PLAN.md, 20-02-PLAN.md, 20-03-PLAN.md]
+    reviewed_at: 2026-06-05T00:00:00Z
+    high_concerns_raised: 1
 ---
 
 # Cross-AI Plan Review — Phase 20: Live Human UAT
@@ -407,3 +413,120 @@ Both reviewers agree the **revised reconciliation strategy is sound** and that C
 4. Rewrite 20-02 Change 1 guard to scope-allow the specified `re_run` updates.
 5. Make the D-05 narrative-only exception explicit in 20-02's closure; consider promoting an optional current reproducible-UI screenshot to a mandatory light artifact.
 6. Confirm ROADMAP Phase 20 reflects 3 plans + Wave 2 and add a verify-phase audit note that STATE `Deferred Items` UAT rows are cleared at close.
+
+---
+
+# Cycle 3 Review
+
+> Reviewers: Gemini, Codex. Claude skipped (self-review excluded — running inside Claude Code). Cursor attempted but failed (account usage limit). CodeRabbit attempted but returned "No files found for review" — the working tree is clean and this is an unexecuted, documentation-only planning phase with no diff to review. The orchestrator independently verified both of Codex's HIGH claims against the live plan and `REQUIREMENTS.md` files before writing the consensus.
+
+## Gemini Review (Cycle 3)
+
+# Phase 20 Implementation Plan Review: Live Human UAT
+
+## Summary
+The plan is a high-quality, surgical documentation sweep designed to satisfy the v1.4 debt-zero mandate without requiring redundant live testing. It correctly identifies that the "human execution" requirement has already been met by past events and focuses on aligning the project's tracking artifacts (`03-UAT.md`, `04-UAT.md`, `REQUIREMENTS.md`, `ROADMAP.md`) with this reality. The "preserve history while superseding the rollup" strategy is effectively implemented across all three plans.
+
+## Strengths
+- **Adherence to Conventions:** Strictly follows the D-10/D-11 preserve-history convention — historical data rows are not rewritten.
+- **Surgical Accuracy:** Correctly distinguishes data rows from aggregate rollups; 20-02 identifies the actual `result: deferred` marker lives in the YAML frontmatter.
+- **Empirical Validation:** 20-01 verifies the exact current line numbers in `auth-helpers.ts` before citing them.
+- **Terminology Reconciliation:** Proactively addresses the "server-side vs. client-side" drift in REQUIREMENTS.md.
+- **Clean Dependency Management:** 20-03 correctly placed in Wave 2.
+
+## Concerns
+- **Verification Anchoring (LOW):** Success criteria rely on grep counts; executor must use the exact anchored patterns to avoid false positives.
+- **Manual Task Weight (LOW):** Multiple surgical string replacements in complex YAML/Markdown — any whitespace deviation could fail the replace.
+
+## Suggestions
+- Note any optional confirming screenshot path explicitly in 20-01-SUMMARY.md for a complete audit trail.
+- Cross-check the historical "13" vs current "8" unit-test count to confirm no tests were accidentally deleted.
+
+## Risk Assessment: LOW
+No executable code, schema, or infra changes. Primary risk is documentation inconsistency, well-mitigated by exhaustive success criteria. Debt-zero goal achieved.
+
+---
+
+## Codex Review (Cycle 3)
+
+The plan set is directionally sound: it correctly pivots Phase 20 from fresh live UAT to reconciliation of existing live PASS evidence, keeps edits in planning markdown, and adds a needed 20-03 tracking closeout. Main risks are audit accuracy and internal documentation consistency, not app/security/performance.
+
+### 20-01-PLAN.md
+**Concerns**
+- **HIGH:** Migration language too broad — migration 14 includes `handle_new_user`, which fires from the `auth.users` trigger and is not necessarily "reached only after a successful member check." The safe claim is narrower.
+- **MEDIUM:** Records a git-log finding but does not require running `git log` during execution.
+- **LOW:** Narrative-only evidence wording should avoid implying a literal screenshot exists.
+
+**Risk Assessment: MEDIUM** — operational risk low, but the migration-order overclaim could undermine the audit basis if copied into 03-UAT.md.
+
+### 20-02-PLAN.md
+**Concerns**
+- **MEDIUM:** Change 1 says "Do NOT change re_run block contents" but later steps intentionally edit `re_run.results` / `re_run.followups` — instruction conflict.
+- **MEDIUM:** UAT-02 evidence remains weaker than UAT-01 (no precise timestamp, no screenshot).
+- **LOW:** No verification command for the current 8-test count.
+- **LOW:** Grepping only `Test 6a still pending` could miss other stale wording.
+
+**Risk Assessment: LOW to MEDIUM** — intended edits are safe; the contradictory `re_run` instruction should be cleaned up.
+
+### 20-03-PLAN.md
+**Concerns**
+- **HIGH:** Append-only edits may leave contradictions in `REQUIREMENTS.md` — lines saying UAT was "executed live by the operator this milestone" and that alternatives to live runs are out of scope. Since the decision changed to accepting pre-existing live evidence, those global lines should be rewritten, not merely annotated.
+- **MEDIUM:** `ROADMAP.md` says Phase 20 has `2 plans` / `0/2`; adding 20-03 requires `3 plans` / `0/3` plus a Wave 2 entry.
+- **MEDIUM:** Checkbox ownership ambiguous (this plan vs phase-close workflow).
+- **MEDIUM:** Add a phase-close verification note that STATE.md no longer carries UAT-01/02 as open.
+
+**Risk Assessment: MEDIUM** — necessary plan, but appending closure notes without removing stale global wording/counts leaves the milestone internally inconsistent during audit.
+
+---
+
+## Consensus Summary (Cycle 3)
+
+### Orchestrator verification of Codex's two HIGH claims
+
+| Codex HIGH | Plan/file checked | Verdict |
+|---|---|---|
+| **20-01 migration wording too broad** (migration 14 / `handle_new_user` not "post-member-check") | `20-01-PLAN.md` lines 65, 73, 117 | **ALREADY RESOLVED in the plan.** The current plan already states the narrow, correct claim verbatim: migration 14 hardens *multiple* SECURITY DEFINER functions (`profile_self_update_allowed, handle_new_user, is_current_user_admin, increment_vote_count, validate_vote_choice, update_profile_after_auth`) — "all DB-side functions reached only AFTER a successful member check" — and the load-bearing point is the narrow one ("the non-member rejection branch returns and signs out BEFORE any post-success DB-side RPC runs"). The plan even explicitly warns: *"Do NOT claim the migrations 'only touch update_profile_after_auth' — that is factually too broad."* This is the Cycle-2 HIGH already fixed; Codex re-flagged it because it reviewed context-free. The `handle_new_user` nuance Codex raises does not break the plan's claim — the plan never asserts these functions are post-member-check *exclusively from the OAuth callback*; it asserts the **non-member rejection path** never reaches them, which is correct. **NOT counted.** |
+| **20-03 append-only leaves REQUIREMENTS.md contradiction** | `20-03-PLAN.md` Change 3 (lines 90–95) + live `REQUIREMENTS.md` lines 14, 30, 85, 99–100 | **CONFIRMED REAL / UNRESOLVED.** The plan's Change 3 only *appends* a closure clause to the UAT-01/02 bullets. It does not touch line 14 ("Human UAT items = executed live by the operator this milestone"), line 30 ("Executed live by the operator this milestone with the required test accounts"), or the Out-of-Scope row at line 85 ("Operator chose to run UAT-01/02 live; E2E mocking is not a substitute"). After execution REQUIREMENTS.md would simultaneously read "executed live this milestone" AND "closed by accepting the 2026-05-03 pre-existing PASS (no fresh run)" — a genuine internal contradiction a debt-zero audit would flag. **Counted as the one remaining HIGH.** |
+
+### Agreed Strengths (both reviewers)
+- Correct phase framing — reconciliation of pre-existing live PASS evidence, not re-execution.
+- Preserve-history + rollup-supersede convention honored across all three plans.
+- Anchored grep checks now avoid blockquote false positives.
+- 20-01 empirically re-verifies `auth-helpers.ts` line numbers before citing them.
+- Documentation-only, null executable surface → low operational/security risk.
+
+### Agreed / Confirmed Concerns
+
+**HIGH (1 remaining, confirmed by orchestrator verification)**
+1. **20-03 append-only edits leave a REQUIREMENTS.md internal contradiction (UNRESOLVED).** Change 3 appends a "closed by accepting pre-existing evidence (no fresh run)" clause but leaves the global "executed live by the operator this milestone" framing (REQUIREMENTS.md lines 14, 30) and the Out-of-Scope "Operator chose to run UAT-01/02 live" row (line 85) intact. Raised by Codex (HIGH); independently verified true against the live file. **Fix:** rewrite the global framing lines (14, 30, 85) to reflect the operator-locked pivot — "accepting pre-existing live evidence per D-01/D-02" — instead of only appending a clause beneath the unchanged "executed live this milestone" wording.
+
+**Resolved since Cycle 2**
+- **20-01 migration premise too broad — NOW RESOLVED.** Cycle-2 HIGH; the plan now states the narrow, factually-correct migration basis and explicitly forbids the over-broad claim. Codex re-raised it context-free in Cycle 3, but the live plan text already contains the exact fix. Re-verified at 20-01-PLAN.md lines 65/73/117.
+- **20-02 `grep -c "deferred: 0"` false-fail — NOW RESOLVED.** Cycle-2 HIGH; not re-raised this cycle. Re-verified the 20-02 acceptance criteria no longer assert the bad count.
+
+**MEDIUM**
+2. **ROADMAP plan-count staleness (Codex).** ROADMAP.md still says Phase 20 = `2 plans` (line 165) and `0/2` (line 195); the 20-03 plan does not update these to `3 plans` / `0/3` or add a Wave 2 entry. Verified true against ROADMAP.md.
+3. **20-02 Change 1 guard self-contradictory (Codex).** "Do NOT change re_run block contents" conflicts with the intended `re_run.results` / `re_run.followups` edits. Reword the guard to scope-allow the specified updates.
+4. **Checkbox / STATE ownership (Codex).** Clarify whether 20-03 or the phase-close workflow flips plan checkboxes, and add a verify-phase note confirming STATE.md no longer carries UAT-01/02 as open.
+
+**LOW**
+5. **D-05 narrative-only artifact exception (Gemini LOW / Codex LOW).** UAT-02 lacks a precise timestamp/screenshot; keep the D-05 exception explicit and avoid wording that implies a literal screenshot exists.
+6. **Grep/manual-edit fragility (Gemini LOW).** Use the exact anchored patterns and exact target strings to avoid replace-tool failures.
+
+### Divergent Views
+- **Overall readiness.** Gemini: LOW / approved, proceed. Codex: MEDIUM, two HIGHs before execution. Orchestrator verification splits Codex's two HIGHs: the 20-01 migration HIGH is already fixed in the plan (NOT counted); the 20-03 REQUIREMENTS contradiction is real and UNRESOLVED (counted). Net: **1 remaining HIGH**.
+
+### Recommended actions before execution (Cycle 3)
+1. **(HIGH)** In 20-03, rewrite REQUIREMENTS.md global framing — line 14 ("executed live by the operator this milestone"), line 30 (same), and the Out-of-Scope row at line 85 — to reflect the operator-locked accept-pre-existing-evidence pivot (D-01/D-02), instead of only appending a closure clause to the UAT-01/02 bullets. This closes the internal contradiction a debt-zero audit would catch.
+2. **(MEDIUM)** Have 20-03 update ROADMAP.md Phase 20 to `3 plans` / `0/3` and add a Wave 2 entry.
+3. **(MEDIUM)** Reword the 20-02 Change 1 guard to scope-allow the specified `re_run` updates.
+4. **(MEDIUM)** Clarify plan-checkbox ownership and add a verify-phase note that STATE.md UAT-01/02 entries are cleared at close.
+5. **(LOW)** Keep the D-05 narrative-only exception explicit; add the optional `git log` / 8-test verification commands Codex suggested.
+
+### Cycle 2 → Cycle 3: status of prior HIGH concerns
+| Cycle 2 HIGH | Status in Cycle 3 |
+|---|---|
+| 20-01 migration premise too broad | **FULLY RESOLVED** — plan now states the narrow correct basis and forbids the broad claim (20-01-PLAN.md lines 65/73/117). |
+| 20-02 `grep -c "deferred: 0"` false-fail | **FULLY RESOLVED** — not re-raised; acceptance criteria corrected. |
+
+**Net remaining HIGH after Cycle 3: 1** (the 20-03 REQUIREMENTS.md global-wording contradiction).
