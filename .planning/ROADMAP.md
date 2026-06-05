@@ -166,7 +166,7 @@ Plans:
 Plans:
 **Wave 1** *(both plans are independent — run in parallel)*
 
-- [ ] 20-01-PLAN.md — Record D-03 acceptance basis in 03-UAT.md and reconcile skipped: 2 rollup (UAT-01)
+- [x] 20-01-PLAN.md — Record D-03 acceptance basis in 03-UAT.md and reconcile skipped: 2 rollup (UAT-01)
 - [ ] 20-02-PLAN.md — Formalize Off-Record Verification PASS in 04-UAT.md and clear deferred: 1 rollup (UAT-02)
 
 ### Phase 21: Dependency Hygiene
@@ -192,7 +192,7 @@ Plans:
 | 17. Planning-Doc + UI Hygiene Sweep | 2/2 | Complete    | 2026-05-30 |
 | 18. Test-Environment Repair | 3/3 | Complete    | 2026-06-02 |
 | 19. DB Migration + A11y Restore | 3/3 | Complete    | 2026-06-03 |
-| 20. Live Human UAT | 0/2 | Not started | - |
+| 20. Live Human UAT | 1/3 | In Progress|  |
 | 21. Dependency Hygiene | 0/TBD | Not started | - |
 
 | Milestone | Phases | Plans | Status | Shipped |
