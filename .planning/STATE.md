@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Final Closeout
 status: executing
-stopped_at: Completed Phase 20 Plan 03 — UAT-01/02 Validated in REQUIREMENTS.md + ROADMAP Phase 20 closure annotations
+stopped_at: Phase 20 complete and verified — UAT-01/02 Validated, debt-zero (branch gsd/phase-20-live-human-uat)
 last_updated: "2026-06-05T19:46:39.954Z"
 last_activity: 2026-06-05
 progress:
@@ -21,18 +21,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-31 after v1.3 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** Phase 20 — live-human-uat
+**Current focus:** Phase 20 complete — next Phase 21 (dep hygiene)
 
 ## Current Position
 
-Phase: 20 (live-human-uat) — EXECUTING
-Plan: 3 of 3
-Status: Ready to execute
+Phase: 20 (live-human-uat) — COMPLETE
+Plan: 3 of 3 complete
+Status: Phase 20 verified (gsd-verifier 7/7 must-haves) — UAT-01/02 Validated, debt-zero. Next: Phase 21 (dep hygiene).
 Last activity: 2026-06-05
 
 ```
 [Phase 18] [Phase 19] [Phase 20] [Phase 21]
-[  0%    ] [  0%    ] [  0%    ] [  0%    ]
+[ 100%   ] [ 100%   ] [ 100%   ] [   0%   ]
 ```
 
 ## Performance Metrics
@@ -78,9 +78,9 @@ v1.3 decisions are now in the canonical PROJECT.md Key Decisions table (10 v1.3 
 - UAT-01/02 = executed live by the operator with real accounts; E2E mocking is not a substitute
 - [Phase ?]: CLI v2.102.0 resolved as single pin for all four locations; edge-runtime v1.74.0 confirmed via docker ps
 - [Phase 18-03]: Title-scoped fault rows (fault_title = poll title token) replace global wildcard UUID — concurrent files unaffected; audit-only poll-id resolution via poll_created row target_id for absent-poll branches; fileParallelism: false for defense-in-depth serialization; fail-closed guard via \set ON_ERROR_STOP on + CI -v ON_ERROR_STOP=1
-- [Phase ?]: Change 0 (## Current Test annotation) is a current-status note, NOT a D-04 historical result: row — updated to Phase 20 closure note
-- [Phase ?]: UAT-02 reconciled: both historical non-pass rows carry SEPARATE resolution pointers; § UAT-02 Phase 20 Closure section added with D-02/D-05 rationale and unit-test count 8
-- [Phase ?]: REQUIREMENTS.md: UAT-01/02 flipped to Validated; global this-milestone framing rewritten to D-01/D-02 pivot; ROADMAP.md Phase 20 updated to 3 plans with Wave 2 entry
+- [Phase 20]: Change 0 (## Current Test annotation) is a current-status note, NOT a D-04 historical result: row — updated to Phase 20 closure note
+- [Phase 20]: UAT-02 reconciled: both historical non-pass rows carry SEPARATE resolution pointers; § UAT-02 Phase 20 Closure section added with D-02/D-05 rationale and unit-test count 8
+- [Phase 20]: REQUIREMENTS.md: UAT-01/02 flipped to Validated; global this-milestone framing rewritten to D-01/D-02 pivot; ROADMAP.md Phase 20 updated to 3 plans with Wave 2 entry
 
 ### Blockers/Concerns
 
@@ -97,8 +97,8 @@ Items from v1.3 now absorbed into v1.4 scope (no longer deferred — must be res
 | test_completeness | Fault-injection gap in create-poll-results-hidden.test.ts | TEST-19 | 18 ✓ DONE |
 | db_hardening | `profile_self_update_allowed` current_user gate (Option b: session GUC) | DBHY-05 | 19 |
 | a11y | Two `<h2>` headings demoted to CardTitle `<div>` (17-REVIEW.md WR-01) | UIDN-06 | 19 |
-| uat_gaps | Phase 03 UAT tests 2+3 (non-member tester, 2FA on) | UAT-01 | 20 |
-| uat_gaps | Phase 04 UAT 6a (second-admin demote click flow) | UAT-02 | 20 |
+| uat_gaps | Phase 03 UAT tests 2+3 (non-member tester, 2FA on) | UAT-01 | 20 ✓ DONE |
+| uat_gaps | Phase 04 UAT 6a (second-admin demote click flow) | UAT-02 | 20 ✓ DONE |
 | dep_hygiene | Dependabot PR #40 (15-package minor+patch group) | DEP-01 | 21 |
 | dep_hygiene | Dependabot PR #34 (lint-staged 16→17) | DEP-02 | 21 |
 
@@ -107,8 +107,8 @@ Items from v1.3 now absorbed into v1.4 scope (no longer deferred — must be res
 ## Session Continuity
 
 Last session: 2026-06-05T19:46:39.949Z
-Stopped at: Completed Phase 20 Plan 03 — UAT-01/02 Validated in REQUIREMENTS.md + ROADMAP Phase 20 closure annotations
-Resume action: Execute Phase 19 (db-hardening-a11y-sweep)
+Stopped at: Phase 20 complete and verified (UAT-01/02 Validated, debt-zero) on branch gsd/phase-20-live-human-uat
+Resume action: Execute Phase 21 (dep hygiene — DEP-01/DEP-02), the final v1.4 phase
 
 ## Operator Next Steps
 
