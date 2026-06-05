@@ -2,7 +2,19 @@
 phase: 20
 reviewers: [gemini, codex, cursor]
 reviewed_at: 2026-06-05T00:00:00Z
-plans_reviewed: [20-01-PLAN.md, 20-02-PLAN.md]
+plans_reviewed: [20-01-PLAN.md, 20-02-PLAN.md, 20-03-PLAN.md]
+cycles:
+  - cycle: 1
+    reviewers: [gemini, codex, cursor]
+    plans_reviewed: [20-01-PLAN.md, 20-02-PLAN.md]
+    reviewed_at: 2026-06-05T00:00:00Z
+    high_concerns_raised: 2
+    high_concerns_resolved_next_cycle: 2
+  - cycle: 2
+    reviewers: [gemini, codex]
+    plans_reviewed: [20-01-PLAN.md, 20-02-PLAN.md, 20-03-PLAN.md]
+    reviewed_at: 2026-06-05T00:00:00Z
+    high_concerns_raised: 2
 ---
 
 # Cross-AI Plan Review — Phase 20: Live Human UAT
@@ -237,3 +249,161 @@ The orchestrator independently re-ran every disputed grep against the live files
 4. Correct the "13 unit tests" reference to 8 in PLAN 20-02 Change 5.
 5. Add an explicit D-05 narrative-artifact paragraph to 20-01 Task 2 and 20-02 closure; reconcile "server-side" vs "client-side" gate terminology in the 03-UAT.md acceptance basis.
 6. Add a follow-on step (20-03 or phase verification) to flip `REQUIREMENTS.md`/`STATE.md`/`ROADMAP.md` to Validated, and add `20-0X-SUMMARY.md` to `files_modified`.
+
+---
+---
+
+# Cross-AI Plan Review — Phase 20 (Cycle 2)
+
+> Reviewers this cycle: **Gemini, Codex**. Claude skipped (review runs inside Claude Code — self-review excluded for independence). **Cursor** was attempted but failed (Pro usage limit hit — empty output); excluded from consensus. **CodeRabbit** not invoked: the working tree is clean (no diff) and this is an unexecuted documentation-only planning phase.
+>
+> This cycle re-reviews the **revised** plan set after Cycle 1, which now includes the new **20-03-PLAN.md** (milestone-closure plan) and incorporates Cycle 1 fixes. The orchestrator independently re-verified every disputed claim against the live `03-UAT.md` / `04-UAT.md` files and the actual migration SQL before writing the consensus.
+
+## Cycle 1 → Cycle 2: status of prior HIGH concerns
+
+Both prior-cycle HIGHs are **FULLY RESOLVED** in the current plans (independently re-verified):
+
+| Cycle 1 HIGH | Fix landed | Verification |
+|--------------|-----------|--------------|
+| Grep acceptance criteria false-fail (`result: skipped`/`result: deferred` miscount vs blockquote prose) | Plans now use **anchored / blockquote-excluded** grep patterns; both reviewers this cycle explicitly note "anchored grep checks avoid false positives." | Confirmed — current plan greps are anchored; the unanchored=2 vs anchored=1 split is now documented as expected. |
+| 20-02 resolution pointer aimed at wrong row (`### 6` `result: partial` instead of frontmatter `result: deferred`) | 20-02 Change 3 now adds `resolution:` to **both** the frontmatter `re_run.results` test-6a `result: deferred` object **and** the `### 6` `result: partial` body row. | Confirmed in 20-02-PLAN.md (Output line + Change list). |
+
+## Gemini Review (Cycle 2)
+
+# Cross-AI Plan Review: Phase 20 — Live Human UAT
+
+## 1. Summary
+The plans for Phase 20 are exceptionally well-reasoned and demonstrate a high degree of "archaeological" precision. By correctly identifying that the required live evidence already exists historically, the plans pivot from redundant execution to high-fidelity reconciliation and "debt-zero" rollup. The approach is surgical, preserving historical records verbatim while satisfying modern v1.4 audit standards through additive resolution pointers and updated aggregate summaries.
+
+## 2. Strengths
+- **Rigorous History Preservation:** Adheres strictly to the `D-04`/`D-10`/`D-11` convention of never rewriting historical data rows, using additive `resolution:` pointers instead.
+- **Technical Depth (D-03):** 20-01-PLAN correctly anchors the UAT-01 acceptance on a code-level diff of the auth gate.
+- **Terminology Alignment:** 20-03-PLAN proactively reconciles the "server-side gate" vs. "client-side check" terminology drift in `REQUIREMENTS.md`.
+- **Artifact Completeness:** 20-03-PLAN ensures the "debt-zero" state is reflected globally in `REQUIREMENTS.md` and `ROADMAP.md`.
+- **Verification Rigor:** Anchored grep commands (`grep -c "^result: ..."`) prevent false positives from blockquote prose.
+
+## 3. Concerns
+- **Success Criteria Alignment (Artifacts) [LOW]:** ROADMAP Success Criterion 1 asks for a "screenshot or screen-recording reference." Plans (via `D-05`) argue historical screenshots are N/A but mention optionally supplementing with a current reproducible-UI screenshot. For a perfect audit these "optional" screenshots should arguably be mandatory light artifacts.
+- **Yaml/Markdown Formatting [LOW]:** 20-02 Task 1 appends a sibling key below a `re_run_evidence:` block — safe under standard sibling placement, but care needed if that block is a multi-line literal.
+
+## 4. Suggestions
+- Upgrade the "optional" current-UI screenshots (the `/auth/error?reason=not-in-server` page; the current `AdminsList` UI) to mandatory artifacts, satisfying the literal ROADMAP "screenshot" requirement without original test accounts.
+- Add an explicit `verify` task in 20-03 to confirm `STATE.md` `Deferred Items` is clear of UAT entries after the phase transition.
+
+## 5. Risk Assessment
+**Overall Risk: LOW.** Implementation is restricted to `.planning/` markdown — zero risk to app code, DB schema, or live environment. The primary clerical risk (YAML rollup counts) is mitigated by grep-based verification tasks. **Status: Approved** — proceed Wave 1 (20-01, 20-02) then Wave 2 (20-03).
+
+---
+
+## Codex Review (Cycle 2)
+
+**Summary**
+
+The Phase 20 plan set is directionally sound: it correctly treats this as evidence reconciliation rather than fresh live UAT, preserves historical rows, and adds closure artifacts across the UAT records plus milestone tracking. The main risk is not code/security, but audit integrity: a few verification checks and wording choices could either fail despite correct edits or leave canonical docs internally contradictory.
+
+### 20-01-PLAN.md
+
+**Strengths**
+- Good preservation model: keeps historical `result: skipped` rows and adds forward `resolution:` pointers.
+- Strong acceptance-basis structure: cites the auth gate, RPC ordering, error route, and post-run migrations.
+- Correctly handles the server-side/client-side terminology drift instead of pretending it does not exist.
+- Anchored grep checks avoid false positives from blockquotes.
+
+**Concerns**
+- **HIGH:** The migration premise is inaccurate. Migrations 14/15 do not "only alter `update_profile_after_auth` internals"; they also touch `profile_self_update_allowed` and other DB functions. The correct claim is narrower: those changes affect DB/RPC/trigger paths that non-members never reach because rejection happens before the RPC.
+- **MEDIUM:** The plan cites "unchanged since April/May" but does not explicitly require a `git log --since=2026-05-03 -- ...` verification in Task 1.
+- **MEDIUM:** Relying on narrative-only evidence is probably allowed by D-05, but it stretches the original "screenshot or screen-recording reference" criterion. Mark it explicitly as a D-05-accepted exception, not normal evidence parity.
+
+**Suggestions**
+- Replace "migrations 14 and 15 only alter `update_profile_after_auth` internals" with "migrations 14/15 alter DB-side profile-update/trusted-context functions reached only after a successful member check."
+- Add a required `git log --since=2026-05-03 -- src/lib/auth-helpers.ts ...` verification.
+- Cite the actual current anchor: non-member rejection at `auth-helpers.ts` ~lines 193-201, RPC starts ~line 209.
+
+**Risk Assessment: MEDIUM** — markdown-only, no runtime risk; audit risk medium because one acceptance-basis statement is factually too broad.
+
+### 20-02-PLAN.md
+
+**Strengths**
+- Correctly identifies the real `result: deferred` row in frontmatter and the separate `result: partial` body row.
+- Preserves historical evidence while making rollups debt-zero.
+- Handles stale "13 unit tests" carefully by preserving history but using the current count of 8 in the new closure section.
+- Good explicit D-05 paragraph for missing timestamp/screenshot.
+
+**Concerns**
+- **HIGH:** Acceptance criterion `grep -c "deferred: 0"` returning "at least 2" is likely wrong. The current file has only one `deferred:` aggregate. A correct edit produces exactly one `deferred: 0`.
+- **MEDIUM:** Change 1 says "Do NOT change ... re_run block contents," but later changes add a resolution and update a followup inside `re_run`. Internally contradictory.
+- **MEDIUM:** Narrative-only evidence is defensible under D-05, but UAT-02 is especially weak (no precise timestamp, no screenshot). Make the artifact exception very explicit.
+
+**Suggestions**
+- Change the `deferred: 0` criterion to expect exactly 1 unless the plan intentionally adds another aggregate field.
+- Rewrite the Change 1 guard to: "Do not change other frontmatter fields except the re_run updates specified below."
+- Optionally reference a current Admins-list/demote UI screenshot path if the operator captures one (non-blocking).
+
+**Risk Assessment: MEDIUM** — conceptually strong, but the bad grep expectation can cause a false failure during execution.
+
+### 20-03-PLAN.md
+
+**Strengths**
+- Correctly adds a Wave 2 artifact-close step after UAT records are reconciled.
+- Good dependency ordering: validates 20-01/20-02 closure sections before flipping requirement status.
+- Sensible STATE.md scope guard if the established workflow owns state transitions.
+- Catches an important gap: REQUIREMENTS/ROADMAP would otherwise still say UAT-01/02 are pending.
+
+**Concerns**
+- **MEDIUM:** "Append, do not delete original requirement text" may leave REQUIREMENTS.md saying the tests were "executed live by the operator this milestone" while also saying they were closed by accepting prior evidence. That remains contradictory.
+- **MEDIUM:** ROADMAP currently says Phase 20 has 2 plans; if 20-03 is added, explicitly bump to 3 and add a Wave 2 entry.
+- **MEDIUM:** Leaving STATE untouched is probably right procedurally, but a debt-zero audit may still find stale pending language there unless verify-phase reliably updates it.
+
+**Suggestions**
+- Reword the UAT section intro/bullets rather than only appending clauses — remove "this milestone" where it is no longer true.
+- Explicitly update ROADMAP Phase 20 to 3 plans and add `20-03-PLAN.md` under Wave 2.
+- Add a final verification note: STATE transition expected during verify-phase; audit must confirm no stale UAT Pending remains after phase close.
+
+**Risk Assessment: MEDIUM** — no code risk, but canonical tracking docs could remain inconsistent if wording is only appended.
+
+**Overall Risk: MEDIUM.** Plans achieve the phase goal in principle and are safe from a security/performance standpoint (planning markdown only). Remaining risk is evidence/audit quality: fix the migration wording, the faulty `deferred: 0` check, and the REQUIREMENTS/ROADMAP contradiction before execution.
+
+---
+
+## Consensus Summary (Cycle 2)
+
+Both reviewers agree the **revised reconciliation strategy is sound** and that Cycle 1's two HIGH issues are fixed. Risk remains concentrated in **documentation / audit-integrity precision**, not product or security (markdown-only, null executable surface). Gemini rates the set **LOW / Approved**; Codex rates it **MEDIUM** and surfaces two new HIGHs plus the REQUIREMENTS contradiction. The orchestrator independently verified all three of Codex's primary claims against the live files and **confirms the two new HIGHs are real**.
+
+### Orchestrator verification (re-run against live files)
+
+| Verified claim | Plan assertion | Actual today | Verdict |
+|----------------|----------------|--------------|---------|
+| 20-01: migrations 14/15 "only alter `update_profile_after_auth` internals" | only that one function | Migration 14 also alters `profile_self_update_allowed`, `handle_new_user`, `is_current_user_admin`, `increment_vote_count`, `validate_vote_choice` | **Plan WRONG** — premise factually too broad (HIGH) |
+| 20-02: `grep -c "deferred: 0"` "returns at least 2" | ≥2 | exactly **1** `deferred:` aggregate exists (04-UAT line 170) → correct edit yields exactly 1 | **Plan WRONG** — false-fail on correct execution (HIGH) |
+| REQUIREMENTS UAT-01/02 say "executed live by the operator this milestone"; operator table rejects "alternative-validation substitutes" | append "Validated" | wording still present at REQUIREMENTS lines 14/30/32/34/85; plans accept prior off-record evidence instead of fresh live runs | **Contradiction real** (MEDIUM) — append-only wording leaves doc internally inconsistent |
+
+### Agreed Strengths (both reviewers)
+- Correct phase framing — reconciliation/backfill, not re-execution (matches operator-locked CONTEXT).
+- D-04 verbatim-preserve + rollup-supersede honors history while clearing debt markers.
+- Anchored grep checks (the Cycle 1 fix) now avoid blockquote false positives.
+- 20-03 closes the milestone-tracking gap Cycle 1 flagged (REQUIREMENTS/ROADMAP flip).
+- Documentation-only, null executable surface → low operational/security risk.
+
+### Agreed / Confirmed Concerns
+
+**HIGH (new this cycle — both confirmed by orchestrator verification)**
+1. **20-01 migration premise is factually too broad (UNRESOLVED).** Task 1 + Implementation assert migrations 14/15 "only alter `update_profile_after_auth` internals." Migration 14 demonstrably hardens six functions including `profile_self_update_allowed`. Raised by Codex (HIGH); verified true. Fix: reword to "migrations 14/15 alter DB-side profile-update / trusted-context functions reached only after a successful member check — not the pre-RPC non-member rejection path."
+2. **20-02 `grep -c "deferred: 0"` expects ≥2 but a correct edit yields exactly 1 (UNRESOLVED).** Same false-fail class as the Cycle 1 grep bug, reintroduced in a new check. Raised by Codex (HIGH); verified true (only one `deferred:` aggregate at 04-UAT line 170). Fix: expect exactly 1, or anchor to the specific aggregate.
+
+**MEDIUM**
+3. **REQUIREMENTS/ROADMAP internal contradiction (Codex).** Append-only edits leave "executed live by the operator this milestone" alongside the accept-prior-evidence closure; the operator table explicitly rejects alternative-validation substitutes. Verified the wording is still present. Reword UAT-01/02 to reflect the operator-locked reconciliation pivot rather than only appending "Validated."
+4. **20-02 Change 1 guard is self-contradictory (Codex).** "Do NOT change re_run block contents" conflicts with later changes that add a resolution/followup inside `re_run`. Reword the guard to scope-allow the specified `re_run` updates.
+5. **Narrative-only artifact exception should be explicit, esp. UAT-02 (Gemini LOW / Codex MEDIUM).** UAT-02 lacks precise timestamp + screenshot; mark the D-05 exception unmistakably, and consider promoting an optional current reproducible-UI screenshot to a mandatory light artifact to satisfy ROADMAP SC-1 literally.
+6. **ROADMAP plan-count / STATE staleness (Codex MEDIUM).** Ensure ROADMAP Phase 20 reflects 3 plans + Wave 2, and that verify-phase reliably clears STATE `Deferred Items` UAT entries (20-03 already guards STATE editing to avoid double-ownership — acceptable, but add the audit-confirm note).
+
+### Divergent Views
+- **Overall readiness.** Gemini: LOW / Approved, proceed. Codex: MEDIUM, fix migration wording + `deferred: 0` check + REQUIREMENTS contradiction before execution. Orchestrator verification sides with Codex on the two HIGHs — they would either produce a factually wrong audit artifact (migration premise) or false-fail a correct execution (`deferred: 0`), so both should be fixed before execute.
+- **Screenshot/D-05 sufficiency.** Gemini treats it LOW; Codex elevates UAT-02's missing artifacts to MEDIUM. Both agree narrative-only is defensible for a non-reproducible historical event if explicitly documented.
+
+### Recommended actions before execution (Cycle 2)
+1. Reword 20-01 Task 1 + Implementation: migrations 14/15 alter post-success DB/RPC/trigger functions (not "only `update_profile_after_auth`"); the load-bearing claim is that non-members reject before the RPC.
+2. Fix 20-02 `grep -c "deferred: 0"` acceptance to expect exactly **1** (or anchor to the single aggregate line).
+3. Reword REQUIREMENTS.md UAT-01/02 (and ROADMAP) to reflect the operator-locked reconciliation pivot instead of appending "Validated" beneath "executed live this milestone."
+4. Rewrite 20-02 Change 1 guard to scope-allow the specified `re_run` updates.
+5. Make the D-05 narrative-only exception explicit in 20-02's closure; consider promoting an optional current reproducible-UI screenshot to a mandatory light artifact.
+6. Confirm ROADMAP Phase 20 reflects 3 plans + Wave 2 and add a verify-phase audit note that STATE `Deferred Items` UAT rows are cleared at close.
