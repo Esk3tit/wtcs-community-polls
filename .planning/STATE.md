@@ -2,7 +2,7 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Final Closeout
-status: "Phase 20 shipped — PR #46"
+status: "Phase 20 merged to main (PR #46) — next Phase 21"
 stopped_at: Phase 20 complete and verified (UAT-01/02 Validated, debt-zero) on branch gsd/phase-20-live-human-uat
 last_updated: "2026-06-05T20:13:56.359Z"
 last_activity: 2026-06-05
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-31 after v1.3 milestone)
 
 Phase: 20 (live-human-uat) — COMPLETE
 Plan: 3 of 3 complete
-Status: Phase 20 shipped — PR #46
+Status: Phase 20 merged to main (PR #46) — ready for Phase 21
 Last activity: 2026-06-05
 
 ```
@@ -99,7 +99,7 @@ Items from v1.3 now absorbed into v1.4 scope (no longer deferred — must be res
 | a11y | Two `<h2>` headings demoted to CardTitle `<div>` (17-REVIEW.md WR-01) | UIDN-06 | 19 |
 | uat_gaps | Phase 03 UAT tests 2+3 (non-member tester, 2FA on) | UAT-01 | 20 ✓ DONE |
 | uat_gaps | Phase 04 UAT 6a (second-admin demote click flow) | UAT-02 | 20 ✓ DONE |
-| dep_hygiene | Dependabot PR #40 (15-package minor+patch group) | DEP-01 | 21 |
+| dep_hygiene | Dependabot PR #44 (18-package minor+patch group; supersedes #40) | DEP-01 | 21 |
 | dep_hygiene | Dependabot PR #34 (lint-staged 16→17) | DEP-02 | 21 |
 
 **DBHY-05 remediation context (from v1.3 STATE.md):** Inside a `SECURITY DEFINER` trigger, `current_user` always resolves to the function owner — the `current_user = session_user` gate in `profile_self_update_allowed` cannot distinguish direct client UPDATEs from RPC-mediated UPDATEs. Option (b) selected: `update_profile_after_auth` sets an explicit trusted-context flag (session GUC) and `profile_self_update_allowed` checks that flag instead. This needs its own migration. The protected-column branch is likely dead code in practice (table-level RLS blocks direct client UPDATEs) — the regression test must prove the branch is reachable and correct.
