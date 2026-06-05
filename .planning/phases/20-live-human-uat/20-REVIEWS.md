@@ -27,6 +27,12 @@ cycles:
     plans_reviewed: [20-01-PLAN.md, 20-02-PLAN.md, 20-03-PLAN.md]
     reviewed_at: 2026-06-05T18:38:08Z
     high_concerns_raised: 2
+    high_concerns_resolved_next_cycle: 2
+  - cycle: 5
+    reviewers: [gemini, codex]
+    plans_reviewed: [20-01-PLAN.md, 20-02-PLAN.md, 20-03-PLAN.md]
+    reviewed_at: 2026-06-05T19:30:00Z
+    high_concerns_raised: 2
 ---
 
 # Cross-AI Plan Review — Phase 20: Live Human UAT
@@ -601,3 +607,77 @@ Codex rates 20-01 and 20-02 **HIGH until fixed**; 20-03 **LOW** (Cycle 3 HIGH re
 4. **(LOW)** Prefer a clean rewrite of the ROADMAP top-level Phase 20 line over an appended parenthetical.
 
 **Net remaining HIGH after Cycle 4: 2** (20-01 false `handle_new_user` migration premise; 20-02 unhandled `## Current Test` deferred-status line).
+
+---
+
+## Cycle 4 → Cycle 5: status of the prior HIGH concerns
+
+| Cycle 4 HIGH | Status in Cycle 5 | Verification |
+|---|---|---|
+| **20-01 acceptance-basis text encodes a false migration/path premise** (`handle_new_user` "reached only after a successful member check") | **FULLY RESOLVED** | 20-01-PLAN.md Task 1 (line 65), Task 2 Change 3 (line 119), Task 1 `<done>` (line 84), and success criteria (line 181) now explicitly FORBID the over-broad claim and instruct the narrow true statement: non-members never reach the `update_profile_after_auth` RPC; `handle_new_user` is a signup-time, behavior-identical `search_path`-hardening rewrite that fires `AFTER INSERT ON auth.users` before the guild check, NOT a post-member-check function. The plan cites "review HIGH #1 — Cycle 4" inline. Orchestrator re-verified against live migration 14 (`handle_new_user` at line 28 of 6 hardened functions) and `00000000000002_triggers.sql:159-162` (`AFTER INSERT ON auth.users`). Both Gemini and Codex this cycle confirm RESOLVED. |
+| **20-02 leaves the `## Current Test` line 70 deferred-status annotation unhandled** | **FULLY RESOLVED** | 20-02-PLAN.md Change 0 (lines 73-78) now explicitly replaces the `## Current Test` line 70 annotation ("test 6a deferred until second admin signs in") with a Phase 20 closure note, backed by acceptance grep `grep -c "deferred until second admin"` returns 0 (lines 152, 164, 201). Orchestrator re-verified the live line 70 still carries the stale string (so the target is real) and that the plan correctly targets it as a current-status note, not a D-04 historical row. Both reviewers confirm RESOLVED. |
+
+**Both Cycle 4 HIGHs are FULLY RESOLVED in the Cycle 5 plans.**
+
+---
+
+> Reviewers: Gemini, Codex. Claude skipped (self-review excluded — running inside Claude Code). Cursor attempted but failed again (usage-limit — consistent with Cycles 2/3/4). CodeRabbit not invoked: the working tree is clean and this is an unexecuted, documentation-only planning phase with no diff to review. The orchestrator independently verified every grep-count claim against the live `ROADMAP.md` / `04-UAT.md` / plan files before writing the consensus.
+
+## Gemini Review (Cycle 5)
+
+Gemini assessed all three plans and concluded **all previously raised HIGH-severity concerns (Cycle 4 #1/#2 and Cycle 3 #3) are RESOLVED, and no new HIGH or MEDIUM was identified** — risk LOW, ready for execution.
+
+- **20-01:** Praises the narrow Migration-14 security claim, anchored greps, and the server-side/client-side terminology reconciliation. No concerns.
+- **20-02:** "Exhaustive sweep" of frontmatter, summary, followups, and body rows; correctly identifies the frontmatter `re_run.results` object as the primary deferred data row; corrects the stale 13→8 unit-test count. No concerns.
+- **20-03:** Rewrite-not-append on the three global lines; avoids STATE.md double-ownership; corrects Phase 20 plan counts and Wave structure. No concerns.
+
+Gemini's verdict: **LOW risk, no remaining HIGH or MEDIUM, ready for execution.** (Reviewed at higher altitude — did not execute the acceptance greps against the live files.)
+
+## Codex Review (Cycle 5)
+
+Codex confirms **both Cycle 4 HIGHs are RESOLVED** (20-01 migration claim now narrow and correct; 20-02 Change 0 clears the line-70 annotation), and independently verified 8 `it()` blocks in `demote-admin.test.ts` (matching the plan's corrected count). It then raises **new HIGH concerns confined to verification/acceptance greps** in 20-02 and 20-03 — the plans' own self-checks would false-fail on a correct execution:
+
+- **HIGH (20-03) — `grep -c "Plans\*\*: 3 plans"` expects 1 but is already impossible.** `ROADMAP.md` already contains two `**Plans**: 3 plans` lines (other phases at lines 125 and 143). After Phase 20 flips 2→3, the count becomes 3, not 1. Fix: scope the verifier to the Phase 20 section.
+- **HIGH (20-02) — `grep -c "UAT-02 Phase 20 Closure"` expects 1 but the plan writes the phrase 3+ times** (the section heading + the Change 0 Current Test note "See § ... + § UAT-02 Phase 20 Closure" + the 2a resolution pointer "§ UAT-02 Phase 20 Closure below"). Fix: anchor to `grep -c "^## UAT-02 Phase 20 Closure$"`.
+- **MEDIUM (20-02) — blockquote-excluded `grep "result: deferred" | grep -vc '^>'` expects 1** but Change 5's closure prose ("the archival `result: deferred` / `result: partial` rows are intentionally preserved") adds a second non-blockquote match. The plan's parallel ANCHORED check `grep -c "^      result: deferred$"` = 1 is robust; the blockquote-excluded variant is redundant and should be dropped.
+- **MEDIUM (20-03):** top-level Phase 20 ROADMAP entry is appended-to rather than cleanly rewritten (carry-over LOW/MEDIUM from Cycle 4).
+
+Codex rates 20-01 **LOW**, 20-02 **HIGH-as-written / LOW-after-verifier-fix**, 20-03 **HIGH-as-written / LOW-after-verifier-fix**.
+
+## Consensus Summary (Cycle 5)
+
+### Orchestrator verification of Codex's three new claims
+
+| Codex claim | Files checked | Verdict |
+|---|---|---|
+| **20-03 `grep -c "Plans\*\*: 3 plans"` expects 1, impossible** | live `ROADMAP.md` lines 125/143/165 | **CONFIRMED REAL / UNRESOLVED (HIGH).** Two pre-existing `**Plans**: 3 plans` lines already exist (lines 125, 143). After Phase 20's line 165 flips 2→3, the count is **3**, so the `= 1` acceptance criterion false-fails on a correct execution. Same false-fail class as Cycle 1. The accompanying progress-row check (`20. Live Human UAT | 0/3`) is correctly scoped, but the plan-count grep is not. **Counted.** |
+| **20-02 `grep -c "UAT-02 Phase 20 Closure"` expects 1, plan writes it 3+ times** | `20-02-PLAN.md` Change 0 (line 77), heading (line 129), 2a pointer (line 94) | **CONFIRMED REAL / UNRESOLVED (HIGH).** The plan instructs writing "§ UAT-02 Phase 20 Closure" into the Current Test closure note AND the 2a resolution pointer AND the section heading — a correct execution yields ≥3 matches, not 1. The `= 1` criterion false-fails. Fix: anchor to `^## UAT-02 Phase 20 Closure$`. **Counted.** |
+| **20-02 blockquote-excluded `result: deferred` grep expects 1, closure prose adds a match** | `20-02-PLAN.md` Change 5 (line 138) | **CONFIRMED REAL but MEDIUM (not counted as HIGH).** Change 5's success-criterion-3 clarification prose contains a non-blockquote `result: deferred` mention, so the blockquote-excluded variant would return 2. However, the plan ALSO carries the robust anchored check `grep -c "^      result: deferred$"` = 1, which correctly counts the single data row. The defect is a redundant secondary verifier, not a missing/incorrect data edit. Folded into the 20-02 verifier-fix action. |
+
+### Agreed Strengths (both reviewers)
+- Both Cycle 4 HIGHs (20-01 migration premise, 20-02 line-70 annotation) are fully and correctly resolved; the substantive documentation edits are sound across all three plans.
+- D-04 history preservation remains correct: both 04-UAT.md non-pass rows get separate forward pointers; no historical `result:` row is rewritten to pass.
+- 20-01's narrow Migration-14 claim is factually accurate (verified against live migration 14 + trigger wiring).
+- 20-03's rewrite-not-append of the three global REQUIREMENTS.md lines holds; the Cycle 3 contradiction stays resolved.
+- 20-02 corrects the stale 13→8 unit-test count (Codex independently verified 8 `it()` blocks).
+
+### Agreed / Confirmed Concerns
+
+**HIGH (2 new this cycle — both raised by Codex, both confirmed by orchestrator verification against the live files; Gemini reviewed at higher altitude and did not execute the greps)**
+1. **20-03 ROADMAP plan-count verifier false-fails (UNRESOLVED).** `grep -c "Plans\*\*: 3 plans"` expects 1, but two unrelated phases already match (ROADMAP lines 125/143); a correct Phase-20 edit yields 3. Fix: scope the grep to the Phase 20 section (e.g. `awk` the Phase 20 block, or check the specific line) and restate the expected count.
+2. **20-02 closure-phrase verifier false-fails (UNRESOLVED).** `grep -c "UAT-02 Phase 20 Closure"` expects 1, but the plan deliberately writes the phrase in the heading + Current Test note + 2a resolution pointer (≥3 matches). Fix: anchor to `grep -c "^## UAT-02 Phase 20 Closure$"` (the heading only).
+
+**MEDIUM**
+- **20-02 redundant blockquote-excluded `result: deferred` grep** would also false-fail (closure prose adds a non-blockquote match); the parallel anchored `^      result: deferred$` check is robust — drop or replace the redundant variant.
+- **20-03 top-level Phase 20 ROADMAP entry** appended-to rather than cleanly rewritten (carry-over).
+
+### Divergent Views
+- **Overall readiness.** Gemini: LOW / approved, no remaining HIGH/MEDIUM, proceed. Codex: two HIGH verifier defects before execution. Orchestrator verification sides with Codex — both grep claims are independently true against the live files and both would block a clean autonomous execution (the plans would fail their own acceptance checks even on a perfectly correct documentation edit). Net: **2 remaining HIGH.**
+
+### Recommended actions before execution (Cycle 5)
+1. **(HIGH)** In 20-03 Task 2, replace the unscoped `grep -c "Plans\*\*: 3 plans"` (expects 1) with a Phase-20-scoped check — e.g. extract the Phase 20 ROADMAP block first (`awk '/^### Phase 20:/{f=1} f; /^### Phase 21:/{exit}'`) and assert `**Plans**: 3 plans` appears once within it, or verify the specific line number. Restate the expected count accordingly.
+2. **(HIGH)** In 20-02, change the closure-section acceptance grep from `grep -c "UAT-02 Phase 20 Closure"` (expects 1) to the anchored heading-only form `grep -c "^## UAT-02 Phase 20 Closure$"` (expects 1), so the deliberate in-prose references to the section do not inflate the count.
+3. **(MEDIUM)** In 20-02, drop the blockquote-excluded `grep "result: deferred" | grep -vc '^>'` check (it will read 2 after the closure prose is added) and rely on the already-correct anchored `grep -c "^      result: deferred$"` = 1.
+4. **(MEDIUM)** In 20-03, prefer a clean rewrite of the top-level Phase 20 ROADMAP entry over an appended parenthetical.
+
+**Net remaining HIGH after Cycle 5: 2** (20-03 unscoped ROADMAP plan-count verifier false-fail; 20-02 unanchored `UAT-02 Phase 20 Closure` verifier false-fail). Both are acceptance-grep defects in the plans' self-checks — the substantive documentation edits are correct; the plans would false-fail their own verification on a correct execution unless the greps are scoped/anchored. The two Cycle 4 HIGHs are FULLY RESOLVED.
