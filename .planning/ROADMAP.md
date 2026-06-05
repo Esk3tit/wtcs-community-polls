@@ -78,7 +78,7 @@ Full v1.3 phase details (goals, plans, success criteria, wave structure) preserv
 
 - [x] **Phase 18: Test-Environment Repair** - Fix the two broken local test harnesses (ES256 edge-runtime bug, gotrue email config) and implement the deferred fault-injection test
 - [x] **Phase 19: DB Migration + A11y Restore** - Replace the undistinguishing `profile_self_update_allowed` gate with a session-GUC trusted-context flag and restore two `<h2>` semantic headings
-- [ ] **Phase 20: Live Human UAT** - Execute Phase 03 UAT tests 2+3 (non-member tester) and Phase 04 UAT 6a (second-admin demote) live with required accounts (closed by accepting the pre-existing live evidence; see 03/04-UAT.md closure sections — no fresh run this milestone)
+- [x] **Phase 20: Live Human UAT** - Execute Phase 03 UAT tests 2+3 (non-member tester) and Phase 04 UAT 6a (second-admin demote) live with required accounts (closed by accepting the pre-existing live evidence; see 03/04-UAT.md closure sections — no fresh run this milestone)
 - [ ] **Phase 21: Dependency Hygiene** - Review, validate, and merge dependabot PRs #40 (15-package group) and #34 (lint-staged 16→17)
 
 ## Phase Details

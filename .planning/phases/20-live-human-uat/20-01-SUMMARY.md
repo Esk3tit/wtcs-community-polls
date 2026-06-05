@@ -31,6 +31,7 @@ metrics:
   duration: "~3m (subagent interrupted by API overload after edit commit; SUMMARY + tracking finalized by orchestrator)"
   completed_date: "2026-06-05T19:40:00Z"
   tasks_completed: 2
+  tasks_total: 2
   files_created: 1
   files_modified: 1
 requirements:

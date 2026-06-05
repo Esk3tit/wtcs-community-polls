@@ -34,6 +34,7 @@ metrics:
   duration: "~5m"
   completed_date: "2026-06-05T00:00:00Z"
   tasks_completed: 1
+  tasks_total: 1
   files_created: 1
   files_modified: 1
 requirements:

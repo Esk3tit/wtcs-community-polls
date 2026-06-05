@@ -75,7 +75,7 @@ v1.3 decisions are now in the canonical PROJECT.md Key Decisions table (10 v1.3 
 **v1.4 operator decisions (locked at scoping):**
 
 - TEST-17/18 = REAL environment repairs (upgrade/config fix + harnesses actually run green), not alternative-validation substitutes
-- UAT-01/02 = executed live by the operator with real accounts; E2E mocking is not a substitute
+- UAT-01/02 = satisfied by pre-existing live operator runs (UAT-01 executed live 2026-05-03; UAT-02 during the v1.0→v1.1 transition), accepted this milestone per D-01/D-02 — live with real accounts, not E2E-mocked; no fresh run was performed this milestone
 - [Phase ?]: CLI v2.102.0 resolved as single pin for all four locations; edge-runtime v1.74.0 confirmed via docker ps
 - [Phase 18-03]: Title-scoped fault rows (fault_title = poll title token) replace global wildcard UUID — concurrent files unaffected; audit-only poll-id resolution via poll_created row target_id for absent-poll branches; fileParallelism: false for defense-in-depth serialization; fail-closed guard via \set ON_ERROR_STOP on + CI -v ON_ERROR_STOP=1
 - [Phase 20]: Change 0 (## Current Test annotation) is a current-status note, NOT a D-04 historical result: row — updated to Phase 20 closure note
