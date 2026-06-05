@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Final Closeout
 status: executing
-stopped_at: Phase 20 context gathered
-last_updated: "2026-06-05T19:41:43.071Z"
+stopped_at: Completed Phase 20 Plan 03 — UAT-01/02 Validated in REQUIREMENTS.md + ROADMAP Phase 20 closure annotations
+last_updated: "2026-06-05T19:46:39.954Z"
 last_activity: 2026-06-05
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 9
-  completed_plans: 8
-  percent: 50
+  completed_plans: 9
+  percent: 75
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-31 after v1.3 milestone)
 ## Current Position
 
 Phase: 20 (live-human-uat) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-06-05
 
@@ -64,6 +64,7 @@ Last activity: 2026-06-05
 | Phase 18 P02 | 6min | 1 tasks | 4 files |
 | Phase 18 P03 | 25min | 4 tasks | 4 files |
 | Phase 20 P02 | 5 | 1 tasks | 1 files |
+| Phase 20 P03 | 8m | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,7 @@ v1.3 decisions are now in the canonical PROJECT.md Key Decisions table (10 v1.3 
 - [Phase 18-03]: Title-scoped fault rows (fault_title = poll title token) replace global wildcard UUID — concurrent files unaffected; audit-only poll-id resolution via poll_created row target_id for absent-poll branches; fileParallelism: false for defense-in-depth serialization; fail-closed guard via \set ON_ERROR_STOP on + CI -v ON_ERROR_STOP=1
 - [Phase ?]: Change 0 (## Current Test annotation) is a current-status note, NOT a D-04 historical result: row — updated to Phase 20 closure note
 - [Phase ?]: UAT-02 reconciled: both historical non-pass rows carry SEPARATE resolution pointers; § UAT-02 Phase 20 Closure section added with D-02/D-05 rationale and unit-test count 8
+- [Phase ?]: REQUIREMENTS.md: UAT-01/02 flipped to Validated; global this-milestone framing rewritten to D-01/D-02 pivot; ROADMAP.md Phase 20 updated to 3 plans with Wave 2 entry
 
 ### Blockers/Concerns
 
@@ -104,8 +106,8 @@ Items from v1.3 now absorbed into v1.4 scope (no longer deferred — must be res
 
 ## Session Continuity
 
-Last session: 2026-06-05T19:41:34.508Z
-Stopped at: Phase 20 context gathered
+Last session: 2026-06-05T19:46:39.949Z
+Stopped at: Completed Phase 20 Plan 03 — UAT-01/02 Validated in REQUIREMENTS.md + ROADMAP Phase 20 closure annotations
 Resume action: Execute Phase 19 (db-hardening-a11y-sweep)
 
 ## Operator Next Steps

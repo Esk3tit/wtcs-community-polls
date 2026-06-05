@@ -172,7 +172,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 20-03-PLAN.md — Flip UAT-01/02 to Validated in REQUIREMENTS.md (rewrite the global "this milestone" framing per D-01/D-02) + ROADMAP closure annotations
+- [x] 20-03-PLAN.md — Flip UAT-01/02 to Validated in REQUIREMENTS.md (rewrite the global "this milestone" framing per D-01/D-02) + ROADMAP closure annotations
 
 ### Phase 21: Dependency Hygiene
 
@@ -197,7 +197,7 @@ Plans:
 | 17. Planning-Doc + UI Hygiene Sweep | 2/2 | Complete    | 2026-05-30 |
 | 18. Test-Environment Repair | 3/3 | Complete    | 2026-06-02 |
 | 19. DB Migration + A11y Restore | 3/3 | Complete    | 2026-06-03 |
-| 20. Live Human UAT | 2/3 | In Progress|  |
+| 20. Live Human UAT | 3/3 | Complete   | 2026-06-05 |
 | 21. Dependency Hygiene | 0/TBD | Not started | - |
 
 | Milestone | Phases | Plans | Status | Shipped |
