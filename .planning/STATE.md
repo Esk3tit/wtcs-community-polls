@@ -4,13 +4,13 @@ milestone: v1.4
 milestone_name: — Final Closeout
 status: executing
 stopped_at: Phase 20 context gathered
-last_updated: "2026-06-05T19:33:10.958Z"
-last_activity: 2026-06-05 -- Phase 20 execution started
+last_updated: "2026-06-05T19:41:43.071Z"
+last_activity: 2026-06-05
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 9
-  completed_plans: 6
+  completed_plans: 8
   percent: 50
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-05-31 after v1.3 milestone)
 ## Current Position
 
 Phase: 20 (live-human-uat) — EXECUTING
-Plan: 1 of 3
-Status: Executing Phase 20
-Last activity: 2026-06-05 -- Phase 20 execution started
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-06-05
 
 ```
 [Phase 18] [Phase 19] [Phase 20] [Phase 21]
@@ -63,6 +63,7 @@ Last activity: 2026-06-05 -- Phase 20 execution started
 | Phase 16 P07 | 10min | 2 tasks | 4 files |
 | Phase 18 P02 | 6min | 1 tasks | 4 files |
 | Phase 18 P03 | 25min | 4 tasks | 4 files |
+| Phase 20 P02 | 5 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,8 @@ v1.3 decisions are now in the canonical PROJECT.md Key Decisions table (10 v1.3 
 - UAT-01/02 = executed live by the operator with real accounts; E2E mocking is not a substitute
 - [Phase ?]: CLI v2.102.0 resolved as single pin for all four locations; edge-runtime v1.74.0 confirmed via docker ps
 - [Phase 18-03]: Title-scoped fault rows (fault_title = poll title token) replace global wildcard UUID — concurrent files unaffected; audit-only poll-id resolution via poll_created row target_id for absent-poll branches; fileParallelism: false for defense-in-depth serialization; fail-closed guard via \set ON_ERROR_STOP on + CI -v ON_ERROR_STOP=1
+- [Phase ?]: Change 0 (## Current Test annotation) is a current-status note, NOT a D-04 historical result: row — updated to Phase 20 closure note
+- [Phase ?]: UAT-02 reconciled: both historical non-pass rows carry SEPARATE resolution pointers; § UAT-02 Phase 20 Closure section added with D-02/D-05 rationale and unit-test count 8
 
 ### Blockers/Concerns
 
@@ -101,7 +104,7 @@ Items from v1.3 now absorbed into v1.4 scope (no longer deferred — must be res
 
 ## Session Continuity
 
-Last session: 2026-06-05T00:35:16.633Z
+Last session: 2026-06-05T19:41:34.508Z
 Stopped at: Phase 20 context gathered
 Resume action: Execute Phase 19 (db-hardening-a11y-sweep)
 

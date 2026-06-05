@@ -31,7 +31,7 @@ The two second-human-gated UAT items deferred since v1.0/v1.1. Executed live by 
 
 - [ ] **UAT-01**: Phase 03 UAT tests 2 + 3 executed live with a 2FA-on, non-WTCS-member Discord account (2FA must be ON so the gate clears and the non-member check fires). Evidence — non-member is correctly blocked at the server-side membership gate — recorded in the Phase 03 UAT record. Closes the "Phase 03 UAT tests 2+3" carry-forward.
 
-- [ ] **UAT-02**: Phase 04 UAT test 6a (demote-click flow) executed live with a second admin account. Evidence — demote action succeeds with the self-guard intact — recorded in the Phase 04 UAT record. Closes the "Phase 04 UAT 6a backfill" carry-forward.
+- [x] **UAT-02**: Phase 04 UAT test 6a (demote-click flow) executed live with a second admin account. Evidence — demote action succeeds with the self-guard intact — recorded in the Phase 04 UAT record. Closes the "Phase 04 UAT 6a backfill" carry-forward.
 
 ### Security / DB Hardening (DBHY-*)
 
@@ -97,7 +97,7 @@ Explicitly excluded for v1.4. Documented to prevent scope creep.
 | TEST-18 | Phase 18 | Complete |
 | TEST-19 | Phase 18 | Complete |
 | UAT-01 | Phase 20 | Pending |
-| UAT-02 | Phase 20 | Pending |
+| UAT-02 | Phase 20 | Complete |
 | DBHY-05 | Phase 19 | Complete |
 | UIDN-06 | Phase 19 | Complete |
 | DEP-01 | Phase 21 | Pending |
