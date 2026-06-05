@@ -21,6 +21,12 @@ cycles:
     plans_reviewed: [20-01-PLAN.md, 20-02-PLAN.md, 20-03-PLAN.md]
     reviewed_at: 2026-06-05T00:00:00Z
     high_concerns_raised: 1
+    high_concerns_resolved_next_cycle: 1
+  - cycle: 4
+    reviewers: [gemini, codex]
+    plans_reviewed: [20-01-PLAN.md, 20-02-PLAN.md, 20-03-PLAN.md]
+    reviewed_at: 2026-06-05T18:38:08Z
+    high_concerns_raised: 2
 ---
 
 # Cross-AI Plan Review — Phase 20: Live Human UAT
@@ -530,3 +536,68 @@ The plan set is directionally sound: it correctly pivots Phase 20 from fresh liv
 | 20-02 `grep -c "deferred: 0"` false-fail | **FULLY RESOLVED** — not re-raised; acceptance criteria corrected. |
 
 **Net remaining HIGH after Cycle 3: 1** (the 20-03 REQUIREMENTS.md global-wording contradiction).
+
+---
+
+# Cycle 4 Review
+
+> Reviewers: Gemini, Codex. Claude skipped (self-review excluded — running inside Claude Code). Cursor attempted but failed again (empty output — consistent with the Cycle 2/3 usage-limit failure). CodeRabbit not invoked: the working tree is clean and this is an unexecuted, documentation-only planning phase with no diff to review. The orchestrator independently verified both of Codex's HIGH claims against the live source/migration/UAT files before writing the consensus.
+>
+> This cycle re-reviews the plan set after the Cycle 3 fix landed (20-03 Change 3 now REWRITES the three contradictory global REQUIREMENTS.md lines rather than only appending a clause).
+
+## Cycle 3 → Cycle 4: status of the prior HIGH concern
+
+| Cycle 3 HIGH | Status in Cycle 4 | Verification |
+|---|---|---|
+| 20-03 append-only edits leave a REQUIREMENTS.md internal contradiction (global "executed live this milestone" lines ~14/~30/~85) | **FULLY RESOLVED** | 20-03-PLAN.md Change 3 (lines 101–125) now gives exact REWRITE replacement strings for all three global lines (~14/~30/~85), pivoting them to "satisfied by pre-existing live operator runs / no fresh run this milestone" per D-01/D-02. Both reviewers this cycle confirm the contradiction is removed; orchestrator re-verified the plan instructs a rewrite (not an append) and that the live REQUIREMENTS.md still carries the old wording only because the plan is unexecuted. |
+
+## Gemini Review (Cycle 4)
+
+Gemini assessed all three plans and concluded **all previously raised HIGH-severity concerns are resolved and no new HIGH was identified** — risk LOW, ready for execution.
+
+- **20-01:** Praises the narrow migration claim (forbids the over-broad wording), anchored greps, and D-04 compliance. One LOW: reliance on specific `auth-helpers.ts` line numbers (mitigated by the in-plan re-confirmation step).
+- **20-02:** "Highly robust" — correctly resolves both the frontmatter `result: deferred` data row and the `### 6` body `result: partial` row; acknowledges the 13→8 unit-test delta without altering historical text. No concerns raised.
+- **20-03:** Calls Change 3's rewrite of the three global lines a complete resolution of the Cycle 3 HIGH; praises the terminology alignment (Change 4) and ROADMAP synchronization. One LOW: the Wave 2 checkbox is left for execute-phase to flip (standard).
+
+Gemini's verdict: **LOW risk, no remaining HIGH, ready for execution.**
+
+## Codex Review (Cycle 4)
+
+Codex confirms the Cycle 3 REQUIREMENTS.md contradiction is resolved by 20-03 Change 3, but raises **two new HIGH concerns**:
+
+- **HIGH #1 — 20-01 migration/path claim around `handle_new_user` is false.** The plan's instructed acceptance-basis text (20-01-PLAN.md lines 73 and 117) says Migration 14/15's touched functions are "reached **only** AFTER a successful member check" and lists `handle_new_user` among them. But `handle_new_user` is wired `AFTER INSERT ON auth.users` (`00000000000002_triggers.sql:160`) and is rewritten by Migration 14 (`00000000000014_...sql:20/28`). It fires during OAuth user creation — **before** the client-side guild check in `auth-helpers.ts` — so it is *not* post-member-check. A first-time non-member's signup would trigger it before rejection.
+- **HIGH #2 — 20-02 misses the `## Current Test` deferred-status line.** `04-UAT.md:70` (under `## Current Test`) reads `[2026-04-25 re-run: 8 of 9 previously-blocked tests now pass on live prod; test 6a deferred until second admin signs in]`. 20-02-PLAN.md enumerates the markers it resolves (frontmatter `result_note`, the two "still pending" followups at ~52/~176, `re_run_partial` at ~174) but does **not** touch line 70. After a correct execution, `04-UAT.md` would still carry a current-status assertion that 6a is deferred — failing Phase 20 success criterion 3 and the debt-zero mandate. This is a current-status annotation, **not** a D-04-preserved historical `result:` row, so it must be updated.
+
+Codex rates 20-01 and 20-02 **HIGH until fixed**; 20-03 **LOW** (Cycle 3 HIGH resolved). Two LOWs: hard-coded "2026-06-04" closure date (decision vs execution date), and ROADMAP top-level line uses an appended parenthetical rather than a clean rewrite.
+
+## Consensus Summary (Cycle 4)
+
+### Orchestrator verification of Codex's two HIGH claims
+
+| Codex HIGH | Files checked | Verdict |
+|---|---|---|
+| **#1 — 20-01 `handle_new_user` "only after member check" claim is false** | `20-01-PLAN.md:73,117`; `00000000000002_triggers.sql:159-162`; `00000000000014_...sql:20,28`; `src/lib/auth-helpers.ts` (guild check at ~130, signOut on non-member, RPC after) | **CONFIRMED REAL / UNRESOLVED.** `handle_new_user` fires `AFTER INSERT ON auth.users` during OAuth user creation, which precedes the client-side guild check that rejects non-members. The plan's instructed wording contains a literally-false clause ("modify only DB-side functions reached AFTER a successful member check") AND lists `handle_new_user` under it. The *load-bearing* clause (non-members never reach the `update_profile_after_auth` RPC / post-success path) is true and sufficient — but the plan would still write the false clause into the 03-UAT.md audit artifact. For a debt-zero audit milestone whose purpose is an accurate trail, encoding a false premise is HIGH. **Distinction from Cycle 3:** in Cycle 3 the orchestrator ruled this NOT-counted because the *load-bearing* claim was narrow; Cycle 4 re-examined the **exact instructed text** and found the over-broad clause is still present verbatim and explicitly enumerates `handle_new_user`. Fix: drop "only…after a successful member check" as applied to the full list; state the narrow truth (non-members never reach the RPC / post-success functions; `handle_new_user` is a signup-time search_path-hardening rewrite that is behavior-identical and not the membership-rejection decision). |
+| **#2 — 20-02 misses `## Current Test` line 70** | `04-UAT.md:70`; `20-02-PLAN.md` (resolves lines 4/52/174/176, not 70) | **CONFIRMED REAL / UNRESOLVED.** Line 70 is a current-status annotation asserting "test 6a deferred until second admin signs in." 20-02 does not enumerate it among the markers it clears. A correct execution leaves a visible current-status deferred scenario, violating success criterion 3 ("no remaining pending or deferred scenarios") and the debt-zero mandate. It is not a D-04-preserved `result:` row, so updating it to a Phase 20 closure note is in-scope and required. Fix: add a 20-02 change updating line 70 to a Phase 20 closure note + an acceptance grep (`grep -c "test 6a deferred until second admin signs in"` returns 0). |
+
+### Agreed Strengths (both reviewers)
+- The Cycle 3 REQUIREMENTS.md contradiction is fully resolved by 20-03 Change 3's rewrite of the three global lines.
+- D-04 history preservation is correct: both non-pass rows in 04-UAT.md get separate forward pointers; no historical `result:` row is rewritten to pass.
+- Anchored / blockquote-excluded greps avoid the Cycle 1 false-fail class.
+- Server-side vs client-side terminology is reconciled across 03-UAT.md and REQUIREMENTS.md.
+
+### Agreed Concerns (2+ reviewers — highest priority)
+
+**HIGH (2 new this cycle — both raised by Codex, both confirmed by orchestrator verification; Gemini reviewed at higher altitude and did not surface either file-level specific)**
+1. **20-01 acceptance-basis text encodes a false migration/path premise (UNRESOLVED).** The instructed wording says Migration 14/15's functions — including `handle_new_user` — are "reached only after a successful member check"; `handle_new_user` is an `auth.users` signup trigger that fires before the non-member rejection. Fix: state only the narrow truth.
+2. **20-02 leaves the `## Current Test` line 70 deferred-status annotation unhandled (UNRESOLVED).** A correct execution still leaves "test 6a deferred until second admin signs in" in `04-UAT.md`, failing debt-zero success criterion 3. Fix: add a change + acceptance grep clearing line 70.
+
+### Divergent Views
+- **Overall readiness.** Gemini: LOW / approved, no remaining HIGH, proceed. Codex: two HIGHs before execution. Orchestrator verification sides with Codex — both claims are independently true against the live files and both would land an audit-integrity defect (a false premise in 03-UAT.md; a residual deferred scenario in 04-UAT.md) that a v1.4 debt-zero audit would flag. Net: **2 remaining HIGH.**
+
+### Recommended actions before execution (Cycle 4)
+1. **(HIGH)** In 20-01 Task 1/Task 2 (lines 73, 117), remove the clause asserting the full Migration-14 function list is "reached only after a successful member check." Replace with the narrow, true claim: non-members never reach the `update_profile_after_auth` RPC / post-success path; `handle_new_user` is a signup-time, behavior-identical search_path-hardening rewrite and is not the membership-rejection decision. Add a review note/grep ensuring the final 03-UAT.md text does not contain the over-broad phrasing.
+2. **(HIGH)** In 20-02, add a change updating `04-UAT.md` line 70 (`## Current Test` → "test 6a deferred until second admin signs in") to a Phase 20 closure note, plus an acceptance grep (`grep -c "test 6a deferred until second admin signs in"` returns 0).
+3. **(LOW)** Clarify whether the hard-coded "2026-06-04" closure date is the decision date or execution date (execution may land 2026-06-05).
+4. **(LOW)** Prefer a clean rewrite of the ROADMAP top-level Phase 20 line over an appended parenthetical.
+
+**Net remaining HIGH after Cycle 4: 2** (20-01 false `handle_new_user` migration premise; 20-02 unhandled `## Current Test` deferred-status line).
