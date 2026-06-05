@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Final Closeout
-status: executing
-stopped_at: Phase 20 complete and verified — UAT-01/02 Validated, debt-zero (branch gsd/phase-20-live-human-uat)
-last_updated: "2026-06-05T19:46:39.954Z"
+status: "Phase 20 shipped — PR #46"
+stopped_at: Phase 20 complete and verified (UAT-01/02 Validated, debt-zero) on branch gsd/phase-20-live-human-uat
+last_updated: "2026-06-05T20:13:56.359Z"
 last_activity: 2026-06-05
 progress:
   total_phases: 4
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-31 after v1.3 milestone)
 
 Phase: 20 (live-human-uat) — COMPLETE
 Plan: 3 of 3 complete
-Status: Phase 20 verified (gsd-verifier 7/7 must-haves) — UAT-01/02 Validated, debt-zero. Next: Phase 21 (dep hygiene).
+Status: Phase 20 shipped — PR #46
 Last activity: 2026-06-05
 
 ```
