@@ -1,7 +1,7 @@
 ---
 status: complete
-result: partial
-result_note: "14/15 functional cases pass; test 6a deferred — gated on second admin Discord ID (290377966251409410 / MapCommittee) signing in. Demote click flow source-tested via 13 unit tests in demote-admin.test.ts; live two-admin smoke pending. Accepted under v1.0 milestone audit (tech_debt) 2026-04-26."
+result: complete
+result_note: "15/15 functional cases pass; test 6a (live demote-admin click flow) backfilled via Off-Record Verification PASS by MapCommittee (Discord ID 290377966251409410) during v1.0→v1.1 transition. Formally closed Phase 20 (2026-06-04). See § Off-Record Verification."
 phase: 04-admin-panel-suggestion-management
 source:
   - .planning/phases/04-admin-panel-suggestion-management/04-01-SUMMARY.md
@@ -24,6 +24,7 @@ re_run:
     - test: 6a
       result: deferred
       reason: "Prod has only YES KiNG as a logged-in admin; second seeded admin (290377966251409410 / MapCommittee) has never signed in so has no profile and is invisible in the Admins list. Demote click flow cannot be exercised without a second real admin. User opted to defer until a teammate signs in (option 2). Demote logic itself is covered by 13 unit tests in demote-admin.test.ts + 04-VER source-analysis evidence."
+      resolution: "6a superseded by Off-Record Verification PASS (MapCommittee, Discord ID 290377966251409410, v1.0→v1.1 transition); Phase 20 closure 2026-06-04. See § Off-Record Verification + § UAT-02 Phase 20 Closure below."
     - test: 6b
       result: pass
       evidence: "Self-demote UI guard verified — Admins list shows YES KiNG row with 'You' tag and NO Demote button (D-06)."
@@ -49,7 +50,7 @@ re_run:
       result: pass
       evidence: "Voted poll 'Add Sweden to 10.3 bracket' (62 responses): kebab → Delete is DISABLED with tooltip 'Cannot delete after responses received.' Edit is also DISABLED with tooltip 'Cannot edit after responses received.' (D-17 + D-18 UI locks confirmed at runtime)."
   followups:
-    - "Test 6a still pending — second admin sign-in required."
+    - "Test 6a RESOLVED — Off-Record Verification PASS recorded (MapCommittee, v1.0→v1.1 transition); Phase 20 closure 2026-06-04. See § Off-Record Verification."
     - "Cleanup of fake admin_discord_ids '123456789012345678' (low priority — harmless)."
     - "7 leftover 'Test: …' polls in prod admin list from earlier ad-hoc testing — separate cleanup task."
 ---
@@ -67,7 +68,7 @@ If Edge Functions aren't deployed yet, runtime tests (4–14) will be blocked on
 
 ## Current Test
 
-[2026-04-25 re-run: 8 of 9 previously-blocked tests now pass on live prod; test 6a deferred until second admin signs in]
+[2026-04-25 re-run: 8 of 9 previously-blocked tests passed on live prod; test 6a (demote flow) RESOLVED — off-record MapCommittee PASS formalized via Phase 20 closure (2026-06-04), no fresh live run per D-02. See § Off-Record Verification + § UAT-02 Phase 20 Closure.]
 
 ## Tests
 
@@ -103,6 +104,7 @@ result: partial
 prior_blocked_by: prior-phase
 prior_reason: "demote-admin Edge Function not deployed to remote Supabase project. D-06 UI guard verifiable but runtime demote flow blocked on Phase 5 EF deployment."
 re_run_evidence: "2026-04-25: (b) Self-demote UI guard PASS — Admins list shows YES KiNG with 'You' tag and NO Demote button (D-06 verified). (a) DEFERRED — only YES KiNG is a logged-in admin in prod (second seeded admin 290377966251409410 has never signed in so has no profile and is invisible in the list). Demote click flow can't be exercised without a second real admin. User opted to defer until a teammate signs in. Demote logic itself covered by 13 unit tests in demote-admin.test.ts + 04-VER source-analysis."
+resolution: "Test 6 6a sub-case superseded by Off-Record Verification PASS (MapCommittee, v1.0→v1.1 transition); Phase 20 closure 2026-06-04. See § Off-Record Verification below. (6b self-demote guard already passed.)"
 
 ### 7. Create Suggestion — Full Form
 expected: From Admin Suggestions tab, click "Create suggestion" → navigates to `/admin/suggestions/new`. Fill in: Title "Test poll", Description "optional body", pick Yes/No preset (auto-fills 2 choices), pick 7-day timer preset, pick a category (or "Uncategorized"), upload an image (JPG/PNG/WebP ≤2MB — SVG rejected, oversized rejected with toast). Click Submit → redirects to admin list showing the new row with Active badge.
@@ -161,19 +163,19 @@ result: pass
 ## Summary
 
 total: 15
-passed: 14
-partial: 1
+passed: 15
+partial: 0
 issues: 0
 pending: 0
 skipped: 0
 blocked: 0
-deferred: 1
+deferred: 0
 
 re_run_at: 2026-04-25
 re_run_passed: 8
-re_run_partial: 1 (test 6 — 6b pass, 6a deferred to second-admin sign-in)
+re_run_partial: 0 (test 6 — both 6a and 6b pass; 6a backfilled via Off-Record Verification)
 re_run_remaining_followups:
-  - Test 6a (demote click flow) — awaits a second logged-in admin in prod.
+  - Test 6a RESOLVED — Off-Record Verification PASS (MapCommittee, v1.0→v1.1 transition); Phase 20 closure 2026-06-04.
   - Cleanup of fake admin_discord_ids '123456789012345678' from test 5b — harmless.
   - 7 leftover 'Test: …' polls in admin list from earlier ad-hoc testing — separate cleanup.
 
@@ -226,3 +228,17 @@ re_run_remaining_followups:
     a confirmation dialog; confirming removed MapCommittee from the admin list with a
     success toast — matching the expected behavior from UAT test 6 specification.
     Demote logic source-side coverage: 13 unit tests in `src/__tests__/admin/demote-admin.test.ts`.
+
+## UAT-02 Phase 20 Closure
+
+This section formally closes UAT-02 per Phase 20 (2026-06-04) decision D-02.
+
+The Off-Record Verification PASS by MapCommittee (Discord ID 290377966251409410) during the v1.0→v1.1 transition is accepted as satisfying UAT-02's "executed live with a real second admin account" requirement per the D-02 backfill decision. The no-fresh-run decision is D-02 (not D-01 — D-01 covers UAT-01).
+
+Source-side coverage: 8 unit tests (`it()` blocks) in `src/__tests__/admin/demote-admin.test.ts` as of the Phase 20 closure date. The historical evidence rows in § Off-Record Verification and in the re_run block cite "13 unit tests" — that figure is from the original deferral and is preserved verbatim per D-04 in those historical rows; the verified current count is 8.
+
+The off-record demote event has no precise UTC timestamp (only the v1.0→v1.1 transition window 2026-04-28 → 2026-05-07 is known from git/audit records) and no screenshot or screen-recording, because it was a historical off-record event that cannot be reconstructed after the fact. Per D-05, the narrative evidence and PASS verdict recorded in § Off-Record Verification is accepted as the lightest sufficient artifact. The operator may optionally attach a current confirming screenshot of the reproducible Admins-list/demote UI from their own admin session (D-06), but it is not required for closure.
+
+Regarding success criterion 3 (debt-zero): debt-zero applies to the Summary rollups and followups, both of which now read 0 for deferred and partial. The archival deferred-result row in the frontmatter re_run.results block (test 6a) and the partial-result row in the § Tests ### 6 body are intentionally preserved verbatim per D-04 and are NOT outstanding debt — they document historical state and each carries a resolution: forward pointer to this section and to § Off-Record Verification.
+
+UAT-02 is PASS. `04-UAT.md` carries no remaining deferred or pending scenarios in any aggregate or rollup.
