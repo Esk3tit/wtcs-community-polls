@@ -193,7 +193,7 @@ Plans:
 
 **Wave 2** *(PR #44 — depends on PR #34 merged first)*
 
-- [ ] 21-02-PLAN.md — Rebase, validate, and merge PR #44 (18-package minor+patch group, DEP-01)
+- [x] 21-02-PLAN.md — Rebase, validate, and merge PR #44 (18-package minor+patch group, DEP-01)
 
 ## Progress
 
@@ -206,7 +206,7 @@ Plans:
 | 18. Test-Environment Repair | 3/3 | Complete    | 2026-06-02 |
 | 19. DB Migration + A11y Restore | 3/3 | Complete    | 2026-06-03 |
 | 20. Live Human UAT | 3/3 | Complete   | 2026-06-05 |
-| 21. Dependency Hygiene | 1/2 | In Progress|  |
+| 21. Dependency Hygiene | 2/2 | Complete    | 2026-06-06 |
 
 | Milestone | Phases | Plans | Status | Shipped |
 |-----------|--------|-------|--------|---------|

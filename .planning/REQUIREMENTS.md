@@ -49,9 +49,9 @@ Continues from v1.3's UIDN-05.
 
 New category. The two open dependabot PRs surfaced by the completeness sweep — closing the door on lingering dependency-update debt for the final v1 milestone.
 
-- [ ] **DEP-01**: Dependabot PR #40 (minor-and-patch group, 15 updates) reviewed, CI-green (lint + typecheck + unit + E2E), and merged — or superseded by an equivalent up-to-date bump. No regressions in the build pipeline.
+- [x] **DEP-01**: Dependabot PR #40 (minor-and-patch group, 15 updates) reviewed, CI-green (lint + typecheck + unit + E2E), and merged — or superseded by an equivalent up-to-date bump. No regressions in the build pipeline.
 
-- [ ] **DEP-02**: Dependabot PR #34 (lint-staged 16 → 17) reviewed against the v17 breaking-change notes, the `lint-staged` config validated/updated for v17, CI-green, and merged.
+- [x] **DEP-02**: Dependabot PR #34 (lint-staged 16 → 17) reviewed against the v17 breaking-change notes, the `lint-staged` config validated/updated for v17, CI-green, and merged.
 
 ## v2 Requirements (deferred — NOT in v1.4)
 
@@ -100,8 +100,8 @@ Explicitly excluded for v1.4. Documented to prevent scope creep.
 | UAT-02 | Phase 20 | Validated |
 | DBHY-05 | Phase 19 | Complete |
 | UIDN-06 | Phase 19 | Complete |
-| DEP-01 | Phase 21 | Pending |
-| DEP-02 | Phase 21 | Pending |
+| DEP-01 | Phase 21 | Complete |
+| DEP-02 | Phase 21 | Complete |
 
 **Coverage:**
 - v1.4 requirements: 9 total
