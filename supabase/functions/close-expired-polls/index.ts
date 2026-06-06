@@ -19,6 +19,7 @@
 // "secret missing" state loud and visible.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
+import { Redis } from 'https://esm.sh/@upstash/redis@1.34.6'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { writeAudit } from '../_shared/audit.ts'
 
@@ -27,6 +28,29 @@ function json(body: unknown, status: number, cors: HeadersInit) {
     status,
     headers: { ...(cors as Record<string, string>), 'Content-Type': 'application/json' },
   })
+}
+
+// Upstash free-tier Redis is archived after extended inactivity. The rate
+// limiter (submit-vote) only touches Redis when someone votes, so during quiet
+// periods Redis gets zero traffic and Upstash flags it for archival. This daily
+// cron already keeps Supabase warm; piggyback a cheap self-expiring write so the
+// same daily run also keeps Redis warm. Best-effort and isolated: a keepalive
+// failure must never affect the poll-closing sweep or its response.
+async function keepUpstashWarm(): Promise<void> {
+  const url = Deno.env.get('UPSTASH_REDIS_REST_URL')
+  const token = Deno.env.get('UPSTASH_REDIS_REST_TOKEN')
+  if (!url || !token) {
+    console.warn('close-expired-polls: UPSTASH_REDIS_REST_URL/TOKEN not set — skipping Redis keepalive')
+    return
+  }
+  try {
+    const redis = new Redis({ url, token })
+    // 7-day TTL: the key self-expires long after the next daily run refreshes it,
+    // so a stuck cron never leaves a stale key around forever.
+    await redis.set('keepalive:close-expired-polls', new Date().toISOString(), { ex: 604800 })
+  } catch (err) {
+    console.warn('close-expired-polls: Upstash keepalive failed (non-fatal):', err)
+  }
 }
 
 Deno.serve(async (req) => {
@@ -44,6 +68,10 @@ Deno.serve(async (req) => {
   if (!providedSecret || providedSecret !== expectedSecret) {
     return json({ error: 'Unauthorized' }, 401, corsHeaders)
   }
+
+  // Runs on every authorized sweep — before the DB work and outside the sweep's
+  // try/catch — so Redis gets daily traffic regardless of the sweep's outcome.
+  await keepUpstashWarm()
 
   try {
     const supabaseAdmin = createClient(
