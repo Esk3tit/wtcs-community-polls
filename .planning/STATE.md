@@ -2,38 +2,33 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Final Closeout
-status: milestone_complete
-stopped_at: Milestone complete (Phase 21 was final phase)
-last_updated: 2026-06-06T15:37:05.912Z
-last_activity: 2026-06-06 -- Phase 21 execution started
+status: Awaiting next milestone
+stopped_at: Phase 21 context gathered
+last_updated: "2026-06-06T18:40:45.162Z"
+last_activity: 2026-06-06 — Milestone v1.4 completed and archived
 progress:
   total_phases: 4
-  completed_phases: 3
-  total_plans: 91
+  completed_phases: 4
+  total_plans: 11
   completed_plans: 11
-  percent: 75
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-31 after v1.3 milestone)
+See: .planning/PROJECT.md (updated 2026-06-06 after v1.4 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** Milestone complete
+**Current focus:** v1 line complete (debt-zero close at v1.4). No v1.5. Next milestone, if started, is the v2 product line (Discord webhooks, analytics dashboard, Turnstile) — not yet scoped. Start with `/gsd:new-milestone`.
 
 ## Current Position
 
-Phase: 21
-Plan: Not started
-Status: Milestone complete
-Last activity: 2026-06-06 - Completed quick task 260606-cff: Upstash Redis keepalive in close-expired-polls
-
-```
-[Phase 18] [Phase 19] [Phase 20] [Phase 21]
-[ 100%   ] [ 100%   ] [ 100%   ] [   0%   ]
-```
+Phase: Milestone v1.4 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-06-06 — Milestone v1.4 completed and archived
 
 ## Performance Metrics
 
@@ -95,30 +90,30 @@ v1.3 decisions are now in the canonical PROJECT.md Key Decisions table (10 v1.3 
 
 ## Deferred Items
 
-Items from v1.3 now absorbed into v1.4 scope (no longer deferred — must be resolved this milestone per debt-zero mandate):
+**All v1.4 carry-forwards RESOLVED at the v1.4 debt-zero close (2026-06-06).** Every item below reached Validated; the milestone audit closed `passed`.
 
-| Category | Item | v1.4 Req | Phase |
-|----------|------|-----------|-------|
-| test_env | Local ES256 bug (1.73.x edge-runtime) | TEST-17 | 18 |
-| test_env | TEST-11 12-cell vitest run (gotrue email config) | TEST-18 | 18 |
-| test_completeness | Fault-injection gap in create-poll-results-hidden.test.ts | TEST-19 | 18 ✓ DONE |
-| db_hardening | `profile_self_update_allowed` current_user gate (Option b: session GUC) | DBHY-05 | 19 |
-| a11y | Two `<h2>` headings demoted to CardTitle `<div>` (17-REVIEW.md WR-01) | UIDN-06 | 19 |
-| uat_gaps | Phase 03 UAT tests 2+3 (non-member tester, 2FA on) | UAT-01 | 20 ✓ DONE |
-| uat_gaps | Phase 04 UAT 6a (second-admin demote click flow) | UAT-02 | 20 ✓ DONE |
-| dep_hygiene | Dependabot PR #44 (18-package minor+patch group; supersedes #40) | DEP-01 | 21 |
-| dep_hygiene | Dependabot PR #34 (lint-staged 16→17) | DEP-02 | 21 |
+| Category | Item | v1.4 Req | Phase | Status |
+|----------|------|-----------|-------|--------|
+| test_env | Local ES256 bug (1.73.x edge-runtime) | TEST-17 | 18 | ✓ DONE |
+| test_env | TEST-11 12-cell vitest run (gotrue email config) | TEST-18 | 18 | ✓ DONE |
+| test_completeness | Fault-injection gap in create-poll-results-hidden.test.ts | TEST-19 | 18 | ✓ DONE |
+| db_hardening | `profile_self_update_allowed` current_user gate (session GUC) | DBHY-05 | 19 | ✓ DONE (Migration 15 live in prod) |
+| a11y | Two `<h2>` headings demoted to CardTitle `<div>` (17-REVIEW.md WR-01) | UIDN-06 | 19 | ✓ DONE |
+| uat_gaps | Phase 03 UAT tests 2+3 (non-member tester, 2FA on) | UAT-01 | 20 | ✓ DONE |
+| uat_gaps | Phase 04 UAT 6a (second-admin demote click flow) | UAT-02 | 20 | ✓ DONE |
+| dep_hygiene | Dependabot minor+patch group (PR #47, supersedes #44/#40) | DEP-01 | 21 | ✓ DONE |
+| dep_hygiene | Dependabot PR #34 (lint-staged 16→17) | DEP-02 | 21 | ✓ DONE |
 
-**DBHY-05 remediation context (from v1.3 STATE.md):** Inside a `SECURITY DEFINER` trigger, `current_user` always resolves to the function owner — the `current_user = session_user` gate in `profile_self_update_allowed` cannot distinguish direct client UPDATEs from RPC-mediated UPDATEs. Option (b) selected: `update_profile_after_auth` sets an explicit trusted-context flag (session GUC) and `profile_self_update_allowed` checks that flag instead. This needs its own migration. The protected-column branch is likely dead code in practice (table-level RLS blocks direct client UPDATEs) — the regression test must prove the branch is reachable and correct.
+**Accepted residual carried into the v2 line (not blocking):**
+- **T-19-07** — `update_profile_after_auth` still trusts caller-supplied `p_mfa_verified`/`p_guild_member` (computed client-side from Discord OAuth, not re-derived server-side). Pre-existing since Migration 02, not widened by Phase 19, no live users. Server-side re-validation (an Edge Function with the user's provider token) deferred to a future auth refactor. Documented in the function's `COMMENT ON FUNCTION` + `milestones/v1.4-phases/19-db-migration-a11y-restore/19-SECURITY.md`.
+- **vite 8.0.16** — held at 8.0.12; re-validate future vite bumps in a linux/amd64 container before merging (Linux-only `keepNames` sourcemap regression).
 
 ## Session Continuity
 
-Last session: 2026-06-06T00:58:54.589Z
-Stopped at: Phase 21 context gathered
-Resume action: Execute Phase 21 (dep hygiene — DEP-01/DEP-02), the final v1.4 phase
+Last session: 2026-06-06 — v1.4 milestone completion
+Stopped at: Milestone v1.4 archived and tagged
+Resume action: v1 line complete. Start the v2 product line with `/gsd:new-milestone` when ready.
 
 ## Operator Next Steps
 
-- Phase 18 complete — all 3 plans done (TEST-17, TEST-18, TEST-19 all green)
-- Phases execute in order: 19 → 20 → 21 (Phase 20 is human-executed; Phase 21 is independent of 19/20 but runs last to avoid merge conflict noise)
-- CI confirmation of 18-03 changes deferred to PR creation (ci.yml only triggers on PR/main push)
+- Start the next milestone with /gsd-new-milestone

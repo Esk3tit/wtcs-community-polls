@@ -1,5 +1,58 @@
 # Milestones
 
+## v1.4 — Final Closeout
+
+**Shipped:** 2026-06-06
+**Phases:** 18 → 21 (4 phases, 11 plans, 22 tasks)
+**Tag:** `v1.4`
+**Production URL:** https://polls.wtcsmapban.com (continuous since v1.0)
+**Known deferred items at close:** 0 blocking — debt-zero close achieved. One accepted in-code residual (T-19-07, caller-supplied `p_mfa_verified`/`p_guild_member`; pre-existing, deferred to a future auth refactor) and cosmetic items only (Phase 20 has no Nyquist VALIDATION.md — N/A for a code-free UAT phase; 6 SUMMARY `requirements-completed` frontmatter fields empty — confirmed satisfied via VERIFICATION + traceability). See [milestones/v1.4-MILESTONE-AUDIT.md](milestones/v1.4-MILESTONE-AUDIT.md).
+
+### Delivered
+
+The debt-zero closeout of the v1 line (operator mandate: "one and done — finish everything before it"). Every outstanding v1 carry-forward was resolved across four phases — local test-environment repair, a database security-gate migration, live-human-UAT closure, and dependency hygiene — with a hard debt-zero exit (no `tech_debt`/DEFER verdicts). The two broken local test harnesses were genuinely repaired (not documented as won't-fix with proxy coverage): a unified Supabase CLI pin closed the ES256 edge-runtime bug, and a gotrue config fix restored the TEST-11 12-cell RLS matrix as primary evidence. Migration 15 replaced a permanently-false privilege gate with a session-GUC trusted-context flag and shipped to production. **9 of 9 requirements satisfied; zero unsatisfied, zero orphaned.** No new product features — the final hygiene pass before the v1 line is closed.
+
+### Key Accomplishments
+
+1. **Test-environment repair (Phase 18, 3 plans)** — Unified all four Supabase CLI pins from divergent 2.92.1/2.98.2 to **2.102.0**, with `docker ps` confirming edge-runtime `v1.74.0` running — closing the 1.73.x ES256 JWT-verification bug so `npm run test:integration` runs green locally and in CI with no skips (TEST-17). Added an `[auth.email]` section to `config.toml` (`enable_signup=true` / `enable_confirmations=false`) fixing the `GOTRUE_EXTERNAL_EMAIL_ENABLED=false` default that caused `email_provider_disabled` errors, restoring the **TEST-11 12-cell RLS invariant vitest matrix** as the primary admin-RLS evidence (PR #43, TEST-18). Implemented the previously comment-only fault-injection branch in `create-poll-results-hidden.test.ts` via title-scoped `BEFORE UPDATE/DELETE` triggers on `polls` with try/finally disarm + audit-only poll-id resolution + fail-closed seed guard (`\set ON_ERROR_STOP on`, `fileParallelism: false`) — now 6 passed / 0 failed (TEST-19).
+
+2. **DB migration + a11y restore (Phase 19, 3 plans)** — Migration 15 (`00000000000015_trusted_profile_update_guc.sql`) replaces the permanently-false `current_user = session_user` check in `profile_self_update_allowed` — `current_user` always resolves to the function owner inside a `SECURITY DEFINER` trigger, so the original gate could never distinguish direct-client UPDATEs from RPC-mediated ones — with a **transaction-local GUC** (`set_config('app.trusted_profile_update', ..., is_local=true)`) set by `update_profile_after_auth`; null-safe `IS DISTINCT FROM 'on'` gate, `pg_catalog`-qualified built-ins under `search_path=''`, explicit REVOKE/GRANT EXECUTE (DBHY-05). Applied to **production** (advisor lint clean, `submit-vote` smoke round-trip unaffected); the integration test proves both gate directions (6/6, incl. an ordered RPC proof + GUC-leak guard). Restored the two `<h2>` section headings in `AdminsList` / `CategoriesList` by making shadcn `CardTitle` polymorphic via `asChild` / `Slot.Root` (same pattern as button.tsx/badge.tsx), replacing the Phase 17 `<div role="heading" aria-level={2}>` ARIA workaround with native `<h2>` (UIDN-06).
+
+3. **Live human UAT (Phase 20, 3 plans)** — Closed both second-human-gated UAT carry-forwards by **accepting pre-existing live operator evidence** per D-01/D-02, with the gate paths verified unchanged — no redundant re-testing. `03-UAT.md` reconciled to debt-zero (`skipped: 0` / `passed: 6`) with a new § UAT-01 Acceptance Basis recording the D-03 gate-path-unchanged rationale for the 2026-05-03 second-human PASS (UAT-01). `04-UAT.md` reconciled (`result: complete`, `passed: 15 / deferred: 0`) with a new § UAT-02 Phase 20 Closure formalizing the Off-Record Verification PASS (MapCommittee, v1.0→v1.1 transition) (UAT-02). REQUIREMENTS.md UAT-01/02 flipped to Validated and three contradictory "executed live this milestone" framings rewritten to the accept-pre-existing-evidence pivot.
+
+4. **Dependency hygiene (Phase 21, 2 plans)** — lint-staged 16.4.0 → 17.0.7 validated against v17 breaking-change notes (CI + local build + v17 pre-commit hook test) and merged via PR #34 (DEP-02). The minor+patch dependabot group merged **17 of 19** packages via PR #47 (lint + typecheck + unit + E2E green) — with **vite 8.0.16 isolated and deferred** after a Docker bisect proved it regresses `keepNames` sourcemap function names on Linux only (rolldown), which would re-break the Sentry symbolication guarded by `verify-sourcemap-names.mjs`; vite held at 8.0.12. Zero open dependabot PRs remain (DEP-01).
+
+### Stats
+
+| Metric | Value |
+|--------|-------|
+| Phases | 4 (18–21) |
+| Plans | 11 |
+| Tasks | 22 |
+| Code files changed (excl. `.planning/`) | 16 |
+| Code lines added / removed | +2,469 / −2,459 |
+| PRs merged | #34 (lint-staged 17), #43 (config/CLI repair), #47 (dep group), + supporting #45/#46 |
+| Edge Functions added | 0 (`close-expired-polls` gained an Upstash keepalive write via quick task 260606-cff) |
+| DB Migrations | 1 (Migration 15 — session-GUC trusted-context gate; live in prod) |
+| Tests | unit 403/403 · integration 32/32 · @smoke 6/6 |
+| Timeline | 2026-05-31 → 2026-06-06 (~6 days) |
+
+### Decimal Phases
+
+None for v1.4 — all integer phases (18, 19, 20, 21).
+
+### Key Decisions (with outcomes)
+
+| Decision | Outcome |
+|----------|---------|
+| Migration 15 session-GUC trusted-context gate (DBHY-05) | ✓ Good — `current_user = session_user` is permanently false inside a SECURITY DEFINER trigger; transaction-local GUC is the only way to distinguish RPC-mediated from direct-client UPDATEs. Live in prod, advisor-clean, both directions proven 6/6 |
+| Accept caller-supplied `p_mfa_verified`/`p_guild_member` residual (T-19-07) | — Accepted — pre-existing since Migration 02, not widened by Phase 19, no live users; server-side re-validation deferred to a future auth refactor; documented in `COMMENT ON FUNCTION` + 19-SECURITY.md |
+| UAT-01/02 closed on pre-existing live evidence, no fresh run (D-01/D-02) | ✓ Good — operator-intent "live with real accounts, not E2E-mocked" met by the 2026-05-03 + v1.0→v1.1 runs; gate paths verified unchanged; debt-zero closure without redundant re-testing |
+| Unified Supabase CLI pin 2.102.0 across all four locations (TEST-17) | ✓ Good — local/CI runtime skew caused the ES256 edge-runtime bug; single pin → edge-runtime v1.74.0 closes it |
+| vite held at 8.0.12; 8.0.16 isolated/deferred (DEP-01) | — Accepted — Docker bisect proved 8.0.16 regresses `keepNames` sourcemap names on Linux only; re-validate future vite bumps in a linux/amd64 container before merging |
+
+---
+
 ## v1.3 — Hygiene & Performance
 
 **Shipped:** 2026-05-31

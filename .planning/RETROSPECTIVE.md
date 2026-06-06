@@ -177,6 +177,54 @@
 
 ---
 
+## Milestone: v1.4 — Final Closeout
+
+**Shipped:** 2026-06-06
+**Phases:** 4 (Phases 18–21) | **Plans:** 11 | **Tasks:** 22
+**Timeline:** 2026-05-31 → 2026-06-06 (~6 days)
+**Code:** +2,469 / −2,459 LOC across 16 non-planning files; PRs #34 (lint-staged 17), #43 (config/CLI repair), #47 (dep group) + supporting #45/#46; 0 new Edge Functions; 1 new DB migration (Migration 15, live in prod). The debt-zero close of the v1 line.
+
+### What Was Built
+
+- **Test-environment repair (Phase 18)** — Unified Supabase CLI pin to 2.102.0 (edge-runtime v1.74.0) closing the ES256 verification bug so `npm run test:integration` runs green (TEST-17); `[auth.email]` config.toml fix resolved gotrue `email_provider_disabled`, restoring the TEST-11 12-cell RLS matrix as primary admin-RLS evidence (TEST-18); the comment-only fault-injection branch in `create-poll-results-hidden.test.ts` implemented via title-scoped triggers + fail-closed seed guard (TEST-19)
+- **DB migration + a11y restore (Phase 19)** — Migration 15 replaced the permanently-false `current_user = session_user` gate in `profile_self_update_allowed` with a transaction-local GUC (`app.trusted_profile_update`) set by `update_profile_after_auth`, applied to prod (advisor-clean, both directions proven 6/6) (DBHY-05); `<h2>` headings restored via `CardTitle asChild`/`Slot.Root` polymorphism, retiring the Phase 17 ARIA workaround (UIDN-06)
+- **Live human UAT (Phase 20)** — UAT-01/02 closed by accepting pre-existing live operator evidence (D-01/D-02), gate paths verified unchanged; 03/04-UAT.md reconciled to debt-zero with new acceptance-basis/closure sections; no redundant re-testing
+- **Dependency hygiene (Phase 21)** — lint-staged 16→17 (PR #34, DEP-02); 17-of-19 minor+patch group merged (PR #47, DEP-01) with vite 8.0.16 isolated/deferred after a Docker bisect proved a Linux-only `keepNames` regression; zero open dependabot PRs
+
+### What Worked
+
+- **Real repair over proxy coverage** — the operator's "REAL environment repair" mandate (not won't-fix + alternative validation) paid off: a single unified CLI pin fixed the ES256 bug at its root (local/CI runtime skew), and the gotrue config fix restored the full 12-cell matrix as primary evidence rather than leaning on the v1.3 SQL-fixture stopgap
+- **GUC over guesswork for the privilege gate** — Phase 19 proved the suspected-dead-code branch was genuinely unreachable as written (`current_user` is always the owner inside a SECURITY DEFINER trigger) and replaced it with a transaction-local GUC that the regression test exercises in both directions, incl. a GUC-leak guard — turning "likely dead code" into verified, reachable behavior
+- **Accept-pre-existing-evidence closure (D-01/D-02)** — recognizing that the second-human UAT intent was already satisfied by real prior live runs avoided forcing redundant multi-account test sessions while still reaching debt-zero; the discipline was to verify the gate path was unchanged before accepting
+- **Docker bisect caught a host-specific regression** — vite 8.0.16's `keepNames` breakage only manifests on Linux (rolldown); reproducing it in a linux/amd64 container before merging prevented re-breaking the Sentry symbolication guard, and the bad version was surgically held back while the rest of the group merged
+
+### What Was Inefficient
+
+- **CLI MILESTONES auto-extraction is still noisy (4th time)** — `milestone.complete` again emitted "One-liner:" stubs for 6 of 11 plans (the SUMMARY files whose one-liner field wasn't in the expected shape), requiring the same full curated rewrite flagged in v1.1/v1.2/v1.3. The lesson is now confirmed four milestones running
+- **SUMMARY `requirements-completed` frontmatter under-populated** — 6 of 9 requirements had empty frontmatter (the cosmetic source-3 gap the audit flagged); satisfaction was confirmed via VERIFICATION + traceability, but the 3-source cross-check would have been clean if frontmatter were filled at phase-close
+- **Open-artifact audit false positive on a complete quick task** — the pre-close audit flagged quick task 260606-cff as `missing` because its status detector reads PLAN.md (no status field) rather than SUMMARY.md (`status: complete`); the work was committed and done. The audit's status source should prefer SUMMARY when present
+- **Dependabot PR churn** — the DEP-01 target drifted across PR numbers (#40 → #44 → #47 as the group rebased/superseded), so the roadmap and STATE references lagged the actual merged PR
+
+### Patterns Established
+
+- **Transaction-local GUC trusted-context gate** — to distinguish RPC-mediated from direct-client writes inside a SECURITY DEFINER trigger, set `set_config('app.x', ..., is_local=true)` in the trusted RPC and check it in the gate; assert both directions + a GUC-leak guard in the regression test
+- **Accept-pre-existing-live-evidence for human-gated UAT** — a second-human/second-account UAT can be closed on prior real evidence when the gate path is verified unchanged, recorded as an explicit acceptance-basis decision (D-01/D-02) — debt-zero without redundant re-testing
+- **Host-specific dependency bisect before merge** — reproduce a suspected build regression in the CI host's container (linux/amd64) and surgically hold back only the offending package while merging the rest of the group
+
+### Key Lessons
+
+1. **The MILESTONES auto-extraction lesson is now confirmed FOUR times (v1.1 gap, v1.2/v1.3/v1.4 stubs).** The CLI seed is permanently a scaffold; the only fix is to stop expecting content from it. Curate by hand against the prior milestone every time.
+2. **Fill `requirements-completed` frontmatter at phase-close, not milestone-close.** The recurring source-3 cross-check gap (and the stale-VALIDATION lesson from v1.3) are the same root cause: frontmatter hygiene isn't automated at phase-close.
+3. **The "debt-zero mandate" worked as a forcing function.** Refusing `tech_debt`/DEFER exits drove the two genuinely-hard repairs (ES256 runtime, the GUC gate) to real fixes instead of documented won't-fixes — and the milestone audit closed `passed` on the strength of it.
+4. **Audit status detectors should prefer SUMMARY over PLAN.** The 260606-cff false positive would vanish if the open-artifact audit read completion status from SUMMARY.md (where `status: complete` lives) rather than PLAN.md.
+
+### Cost Observations
+
+- **Sessions:** compact ~6-day window; Phase 20 was a documentation-reconciliation phase (no new code), Phase 19 carried the only production-touching change (Migration 15), Phase 21 was a dependency-validation chain with a Docker-bisect detour
+- **Notable:** v1.4 shipped the smallest code delta of any milestone yet relative to its planning weight (much of the work was repair, reconciliation, and validation rather than new code) — appropriate for a closeout milestone. The one production change (Migration 15) closed a real privilege-escalation gap that had been suspected-but-unproven since the v1.3 PR #30 finding
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -187,6 +235,7 @@
 | v1.1 | (entry missing — backfill candidate) | 4 (Phases 7–10) | Path-3 carry-forward pattern introduced for evidence-driven UI closures |
 | v1.2 | ~15-20 | 3 (Phases 11–13) | Wave-based plan dependencies in Phase 12; decision-reversal-via-plan-zero pattern (D-01); strict-floor MISS with concrete follow-up trigger (D-12); 4-round PR fix-pass discipline |
 | v1.3 | multi-session | 4 (Phases 14–17) | Verify-and-close phase shape (Phase 15 research reframe); machine-enforced body-identical migration diff (Phase 14); facade-before-lazy-load (Phase 16); v1.1 MILESTONES gap finally backfilled (Phase 17) |
+| v1.4 | ~6-day window | 4 (Phases 18–21) | Debt-zero mandate as forcing function (real repairs, no DEFER exits); transaction-local GUC trusted-context gate (Phase 19); accept-pre-existing-live-evidence UAT closure (Phase 20, D-01/D-02); host-specific dependency bisect (Phase 21 vite 8.0.16) |
 
 ### Cumulative Quality
 
@@ -196,6 +245,7 @@
 | v1.1 | (entry missing) | — | — |
 | v1.2 | TEST-11 (12-cell matrix) + TEST-12 (7+4 cases) + TEST-13 (@smoke SC4) | Phase 12 partial / Phase 13 resolved (0 pending scenarios each) | shadcn `Checkbox` + `Switch` (vendored); Vitest integration scaffolding (no new deps) |
 | v1.3 | 401 unit/component green; `is_current_user_admin` SQL regression fixture (6 PASS / 0 FAIL); `verify-sourcemap-names.mjs` CI guard; #11/#12/#13 E2E green | Verify-and-close (5 GitHub issues closed via evidence) | `scripts/verify-sourcemap-names.mjs` (zero-dep build-time guard); `rollup-plugin-visualizer` (devDep only) |
+| v1.4 | unit 403/403; integration 32/32 (TEST-11 12-cell matrix restored as primary); @smoke 6/6; `create-poll` fault-injection branch now executable (TEST-19); Migration 15 gate proven 6/6 both directions | UAT-01/02 closed on accepted pre-existing live evidence (D-01/D-02); debt-zero (0 deferred at close) | DDL fault-injection harness in seed.sql (title-scoped triggers); no new runtime deps (dep group was refresh-only) |
 
 ### Top Lessons (Verified Across Milestones)
 
@@ -205,3 +255,5 @@
 4. **Hard-assert validation commands by default** — surfaced in v1.2 (round 3 of PR review); the conversion exposed a latent count bug. Soft `... | wc -l → N` is brittle
 5. **Stale VALIDATION frontmatter reads as missing coverage** — surfaced in v1.3 (Phases 16/17 closed with stale/missing markers; milestone audit read `tech_debt` until a frontmatter-promotion pass flipped it to `passed` with zero test generation). Automating frontmatter refresh at phase-close would close this permanently — still the unfinished half of lesson 1
 6. **Research can shrink a milestone** — surfaced in v1.3 (Phase 15 verify-and-close reframe + two confirmed perf anti-features). Front-load "is this already done / is this a no-op?" research before planning
+7. **A debt-zero mandate forces real fixes** — surfaced in v1.4: refusing `tech_debt`/DEFER exits drove the two hard repairs (ES256 runtime, the GUC privilege gate) to root-cause fixes instead of documented won't-fixes; the audit closed `passed`. Use a hard debt-zero exit for closeout milestones
+8. **Fill `requirements-completed` frontmatter at phase-close** — confirmed across v1.3 (stale VALIDATION) and v1.4 (6/9 empty): frontmatter hygiene at phase-close is the unautomated root cause behind both the Nyquist-gap and 3-source-cross-check noise at milestone audit

@@ -22,38 +22,38 @@ This platform gathers community **opinions**, not binding votes. Nothing on the 
 
 ## Current State
 
-**Shipped:** v1.3 — Hygiene & Performance (2026-05-31)
-**Previous:** v1.2 — Admin Visibility Controls (2026-05-14) · v1.1 — Hygiene & Polish (2026-05-11) · v1.0 — Launch-Ready MVP (2026-04-28)
-**Production:** https://polls.wtcsmapban.com — no new user-visible features in v1.3 (security/perf/doc hygiene); the one product-touching delta is the perf-budget pass that closed UIDN-02 (5/5 mobile routes Perf ≥ 90).
-**Code (cumulative through v1.3):** v1.0 baseline 13,602 LOC + v1.1/v1.2 deltas + v1.3 delta (+2,768 / −1,793 across 39 non-planning files); 17 Edge Functions (no new EFs in v1.3); 12 DB migrations (Migration 14 = `SECURITY DEFINER` `search_path = ''` hardening on 6 user-owned functions + stale 3-param `update_profile_after_auth` overload drop); zero `0011_function_search_path_mutable` advisor WARNs post-deploy. PostHog moved off the critical-path chunk (~187 KB deferred behind a consent-gated lazy loader); logo served as WebP; `defaultPreload: 'intent'` app-wide.
-**Tests:** 401 unit/component tests green (incl. a new `findByRole('dialog')` ARIA assertion from the UIDN-04/05 Card migration); `scripts/verify-sourcemap-names.mjs` build-time `keepNames` regression guard wired into CI; direct SQL regression fixture for `is_current_user_admin()` (6 PASS / 0 FAIL); all five Playwright E2E specs (#11/#12/#13) green in CI.
+**Shipped:** v1.4 — Final Closeout (2026-06-06) — the debt-zero close of the v1 line: every outstanding v1 carry-forward resolved, no `tech_debt`/DEFER exits.
+**Previous:** v1.3 — Hygiene & Performance (2026-05-31) · v1.2 — Admin Visibility Controls (2026-05-14) · v1.1 — Hygiene & Polish (2026-05-11) · v1.0 — Launch-Ready MVP (2026-04-28)
+**Production:** https://polls.wtcsmapban.com — no new user-visible features in v1.4 (test-environment repair, a security-gate migration, live-UAT closure, and dependency hygiene). Migration 15 (DBHY-05 session-GUC trusted-context gate) is live in prod, advisor-clean, with the `submit-vote` smoke round-trip unaffected.
+**Code (cumulative through v1.4):** ~16,900 LOC (src + supabase TS/TSX); 17 Edge Functions (no new EFs in v1.4 — `close-expired-polls` gained a best-effort Upstash keepalive write via quick task 260606-cff); 13 DB migrations (Migration 15 = session-GUC `app.trusted_profile_update` trusted-context gate superseding the permanently-false `current_user = session_user` check in `profile_self_update_allowed`). Dependencies refreshed via the 17-of-19 minor+patch group (PR #47) + lint-staged 17 (PR #34); vite held at 8.0.12 (8.0.16 deferred — Linux `keepNames` sourcemap regression proven via Docker bisect).
+**Tests:** unit 403/403 green, integration 32/32 (TEST-11 12-cell RLS matrix restored as primary evidence after the gotrue/edge-runtime repair), @smoke 6/6; the `create-poll-results-hidden` fault-injection branch is now executable (TEST-19). `scripts/verify-sourcemap-names.mjs` `keepNames` guard still wired into CI.
+**v1.4 archives:** [milestones/v1.4-ROADMAP.md](milestones/v1.4-ROADMAP.md) · [milestones/v1.4-REQUIREMENTS.md](milestones/v1.4-REQUIREMENTS.md) · [milestones/v1.4-MILESTONE-AUDIT.md](milestones/v1.4-MILESTONE-AUDIT.md) (verdict: passed — 9/9 requirements, 4/4 phases, integration clean, flows intact)
 **v1.3 archives:** [milestones/v1.3-ROADMAP.md](milestones/v1.3-ROADMAP.md) · [milestones/v1.3-REQUIREMENTS.md](milestones/v1.3-REQUIREMENTS.md) · [milestones/v1.3-MILESTONE-AUDIT.md](milestones/v1.3-MILESTONE-AUDIT.md) (verdict: passed — 23/23 requirements, 4/4 phases, 9/9 seams wired, 3/3 E2E flows, 4/4 Nyquist-compliant)
 **v1.2 archives:** [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROADMAP.md) · [milestones/v1.2-REQUIREMENTS.md](milestones/v1.2-REQUIREMENTS.md) (no separate v1.2 audit file; pre-close artifact audit + Phase 13 verification covered this)
 **v1.1 archives:** [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md) · [milestones/v1.1-REQUIREMENTS.md](milestones/v1.1-REQUIREMENTS.md) · [milestones/v1.1-MILESTONE-AUDIT.md](milestones/v1.1-MILESTONE-AUDIT.md)
 
-## Current Milestone: v1.4 — Final Closeout
+## Next Milestone: none planned — v1 line complete
+
+v1.4 was the **debt-zero closeout** of the v1 line (operator mandate: "one and done — finish everything before it"). With all v1 carry-forwards resolved, there is no v1.5. The next milestone, if started, is **v2** — a product-feature line (Discord webhook notifications, an admin analytics dashboard, Turnstile abuse prevention; see *Deferred to v2* below). No v2 work is scoped or scheduled. Start it with `/gsd:new-milestone` only when the operator decides to open the v2 product line.
+
+<details>
+<summary>Previous milestone goals (v1.4 — Final Closeout, shipped 2026-06-06)</summary>
+
+## v1.4 — Final Closeout
 
 **Goal:** Close every outstanding v1 carry-forward — local test-environment repairs, live human UAT, code/migration debt, and test-completeness gaps — so nothing carries past v1.4. Hard debt-zero mandate: no `tech_debt`/DEFER exits. Excludes all V2 product features.
 
-**Target features:**
+**Delivered (Phases 18–21, 11/11 plans, 9/9 requirements):**
 
-- **Test-environment repair (real fix)** — Upgrade/pin local supabase-edge-runtime past the 1.73.x ES256 verification bug so `npm run test:integration` runs green; fix local gotrue `email_provider_disabled` config so the TEST-11 12-cell RLS vitest matrix runs green.
-- **Live human UAT** — Execute Phase 03 UAT tests 2+3 (2FA-on, non-WTCS-member Discord tester) and Phase 04 UAT 6a (second-admin demote-click flow); record evidence into `03-UAT.md` / `04-UAT.md`.
-- **Code/migration debt** — New migration replacing the undistinguishing `profile_self_update_allowed` `current_user = session_user` gate with a session-GUC trusted-context flag (STATE.md Deferred Items, Option b); restore the two `<h2>` semantic headings demoted to `CardTitle` `<div>`s during the Phase 17 UIDN-04/05 Card migration (17-REVIEW.md WR-01).
-- **Test completeness** — Implement the deferred manual fault-injection coverage in `e2e/integration/create-poll-results-hidden.test.ts` (line 156).
-- **Dependency hygiene** — Review/merge open dependabot PRs #40 (minor-and-patch group, 15 updates) and #34 (lint-staged 16→17).
+- **Test-environment repair (real fix)** — Unified Supabase CLI pin to 2.102.0 (edge-runtime v1.74.0) closing the ES256 verification bug so `npm run test:integration` runs green (TEST-17); `[auth.email]` config.toml fix resolved gotrue `email_provider_disabled` so the TEST-11 12-cell RLS vitest matrix runs green (TEST-18).
+- **Live human UAT** — UAT-01 (Phase 03 tests 2+3, non-member tester) and UAT-02 (Phase 04 6a second-admin demote) closed by accepting pre-existing live operator evidence per D-01/D-02; UAT docs reconciled to debt-zero. No fresh run was required.
+- **Code/migration debt** — Migration 15 replaced the undistinguishing `profile_self_update_allowed` `current_user = session_user` gate with a session-GUC trusted-context flag (`app.trusted_profile_update`), applied to prod (DBHY-05); the two `<h2>` semantic headings restored via `CardTitle asChild` polymorphism (UIDN-06).
+- **Test completeness** — The deferred fault-injection branch in `e2e/integration/create-poll-results-hidden.test.ts` is now an executable, green test (TEST-19).
+- **Dependency hygiene** — 17-of-19 minor+patch group merged (PR #47, DEP-01) + lint-staged 16→17 (PR #34, DEP-02); zero open dependabot PRs. vite 8.0.16 isolated/deferred (Linux `keepNames` regression).
 
-**Key context:**
+**Outcome:** Audit `passed` (9/9 requirements, 4/4 phases, integration clean). One accepted residual documented in-code (T-19-07: `update_profile_after_auth` still trusts caller-supplied `p_mfa_verified`/`p_guild_member`; pre-existing, deferred to a future auth refactor).
 
-- Phase numbering continues from v1.3 (last phase 17) → v1.4 starts at **Phase 18**.
-- This is the "finish line" milestone — structural sibling of v1.1/v1.3 hygiene passes, but with a hard **debt-zero exit** (no DEFER / `tech_debt` verdicts accepted; the explicit operator mandate is "one and done — finish everything before it").
-- Environment items are REAL repairs (upgrade/config fix + run the real tests green), not alternative-validation substitutes — operator decision at scoping.
-- Human UAT items are executed **live by the operator** this milestone (operator decision); plans must produce exact step-by-step checklists + evidence-recording targets.
-- Completeness sweep at scoping confirmed the canonical carry-forward list is exhaustive: zero open GitHub issues, zero skipped tests, no hidden `v1.4`/`v1.5` markers beyond the known TEST-11 deferral. Net-new surfaced: the fault-injection test gap + two dependabot PRs (both folded in).
-- v1.3 phase work dirs (14–17) archived to `milestones/v1.3-phases/` at v1.4 open (restoring the per-milestone archival convention the v1.3 close skipped).
-- **Out of scope (V2, untouched):** NOTF Discord webhooks, ANLT analytics dashboard, ABSE Turnstile CAPTCHA, VERF-01 (superseded by AUTH-03).
-
-GitHub milestone: TBD on first push.
+</details>
 
 <details>
 <summary>Previous milestone goals (v1.3 — Hygiene & Performance, shipped 2026-05-31)</summary>
@@ -234,15 +234,14 @@ GitHub milestone: TBD on first push.
 - ✓ TEST-19 — Deferred `create-poll` fault-injection coverage implemented (fail-safe, title-scoped, serialized; fail-closed seed guard) — Phase 18
 - ✓ DBHY-05 — `profile_self_update_allowed` privilege-escalation gate fixed: Migration 15 replaces the permanently-false `current_user = session_user` check (always false inside a SECURITY DEFINER trigger) with a transaction-local GUC flag (`app.trusted_profile_update`, `set_config(..., is_local=true)`) set by `update_profile_after_auth`; null-safe `IS DISTINCT FROM 'on'` gate, `pg_catalog`-qualified built-ins under `search_path=''`, explicit REVOKE/GRANT EXECUTE. Applied to local stack, advisor lint clean, integration test proves both gate directions (6/6, incl. ordered RPC proof + GUC-leak guard). **Accepted residual (T-19-07):** `update_profile_after_auth` still trusts caller-supplied `p_mfa_verified`/`p_guild_member` (computed client-side from Discord OAuth, not re-derived server-side) — pre-existing since migration 02, not widened by Phase 19, no live users; server-side re-validation (Edge Function with the user's provider token) deferred to a future auth refactor. Tracked in the function's `COMMENT ON FUNCTION` and `19-SECURITY.md`. Prod `--linked` deploy deferred to milestone ship — Phase 19
 - ✓ UIDN-06 — Two `<h2>` section headings restored in AdminsList/CategoriesList: CardTitle made polymorphic via `asChild`/`Slot.Root` (same pattern as button.tsx/badge.tsx), replacing the Phase 17 `<div role="heading" aria-level={2}>` ARIA workaround with native `<h2>` — Phase 19
+- ✓ UAT-01 — Phase 03 UAT tests 2+3 (2FA-on, non-WTCS-member tester; server-side membership gate blocks the non-member) closed by accepting the pre-existing 2026-05-03 second-human PASS per D-01/D-03; gate path verified unchanged, no fresh run (see 03-UAT.md § UAT-01 Acceptance Basis) — Phase 20
+- ✓ UAT-02 — Phase 04 UAT 6a (second-admin demote-click flow; self-demote guard intact) closed by backfilling the pre-existing Off-Record Verification PASS (MapCommittee, v1.0→v1.1 transition) per D-02; no fresh run (see 04-UAT.md § UAT-02 Phase 20 Closure) — Phase 20
+- ✓ DEP-01 — Dependabot minor+patch group merged: 17-of-19 packages via PR #47 (lint + typecheck + unit + E2E green); vite 8.0.16 isolated/deferred after a Docker bisect proved it regresses `keepNames` sourcemap names on Linux only (vite held at 8.0.12). Zero build-pipeline regressions — Phase 21
+- ✓ DEP-02 — lint-staged 16.4.0 → 17.0.7 validated against v17 breaking-change notes (config + v17 pre-commit hook tested), CI-green, merged via PR #34 — Phase 21
 
-### Active (carry-forward to v1.4+)
+### Active (carry-forward)
 
-- [ ] Backfill Phase 04 UAT test 6a evidence (demote click flow — passed off-record on second admin, needs 04-UAT.md update; second-admin-gated)
-- [ ] Phase 03 UAT tests 2 + 3 with second human (2FA-enabled, non-WTCS-member Discord tester — 2FA must be ON so the gate clears and the non-member check fires)
-
-### Scoped for v1.4 (Final Closeout)
-
-v1.4 is now scoped (2026-05-31) as the debt-zero closeout milestone. It absorbs **all** the carry-forwards in **Active** above (test-environment repair, live human UAT, the `profile_self_update_allowed` gate migration, and the Phase 17 a11y heading restore) plus two sweep-surfaced stragglers (the `create-poll-results-hidden.test.ts` fault-injection gap and dependabot PRs #40/#34). REQ-IDs and phase mapping live in `.planning/REQUIREMENTS.md`. As phases complete, these items migrate from **Active** to **Validated (v1.4)**.
+_None — all v1 carry-forwards closed at the v1.4 debt-zero milestone. Future work is the v2 product line (see Deferred to v2)._
 
 ### Deferred to v2 (or later)
 
@@ -278,6 +277,7 @@ v1.4 is now scoped (2026-05-31) as the debt-zero closeout milestone. It absorbs 
 - **Primary user flow:** Admin shares a link in Discord → user clicks → lands on suggestion page → authenticates → responds → sees results.
 - **Codebase state at v1.0 ship:** 13,602 LOC, 141 .ts/.tsx files, 41 test files, 378/378 unit tests, 16 Edge Functions, 10 DB migrations.
 - **Codebase state at v1.3 ship:** 401 unit/component tests green, 17 Edge Functions, 12 DB migrations (Migration 14 = SECURITY DEFINER `search_path` hardening); PostHog lazy-loaded off the critical path (~187 KB deferred); WebP logo; zero `0011` advisor WARNs. No new product features in v1.3 — security/perf/doc hygiene + UIDN-02 closure.
+- **Codebase state at v1.4 ship:** ~16,900 LOC (src + supabase TS/TSX), 17 Edge Functions, 13 DB migrations (Migration 15 = session-GUC trusted-context gate, live in prod); unit 403/403 + integration 32/32 (TEST-11 matrix restored) + @smoke 6/6 green; local test harnesses repaired (CLI 2.102.0 / edge-runtime v1.74.0 / `[auth.email]` config); dependencies refreshed (PR #47 + #34), vite pinned 8.0.12. No new product features in v1.4 — debt-zero closeout of the v1 line.
 - **Two separate surfaces:** User-facing (no admin awareness) and admin-facing (separate /admin/* routes, AdminGuard + suppressed ConsentBanner/Chip).
 - **Observability:** Sentry error tracking unconditional; PostHog event capture and Sentry Replay default-OFF until consent Allow (D-05 + Phase 6 GDPR rewire).
 
@@ -331,6 +331,11 @@ v1.4 is now scoped (2026-05-31) as the debt-zero closeout milestone. It absorbs 
 | `defaultPreload: 'intent'` app-wide + `preload={false}` on Admin links | App-wide hover-preload without leaking the V4 access-control boundary (hover-redirect) | ✓ Good (v1.3 Phase 16) |
 | Single Lighthouse rerun on production per milestone (D-13) | Avoid repeated-run thrash; accept the one measured outcome | ✓ Good (v1.3 Phase 16 — 5/5 routes ≥ 90 in one run; UIDN-02 closed) |
 | v1.1 MILESTONES entry manually curated, not CLI auto-extracted (DOCS-08) | CLI auto-extraction produces noisy "One-liner:" stubs | ✓ Good (v1.3 Phase 17 — re-confirmed when the v1.3 entry itself was auto-seeded; manual curation closes the gap permanently) |
+| Migration 15: session-GUC trusted-context gate (DBHY-05) | `current_user = session_user` is permanently false inside a SECURITY DEFINER trigger; a transaction-local GUC (`set_config('app.trusted_profile_update', ..., is_local=true)`) set by `update_profile_after_auth` is the only way to distinguish RPC-mediated from direct-client UPDATEs | ✓ Good (v1.4 Phase 19 — applied to prod, advisor-clean, both gate directions proven 6/6 incl. ordered RPC proof + GUC-leak guard) |
+| Accept caller-supplied `p_mfa_verified`/`p_guild_member` residual (T-19-07) | Flags computed client-side from Discord OAuth, not re-derived server-side; pre-existing since Migration 02, not widened by Phase 19, no live users; server-side re-validation deferred to a future auth refactor | — Accepted (v1.4 Phase 19 — documented in `COMMENT ON FUNCTION` + 19-SECURITY.md) |
+| UAT-01/02 closed on pre-existing live evidence, no fresh run (D-01/D-02) | The operator-intent "live with real accounts, not E2E-mocked" is met by the 2026-05-03 (UAT-01) and v1.0→v1.1 (UAT-02) live runs; gate paths verified unchanged | ✓ Good (v1.4 Phase 20 — debt-zero closure without redundant re-testing) |
+| Unified Supabase CLI pin 2.102.0 across all four locations (TEST-17) | Local/CI runtime skew caused the ES256 edge-runtime bug; a single pin → edge-runtime v1.74.0 closes it | ✓ Good (v1.4 Phase 18 — integration suite green locally + CI) |
+| vite held at 8.0.12; 8.0.16 isolated/deferred (DEP-01) | Docker bisect proved 8.0.16 regresses `keepNames` sourcemap function names on Linux only (rolldown); merging it would re-break the Sentry symbolication guarded by `verify-sourcemap-names.mjs` | — Accepted (v1.4 Phase 21 — re-validate future vite bumps in a linux/amd64 container before merging) |
 
 ## Evolution
 
@@ -350,4 +355,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-03 — Phase 19 (DB Migration + A11y Restore) complete: DBHY-05 (Migration 15 session-GUC trusted-context gate, applied to local stack, lint clean, integration 6/6 incl. ordered RPC proof + GUC-leak guard) and UIDN-06 (CardTitle `asChild` polymorphism restoring native `<h2>` headings) validated. Suites green (unit 403/403, integration 32/32, @smoke 6/6); code review 0 blockers. Prod `--linked` migration deploy deferred to v1.4 milestone ship. Next: Phase 20 — Live Human UAT (Phase 03 UAT 2+3 non-member tester + Phase 04 UAT 6a second-admin demote).*
+*Last updated: 2026-06-06 after v1.4 — Final Closeout milestone. All 9 requirements Validated (TEST-17/18/19, UAT-01/02, DBHY-05, UIDN-06, DEP-01/02); audit passed. Migration 15 live in prod. v1 line complete (debt-zero); no v1.5 — next milestone, if started, is the v2 product line.*
