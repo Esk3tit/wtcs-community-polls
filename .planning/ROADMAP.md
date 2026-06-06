@@ -189,7 +189,7 @@ Plans:
 Plans:
 **Wave 1** *(PR #34 — independent quick win)*
 
-- [ ] 21-01-PLAN.md — Validate and merge PR #34 (lint-staged 16→17, DEP-02)
+- [x] 21-01-PLAN.md — Validate and merge PR #34 (lint-staged 16→17, DEP-02)
 
 **Wave 2** *(PR #44 — depends on PR #34 merged first)*
 
@@ -206,7 +206,7 @@ Plans:
 | 18. Test-Environment Repair | 3/3 | Complete    | 2026-06-02 |
 | 19. DB Migration + A11y Restore | 3/3 | Complete    | 2026-06-03 |
 | 20. Live Human UAT | 3/3 | Complete   | 2026-06-05 |
-| 21. Dependency Hygiene | 0/2 | Not started | - |
+| 21. Dependency Hygiene | 1/2 | In Progress|  |
 
 | Milestone | Phases | Plans | Status | Shipped |
 |-----------|--------|-------|--------|---------|
