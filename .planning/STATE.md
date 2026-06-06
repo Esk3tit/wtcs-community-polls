@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-31 after v1.3 milestone)
 Phase: 21
 Plan: Not started
 Status: Milestone complete
-Last activity: 2026-06-06
+Last activity: 2026-06-06 - Completed quick task 260606-cff: Upstash Redis keepalive in close-expired-polls
 
 ```
 [Phase 18] [Phase 19] [Phase 20] [Phase 21]
@@ -86,6 +86,12 @@ v1.3 decisions are now in the canonical PROJECT.md Key Decisions table (10 v1.3 
 ### Blockers/Concerns
 
 - _None open at roadmap creation. All v1.3 phase risks resolved. v1.4 requirements are carry-forwards with known remediation paths._
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260606-cff | Upstash Redis keepalive in close-expired-polls (avert free-tier archival) | 2026-06-06 | 59a53af | [260606-cff-upstash-redis-keepalive-in-close-expired](./quick/260606-cff-upstash-redis-keepalive-in-close-expired/) |
 
 ## Deferred Items
 
