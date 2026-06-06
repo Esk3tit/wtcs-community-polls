@@ -170,6 +170,7 @@ GitHub milestone: TBD on first push.
 **Infrastructure:**
 - ✓ Netlify deployment at polls.wtcsmapban.com (INFR-01) — v1.0
 - ✓ Supabase keepalive cron every 3-4 days (INFR-02) — v1.0
+- ✓ Upstash Redis keepalive — v1.4 (quick task 260606-cff): the daily `cron-sweep.yml` → `close-expired-polls` run now also issues a self-expiring Redis write (`keepalive:close-expired-polls`, 7-day TTL), so one daily cron keeps BOTH Supabase and Upstash warm. Added after Upstash flagged the free-tier Redis DB for inactivity archival (only `submit-vote` touched Redis, so it idled during quiet periods). Reuses existing Supabase project secrets; verified live (key TTL counting down in Upstash console).
 - ✓ Direct Supabase reads with RLS (INFR-03) — v1.0
 - ✓ Edge Function-only writes (INFR-04) — v1.0
 
