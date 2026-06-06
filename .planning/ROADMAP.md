@@ -185,7 +185,15 @@ Plans:
   2. Dependabot PR #34 (lint-staged 16→17) is merged after the `lint-staged` config is validated against v17 breaking changes; pre-commit hook runs correctly post-merge (DEP-02)
   3. No open dependabot PRs remain for the v1 carry-forward list after both merges
 
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+**Wave 1** *(PR #34 — independent quick win)*
+
+- [ ] 21-01-PLAN.md — Validate and merge PR #34 (lint-staged 16→17, DEP-02)
+
+**Wave 2** *(PR #44 — depends on PR #34 merged first)*
+
+- [ ] 21-02-PLAN.md — Rebase, validate, and merge PR #44 (18-package minor+patch group, DEP-01)
 
 ## Progress
 
@@ -198,7 +206,7 @@ Plans:
 | 18. Test-Environment Repair | 3/3 | Complete    | 2026-06-02 |
 | 19. DB Migration + A11y Restore | 3/3 | Complete    | 2026-06-03 |
 | 20. Live Human UAT | 3/3 | Complete   | 2026-06-05 |
-| 21. Dependency Hygiene | 0/TBD | Not started | - |
+| 21. Dependency Hygiene | 0/2 | Not started | - |
 
 | Milestone | Phases | Plans | Status | Shipped |
 |-----------|--------|-------|--------|---------|
@@ -206,4 +214,4 @@ Plans:
 | v1.1 | 7–10 | 16/16 | ✅ Shipped | 2026-05-11 |
 | v1.2 | 11–13 | 17/17 | ✅ Shipped | 2026-05-14 |
 | v1.3 | 14–17 | 15/15 | ✅ Shipped | 2026-05-31 |
-| v1.4 | 18–21 | 0/TBD | 🚧 In progress | - |
+| v1.4 | 18–21 | 9/11 | 🚧 In progress | - |
