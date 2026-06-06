@@ -4,8 +4,8 @@ milestone: v1.4
 milestone_name: — Final Closeout
 status: executing
 stopped_at: Phase 21 context gathered
-last_updated: "2026-06-06T05:39:01.024Z"
-last_activity: 2026-06-06 -- Phase 21 planning complete
+last_updated: "2026-06-06T06:44:21.181Z"
+last_activity: 2026-06-06 -- Phase 21 execution started
 progress:
   total_phases: 4
   completed_phases: 3
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-31 after v1.3 milestone)
 
 **Core value:** Community members can share opinions on competitive scene proposals with confidence that results are authentic
-**Current focus:** Phase 20 complete — next Phase 21 (dep hygiene)
+**Current focus:** Phase 21 — dependency-hygiene
 
 ## Current Position
 
-Phase: 20 (live-human-uat) — COMPLETE
-Plan: 3 of 3 complete
-Status: Ready to execute
-Last activity: 2026-06-06 -- Phase 21 planning complete
+Phase: 21 (dependency-hygiene) — EXECUTING
+Plan: 1 of 2
+Status: Executing Phase 21
+Last activity: 2026-06-06 -- Phase 21 execution started
 
 ```
 [Phase 18] [Phase 19] [Phase 20] [Phase 21]
