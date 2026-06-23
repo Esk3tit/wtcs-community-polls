@@ -1,8 +1,9 @@
 // supabase/functions/delete-poll/index.ts
 //
-// Admin-gated hard delete (D-18). Server-side delete lock: rejects 409 if any
-// votes exist for the poll (uses EXISTS on the votes table — vote_counts is a
-// CACHE and must NEVER be the source of truth for security decisions).
+// Admin-gated hard delete, always allowed at any lifecycle stage. An
+// authenticated admin may delete a suggestion before votes, while voting is
+// active, or after close. The polls DELETE cascades to votes, vote_counts, and
+// choices via ON DELETE CASCADE FKs, so responses are removed with no orphans.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.101.1'
 import { getCorsHeaders } from '../_shared/cors.ts'
@@ -58,21 +59,6 @@ Deno.serve(async (req) => {
     }
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(poll_id)) {
       return json({ error: 'Invalid poll_id' }, 400, corsHeaders)
-    }
-
-    // EXISTS guard: refuse to delete if any votes already exist (D-18).
-    const { data: voteRow, error: voteCheckError } = await supabaseAdmin
-      .from('votes')
-      .select('id')
-      .eq('poll_id', poll_id)
-      .limit(1)
-      .maybeSingle()
-    if (voteCheckError) {
-      console.error('delete-poll vote pre-check failed:', voteCheckError)
-      return json({ error: 'Internal error' }, 500, corsHeaders)
-    }
-    if (voteRow) {
-      return json({ error: 'Cannot delete: responses already received' }, 409, corsHeaders)
     }
 
     // Best-effort capture of pre-DELETE snapshot for the audit `before` payload.
