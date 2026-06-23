@@ -33,8 +33,8 @@ export function DeleteSuggestionDialog({ open, onOpenChange, pollId, onDeleted }
         <DialogHeader>
           <DialogTitle>Delete this suggestion?</DialogTitle>
           <DialogDescription>
-            This permanently removes the suggestion and all of its choices. This cannot be
-            undone. Suggestions with responses cannot be deleted.
+            This permanently removes the suggestion, all of its choices, and every
+            response already received. This cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
