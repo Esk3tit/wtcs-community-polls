@@ -145,7 +145,7 @@ describe('suggestion CRUD Edge Functions source analysis', () => {
     })
   })
 
-  describe('delete-poll server-side delete lock', () => {
+  describe('delete-poll always-allowed admin delete', () => {
     const src = efSrc('delete-poll')
 
     it('exists and is non-empty', () => {
@@ -157,25 +157,16 @@ describe('suggestion CRUD Edge Functions source analysis', () => {
       expect(src).toMatch(/requireAdmin\s*\(/)
     })
 
-    it('contains EXISTS guard on votes table', () => {
-      expect(src).toMatch(/from\(\s*['"]votes['"]\s*\)/)
-      expect(src).toMatch(/poll_id/)
-    })
-
-    it('returns 409 on guard hit', () => {
-      expect(src).toMatch(/409/)
-    })
-
     it('deletes from polls table', () => {
       expect(src).toMatch(/from\(\s*['"]polls['"]\s*\)\s*\.\s*delete/)
     })
 
-    it('vote guard appears BEFORE the delete call', () => {
-      const votesIdx = src.search(/from\(\s*['"]votes['"]\s*\)/)
-      const deleteIdx = src.search(/from\(\s*['"]polls['"]\s*\)\s*\.\s*delete/)
-      expect(votesIdx).toBeGreaterThan(-1)
-      expect(deleteIdx).toBeGreaterThan(-1)
-      expect(votesIdx).toBeLessThan(deleteIdx)
+    it('no longer references the votes table', () => {
+      expect(src).not.toMatch(/from\(\s*['"]votes['"]\s*\)/)
+    })
+
+    it('no longer returns the votes-guard 409 text', () => {
+      expect(src).not.toMatch(/responses already received/)
     })
   })
 
