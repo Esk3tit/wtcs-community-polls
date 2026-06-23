@@ -18,6 +18,14 @@ export function useVoteCounts(
   // voter UI auto-updates within ~8s of an admin flip. Query targets the
   // polls_effective view (never the base polls table) to preserve the
   // single-read-path invariant enforced by polls-effective-invariant.test.ts.
+  //
+  // Consumer contract: an ABSENT entry means "not yet resolved" (the unknown
+  // window before the first fetch lands), NOT "visible". Consumers MUST treat
+  // a map-miss as hidden (fail-closed) so first paint can never leak counts an
+  // admin may have hidden. The map stays implicit-tri-state (present-true /
+  // present-false / absent-unknown) rather than carrying an explicit 'unknown'
+  // value, since every voted poll id is queried each fetch and gets an entry on
+  // success — a persistent miss only exists in the pre-first-resolution window.
   const [resultsHidden, setResultsHidden] = useState<Map<string, boolean>>(new Map())
 
   // Stabilize dependency: serialize to a sorted, pipe-joined key so the SET
