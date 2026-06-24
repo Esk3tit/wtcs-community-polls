@@ -336,6 +336,7 @@ _None — all v1 carry-forwards closed at the v1.4 debt-zero milestone. Future w
 | UAT-01/02 closed on pre-existing live evidence, no fresh run (D-01/D-02) | The operator-intent "live with real accounts, not E2E-mocked" is met by the 2026-05-03 (UAT-01) and v1.0→v1.1 (UAT-02) live runs; gate paths verified unchanged | ✓ Good (v1.4 Phase 20 — debt-zero closure without redundant re-testing) |
 | Unified Supabase CLI pin 2.102.0 across all four locations (TEST-17) | Local/CI runtime skew caused the ES256 edge-runtime bug; a single pin → edge-runtime v1.74.0 closes it | ✓ Good (v1.4 Phase 18 — integration suite green locally + CI) |
 | vite held at 8.0.12; 8.0.16 isolated/deferred (DEP-01) | Docker bisect proved 8.0.16 regresses `keepNames` sourcemap function names on Linux only (rolldown); merging it would re-break the Sentry symbolication guarded by `verify-sourcemap-names.mjs` | — Accepted (v1.4 Phase 21 — re-validate future vite bumps in a linux/amd64 container before merging) |
+| Admins may delete a suggestion at ANY lifecycle stage (D-18 reversal) | Tim requires maximum flexibility and explicitly owns the integrity trade-off — deleting a suggestion permanently removes its responses. This relaxes the prior zero-votes delete lock while VOTE-03 (no per-vote UPDATE/DELETE via RLS) still holds, so only whole-suggestion deletion is possible, not individual-vote tampering | ✓ 2026-06-23 — delete-poll EF votes-guard removed; FK `ON DELETE CASCADE` (already present in schema.sql) cleans up votes + vote_counts |
 
 ## Evolution
 

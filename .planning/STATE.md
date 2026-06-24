@@ -2,16 +2,17 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Final Closeout
+current_phase: 4
 status: Awaiting next milestone
 stopped_at: Phase 21 context gathered
-last_updated: "2026-06-06T18:40:45.162Z"
-last_activity: 2026-06-06 — Milestone v1.4 completed and archived
+last_updated: "2026-06-23T14:08:38.285Z"
+last_activity: 2026-06-23
+last_activity_desc: "Completed quick task 260623-9dn: allow admin delete at any stage"
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 11
-  completed_plans: 11
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
@@ -28,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-06-06 after v1.4 milestone)
 Phase: Milestone v1.4 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-06-06 — Milestone v1.4 completed and archived
+Last activity: 2026-06-23 — Completed quick task 260623-9na: fix results flash before hide
 
 ## Performance Metrics
 
@@ -87,6 +88,8 @@ v1.3 decisions are now in the canonical PROJECT.md Key Decisions table (10 v1.3 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260606-cff | Upstash Redis keepalive in close-expired-polls (avert free-tier archival) | 2026-06-06 | 59a53af | [260606-cff-upstash-redis-keepalive-in-close-expired](./quick/260606-cff-upstash-redis-keepalive-in-close-expired/) |
+| 260623-9dn | Allow admin delete of suggestions at any lifecycle stage (D-18 reversal; whole-suggestion only) | 2026-06-23 | 0966350 | [260623-9dn-admin-delete-any-stage](./quick/260623-9dn-admin-delete-any-stage/) |
+| 260623-9na | Fix results flash before hide (fail-closed first-paint gate for results_hidden) | 2026-06-23 | 0b81f87 | [260623-9na-fix-results-flash-before-hide-for-result](./quick/260623-9na-fix-results-flash-before-hide-for-result/) |
 
 ## Deferred Items
 
@@ -105,12 +108,13 @@ v1.3 decisions are now in the canonical PROJECT.md Key Decisions table (10 v1.3 
 | dep_hygiene | Dependabot PR #34 (lint-staged 16→17) | DEP-02 | 21 | ✓ DONE |
 
 **Accepted residual carried into the v2 line (not blocking):**
+
 - **T-19-07** — `update_profile_after_auth` still trusts caller-supplied `p_mfa_verified`/`p_guild_member` (computed client-side from Discord OAuth, not re-derived server-side). Pre-existing since Migration 02, not widened by Phase 19, no live users. Server-side re-validation (an Edge Function with the user's provider token) deferred to a future auth refactor. Documented in the function's `COMMENT ON FUNCTION` + `milestones/v1.4-phases/19-db-migration-a11y-restore/19-SECURITY.md`.
 - **vite 8.0.16** — held at 8.0.12; re-validate future vite bumps in a linux/amd64 container before merging (Linux-only `keepNames` sourcemap regression).
 
 ## Session Continuity
 
-Last session: 2026-06-06 — v1.4 milestone completion
+Last session: 2026-06-23T14:08:38.259Z
 Stopped at: Milestone v1.4 archived and tagged
 Resume action: v1 line complete. Start the v2 product line with `/gsd:new-milestone` when ready.
 
