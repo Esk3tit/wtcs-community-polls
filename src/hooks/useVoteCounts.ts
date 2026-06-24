@@ -111,9 +111,11 @@ export function useVoteCounts(
     } else if (hiddenRows) {
       const hMap = new Map<string, boolean>()
       for (const row of hiddenRows) {
-        // Defensive Boolean coerce: view-level nullability may differ from the
-        // underlying NOT NULL column; default to visible (false) on any null.
-        hMap.set(row.id, Boolean(row.results_hidden))
+        // View-level nullability may differ from the underlying NOT NULL
+        // column; fail closed unless the view explicitly says visible (false),
+        // so a null never becomes a present "visible" entry that bypasses the
+        // map-miss fallback.
+        hMap.set(row.id, row.results_hidden !== false)
       }
       setResultsHidden(hMap)
     }

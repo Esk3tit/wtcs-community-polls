@@ -168,6 +168,13 @@ describe('suggestion CRUD Edge Functions source analysis', () => {
     it('no longer returns the votes-guard 409 text', () => {
       expect(src).not.toMatch(/responses already received/)
     })
+
+    it('no longer emits a 409 status anywhere', () => {
+      // Pin the 409-branch removal directly, not just its copy: the function
+      // returns statuses positionally (json(body, 409, cors)), so assert the
+      // status code itself is gone rather than a `status: 409` literal.
+      expect(src).not.toMatch(/\b409\b/)
+    })
   })
 
   describe('set-resolution', () => {
