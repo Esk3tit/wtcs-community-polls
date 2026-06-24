@@ -43,7 +43,6 @@ export function SuggestionKebabMenu({
 
   const hasVotes = voteCount > 0
   const editDisabled = hasVotes
-  const deleteDisabled = hasVotes
   const closeItemDisabled = status !== 'active'
   const resolutionItemDisabled = status !== 'closed'
 
@@ -123,22 +122,10 @@ export function SuggestionKebabMenu({
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            disabled={deleteDisabled}
-            aria-describedby={deleteDisabled ? `kebab-delete-reason-${pollId}` : undefined}
-            className="text-destructive focus:text-destructive flex-col items-start gap-0.5"
-            onClick={() => !deleteDisabled && setDeleteOpen(true)}
+            className="text-destructive focus:text-destructive"
+            onClick={() => setDeleteOpen(true)}
           >
-            <span className="flex items-center">
-              <Trash2 className="h-4 w-4 mr-2" /> Delete
-            </span>
-            {deleteDisabled && (
-              <span
-                id={`kebab-delete-reason-${pollId}`}
-                className="text-xs text-muted-foreground pl-6"
-              >
-                Cannot delete after responses received.
-              </span>
-            )}
+            <Trash2 className="h-4 w-4 mr-2" /> Delete
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

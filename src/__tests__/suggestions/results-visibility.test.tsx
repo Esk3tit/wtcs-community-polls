@@ -7,6 +7,15 @@ vi.mock('lucide-react', () => ({
   Loader2: ({ className }: { className?: string }) => (
     <span data-testid="loader-spinner" className={className} />
   ),
+  Search: () => <span data-testid="search-icon" />,
+  X: () => <span data-testid="x-icon" />,
+  ChevronDown: () => <span data-testid="chevron-icon" />,
+  Pin: () => <span data-testid="pin-icon" />,
+  Clock: () => <span data-testid="clock-icon" />,
+  SearchX: () => <span data-testid="search-x-icon" />,
+  Inbox: () => <span data-testid="inbox-icon" />,
+  Archive: () => <span data-testid="archive-icon" />,
+  EyeOff: () => <span data-testid="eye-off-icon" />,
 }))
 
 // Mock @/components/ui/button
@@ -34,10 +43,58 @@ vi.mock('@/lib/format', () => ({
     if (total === 0) return 0
     return Math.round((count / total) * 100)
   },
+  formatTimeRemaining: () => '7 days left',
+}))
+
+// --- Integration harness for the first-paint fail-closed gate ---
+// SuggestionList renders SuggestionCard for every voted poll. We drive
+// useVoteCounts directly so we can simulate the unknown window (an empty
+// resultsHidden map) while voteCounts is already populated — the exact
+// condition under which a leak WOULD surface if the gate were fail-open.
+const mockUseSuggestions = vi.fn()
+vi.mock('@/hooks/useSuggestions', () => ({
+  useSuggestions: () => mockUseSuggestions(),
+}))
+
+const mockUseCategories = vi.fn()
+vi.mock('@/hooks/useCategories', () => ({
+  useCategories: () => mockUseCategories(),
+}))
+
+const mockUseVoteCounts = vi.fn()
+vi.mock('@/hooks/useVoteCounts', () => ({
+  useVoteCounts: () => mockUseVoteCounts(),
+}))
+
+vi.mock('@/hooks/useVoteSubmit', () => ({
+  useVoteSubmit: () => ({
+    submitVote: vi.fn(),
+    submittingPollId: null,
+    submittingChoiceId: null,
+  }),
+}))
+
+vi.mock('@/hooks/useDebounce', () => ({
+  useDebounce: (value: unknown) => value,
+}))
+
+vi.mock('@/hooks/usePolling', () => ({
+  usePolling: vi.fn(),
+}))
+
+vi.mock('@/components/ui/collapsible', () => ({
+  Collapsible: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  CollapsibleContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  CollapsibleTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}))
+
+vi.mock('@/lib/utils', () => ({
+  cn: (...args: unknown[]) => args.filter(Boolean).join(' '),
 }))
 
 import { ChoiceButtons } from '@/components/suggestions/ChoiceButtons'
 import { ResultBars } from '@/components/suggestions/ResultBars'
+import { SuggestionList } from '@/components/suggestions/SuggestionList'
 
 const mockChoices = [
   { id: 'c1', label: 'Yes, remove it', sort_order: 1, poll_id: 'p1', created_at: '' },
@@ -227,5 +284,87 @@ describe('Results visibility', () => {
 
     // Total responses (singular)
     expect(screen.getByText('0 total responses')).toBeInTheDocument()
+  })
+})
+
+// First-paint contract: a voted poll whose results_hidden flag has not yet
+// resolved (no map entry — the unknown window) must NOT leak vote counts.
+// The gate must fail closed: render the censored placeholder, never ResultBars.
+describe('Results visibility — first-paint fail-closed gate (RSLT-flash)', () => {
+  const votedSuggestion = {
+    id: 'poll-1',
+    title: 'Remove MiG-29',
+    description: 'A test description',
+    status: 'active' as const,
+    is_pinned: false,
+    category_id: 'cat-1',
+    categories: { id: 'cat-1', name: 'Rules', slug: 'rules', sort_order: 1, created_at: '' },
+    choices: [
+      { id: 'c1', label: 'Yes, remove it', sort_order: 1, poll_id: 'poll-1', created_at: '' },
+      { id: 'c2', label: 'No, keep it', sort_order: 2, poll_id: 'poll-1', created_at: '' },
+    ],
+    closes_at: new Date(Date.now() + 86400000).toISOString(),
+    closed_at: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    created_by: 'user-1',
+    image_url: null,
+    resolution: null,
+  }
+
+  // Counts are already loaded — so a leak WOULD be visible if the gate were open.
+  const populatedVoteCounts = new Map([
+    ['poll-1', new Map<string, number>([['c1', 15], ['c2', 5]])],
+  ])
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockUseSuggestions.mockReturnValue({
+      suggestions: [votedSuggestion],
+      // The current user HAS voted (c1) — voted-poll branch is in play.
+      userVotes: new Map([['poll-1', 'c1']]),
+      loading: false,
+      error: null,
+      addOptimisticVote: vi.fn(),
+    })
+    mockUseCategories.mockReturnValue({
+      categories: [{ id: 'cat-1', name: 'Rules', slug: 'rules', sort_order: 1, created_at: '' }],
+      loading: false,
+    })
+  })
+
+  it('does not render vote counts before results_hidden resolves (unknown window => hidden)', () => {
+    // resultsHidden is EMPTY (map-miss = unknown / not-yet-fetched) while
+    // voteCounts is already populated.
+    mockUseVoteCounts.mockReturnValue({
+      voteCounts: populatedVoteCounts,
+      resultsHidden: new Map<string, boolean>(),
+      refetchVoteCounts: vi.fn(),
+    })
+
+    render(<SuggestionList status="active" />)
+
+    // No counts leaked: ResultBars (meter role + percentages) must NOT render.
+    expect(screen.queryByRole('meter')).not.toBeInTheDocument()
+    expect(screen.queryByText('75%')).not.toBeInTheDocument()
+    // The censored placeholder shows instead.
+    expect(screen.getByTestId('results-hidden-alert-poll-1')).toBeInTheDocument()
+    expect(screen.getByText('Results temporarily hidden by admin')).toBeInTheDocument()
+  })
+
+  it('renders ResultBars once results_hidden resolves to false (no regression)', () => {
+    mockUseVoteCounts.mockReturnValue({
+      voteCounts: populatedVoteCounts,
+      resultsHidden: new Map<string, boolean>([['poll-1', false]]),
+      refetchVoteCounts: vi.fn(),
+    })
+
+    render(<SuggestionList status="active" />)
+
+    // Flag resolved to visible => counts render.
+    expect(screen.getAllByRole('meter')).toHaveLength(2)
+    expect(screen.getByText('75%')).toBeInTheDocument()
+    expect(screen.getByText('25%')).toBeInTheDocument()
+    expect(screen.queryByTestId('results-hidden-alert-poll-1')).not.toBeInTheDocument()
   })
 })

@@ -37,8 +37,11 @@ export function SuggestionList({ status, focusId }: SuggestionListProps) {
   // Polling enabled only for active suggestions. Closed suggestions fetch once on mount.
   const enablePolling = status === 'active'
   // results_hidden is polled at the useVoteCounts cadence so the voter
-  // UI auto-updates within ~8s of an admin flip. Map-miss defaults to
-  // visible — RLS enforces no-leak independently at the DB layer.
+  // UI auto-updates within ~8s of an admin flip. A map-miss is the
+  // not-yet-resolved (unknown) window before the first fetch lands, so the
+  // consumer below defaults it to HIDDEN — fail-closed, so a poll an admin
+  // may have hidden can never leak counts on first paint. RLS enforces the
+  // same no-leak guarantee independently at the DB layer.
   const { voteCounts, resultsHidden } = useVoteCounts(votedPollIds, enablePolling)
   const { submitVote, submittingPollId, submittingChoiceId } = useVoteSubmit(addOptimisticVote)
 
@@ -150,7 +153,7 @@ export function SuggestionList({ status, focusId }: SuggestionListProps) {
                     suggestion={suggestion}
                     categoryIndex={categoryIndex >= 0 ? categoryIndex : 0}
                     userChoiceId={userVotes.get(suggestion.id)}
-                    resultsHidden={resultsHidden.get(suggestion.id) ?? false}
+                    resultsHidden={resultsHidden.get(suggestion.id) ?? true}
                     onVote={submitVote}
                     voteCounts={voteCounts.get(suggestion.id)}
                     submittingPollId={submittingPollId}
